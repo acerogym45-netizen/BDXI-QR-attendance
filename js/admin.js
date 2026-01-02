@@ -1,7 +1,28 @@
+// Supabase 설정
+const SUPABASE_URL = 'https://qgpqhtuynxhmgawakjxe.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_ujXj0mLf1casiQdVkc0fCA_G6exymqG'; // ⚠️ 반드시 변경!
+
 // 전역 변수
 let currentTab = 'employees';
 let employees = [];
 let locations = [];
+
+// Supabase API 호출 헬퍼
+async function supabaseFetch(endpoint, options = {}) {
+    const url = `${SUPABASE_URL}/rest/v1/${endpoint}`;
+    const headers = {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        'Prefer': 'return=representation',
+        ...options.headers
+    };
+    
+    return fetch(url, {
+        ...options,
+        headers
+    });
+}
 
 // 페이지 로드 시 초기화
 document.addEventListener('DOMContentLoaded', function() {
@@ -73,9 +94,8 @@ function setupForms() {
         };
         
         try {
-            const response = await fetch('tables/employees', {
+            const response = await supabaseFetch('employees', {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(employeeData)
             });
             
@@ -84,6 +104,8 @@ function setupForms() {
                 e.target.reset();
                 loadEmployees();
             } else {
+                const error = await response.text();
+                console.error('Registration error:', error);
                 alert('직원 등록에 실패했습니다.');
             }
         } catch (error) {
@@ -107,9 +129,8 @@ function setupForms() {
         };
         
         try {
-            const response = await fetch('tables/locations', {
+            const response = await supabaseFetch('locations', {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(locationData)
             });
             
@@ -118,6 +139,8 @@ function setupForms() {
                 e.target.reset();
                 loadLocations();
             } else {
+                const error = await response.text();
+                console.error('Registration error:', error);
                 alert('구역 등록에 실패했습니다.');
             }
         } catch (error) {
@@ -130,9 +153,9 @@ function setupForms() {
 // 직원 목록 로드
 async function loadEmployees() {
     try {
-        const response = await fetch('tables/employees?limit=100');
+        const response = await supabaseFetch('employees?select=*&order=name.asc');
         const data = await response.json();
-        employees = data.data || [];
+        employees = data || [];
         displayEmployees();
     } catch (error) {
         console.error('Error loading employees:', error);
@@ -175,9 +198,8 @@ function displayEmployees() {
 // 직원 상태 토글
 async function toggleEmployeeStatus(id, newStatus) {
     try {
-        const response = await fetch(`tables/employees/${id}`, {
+        const response = await supabaseFetch(`employees?id=eq.${id}`, {
             method: 'PATCH',
-            headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ is_active: newStatus })
         });
         
@@ -199,7 +221,7 @@ async function deleteEmployee(id) {
     }
     
     try {
-        const response = await fetch(`tables/employees/${id}`, {
+        const response = await supabaseFetch(`employees?id=eq.${id}`, {
             method: 'DELETE'
         });
         
@@ -218,9 +240,9 @@ async function deleteEmployee(id) {
 // 구역 목록 로드
 async function loadLocations() {
     try {
-        const response = await fetch('tables/locations?limit=100');
+        const response = await supabaseFetch('locations?select=*&order=name.asc');
         const data = await response.json();
-        locations = data.data || [];
+        locations = data || [];
         displayLocations();
     } catch (error) {
         console.error('Error loading locations:', error);
@@ -263,9 +285,8 @@ function displayLocations() {
 // 구역 상태 토글
 async function toggleLocationStatus(id, newStatus) {
     try {
-        const response = await fetch(`tables/locations/${id}`, {
+        const response = await supabaseFetch(`locations?id=eq.${id}`, {
             method: 'PATCH',
-            headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ is_active: newStatus })
         });
         
@@ -287,7 +308,7 @@ async function deleteLocation(id) {
     }
     
     try {
-        const response = await fetch(`tables/locations/${id}`, {
+        const response = await supabaseFetch(`locations?id=eq.${id}`, {
             method: 'DELETE'
         });
         
@@ -349,7 +370,6 @@ function renderQRCodes(container) {
     // 각 구역에 대한 QR 코드 생성
     locations.filter(loc => loc.is_active).forEach(loc => {
         const qrContainer = document.getElementById(`qr-${loc.id}`);
-        // 컨테이너 비우기
         qrContainer.innerHTML = '';
         
         // QR 코드 데이터 - URL 형식으로 변경 (QR 1번만 스캔하면 됨!)
@@ -445,15 +465,12 @@ function generateScanPageQR() {
     const qrContainer = document.getElementById('scan-page-qr');
     const urlElement = document.getElementById('scan-page-url');
     
-    // 현재 페이지 URL에서 scan.html URL 생성
     const currentUrl = window.location.href;
     const baseUrl = currentUrl.substring(0, currentUrl.lastIndexOf('/') + 1);
     const scanPageUrl = baseUrl + 'scan.html';
     
-    // URL 표시
     urlElement.textContent = scanPageUrl;
     
-    // QR 코드 라이브러리 로드 확인
     if (typeof QRCode === 'undefined') {
         const script = document.createElement('script');
         script.src = 'https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js';
@@ -485,9 +502,7 @@ function copyScanPageURL() {
     const urlElement = document.getElementById('scan-page-url');
     const url = urlElement.textContent;
     
-    // 클립보드에 복사
     navigator.clipboard.writeText(url).then(function() {
-        // 성공 메시지
         const button = event.target.closest('button');
         const originalHTML = button.innerHTML;
         button.innerHTML = '<i class="fas fa-check mr-2"></i>복사 완료!';
