@@ -256,15 +256,14 @@
                         <div class="mt-6 bg-gray-50 border border-gray-200 rounded-lg p-6">
                             <h3 class="font-bold text-lg mb-4">💡 스캔 페이지 사용 가이드</h3>
                             <ol class="space-y-2 text-sm text-gray-700">
-                                <li>1️⃣ 스캔 페이지 접속 → 본인 이름 선택</li>
-                                <li>2️⃣ 카메라 권한 허용</li>
-                                <li>3️⃣ 구역 QR 코드 촬영</li>
-                                <li>4️⃣ 출석 체크 완료!</li>
+                                <li>1️⃣ 구역 QR 코드 스캔 → 자동으로 스캔 페이지 열림</li>
+                                <li>2️⃣ 본인 이름 선택</li>
+                                <li>3️⃣ 출석 체크 완료!</li>
                             </ol>
                             <div class="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded">
                                 <p class="text-sm"><strong>💡 팁:</strong></p>
                                 <ul class="text-sm text-gray-700 mt-2 space-y-1">
-                                    <li>• 스캔 페이지를 홈 화면에 추가하면 앱처럼 사용할 수 있습니다</li>
+                                    <li>• QR 코드 1회 스캔으로 출석 완료!</li>
                                     <li>• 한 번 접속하면 다음에도 쉽게 접속할 수 있습니다</li>
                                     <li>• 여러 구역을 연속으로 스캔할 수 있습니다</li>
                                 </ul>
@@ -276,18 +275,14 @@
         </div>
     </div>
 
-    <script src="js/admin.js"></script>
+    <!-- 인증 스크립트 (먼저 로드) -->
     <script>
         // 비밀번호 인증 시스템
-        const ADMIN_PASSWORD = 'bdxi2026';  //
+        const ADMIN_PASSWORD = 'bdxi2026';  // ⚠️ 여기서 비밀번호를 변경하세요!
         const AUTH_KEY = 'bdxi_admin_auth';
         const AUTH_EXPIRY = 24 * 60 * 60 * 1000; // 24시간
 
         // 페이지 로드 시 인증 확인
-        document.addEventListener('DOMContentLoaded', function() {
-            checkAuth();
-        });
-
         function checkAuth() {
             const authData = localStorage.getItem(AUTH_KEY);
             
@@ -298,12 +293,13 @@
                 // 24시간 이내이고 인증된 경우
                 if (authenticated && (now - timestamp) < AUTH_EXPIRY) {
                     showAdminContent();
-                    return;
+                    return true;
                 }
             }
             
             // 인증 필요
             showLoginScreen();
+            return false;
         }
 
         function showLoginScreen() {
@@ -316,40 +312,55 @@
             document.getElementById('admin-content').classList.remove('hidden');
         }
 
-        // 로그인 폼 제출
-        document.getElementById('login-form').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const password = document.getElementById('admin-password').value;
-            const errorDiv = document.getElementById('login-error');
-            
-            if (password === ADMIN_PASSWORD) {
-                // 인증 정보 저장
-                localStorage.setItem(AUTH_KEY, JSON.stringify({
-                    timestamp: Date.now(),
-                    authenticated: true
-                }));
-                
-                // 관리자 화면 표시
-                showAdminContent();
-                
-                // 폼 초기화
-                document.getElementById('admin-password').value = '';
-                errorDiv.classList.add('hidden');
-            } else {
-                // 오류 표시
-                errorDiv.classList.remove('hidden');
-                document.getElementById('admin-password').value = '';
-            }
-        });
+        // 즉시 인증 확인 실행
+        const isAuthenticated = checkAuth();
 
-        // 로그아웃
-        document.getElementById('logout-btn').addEventListener('click', function() {
-            if (confirm('로그아웃 하시겠습니까?')) {
-                localStorage.removeItem(AUTH_KEY);
-                showLoginScreen();
-            }
+        // DOMContentLoaded 이벤트 리스너
+        document.addEventListener('DOMContentLoaded', function() {
+            // 로그인 폼 제출
+            document.getElementById('login-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const password = document.getElementById('admin-password').value;
+                const errorDiv = document.getElementById('login-error');
+                
+                if (password === ADMIN_PASSWORD) {
+                    // 인증 정보 저장
+                    localStorage.setItem(AUTH_KEY, JSON.stringify({
+                        timestamp: Date.now(),
+                        authenticated: true
+                    }));
+                    
+                    // 관리자 화면 표시
+                    showAdminContent();
+                    
+                    // 폼 초기화
+                    document.getElementById('admin-password').value = '';
+                    errorDiv.classList.add('hidden');
+                    
+                    // admin.js 기능 초기화 (로그인 후)
+                    if (typeof loadEmployees === 'function') {
+                        loadEmployees();
+                        loadLocations();
+                    }
+                } else {
+                    // 오류 표시
+                    errorDiv.classList.remove('hidden');
+                    document.getElementById('admin-password').value = '';
+                }
+            });
+
+            // 로그아웃
+            document.getElementById('logout-btn').addEventListener('click', function() {
+                if (confirm('로그아웃 하시겠습니까?')) {
+                    localStorage.removeItem(AUTH_KEY);
+                    showLoginScreen();
+                }
+            });
         });
     </script>
+    
+    <!-- admin.js 로드 (인증 스크립트 다음에) -->
+    <script src="js/admin.js"></script>
 </body>
 </html>
