@@ -1,9 +1,30 @@
+// Supabase 설정
+const SUPABASE_URL = 'https://qgpqhtuynxhmgawakjxe.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_ujXj0mLf1casiQdVkc0fCA_G6exymqG'; //
+
 // 전역 변수
 let employees = [];
 let selectedEmployee = null;
 let html5QrCode = null;
 let recentScans = [];
 let preloadedLocation = null; // QR 코드로 전달된 구역 정보
+
+// Supabase API 호출 헬퍼
+async function supabaseFetch(endpoint, options = {}) {
+    const url = `${SUPABASE_URL}/rest/v1/${endpoint}`;
+    const headers = {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        'Prefer': 'return=representation',
+        ...options.headers
+    };
+    
+    return fetch(url, {
+        ...options,
+        headers
+    });
+}
 
 // 페이지 로드 시 초기화
 document.addEventListener('DOMContentLoaded', function() {
@@ -56,9 +77,9 @@ function showLocationInfo() {
 // 직원 목록 로드
 async function loadEmployees() {
     try {
-        const response = await fetch('tables/employees?limit=100');
+        const response = await supabaseFetch('employees?select=*&is_active=eq.true&order=name.asc');
         const data = await response.json();
-        employees = (data.data || []).filter(emp => emp.is_active);
+        employees = data || [];
         displayEmployees(employees);
     } catch (error) {
         console.error('Error loading employees:', error);
@@ -127,25 +148,8 @@ async function selectEmployee(employeeId) {
         return;
     }
     
-    // 구역 정보가 없으면 기존대로 QR 스캐너 시작
-    // 선택된 직원 정보 표시
-    document.getElementById('employee-initial').textContent = selectedEmployee.name.charAt(0);
-    document.getElementById('employee-name-display').textContent = selectedEmployee.name;
-    
-    let infoText = selectedEmployee.employee_number;
-    if (selectedEmployee.department) infoText += ` | ${selectedEmployee.department}`;
-    if (selectedEmployee.position) infoText += ` | ${selectedEmployee.position}`;
-    document.getElementById('employee-info-display').textContent = infoText;
-    
-    // UI 전환
-    document.getElementById('employee-selection').classList.add('hidden');
-    document.getElementById('selected-employee-info').classList.remove('hidden');
-    document.getElementById('scanner-section').classList.remove('hidden');
-    
-    // QR 스캐너 시작 (비동기 처리)
-    setTimeout(() => {
-        startScanner();
-    }, 300);
+    // 구역 정보가 없으면 에러 메시지
+    alert('QR 코드에 구역 정보가 없습니다. 관리자 페이지에서 구역 QR 코드를 스캔해주세요.');
 }
 
 // URL로 전달된 구역 정보로 출석 저장
@@ -164,17 +168,19 @@ async function saveAttendanceFromURL() {
         };
         
         // 출석 기록 저장
-        const response = await fetch('tables/attendance_records', {
+        const response = await supabaseFetch('attendance_records', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(attendanceData)
         });
         
         if (!response.ok) {
+            const error = await response.text();
+            console.error('Save error:', error);
             throw new Error('출석 저장 실패');
         }
         
-        const savedRecord = await response.json();
+        const savedRecords = await response.json();
+        const savedRecord = savedRecords[0];
         
         // 성공 메시지 표시
         showSuccessMessage(savedRecord);
@@ -299,14 +305,6 @@ function displayRecentScans() {
 function clearEmployeeSelection() {
     selectedEmployee = null;
     document.getElementById('employee-selection').classList.remove('hidden');
-    document.getElementById('selected-employee-info').classList.add('hidden');
-    document.getElementById('scanner-section').classList.add('hidden');
     document.getElementById('employee-search').value = '';
     displayEmployees(employees);
-}
-
-// QR 스캐너 시작
-async function startScanner() {
-    // 기존 QR 스캐너 코드는 URL에서 구역 정보가 있으면 사용되지 않으므로 간소화
-    alert('구역 정보가 URL에 포함되어 있지 않습니다. 관리자에게 문의하세요.');
 }
