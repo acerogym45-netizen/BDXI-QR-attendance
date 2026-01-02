@@ -1,6 +1,6 @@
 // Supabase 설정
 const SUPABASE_URL = 'https://qgpqhtuynxhmgawakjxe.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_ujXj0mLf1casiQdVkc0fCA_G6exymqG';  //
+const SUPABASE_ANON_KEY = 'sb_publishable_ujXj0mLf1casiQdVkc0fCA_G6exymqG';
 
 // 전역 변수
 let allRecords = [];
@@ -150,6 +150,14 @@ function renderRecords(records) {
         return;
     }
     
+    // 출석 유형에 따른 이모지 및 색상
+    const typeStyles = {
+        '출근': { emoji: '🟢', bg: 'bg-green-100', text: 'text-green-800' },
+        '퇴근': { emoji: '🔴', bg: 'bg-red-100', text: 'text-red-800' },
+        '휴게시작': { emoji: '🟡', bg: 'bg-yellow-100', text: 'text-yellow-800' },
+        '휴게종료': { emoji: '🟣', bg: 'bg-purple-100', text: 'text-purple-800' }
+    };
+    
     tbody.innerHTML = records.map(record => {
         const scanTime = new Date(record.scan_time);
         const formattedDate = scanTime.toLocaleDateString('ko-KR', {
@@ -163,6 +171,9 @@ function renderRecords(records) {
             second: '2-digit'
         });
         
+        const attendanceType = record.attendance_type || '출근';
+        const style = typeStyles[attendanceType] || typeStyles['출근'];
+        
         return `
             <tr class="hover:bg-gray-50">
                 <td class="px-6 py-4 whitespace-nowrap">
@@ -174,6 +185,11 @@ function renderRecords(records) {
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
                     <div class="text-sm text-gray-500">${record.employee_number || '-'}</div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="px-3 py-1 inline-flex text-sm font-semibold rounded-full ${style.bg} ${style.text}">
+                        ${style.emoji} ${attendanceType}
+                    </span>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
                     <div class="text-sm font-medium text-gray-900">${record.location_name}</div>
@@ -205,6 +221,7 @@ function applyFilters() {
     const endDate = document.getElementById('end-date').value;
     const employeeId = document.getElementById('employee-filter').value;
     const locationId = document.getElementById('location-filter').value;
+    const attendanceType = document.getElementById('type-filter').value; // 새로 추가!
     
     filteredRecords = allRecords.filter(record => {
         const recordDate = new Date(record.scan_time).toISOString().split('T')[0];
@@ -219,6 +236,9 @@ function applyFilters() {
         // 구역 필터
         if (locationId && record.location_id !== locationId) return false;
         
+        // 출석 유형 필터 (새로 추가!)
+        if (attendanceType && record.attendance_type !== attendanceType) return false;
+        
         return true;
     });
     
@@ -232,6 +252,7 @@ function resetFilters() {
     document.getElementById('end-date').value = today;
     document.getElementById('employee-filter').value = '';
     document.getElementById('location-filter').value = '';
+    document.getElementById('type-filter').value = ''; // 새로 추가!
     
     filteredRecords = [...allRecords];
     renderRecords(filteredRecords);
@@ -244,8 +265,8 @@ function exportToCSV() {
         return;
     }
     
-    // CSV 헤더
-    const headers = ['날짜', '시간', '직원', '직원번호', '구역', '구역코드', '기기정보'];
+    // CSV 헤더 (출석 유형 추가!)
+    const headers = ['날짜', '시간', '직원', '직원번호', '출석유형', '구역', '구역코드', '기기정보'];
     
     // CSV 데이터
     const rows = filteredRecords.map(record => {
@@ -258,6 +279,7 @@ function exportToCSV() {
             time,
             record.employee_name,
             record.employee_number || '',
+            record.attendance_type || '출근', // 새로 추가!
             record.location_name,
             record.location_code,
             record.device_info || ''
