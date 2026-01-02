@@ -1,6 +1,6 @@
 // Supabase 연결 정보
 const SUPABASE_URL = 'https://qgpqhtuynxhmgawakjxe.supabase.co';
-const SUPABASE_ANON_KEY = 'YOUR_API_KEY_HERE'; // sb_publishable_ujXj0mLf1casiQdVkc0fCA_G6exymqG
+const SUPABASE_ANON_KEY = 'YOUR_API_KEY_HERE'; //sb_publishable_ujXj0mLf1casiQdVkc0fCA_G6exymqG
 
 // Supabase 클라이언트 초기화
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
