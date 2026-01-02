@@ -3,49 +3,331 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>봉담자이프라이드시티 출석 관리</title>
+    <title>봉담자이프라이드시티 출석 관리 시스템</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 </head>
 <body class="bg-gray-100">
+    <!-- 네비게이션 -->
     <nav class="bg-blue-600 text-white shadow-lg">
         <div class="container mx-auto px-4 py-4">
-            <h1 class="text-2xl font-bold">
-                <i class="fas fa-building mr-2"></i>봉담자이프라이드시티 출석 시스템
-            </h1>
+            <div class="flex items-center justify-between">
+                <h1 class="text-2xl font-bold">
+                    <i class="fas fa-building mr-2"></i>봉담자이프라이드시티 출석 시스템
+                </h1>
+                <div class="space-x-4">
+                    <a href="index.html" class="hover:text-blue-200">
+                        <i class="fas fa-home mr-1"></i>관리자
+                    </a>
+                    <a href="scan.html" class="hover:text-blue-200">
+                        <i class="fas fa-qrcode mr-1"></i>QR 스캔
+                    </a>
+                    <a href="records.html" class="hover:text-blue-200">
+                        <i class="fas fa-chart-bar mr-1"></i>출석 기록
+                    </a>
+                </div>
+            </div>
         </div>
     </nav>
 
+    <!-- 메인 컨텐츠 -->
     <div class="container mx-auto px-4 py-8">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-            <a href="admin.html" class="bg-white rounded-lg shadow-lg p-8 hover:shadow-xl transition text-center">
-                <i class="fas fa-user-shield text-5xl text-blue-600 mb-4"></i>
-                <h2 class="text-xl font-bold mb-2">관리자 페이지</h2>
-                <p class="text-gray-600 text-sm">직원/구역 관리<br>QR 코드 생성</p>
+        <!-- 빠른 접속 카드 -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <a href="scan.html" class="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-lg shadow-lg p-6 hover:shadow-xl transition transform hover:-translate-y-1">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-xl font-bold mb-2">📱 직원 출석 체크</h3>
+                        <p class="text-blue-100">QR 코드 스캔하기</p>
+                    </div>
+                    <i class="fas fa-qrcode text-5xl opacity-50"></i>
+                </div>
             </a>
             
-            <a href="scan.html" class="bg-white rounded-lg shadow-lg p-8 hover:shadow-xl transition text-center">
-                <i class="fas fa-qrcode text-5xl text-green-600 mb-4"></i>
-                <h2 class="text-xl font-bold mb-2">QR 스캔</h2>
-                <p class="text-gray-600 text-sm">스마트폰으로<br>출석 체크</p>
+            <a href="records.html" class="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-lg shadow-lg p-6 hover:shadow-xl transition transform hover:-translate-y-1">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-xl font-bold mb-2">📊 출석 기록 조회</h3>
+                        <p class="text-green-100">통계 및 리포트</p>
+                    </div>
+                    <i class="fas fa-chart-bar text-5xl opacity-50"></i>
+                </div>
             </a>
             
-            <a href="records.html" class="bg-white rounded-lg shadow-lg p-8 hover:shadow-xl transition text-center">
-                <i class="fas fa-chart-bar text-5xl text-purple-600 mb-4"></i>
-                <h2 class="text-xl font-bold mb-2">출석 기록</h2>
-                <p class="text-gray-600 text-sm">통계 및<br>기록 조회</p>
-            </a>
+            <div class="bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-lg shadow-lg p-6 cursor-pointer hover:shadow-xl transition transform hover:-translate-y-1" onclick="switchTab('qr-codes')">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-xl font-bold mb-2">🖨️ QR 코드 인쇄</h3>
+                        <p class="text-purple-100">구역 QR 생성</p>
+                    </div>
+                    <i class="fas fa-print text-5xl opacity-50"></i>
+                </div>
+            </div>
         </div>
-        
-        <div class="mt-12 max-w-2xl mx-auto bg-yellow-50 border-l-4 border-yellow-400 p-6 rounded">
-            <h3 class="font-bold text-lg mb-2">
-                <i class="fas fa-exclamation-triangle text-yellow-600 mr-2"></i>설정 필요
-            </h3>
-            <p class="text-sm text-gray-700 mb-3">Supabase 데이터베이스를 설정해야 시스템이 작동합니다.</p>
-            <a href="https://github.com/acerogym45-netizen/BDXI-QR-attendance" class="text-blue-600 hover:underline text-sm">
-                <i class="fas fa-book mr-1"></i>README 참고
-            </a>
+
+        <!-- 탭 메뉴 -->
+        <div class="bg-white rounded-lg shadow-md mb-6">
+            <div class="flex border-b">
+                <button class="tab-btn px-6 py-4 font-semibold text-blue-600 border-b-2 border-blue-600" data-tab="employees">
+                    <i class="fas fa-users mr-2"></i>직원 관리
+                </button>
+                <button class="tab-btn px-6 py-4 font-semibold text-gray-600 hover:text-blue-600" data-tab="locations">
+                    <i class="fas fa-map-marker-alt mr-2"></i>구역 관리
+                </button>
+                <button class="tab-btn px-6 py-4 font-semibold text-gray-600 hover:text-blue-600" data-tab="qr-codes">
+                    <i class="fas fa-qrcode mr-2"></i>QR 코드 생성
+                </button>
+                <button class="tab-btn px-6 py-4 font-semibold text-gray-600 hover:text-blue-600" data-tab="scan-access">
+                    <i class="fas fa-mobile-alt mr-2"></i>스캔 페이지 접속
+                </button>
+            </div>
+        </div>
+
+        <!-- 직원 관리 탭 -->
+        <div id="employees-tab" class="tab-content">
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h2 class="text-xl font-bold mb-4">
+                    <i class="fas fa-user-plus mr-2"></i>직원 등록
+                </h2>
+                <form id="employee-form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">이름 *</label>
+                        <input type="text" name="name" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">사번 *</label>
+                        <input type="text" name="employee_number" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">부서</label>
+                        <input type="text" name="department" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">직책</label>
+                        <input type="text" name="position" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">연락처</label>
+                        <input type="tel" name="phone" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div class="flex items-end">
+                        <button type="submit" class="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition">
+                            <i class="fas fa-plus mr-2"></i>직원 등록
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-bold mb-4">
+                    <i class="fas fa-list mr-2"></i>직원 목록
+                </h2>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">이름</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">사번</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">부서</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">직책</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">연락처</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">상태</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">관리</th>
+                            </tr>
+                        </thead>
+                        <tbody id="employees-list" class="bg-white divide-y divide-gray-200">
+                            <!-- 직원 목록이 동적으로 표시됩니다 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 구역 관리 탭 -->
+        <div id="locations-tab" class="tab-content hidden">
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h2 class="text-xl font-bold mb-4">
+                    <i class="fas fa-map-marker-plus mr-2"></i>구역 등록
+                </h2>
+                <form id="location-form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">구역 이름 *</label>
+                        <input type="text" name="name" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="예: 로비">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">구역 코드 *</label>
+                        <input type="text" name="code" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="예: LOBBY-01">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">건물/동</label>
+                        <input type="text" name="building" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="예: A동">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">층</label>
+                        <input type="text" name="floor" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="예: 1층">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">설명</label>
+                        <textarea name="description" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="구역에 대한 추가 설명"></textarea>
+                    </div>
+                    <div class="md:col-span-2">
+                        <button type="submit" class="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition">
+                            <i class="fas fa-plus mr-2"></i>구역 등록
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-bold mb-4">
+                    <i class="fas fa-list mr-2"></i>구역 목록
+                </h2>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">구역 이름</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">코드</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">건물/동</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">층</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">설명</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">상태</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">관리</th>
+                            </tr>
+                        </thead>
+                        <tbody id="locations-list" class="bg-white divide-y divide-gray-200">
+                            <!-- 구역 목록이 동적으로 표시됩니다 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- QR 코드 생성 탭 -->
+        <div id="qr-codes-tab" class="tab-content hidden">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-bold mb-4">
+                    <i class="fas fa-qrcode mr-2"></i>구역별 QR 코드 생성
+                </h2>
+                <p class="text-gray-600 mb-6">각 구역의 QR 코드를 생성하고 인쇄하여 해당 구역에 부착하세요.</p>
+                
+                <div id="qr-codes-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- QR 코드들이 동적으로 표시됩니다 -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 스캔 페이지 접속 탭 -->
+        <div id="scan-access-tab" class="tab-content hidden">
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h2 class="text-xl font-bold mb-4">
+                    <i class="fas fa-mobile-alt mr-2"></i>스캔 페이지 접속 방법
+                </h2>
+                <p class="text-gray-600 mb-6">직원들이 출석 체크를 위해 스캔 페이지에 접속할 수 있는 다양한 방법을 제공합니다.</p>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- QR 코드로 접속 -->
+                    <div class="border-2 border-blue-200 rounded-lg p-6 text-center bg-blue-50">
+                        <h3 class="text-lg font-bold mb-3">
+                            <i class="fas fa-qrcode mr-2 text-blue-600"></i>QR 코드로 접속 (추천)
+                        </h3>
+                        <p class="text-gray-600 mb-4">아래 QR 코드를 스캔하면 스캔 페이지로 바로 이동합니다.</p>
+                        <div id="scan-page-qr" class="flex justify-center mb-4"></div>
+                        <button onclick="printScanPageQR()" class="bg-blue-600 text-white px-6 py-3 rounded-md hover:bg-blue-700 transition">
+                            <i class="fas fa-print mr-2"></i>QR 코드 인쇄하기
+                        </button>
+                        <p class="text-sm text-gray-500 mt-3">
+                            💡 이 QR 코드를 인쇄하여 직원들이 잘 보이는 곳에 부착하세요
+                        </p>
+                    </div>
+                    
+                    <!-- URL로 접속 -->
+                    <div class="border-2 border-green-200 rounded-lg p-6 bg-green-50">
+                        <h3 class="text-lg font-bold mb-3">
+                            <i class="fas fa-link mr-2 text-green-600"></i>URL로 직접 접속
+                        </h3>
+                        <p class="text-gray-600 mb-4">아래 URL을 복사하여 직원들에게 공유하세요.</p>
+                        <div class="bg-white border border-gray-300 rounded-md p-3 mb-4">
+                            <code id="scan-page-url" class="text-sm text-blue-600 break-all">Loading...</code>
+                        </div>
+                        <button onclick="copyScanPageURL()" class="bg-green-600 text-white px-6 py-3 rounded-md hover:bg-green-700 transition w-full">
+                            <i class="fas fa-copy mr-2"></i>URL 복사하기
+                        </button>
+                        <p class="text-sm text-gray-500 mt-3">
+                            💡 카카오톡, 이메일 등으로 URL을 공유할 수 있습니다
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 사용 가이드 -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-bold mb-4">
+                    <i class="fas fa-info-circle mr-2"></i>스캔 페이지 사용 가이드
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h3 class="font-bold text-lg mb-3 text-blue-600">
+                            <i class="fas fa-mobile-alt mr-2"></i>모바일 사용 (권장)
+                        </h3>
+                        <ol class="space-y-2 text-gray-700">
+                            <li class="flex items-start">
+                                <span class="bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center mr-2 mt-0.5 flex-shrink-0">1</span>
+                                <span>스마트폰으로 스캔 페이지 QR 코드 스캔 또는 URL 접속</span>
+                            </li>
+                            <li class="flex items-start">
+                                <span class="bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center mr-2 mt-0.5 flex-shrink-0">2</span>
+                                <span>직원 목록에서 본인 이름 선택</span>
+                            </li>
+                            <li class="flex items-start">
+                                <span class="bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center mr-2 mt-0.5 flex-shrink-0">3</span>
+                                <span>카메라 권한 허용</span>
+                            </li>
+                            <li class="flex items-start">
+                                <span class="bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center mr-2 mt-0.5 flex-shrink-0">4</span>
+                                <span>구역의 QR 코드에 카메라 비추기</span>
+                            </li>
+                            <li class="flex items-start">
+                                <span class="bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center mr-2 mt-0.5 flex-shrink-0">5</span>
+                                <span>출석 체크 완료! 🎉</span>
+                            </li>
+                        </ol>
+                    </div>
+                    
+                    <div>
+                        <h3 class="font-bold text-lg mb-3 text-green-600">
+                            <i class="fas fa-lightbulb mr-2"></i>사용 팁
+                        </h3>
+                        <ul class="space-y-2 text-gray-700">
+                            <li class="flex items-start">
+                                <i class="fas fa-check-circle text-green-600 mr-2 mt-1"></i>
+                                <span>스캔 페이지를 홈 화면에 추가하면 앱처럼 사용 가능</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-check-circle text-green-600 mr-2 mt-1"></i>
+                                <span>여러 구역을 연속으로 스캔할 수 있습니다</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-check-circle text-green-600 mr-2 mt-1"></i>
+                                <span>카메라가 작동하지 않으면 브라우저 설정 확인</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-check-circle text-green-600 mr-2 mt-1"></i>
+                                <span>최근 스캔 기록은 브라우저에 자동 저장됩니다</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-check-circle text-green-600 mr-2 mt-1"></i>
+                                <span>HTTPS 환경에서만 카메라 접근이 가능합니다</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
+
+    <script src="js/admin.js"></script>
 </body>
 </html>
