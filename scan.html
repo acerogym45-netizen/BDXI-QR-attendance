@@ -6,7 +6,6 @@
     <title>QR 스캔 - 출석 체크</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <style>
         #reader {
             width: 100%;
@@ -24,7 +23,7 @@
         <div class="container mx-auto px-4 py-4">
             <div class="flex items-center justify-between">
                 <h1 class="text-xl md:text-2xl font-bold">
-                    <i class="fas fa-qrcode mr-2"></i>QR 스캔
+                    <i class="fas fa-qrcode mr-2"></i>출석 체크
                 </h1>
                 <div class="space-x-2 md:space-x-4 text-sm md:text-base">
                     <a href="index.html" class="hover:text-blue-200">
@@ -38,11 +37,20 @@
         </div>
     </nav>
     <div class="container mx-auto px-4 py-6">
+        <div id="location-info" class="bg-blue-50 border-2 border-blue-500 rounded-lg p-4 mb-6 hidden">
+            <div class="flex items-center">
+                <i class="fas fa-map-marker-alt text-blue-600 text-2xl mr-3"></i>
+                <div>
+                    <h3 class="font-bold text-blue-800">구역 정보</h3>
+                    <p class="text-sm text-blue-700" id="location-display"></p>
+                </div>
+            </div>
+        </div>
         <div id="employee-selection" class="bg-white rounded-lg shadow-md p-4 md:p-6 mb-6">
             <h2 class="text-lg md:text-xl font-bold mb-4">
                 <i class="fas fa-user mr-2"></i>직원 선택
             </h2>
-            <p class="text-sm md:text-base text-gray-600 mb-4">본인의 이름을 선택한 후 QR 코드를 스캔하세요.</p>
+            <p class="text-sm md:text-base text-gray-600 mb-4">본인의 이름을 선택하세요.</p>
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 mb-2">직원 검색</label>
                 <input type="text" id="employee-search" placeholder="이름 또는 사번으로 검색..." class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
@@ -69,37 +77,23 @@
             <i class="fas fa-clock text-red-600 text-5xl mb-3"></i>
             <h3 class="text-xl font-bold text-red-800 mb-2">⏰ 세션이 만료되었습니다</h3>
             <p class="text-gray-700 mb-4">QR 코드를 다시 스캔해주세요</p>
-            <button onclick="resetSession()" class="bg-red-600 text-white px-6 py-3 rounded-md hover:bg-red-700 transition">
-                <i class="fas fa-redo mr-2"></i>QR 코드 다시 스캔하기
-            </button>
+            <a href="scan.html" class="inline-block bg-red-600 text-white px-6 py-3 rounded-md hover:bg-red-700 transition">
+                <i class="fas fa-redo mr-2"></i>다시 시작
+            </a>
         </div>
-        <div id="selected-employee-info" class="bg-white rounded-lg shadow-md p-4 md:p-6 mb-6 hidden">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center">
-                    <div class="w-12 h-12 md:w-16 md:h-16 bg-blue-600 rounded-full flex items-center justify-center text-white text-xl md:text-2xl font-bold mr-3 md:mr-4">
-                        <span id="employee-initial"></span>
-                    </div>
-                    <div>
-                        <h3 class="text-lg md:text-xl font-bold" id="employee-name-display"></h3>
-                        <p class="text-sm md:text-base text-gray-600" id="employee-info-display"></p>
-                    </div>
-                </div>
-                <button onclick="clearEmployeeSelection()" class="text-red-600 hover:text-red-800">
-                    <i class="fas fa-times-circle text-2xl"></i>
-                </button>
+        <div id="success-result" class="bg-white rounded-lg shadow-md p-4 md:p-6 hidden">
+            <div class="text-center">
+                <i class="fas fa-check-circle text-green-600 text-5xl mb-3"></i>
+                <h3 class="text-xl font-bold text-green-800 mb-2">출석 완료!</h3>
+                <div id="success-details" class="bg-gray-50 rounded-lg p-4 mb-4"></div>
+                <a href="scan.html" class="inline-block bg-blue-600 text-white px-6 py-3 rounded-md hover:bg-blue-700 transition w-full">
+                    <i class="fas fa-redo mr-2"></i>처음으로
+                </a>
             </div>
-        </div>
-        <div id="scanner-section" class="bg-white rounded-lg shadow-md p-4 md:p-6 hidden">
-            <h2 class="text-lg md:text-xl font-bold mb-4">
-                <i class="fas fa-camera mr-2"></i>QR 코드 스캔
-            </h2>
-            <p class="text-sm md:text-base text-gray-600 mb-4">구역의 QR 코드를 카메라에 비추세요.</p>
-            <div id="reader" class="mb-4"></div>
-            <div id="scan-result"></div>
         </div>
         <div id="recent-scans" class="bg-white rounded-lg shadow-md p-4 md:p-6 mt-6 hidden">
             <h2 class="text-lg md:text-xl font-bold mb-4">
-                <i class="fas fa-history mr-2"></i>최근 스캔 기록
+                <i class="fas fa-history mr-2"></i>최근 출석 기록
             </h2>
             <div id="recent-scans-list"></div>
         </div>
@@ -108,22 +102,40 @@
         const SUPABASE_URL = 'https://qgpqhtuynxhmgawakjxe.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_ujXj0mLf1casiQdVkc0fCA_G6exymqG';
         let employees = [];
-        let selectedEmployee = null;
-        let html5QrCode = null;
+        let locationData = null;
         let recentScans = [];
-        let sessionTimer = null;
         let sessionExpireTime = null;
         let timerInterval = null;
         const SESSION_DURATION = 5 * 60 * 1000;
         document.addEventListener('DOMContentLoaded', async function() {
             console.log('✅ Page loaded');
+            parseLocationFromURL();
             await loadEmployees();
             setupEmployeeSearch();
             loadRecentScans();
+            if (locationData) {
+                startSessionTimer();
+            }
         });
+        function parseLocationFromURL() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const locationId = urlParams.get('id');
+            const locationName = urlParams.get('name');
+            const locationCode = urlParams.get('location');
+            if (locationId && locationName && locationCode) {
+                locationData = {
+                    locationId: locationId,
+                    locationName: decodeURIComponent(locationName),
+                    locationCode: locationCode
+                };
+                document.getElementById('location-info').classList.remove('hidden');
+                document.getElementById('location-display').textContent = `${locationData.locationName} (${locationData.locationCode})`;
+                console.log('✅ Location data loaded:', locationData);
+            }
+        }
         async function loadEmployees() {
             try {
-                console.log('📋 Loading employees from Supabase...');
+                console.log('📋 Loading employees...');
                 const response = await fetch(`${SUPABASE_URL}/rest/v1/employees?select=*&is_active=eq.true&order=name.asc&limit=100`, {
                     headers: {
                         'apikey': SUPABASE_ANON_KEY,
@@ -164,64 +176,35 @@
                 displayEmployees(filtered);
             });
         }
-        function selectEmployee(employeeId) {
+        async function selectEmployee(employeeId) {
+            if (sessionExpireTime && Date.now() > sessionExpireTime) {
+                expireSession();
+                return;
+            }
             console.log('👤 Selecting employee:', employeeId);
-            selectedEmployee = employees.find(emp => emp.id === employeeId);
+            const selectedEmployee = employees.find(emp => emp.id === employeeId);
             if (!selectedEmployee) {
                 alert('직원 정보를 찾을 수 없습니다.');
                 return;
             }
-            document.getElementById('employee-initial').textContent = selectedEmployee.name.charAt(0);
-            document.getElementById('employee-name-display').textContent = selectedEmployee.name;
-            let infoText = selectedEmployee.employee_number || '';
-            if (selectedEmployee.department) infoText += (infoText ? ' | ' : '') + selectedEmployee.department;
-            if (selectedEmployee.position) infoText += (infoText ? ' | ' : '') + selectedEmployee.position;
-            document.getElementById('employee-info-display').textContent = infoText;
+            if (!locationData) {
+                alert('구역 정보가 없습니다. QR 코드를 다시 스캔해주세요.');
+                return;
+            }
             document.getElementById('employee-selection').classList.add('hidden');
-            document.getElementById('selected-employee-info').classList.remove('hidden');
-            document.getElementById('scanner-section').classList.remove('hidden');
-            setTimeout(() => { startScanner(); }, 500);
-        }
-        function clearEmployeeSelection() {
-            selectedEmployee = null;
-            clearSessionTimer();
-            document.getElementById('employee-selection').classList.remove('hidden');
-            document.getElementById('selected-employee-info').classList.add('hidden');
-            document.getElementById('scanner-section').classList.add('hidden');
-            document.getElementById('timer-warning').classList.add('hidden');
-            document.getElementById('session-expired').classList.add('hidden');
-            stopScanner();
-            document.getElementById('employee-search').value = '';
-            displayEmployees(employees);
-        }
-        async function startScanner() {
-            console.log('📷 Starting scanner...');
-            const resultDiv = document.getElementById('scan-result');
-            try {
-                html5QrCode = new Html5Qrcode("reader");
-                const config = { fps: 10, qrbox: { width: 250, height: 250 } };
-                console.log('🎥 Requesting camera...');
-                await html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess, onScanError);
-                console.log('✅ Camera started successfully');
-                resultDiv.innerHTML = `<div class="text-center py-4 text-gray-600"><i class="fas fa-camera text-3xl mb-2"></i><p>QR 코드를 카메라에 비추세요</p></div>`;
-            } catch (err) {
-                console.error('❌ Camera error:', err);
-                resultDiv.innerHTML = `<div class="border-2 border-red-500 bg-red-50 rounded-lg p-4 text-center"><i class="fas fa-exclamation-triangle text-red-600 text-3xl mb-2"></i><h3 class="font-bold text-red-600 mb-2">카메라 접근 실패</h3><p class="text-sm text-gray-700 mb-3">${err.message}</p><p class="text-xs text-gray-600 mb-3">브라우저에서 카메라 권한을 허용해주세요.</p><button onclick="startScanner()" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 text-sm"><i class="fas fa-redo mr-2"></i>다시 시도</button></div>`;
-            }
-        }
-        function stopScanner() {
-            if (html5QrCode) {
-                html5QrCode.stop().catch(err => { console.error('Scanner stop error:', err); }).finally(() => { html5QrCode = null; });
-            }
+            await saveAttendanceRecord(selectedEmployee);
         }
         function startSessionTimer() {
-            clearSessionTimer();
             sessionExpireTime = Date.now() + SESSION_DURATION;
             document.getElementById('timer-warning').classList.remove('hidden');
             document.getElementById('session-expired').classList.add('hidden');
             timerInterval = setInterval(() => {
                 const remaining = sessionExpireTime - Date.now();
-                if (remaining <= 0) { expireSession(); } else { updateTimerDisplay(remaining); }
+                if (remaining <= 0) {
+                    expireSession();
+                } else {
+                    updateTimerDisplay(remaining);
+                }
             }, 1000);
             console.log('⏱ 5분 타이머 시작');
         }
@@ -243,61 +226,28 @@
             }
         }
         function expireSession() {
-            clearSessionTimer();
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
             document.getElementById('timer-warning').classList.add('hidden');
             document.getElementById('session-expired').classList.remove('hidden');
-            document.getElementById('scanner-section').classList.add('hidden');
-            stopScanner();
-            console.log('⏰ 세션 만료 - QR 코드를 다시 스캔해주세요');
+            document.getElementById('employee-selection').classList.add('hidden');
+            console.log('⏰ 세션 만료');
         }
-        function clearSessionTimer() {
-            if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
-            sessionExpireTime = null;
-        }
-        function resetSession() {
-            clearSessionTimer();
-            document.getElementById('session-expired').classList.add('hidden');
-            document.getElementById('timer-warning').classList.add('hidden');
-            document.getElementById('selected-employee-info').classList.add('hidden');
-            document.getElementById('employee-selection').classList.remove('hidden');
-            selectedEmployee = null;
-            document.getElementById('employee-search').value = '';
-            displayEmployees(employees);
-        }
-        async function onScanSuccess(decodedText, decodedResult) {
-            console.log('📱 QR code scanned:', decodedText);
+        async function saveAttendanceRecord(employee) {
+            const attendanceData = {
+                employee_id: employee.id,
+                employee_name: employee.name,
+                employee_number: employee.employee_number || '',
+                location_id: locationData.locationId,
+                location_name: locationData.locationName,
+                location_code: locationData.locationCode,
+                scan_time: new Date().toISOString(),
+                device_info: navigator.userAgent
+            };
             try {
-                let qrData;
-                if (decodedText.includes('scan.html?')) {
-                    const url = new URL(decodedText);
-                    qrData = {
-                        locationId: url.searchParams.get('id'),
-                        locationName: decodeURIComponent(url.searchParams.get('name')),
-                        locationCode: url.searchParams.get('location')
-                    };
-                } else {
-                    qrData = JSON.parse(decodedText);
-                    if (qrData.type !== 'location') { showScanResult(false, '올바른 구역 QR 코드가 아닙니다.'); return; }
-                }
-                if (!qrData.locationId || !qrData.locationName || !qrData.locationCode) {
-                    showScanResult(false, '올바른 구역 QR 코드가 아닙니다.');
-                    return;
-                }
-                if (html5QrCode) { html5QrCode.pause(true); }
-                startSessionTimer();
-                await saveAttendanceRecord(qrData);
-            } catch (error) {
-                console.error('❌ Scan processing error:', error);
-                showScanResult(false, 'QR 코드 처리 중 오류가 발생했습니다.');
-                setTimeout(() => { if (html5QrCode) { html5QrCode.resume(); } }, 3000);
-            }
-        }
-        function onScanError(errorMessage) { }
-        async function saveAttendanceRecord(qrData) {
-            if (sessionExpireTime && Date.now() > sessionExpireTime) { expireSession(); showScanResult(false, '세션이 만료되었습니다. QR 코드를 다시 스캔해주세요.'); return; }
-            const attendanceData = { employee_id: selectedEmployee.id, employee_name: selectedEmployee.name, employee_number: selectedEmployee.employee_number || '', location_id: qrData.locationId, location_name: qrData.locationName, location_code: qrData.locationCode, scan_time: new Date().toISOString(), device_info: navigator.userAgent };
-            try {
-                console.log('💾 Saving attendance record...', attendanceData);
+                console.log('💾 Saving attendance...', attendanceData);
                 const response = await fetch(`${SUPABASE_URL}/rest/v1/attendance_records`, {
                     method: 'POST',
                     headers: {
@@ -313,39 +263,51 @@
                 }
                 const data = await response.json();
                 console.log('✅ Attendance saved:', data);
-                showScanResult(true, `${qrData.locationName}에 출석 체크되었습니다.`, data[0]);
+                showSuccess(data[0]);
                 addToRecentScans(data[0]);
             } catch (error) {
-                console.error('❌ Error saving attendance:', error);
-                showScanResult(false, '출석 기록 저장 중 오류가 발생했습니다.');
+                console.error('❌ Error:', error);
+                alert('출석 기록 저장 중 오류가 발생했습니다.');
+                location.reload();
             }
         }
-        function showScanResult(success, message, record = null) {
-            const resultDiv = document.getElementById('scan-result');
-            const icon = success ? 'fa-check-circle text-green-600' : 'fa-exclamation-circle text-red-600';
-            const bgColor = success ? 'bg-green-50 border-green-500' : 'bg-red-50 border-red-500';
-            let html = `<div class="border-2 ${bgColor} rounded-lg p-4 md:p-6 text-center"><i class="fas ${icon} text-4xl md:text-5xl mb-3"></i><h3 class="text-lg md:text-xl font-bold mb-2">${success ? '출석 완료!' : '스캔 실패'}</h3><p class="text-sm md:text-base text-gray-700 mb-4">${message}</p>`;
-            if (success && record) {
-                const scanTime = new Date(record.scan_time);
-                html += `<div class="bg-white rounded-lg p-3 md:p-4 mb-4 text-left"><div class="grid grid-cols-2 gap-2 text-sm"><div class="text-gray-600">직원:</div><div class="font-semibold">${record.employee_name}</div><div class="text-gray-600">구역:</div><div class="font-semibold">${record.location_name}</div><div class="text-gray-600">시간:</div><div class="font-semibold">${formatDateTime(scanTime)}</div></div></div>`;
+        function showSuccess(record) {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
             }
-            html += `<button onclick="continueScanning()" class="bg-blue-600 text-white px-4 md:px-6 py-2 md:py-3 rounded-md hover:bg-blue-700 transition w-full mb-2"><i class="fas fa-qrcode mr-2"></i>계속 스캔하기</button><button onclick="clearEmployeeSelection()" class="bg-gray-600 text-white px-4 md:px-6 py-2 md:py-3 rounded-md hover:bg-gray-700 transition w-full"><i class="fas fa-user-times mr-2"></i>직원 변경</button></div>`;
-            resultDiv.innerHTML = html;
-        }
-        function continueScanning() {
-            const resultDiv = document.getElementById('scan-result');
-            resultDiv.innerHTML = `<div class="text-center py-4 text-gray-600"><i class="fas fa-camera text-3xl mb-2"></i><p>QR 코드를 카메라에 비추세요</p></div>`;
-            if (html5QrCode) { html5QrCode.resume(); }
+            document.getElementById('timer-warning').classList.add('hidden');
+            document.getElementById('location-info').classList.add('hidden');
+            const scanTime = new Date(record.scan_time);
+            document.getElementById('success-details').innerHTML = `
+                <div class="grid grid-cols-2 gap-2 text-sm text-left">
+                    <div class="text-gray-600">직원:</div>
+                    <div class="font-semibold">${record.employee_name}</div>
+                    <div class="text-gray-600">구역:</div>
+                    <div class="font-semibold">${record.location_name}</div>
+                    <div class="text-gray-600">시간:</div>
+                    <div class="font-semibold">${formatDateTime(scanTime)}</div>
+                </div>
+            `;
+            document.getElementById('success-result').classList.remove('hidden');
         }
         function loadRecentScans() {
             const stored = localStorage.getItem('recentScans');
             if (stored) {
-                try { recentScans = JSON.parse(stored); displayRecentScans(); } catch (e) { console.error('Error loading recent scans:', e); recentScans = []; }
+                try {
+                    recentScans = JSON.parse(stored);
+                    displayRecentScans();
+                } catch (e) {
+                    console.error('Error loading recent scans:', e);
+                    recentScans = [];
+                }
             }
         }
         function addToRecentScans(record) {
             recentScans.unshift(record);
-            if (recentScans.length > 10) { recentScans = recentScans.slice(0, 10); }
+            if (recentScans.length > 10) {
+                recentScans = recentScans.slice(0, 10);
+            }
             localStorage.setItem('recentScans', JSON.stringify(recentScans));
             displayRecentScans();
         }
@@ -359,7 +321,9 @@
             }).join('');
         }
         function formatDateTime(date) {
-            if (!date || isNaN(date.getTime())) { return '알 수 없음'; }
+            if (!date || isNaN(date.getTime())) {
+                return '알 수 없음';
+            }
             const year = date.getFullYear();
             const month = String(date.getMonth() + 1).padStart(2, '0');
             const day = String(date.getDate()).padStart(2, '0');
