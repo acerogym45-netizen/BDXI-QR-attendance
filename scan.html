@@ -125,7 +125,7 @@
         async function loadEmployees() {
             try {
                 console.log('Loading employees...');
-                const response = await fetch('/tables/employees?limit=100');
+                const response = await fetch('tables/employees?limit=100');
                 console.log('Response status:', response.status);
                 
                 if (!response.ok) {
@@ -376,7 +376,7 @@
                 device_info: navigator.userAgent
             };
             try {
-                const response = await fetch('/tables/attendance_records', {
+                const response = await fetch('tables/attendance_records', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify(attendanceData)
