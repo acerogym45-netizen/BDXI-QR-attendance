@@ -114,26 +114,40 @@
         let sessionExpireTime = null;
         let timerInterval = null;
         const SESSION_DURATION = 5 * 60 * 1000;
+        
         document.addEventListener('DOMContentLoaded', async function() {
             console.log('Page loaded');
             await loadEmployees();
             setupEmployeeSearch();
             loadRecentScans();
         });
+        
         async function loadEmployees() {
             try {
                 console.log('Loading employees...');
-                const response = await fetch('tables/employees?limit=100');
+                const response = await fetch('/tables/employees?limit=100');
+                console.log('Response status:', response.status);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                
                 const data = await response.json();
+                console.log('Received data:', data);
+                
                 employees = (data.data || []).filter(emp => emp.is_active);
                 console.log('Loaded employees:', employees.length);
                 displayEmployees(employees);
             } catch (error) {
                 console.error('Error loading employees:', error);
                 document.getElementById('employees-grid').innerHTML = 
-                    '<div class="col-span-full text-center text-red-500 py-4">직원 목록을 불러오는데 실패했습니다.</div>';
+                    `<div class="col-span-full text-center text-red-500 py-4">
+                        <p class="font-bold mb-2">직원 목록을 불러오는데 실패했습니다.</p>
+                        <p class="text-sm">${error.message}</p>
+                    </div>`;
             }
         }
+        
         function displayEmployees(employeeList) {
             const grid = document.getElementById('employees-grid');
             if (employeeList.length === 0) {
@@ -155,6 +169,7 @@
                 `;
             }).join('');
         }
+        
         function setupEmployeeSearch() {
             const searchInput = document.getElementById('employee-search');
             searchInput.addEventListener('input', function(e) {
@@ -171,6 +186,7 @@
                 displayEmployees(filtered);
             });
         }
+        
         function selectEmployee(employeeId) {
             console.log('Selecting employee:', employeeId);
             selectedEmployee = employees.find(emp => emp.id === employeeId);
@@ -191,6 +207,7 @@
                 startScanner();
             }, 500);
         }
+        
         function clearEmployeeSelection() {
             selectedEmployee = null;
             clearSessionTimer();
@@ -203,6 +220,7 @@
             document.getElementById('employee-search').value = '';
             displayEmployees(employees);
         }
+        
         async function startScanner() {
             console.log('Starting scanner...');
             const resultDiv = document.getElementById('scan-result');
@@ -241,6 +259,7 @@
                 `;
             }
         }
+        
         function stopScanner() {
             if (html5QrCode) {
                 html5QrCode.stop().catch(err => {
@@ -250,6 +269,7 @@
                 });
             }
         }
+        
         function startSessionTimer() {
             clearSessionTimer();
             sessionExpireTime = Date.now() + SESSION_DURATION;
@@ -265,6 +285,7 @@
             }, 1000);
             console.log('⏱ 5분 타이머 시작');
         }
+        
         function updateTimerDisplay(remaining) {
             const minutes = Math.floor(remaining / 60000);
             const seconds = Math.floor((remaining % 60000) / 1000);
@@ -282,6 +303,7 @@
                 timerWarning.querySelector('i').classList.add('text-red-600');
             }
         }
+        
         function expireSession() {
             clearSessionTimer();
             document.getElementById('timer-warning').classList.add('hidden');
@@ -290,6 +312,7 @@
             stopScanner();
             console.log('⏰ 세션 만료 - QR 코드를 다시 스캔해주세요');
         }
+        
         function clearSessionTimer() {
             if (timerInterval) {
                 clearInterval(timerInterval);
@@ -297,6 +320,7 @@
             }
             sessionExpireTime = null;
         }
+        
         function resetSession() {
             clearSessionTimer();
             document.getElementById('session-expired').classList.add('hidden');
@@ -307,6 +331,7 @@
             document.getElementById('employee-search').value = '';
             displayEmployees(employees);
         }
+        
         async function onScanSuccess(decodedText, decodedResult) {
             console.log('QR code scanned:', decodedText);
             try {
@@ -330,8 +355,10 @@
                 }, 3000);
             }
         }
+        
         function onScanError(errorMessage) {
         }
+        
         async function saveAttendanceRecord(qrData) {
             if (sessionExpireTime && Date.now() > sessionExpireTime) {
                 expireSession();
@@ -341,6 +368,7 @@
             const attendanceData = {
                 employee_id: selectedEmployee.id,
                 employee_name: selectedEmployee.name,
+                employee_number: selectedEmployee.employee_number,
                 location_id: qrData.locationId,
                 location_name: qrData.locationName,
                 location_code: qrData.locationCode,
@@ -348,7 +376,7 @@
                 device_info: navigator.userAgent
             };
             try {
-                const response = await fetch('tables/attendance_records', {
+                const response = await fetch('/tables/attendance_records', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify(attendanceData)
@@ -365,6 +393,7 @@
                 showScanResult(false, '출석 기록 저장 중 오류가 발생했습니다.');
             }
         }
+        
         function showScanResult(success, message, record = null) {
             const resultDiv = document.getElementById('scan-result');
             const icon = success ? 'fa-check-circle text-green-600' : 'fa-exclamation-circle text-red-600';
@@ -401,6 +430,7 @@
             `;
             resultDiv.innerHTML = html;
         }
+        
         function continueScanning() {
             const resultDiv = document.getElementById('scan-result');
             resultDiv.innerHTML = `
@@ -413,13 +443,20 @@
                 html5QrCode.resume();
             }
         }
+        
         function loadRecentScans() {
             const stored = localStorage.getItem('recentScans');
             if (stored) {
-                recentScans = JSON.parse(stored);
-                displayRecentScans();
+                try {
+                    recentScans = JSON.parse(stored);
+                    displayRecentScans();
+                } catch (e) {
+                    console.error('Error loading recent scans:', e);
+                    localStorage.removeItem('recentScans');
+                }
             }
         }
+        
         function addToRecentScans(record) {
             recentScans.unshift(record);
             if (recentScans.length > 10) {
@@ -428,6 +465,7 @@
             localStorage.setItem('recentScans', JSON.stringify(recentScans));
             displayRecentScans();
         }
+        
         function displayRecentScans() {
             if (recentScans.length === 0) return;
             document.getElementById('recent-scans').classList.remove('hidden');
@@ -438,8 +476,8 @@
                     <div class="border-l-4 border-blue-600 bg-gray-50 p-3 md:p-4 mb-3 rounded">
                         <div class="flex justify-between items-start">
                             <div>
-                                <div class="font-semibold text-base md:text-lg">${record.employee_name}</div>
-                                <div class="text-sm md:text-base text-gray-600">${record.location_name}</div>
+                                <div class="font-semibold text-base md:text-lg">${record.employee_name || '직원'}</div>
+                                <div class="text-sm md:text-base text-gray-600">${record.location_name || '구역'}</div>
                                 <div class="text-xs md:text-sm text-gray-500">${formatDateTime(scanTime)}</div>
                             </div>
                             <div class="text-green-600">
@@ -450,7 +488,11 @@
                 `;
             }).join('');
         }
+        
         function formatDateTime(date) {
+            if (!date || isNaN(date.getTime())) {
+                return '날짜 없음';
+            }
             const year = date.getFullYear();
             const month = String(date.getMonth() + 1).padStart(2, '0');
             const day = String(date.getDate()).padStart(2, '0');
