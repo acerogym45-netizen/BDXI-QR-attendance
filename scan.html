@@ -107,8 +107,7 @@
     </div>
     <script>
         const SUPABASE_URL = 'https://qgpqhtuynxhmgawakjxe.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFncHFodHV5bnhobWdhd2FranhlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzM4OTE0OTksImV4cCI6MjA0OTQ2NzQ5OX0.7Y_5LlH7m5pCWt1D_lYRNGVIZBU-3Hec7njrPQ-GHwc';
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const SUPABASE_ANON_KEY = 'sb_publishable_ujXj0mLf1casiQdVkc0fCA_G6exymqG';
         let employees = [];
         let selectedEmployee = null;
         let html5QrCode = null;
@@ -126,12 +125,16 @@
         async function loadEmployees() {
             try {
                 console.log('📋 Loading employees from Supabase...');
-                const { data, error } = await supabaseClient.from('employees').select('*').eq('is_active', true).order('name', { ascending: true });
-                if (error) {
-                    console.error('❌ Supabase error:', error);
-                    throw error;
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/employees?select=*&is_active=eq.true&order=name.asc&limit=100`, {
+                    headers: {
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                    }
+                });
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
-                employees = data || [];
+                employees = await response.json();
                 console.log(`✅ Loaded ${employees.length} employees`);
                 displayEmployees(employees);
             } catch (error) {
@@ -282,11 +285,23 @@
             const attendanceData = { employee_id: selectedEmployee.id, employee_name: selectedEmployee.name, employee_number: selectedEmployee.employee_number || '', location_id: qrData.locationId, location_name: qrData.locationName, location_code: qrData.locationCode, scan_time: new Date().toISOString(), device_info: navigator.userAgent };
             try {
                 console.log('💾 Saving attendance record...', attendanceData);
-                const { data, error } = await supabaseClient.from('attendance_records').insert([attendanceData]).select().single();
-                if (error) { console.error('❌ Supabase error:', error); throw error; }
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/attendance_records`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                        'Prefer': 'return=representation'
+                    },
+                    body: JSON.stringify(attendanceData)
+                });
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                const data = await response.json();
                 console.log('✅ Attendance saved:', data);
-                showScanResult(true, `${qrData.locationName}에 출석 체크되었습니다.`, data);
-                addToRecentScans(data);
+                showScanResult(true, `${qrData.locationName}에 출석 체크되었습니다.`, data[0]);
+                addToRecentScans(data[0]);
             } catch (error) {
                 console.error('❌ Error saving attendance:', error);
                 showScanResult(false, '출석 기록 저장 중 오류가 발생했습니다.');
