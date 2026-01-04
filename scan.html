@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         #reader {
             width: 100%;
@@ -106,6 +107,13 @@
         </div>
     </div>
     <script>
+        // Supabase 설정
+        const SUPABASE_URL = 'https://qgpqhtuynxhmgawakjxe.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFncHFodHV5bnhobWdhd2FranhלIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU2MjI2NzksImV4cCI6MjA1MTE5ODY3OX0.UpQqQz_H8gZYvZGdO8KyPaJJ4O6F7r5RqzI8LQdQ8yQ';
+        
+        const { createClient } = supabase;
+        const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
         let employees = [];
         let selectedEmployee = null;
         let html5QrCode = null;
@@ -124,18 +132,18 @@
         
         async function loadEmployees() {
             try {
-                console.log('Loading employees...');
-                const response = await fetch('tables/employees?limit=100');
-                console.log('Response status:', response.status);
+                console.log('Loading employees from Supabase...');
+                const { data, error } = await supabaseClient
+                    .from('employees')
+                    .select('*')
+                    .eq('is_active', true)
+                    .order('name');
                 
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}`);
+                if (error) {
+                    throw error;
                 }
                 
-                const data = await response.json();
-                console.log('Received data:', data);
-                
-                employees = (data.data || []).filter(emp => emp.is_active);
+                employees = data || [];
                 console.log('Loaded employees:', employees.length);
                 displayEmployees(employees);
             } catch (error) {
@@ -376,21 +384,21 @@
                 device_info: navigator.userAgent
             };
             try {
-                const response = await fetch('tables/attendance_records', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify(attendanceData)
-                });
-                if (response.ok) {
-                    const record = await response.json();
-                    showScanResult(true, `${qrData.locationName}에 출석 체크되었습니다.`, record);
-                    addToRecentScans(record);
-                } else {
-                    showScanResult(false, '출석 기록 저장에 실패했습니다.');
+                const { data, error } = await supabaseClient
+                    .from('attendance_records')
+                    .insert([attendanceData])
+                    .select();
+                
+                if (error) {
+                    throw error;
                 }
+                
+                const record = data[0];
+                showScanResult(true, `${qrData.locationName}에 출석 체크되었습니다.`, record);
+                addToRecentScans(record);
             } catch (error) {
                 console.error('Error saving attendance:', error);
-                showScanResult(false, '출석 기록 저장 중 오류가 발생했습니다.');
+                showScanResult(false, '출석 기록 저장 중 오류가 발생했습니다: ' + error.message);
             }
         }
         
