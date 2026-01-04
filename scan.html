@@ -7,7 +7,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@1"></script>
     <style>
         #reader {
             width: 100%;
@@ -268,8 +267,22 @@
         async function onScanSuccess(decodedText, decodedResult) {
             console.log('📱 QR code scanned:', decodedText);
             try {
-                const qrData = JSON.parse(decodedText);
-                if (qrData.type !== 'location') { showScanResult(false, '올바른 구역 QR 코드가 아닙니다.'); return; }
+                let qrData;
+                if (decodedText.includes('scan.html?')) {
+                    const url = new URL(decodedText);
+                    qrData = {
+                        locationId: url.searchParams.get('id'),
+                        locationName: decodeURIComponent(url.searchParams.get('name')),
+                        locationCode: url.searchParams.get('location')
+                    };
+                } else {
+                    qrData = JSON.parse(decodedText);
+                    if (qrData.type !== 'location') { showScanResult(false, '올바른 구역 QR 코드가 아닙니다.'); return; }
+                }
+                if (!qrData.locationId || !qrData.locationName || !qrData.locationCode) {
+                    showScanResult(false, '올바른 구역 QR 코드가 아닙니다.');
+                    return;
+                }
                 if (html5QrCode) { html5QrCode.pause(true); }
                 startSessionTimer();
                 await saveAttendanceRecord(qrData);
