@@ -62,6 +62,33 @@
                 </div>
             </div>
         </div>
+        <div id="attendance-type-selection" class="bg-white rounded-lg shadow-md p-4 md:p-6 mb-6 hidden">
+            <h2 class="text-lg md:text-xl font-bold mb-4">
+                <i class="fas fa-clipboard-check mr-2"></i>출석 유형 선택
+            </h2>
+            <p class="text-sm md:text-base text-gray-600 mb-4">출석 유형을 선택하세요.</p>
+            <div class="grid grid-cols-2 gap-3">
+                <button onclick="selectAttendanceType('출근')" class="p-4 border-2 border-gray-200 rounded-lg hover:border-green-600 hover:bg-green-50 transition text-center">
+                    <i class="fas fa-sign-in-alt text-green-600 text-3xl mb-2"></i>
+                    <div class="font-semibold text-base">출근</div>
+                </button>
+                <button onclick="selectAttendanceType('퇴근')" class="p-4 border-2 border-gray-200 rounded-lg hover:border-red-600 hover:bg-red-50 transition text-center">
+                    <i class="fas fa-sign-out-alt text-red-600 text-3xl mb-2"></i>
+                    <div class="font-semibold text-base">퇴근</div>
+                </button>
+                <button onclick="selectAttendanceType('외출')" class="p-4 border-2 border-gray-200 rounded-lg hover:border-orange-600 hover:bg-orange-50 transition text-center">
+                    <i class="fas fa-walking text-orange-600 text-3xl mb-2"></i>
+                    <div class="font-semibold text-base">외출</div>
+                </button>
+                <button onclick="selectAttendanceType('복귀')" class="p-4 border-2 border-gray-200 rounded-lg hover:border-blue-600 hover:bg-blue-50 transition text-center">
+                    <i class="fas fa-undo text-blue-600 text-3xl mb-2"></i>
+                    <div class="font-semibold text-base">복귀</div>
+                </button>
+            </div>
+            <button onclick="goBackToEmployeeSelection()" class="mt-4 w-full bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 transition">
+                <i class="fas fa-arrow-left mr-2"></i>직원 선택으로 돌아가기
+            </button>
+        </div>
         <div id="timer-warning" class="bg-yellow-50 border-2 border-yellow-500 rounded-lg p-4 mb-6 hidden">
             <div class="flex items-center justify-between">
                 <div class="flex items-center">
@@ -103,6 +130,7 @@
         const SUPABASE_ANON_KEY = 'sb_publishable_ujXj0mLf1casiQdVkc0fCA_G6exymqG';
         let employees = [];
         let locationData = null;
+        let selectedEmployee = null;
         let recentScans = [];
         let sessionExpireTime = null;
         let timerInterval = null;
@@ -176,13 +204,13 @@
                 displayEmployees(filtered);
             });
         }
-        async function selectEmployee(employeeId) {
+        function selectEmployee(employeeId) {
             if (sessionExpireTime && Date.now() > sessionExpireTime) {
                 expireSession();
                 return;
             }
             console.log('👤 Selecting employee:', employeeId);
-            const selectedEmployee = employees.find(emp => emp.id === employeeId);
+            selectedEmployee = employees.find(emp => emp.id === employeeId);
             if (!selectedEmployee) {
                 alert('직원 정보를 찾을 수 없습니다.');
                 return;
@@ -192,7 +220,21 @@
                 return;
             }
             document.getElementById('employee-selection').classList.add('hidden');
-            await saveAttendanceRecord(selectedEmployee);
+            document.getElementById('attendance-type-selection').classList.remove('hidden');
+        }
+        function goBackToEmployeeSelection() {
+            selectedEmployee = null;
+            document.getElementById('attendance-type-selection').classList.add('hidden');
+            document.getElementById('employee-selection').classList.remove('hidden');
+        }
+        async function selectAttendanceType(type) {
+            if (sessionExpireTime && Date.now() > sessionExpireTime) {
+                expireSession();
+                return;
+            }
+            console.log('📋 Attendance type:', type);
+            document.getElementById('attendance-type-selection').classList.add('hidden');
+            await saveAttendanceRecord(type);
         }
         function startSessionTimer() {
             sessionExpireTime = Date.now() + SESSION_DURATION;
@@ -233,16 +275,18 @@
             document.getElementById('timer-warning').classList.add('hidden');
             document.getElementById('session-expired').classList.remove('hidden');
             document.getElementById('employee-selection').classList.add('hidden');
+            document.getElementById('attendance-type-selection').classList.add('hidden');
             console.log('⏰ 세션 만료');
         }
-        async function saveAttendanceRecord(employee) {
+        async function saveAttendanceRecord(attendanceType) {
             const attendanceData = {
-                employee_id: employee.id,
-                employee_name: employee.name,
-                employee_number: employee.employee_number || '',
+                employee_id: selectedEmployee.id,
+                employee_name: selectedEmployee.name,
+                employee_number: selectedEmployee.employee_number || '',
                 location_id: locationData.locationId,
                 location_name: locationData.locationName,
                 location_code: locationData.locationCode,
+                attendance_type: attendanceType,
                 scan_time: new Date().toISOString(),
                 device_info: navigator.userAgent
             };
@@ -279,12 +323,20 @@
             document.getElementById('timer-warning').classList.add('hidden');
             document.getElementById('location-info').classList.add('hidden');
             const scanTime = new Date(record.scan_time);
+            const typeColor = {
+                '출근': 'text-green-600',
+                '퇴근': 'text-red-600',
+                '외출': 'text-orange-600',
+                '복귀': 'text-blue-600'
+            };
             document.getElementById('success-details').innerHTML = `
                 <div class="grid grid-cols-2 gap-2 text-sm text-left">
                     <div class="text-gray-600">직원:</div>
                     <div class="font-semibold">${record.employee_name}</div>
                     <div class="text-gray-600">구역:</div>
                     <div class="font-semibold">${record.location_name}</div>
+                    <div class="text-gray-600">출석 유형:</div>
+                    <div class="font-semibold ${typeColor[record.attendance_type] || ''}">${record.attendance_type}</div>
                     <div class="text-gray-600">시간:</div>
                     <div class="font-semibold">${formatDateTime(scanTime)}</div>
                 </div>
@@ -315,9 +367,16 @@
             if (recentScans.length === 0) return;
             document.getElementById('recent-scans').classList.remove('hidden');
             const listDiv = document.getElementById('recent-scans-list');
+            const typeColor = {
+                '출근': 'border-green-600',
+                '퇴근': 'border-red-600',
+                '외출': 'border-orange-600',
+                '복귀': 'border-blue-600'
+            };
             listDiv.innerHTML = recentScans.map(record => {
                 const scanTime = new Date(record.scan_time);
-                return `<div class="border-l-4 border-blue-600 bg-gray-50 p-3 md:p-4 mb-3 rounded"><div class="flex justify-between items-start"><div><div class="font-semibold text-base md:text-lg">${record.employee_name || '알 수 없음'}</div><div class="text-sm md:text-base text-gray-600">${record.location_name || '알 수 없음'}</div><div class="text-xs md:text-sm text-gray-500">${formatDateTime(scanTime)}</div></div><div class="text-green-600"><i class="fas fa-check-circle text-xl md:text-2xl"></i></div></div></div>`;
+                const borderColor = typeColor[record.attendance_type] || 'border-blue-600';
+                return `<div class="border-l-4 ${borderColor} bg-gray-50 p-3 md:p-4 mb-3 rounded"><div class="flex justify-between items-start"><div><div class="font-semibold text-base md:text-lg">${record.employee_name || '알 수 없음'} <span class="text-sm text-gray-500">[${record.attendance_type || '출근'}]</span></div><div class="text-sm md:text-base text-gray-600">${record.location_name || '알 수 없음'}</div><div class="text-xs md:text-sm text-gray-500">${formatDateTime(scanTime)}</div></div><div class="text-green-600"><i class="fas fa-check-circle text-xl md:text-2xl"></i></div></div></div>`;
             }).join('');
         }
         function formatDateTime(date) {
