@@ -76,13 +76,13 @@
                     <i class="fas fa-sign-out-alt text-red-600 text-3xl mb-2"></i>
                     <div class="font-semibold text-base">퇴근</div>
                 </button>
-                <button onclick="selectAttendanceType('외출')" class="p-4 border-2 border-gray-200 rounded-lg hover:border-orange-600 hover:bg-orange-50 transition text-center">
-                    <i class="fas fa-walking text-orange-600 text-3xl mb-2"></i>
-                    <div class="font-semibold text-base">외출</div>
+                <button onclick="selectAttendanceType('휴게 시작')" class="p-4 border-2 border-gray-200 rounded-lg hover:border-orange-600 hover:bg-orange-50 transition text-center">
+                    <i class="fas fa-coffee text-orange-600 text-3xl mb-2"></i>
+                    <div class="font-semibold text-base">휴게 시작</div>
                 </button>
-                <button onclick="selectAttendanceType('복귀')" class="p-4 border-2 border-gray-200 rounded-lg hover:border-blue-600 hover:bg-blue-50 transition text-center">
-                    <i class="fas fa-undo text-blue-600 text-3xl mb-2"></i>
-                    <div class="font-semibold text-base">복귀</div>
+                <button onclick="selectAttendanceType('휴게 종료')" class="p-4 border-2 border-gray-200 rounded-lg hover:border-blue-600 hover:bg-blue-50 transition text-center">
+                    <i class="fas fa-play-circle text-blue-600 text-3xl mb-2"></i>
+                    <div class="font-semibold text-base">휴게 종료</div>
                 </button>
             </div>
             <button onclick="goBackToEmployeeSelection()" class="mt-4 w-full bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 transition">
@@ -326,8 +326,8 @@
             const typeColor = {
                 '출근': 'text-green-600',
                 '퇴근': 'text-red-600',
-                '외출': 'text-orange-600',
-                '복귀': 'text-blue-600'
+                '휴게 시작': 'text-orange-600',
+                '휴게 종료': 'text-blue-600'
             };
             document.getElementById('success-details').innerHTML = `
                 <div class="grid grid-cols-2 gap-2 text-sm text-left">
@@ -370,8 +370,8 @@
             const typeColor = {
                 '출근': 'border-green-600',
                 '퇴근': 'border-red-600',
-                '외출': 'border-orange-600',
-                '복귀': 'border-blue-600'
+                '휴게 시작': 'border-orange-600',
+                '휴게 종료': 'border-blue-600'
             };
             listDiv.innerHTML = recentScans.map(record => {
                 const scanTime = new Date(record.scan_time);
