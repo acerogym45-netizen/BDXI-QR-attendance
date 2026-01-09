@@ -8,6 +8,14 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
 </head>
 <body class="bg-gray-100">
+    <!-- 전체 코드 복사 버튼 -->
+    <button id="copy-all-btn" 
+            title="전체 HTML 코드 복사" 
+            style="position:fixed;top:12px;right:12px;z-index:9999" 
+            class="bg-gray-800 text-white px-4 py-2 rounded-lg hover:bg-gray-700 shadow-lg transition">
+        <i class="fas fa-copy mr-2"></i>전체 코드 복사
+    </button>
+
     <!-- 로그인 화면 -->
     <div id="login-screen" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
         <div class="bg-white rounded-lg shadow-xl p-8 max-w-md w-full mx-4">
@@ -64,12 +72,12 @@
         <!-- 메인 컨텐츠 -->
         <div class="container mx-auto px-4 py-8">
             <!-- 빠른 접속 카드 -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
                 <a href="scan.html" class="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-lg shadow-lg p-6 hover:shadow-xl transition transform hover:-translate-y-1">
                     <div class="flex items-center justify-between">
                         <div>
-                            <h3 class="text-xl font-bold mb-2">📱 직원 출석 체크</h3>
-                            <p class="text-blue-100">QR 코드 스캔하기</p>
+                            <h3 class="text-xl font-bold mb-2">📱 직원 출석</h3>
+                            <p class="text-blue-100">QR 스캔하기</p>
                         </div>
                         <i class="fas fa-qrcode text-5xl opacity-50"></i>
                     </div>
@@ -78,22 +86,32 @@
                 <a href="records.html" class="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-lg shadow-lg p-6 hover:shadow-xl transition transform hover:-translate-y-1">
                     <div class="flex items-center justify-between">
                         <div>
-                            <h3 class="text-xl font-bold mb-2">📊 출석 기록 조회</h3>
+                            <h3 class="text-xl font-bold mb-2">📊 출석 기록</h3>
                             <p class="text-green-100">통계 및 리포트</p>
                         </div>
                         <i class="fas fa-chart-bar text-5xl opacity-50"></i>
                     </div>
                 </a>
                 
-                <div class="bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-lg shadow-lg p-6">
+                <a href="work.html" class="bg-gradient-to-br from-orange-500 to-orange-600 text-white rounded-lg shadow-lg p-6 hover:shadow-xl transition transform hover:-translate-y-1">
                     <div class="flex items-center justify-between">
                         <div>
-                            <h3 class="text-xl font-bold mb-2">🖨️ 구역 QR 인쇄</h3>
-                            <p class="text-purple-100">구역 QR 코드 생성</p>
+                            <h3 class="text-xl font-bold mb-2">🧹 청소 기록</h3>
+                            <p class="text-orange-100">업무 기록하기</p>
                         </div>
-                        <i class="fas fa-print text-5xl opacity-50"></i>
+                        <i class="fas fa-broom text-5xl opacity-50"></i>
                     </div>
-                </div>
+                </a>
+                
+                <a href="work-admin.html" class="bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-lg shadow-lg p-6 hover:shadow-xl transition transform hover:-translate-y-1">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-xl font-bold mb-2">📸 청소 현황</h3>
+                            <p class="text-purple-100">실시간 확인</p>
+                        </div>
+                        <i class="fas fa-chart-line text-5xl opacity-50"></i>
+                    </div>
+                </a>
             </div>
 
             <!-- 탭 메뉴 -->
@@ -256,14 +274,15 @@
                         <div class="mt-6 bg-gray-50 border border-gray-200 rounded-lg p-6">
                             <h3 class="font-bold text-lg mb-4">💡 스캔 페이지 사용 가이드</h3>
                             <ol class="space-y-2 text-sm text-gray-700">
-                                <li>1️⃣ 구역 QR 코드 스캔 → 자동으로 스캔 페이지 열림</li>
-                                <li>2️⃣ 본인 이름 선택</li>
-                                <li>3️⃣ 출석 체크 완료!</li>
+                                <li>1️⃣ 스캔 페이지 접속 → 본인 이름 선택</li>
+                                <li>2️⃣ 카메라 권한 허용</li>
+                                <li>3️⃣ 구역 QR 코드 촬영</li>
+                                <li>4️⃣ 출석 체크 완료!</li>
                             </ol>
                             <div class="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded">
                                 <p class="text-sm"><strong>💡 팁:</strong></p>
                                 <ul class="text-sm text-gray-700 mt-2 space-y-1">
-                                    <li>• QR 코드 1회 스캔으로 출석 완료!</li>
+                                    <li>• 스캔 페이지를 홈 화면에 추가하면 앱처럼 사용할 수 있습니다</li>
                                     <li>• 한 번 접속하면 다음에도 쉽게 접속할 수 있습니다</li>
                                     <li>• 여러 구역을 연속으로 스캔할 수 있습니다</li>
                                 </ul>
@@ -275,14 +294,18 @@
         </div>
     </div>
 
-    <!-- 인증 스크립트 (먼저 로드) -->
+    <script src="js/admin.js"></script>
     <script>
         // 비밀번호 인증 시스템
-        const ADMIN_PASSWORD = 'bdxi2026';  // ⚠️ 여기서 비밀번호를 변경하세요!
+        const ADMIN_PASSWORD = 'bdxi2026';  //
         const AUTH_KEY = 'bdxi_admin_auth';
         const AUTH_EXPIRY = 24 * 60 * 60 * 1000; // 24시간
 
         // 페이지 로드 시 인증 확인
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuth();
+        });
+
         function checkAuth() {
             const authData = localStorage.getItem(AUTH_KEY);
             
@@ -293,13 +316,12 @@
                 // 24시간 이내이고 인증된 경우
                 if (authenticated && (now - timestamp) < AUTH_EXPIRY) {
                     showAdminContent();
-                    return true;
+                    return;
                 }
             }
             
             // 인증 필요
             showLoginScreen();
-            return false;
         }
 
         function showLoginScreen() {
@@ -312,55 +334,109 @@
             document.getElementById('admin-content').classList.remove('hidden');
         }
 
-        // 즉시 인증 확인 실행
-        const isAuthenticated = checkAuth();
-
-        // DOMContentLoaded 이벤트 리스너
-        document.addEventListener('DOMContentLoaded', function() {
-            // 로그인 폼 제출
-            document.getElementById('login-form').addEventListener('submit', function(e) {
-                e.preventDefault();
+        // 로그인 폼 제출
+        document.getElementById('login-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const password = document.getElementById('admin-password').value;
+            const errorDiv = document.getElementById('login-error');
+            
+            if (password === ADMIN_PASSWORD) {
+                // 인증 정보 저장
+                localStorage.setItem(AUTH_KEY, JSON.stringify({
+                    timestamp: Date.now(),
+                    authenticated: true
+                }));
                 
-                const password = document.getElementById('admin-password').value;
-                const errorDiv = document.getElementById('login-error');
+                // 관리자 화면 표시
+                showAdminContent();
                 
-                if (password === ADMIN_PASSWORD) {
-                    // 인증 정보 저장
-                    localStorage.setItem(AUTH_KEY, JSON.stringify({
-                        timestamp: Date.now(),
-                        authenticated: true
-                    }));
-                    
-                    // 관리자 화면 표시
-                    showAdminContent();
-                    
-                    // 폼 초기화
-                    document.getElementById('admin-password').value = '';
-                    errorDiv.classList.add('hidden');
-                    
-                    // admin.js 기능 초기화 (로그인 후)
-                    if (typeof loadEmployees === 'function') {
-                        loadEmployees();
-                        loadLocations();
-                    }
-                } else {
-                    // 오류 표시
-                    errorDiv.classList.remove('hidden');
-                    document.getElementById('admin-password').value = '';
-                }
-            });
+                // 폼 초기화
+                document.getElementById('admin-password').value = '';
+                errorDiv.classList.add('hidden');
+            } else {
+                // 오류 표시
+                errorDiv.classList.remove('hidden');
+                document.getElementById('admin-password').value = '';
+            }
+        });
 
-            // 로그아웃
-            document.getElementById('logout-btn').addEventListener('click', function() {
-                if (confirm('로그아웃 하시겠습니까?')) {
-                    localStorage.removeItem(AUTH_KEY);
-                    showLoginScreen();
-                }
-            });
+        // 로그아웃
+        document.getElementById('logout-btn').addEventListener('click', function() {
+            if (confirm('로그아웃 하시겠습니까?')) {
+                localStorage.removeItem(AUTH_KEY);
+                showLoginScreen();
+            }
         });
     </script>
-    
-    <!-- admin.js 로드 (인증 스크립트 다음에) -->
-    <script src="js/admin.js"></script>
+
+    <!-- 전체 코드 복사 기능 -->
+    <script>
+        // 복사 토스트 메시지 표시 함수
+        function showCopyToast(message, isSuccess = true) {
+            let toast = document.getElementById('copy-toast');
+            if (!toast) {
+                toast = document.createElement('div');
+                toast.id = 'copy-toast';
+                toast.style.cssText = `
+                    position: fixed;
+                    bottom: 20px;
+                    right: 20px;
+                    padding: 12px 20px;
+                    border-radius: 8px;
+                    color: white;
+                    font-weight: 500;
+                    z-index: 10000;
+                    transition: opacity 0.3s ease;
+                    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+                `;
+                document.body.appendChild(toast);
+            }
+
+            // 성공/실패에 따라 색상 변경
+            toast.style.backgroundColor = isSuccess ? 'rgba(34, 197, 94, 0.95)' : 'rgba(239, 68, 68, 0.95)';
+            toast.innerHTML = `<i class="fas fa-${isSuccess ? 'check' : 'times'}-circle mr-2"></i>${message}`;
+            toast.style.opacity = '1';
+            
+            setTimeout(() => {
+                toast.style.opacity = '0';
+            }, 2000);
+        }
+
+        // 전체 코드 복사 버튼 이벤트
+        document.getElementById('copy-all-btn').addEventListener('click', async function() {
+            try {
+                const htmlContent = document.documentElement.outerHTML;
+                
+                // 최신 Clipboard API 사용 (HTTPS 환경)
+                if (navigator.clipboard && window.isSecureContext) {
+                    await navigator.clipboard.writeText(htmlContent);
+                    showCopyToast('✅ 전체 코드가 복사되었습니다!', true);
+                } else {
+                    // Fallback: 구형 브라우저 또는 HTTP 환경
+                    const textarea = document.createElement('textarea');
+                    textarea.value = htmlContent;
+                    textarea.style.position = 'fixed';
+                    textarea.style.left = '-999999px';
+                    textarea.style.top = '-999999px';
+                    document.body.appendChild(textarea);
+                    textarea.focus();
+                    textarea.select();
+                    
+                    const successful = document.execCommand('copy');
+                    document.body.removeChild(textarea);
+                    
+                    if (successful) {
+                        showCopyToast('✅ 전체 코드가 복사되었습니다!', true);
+                    } else {
+                        throw new Error('복사 실패');
+                    }
+                }
+            } catch (error) {
+                console.error('복사 실패:', error);
+                showCopyToast('❌ 복사에 실패했습니다. 다시 시도해주세요.', false);
+            }
+        });
+    </script>
 </body>
 </html>
