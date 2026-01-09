@@ -290,6 +290,18 @@
             console.log('🔵 QR SCANNED:', decodedText);
             console.log('🔵 isProcessing =', isProcessing);
             
+            // 즉시 스캐너 중지 (최우선!)
+            if (html5QrCode) {
+                try {
+                    console.log('🛑 Stopping scanner IMMEDIATELY...');
+                    await html5QrCode.stop();
+                    html5QrCode = null;
+                    console.log('✅ Scanner stopped');
+                } catch (err) {
+                    console.error('Scanner stop error:', err);
+                }
+            }
+            
             try {
                 const qrData = JSON.parse(decodedText);
                 
@@ -297,14 +309,6 @@
                     alert('올바른 구역 QR 코드가 아닙니다.');
                     isProcessing = false;
                     return;
-                }
-                
-                // 스캐너 완전히 중지
-                console.log('🛑 Stopping scanner...');
-                if (html5QrCode) {
-                    await html5QrCode.stop();
-                    html5QrCode = null;
-                    console.log('✅ Scanner stopped');
                 }
                 
                 // 스캔된 구역 정보 저장
@@ -315,9 +319,11 @@
                 };
                 console.log('🔵 scannedLocation saved:', scannedLocation);
                 
-                // 메뉴 선택 화면으로 이동
-                console.log('➡️ Calling showMenuSelection()...');
-                showMenuSelection();
+                // 약간의 지연 후 화면 전환 (UI 안정화)
+                setTimeout(() => {
+                    console.log('➡️ Calling showMenuSelection()...');
+                    showMenuSelection();
+                }, 300);
                 
             } catch (error) {
                 console.error('❌ Scan error:', error);
