@@ -133,7 +133,8 @@
         const SUPABASE_URL = 'https://qgpqhtuynxhmgawakjxe.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_ujXj0mLf1casiQdVkc0fCA_G6exymqG';
         
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const { createClient } = supabase;
+        const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         // 전역 변수
         let employees = [];
@@ -158,7 +159,7 @@
             try {
                 console.log('📋 Loading employees from Supabase...');
                 
-                const { data, error } = await supabase
+                const { data, error } = await supabaseClient
                     .from('employees')
                     .select('*')
                     .eq('is_active', true)
@@ -567,7 +568,7 @@
             try {
                 console.log('💾 Saving attendance record...', attendanceData);
                 
-                const { data, error } = await supabase
+                const { data, error } = await supabaseClient
                     .from('attendance_records')
                     .insert([attendanceData])
                     .select()
