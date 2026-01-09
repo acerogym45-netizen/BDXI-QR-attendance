@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>테스트 QR 코드</title>
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            text-align: center;
+        }
+        .qr-container {
+            margin: 30px auto;
+            padding: 20px;
+            border: 2px solid #333;
+            display: inline-block;
+        }
+        .qr-info {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f0f0f0;
+            border-radius: 8px;
+            text-align: left;
+        }
+        pre {
+            background: #333;
+            color: #0f0;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 테스트 QR 코드</h1>
+    <p>이 QR 코드로 스캔을 테스트하세요!</p>
+    
+    <div class="qr-container">
+        <div id="qrcode"></div>
+    </div>
+    
+    <div class="qr-info">
+        <h3>📋 QR 코드 데이터:</h3>
+        <pre id="qr-data"></pre>
+    </div>
+    
+    <div class="qr-info">
+        <h3>📝 사용 방법:</h3>
+        <ol style="text-align: left;">
+            <li>이 QR 코드를 <strong>다른 스마트폰으로 촬영</strong>하거나</li>
+            <li>이 페이지를 <strong>PC에 띄워놓고</strong> 스마트폰으로 스캔하세요</li>
+            <li>scan.html 페이지에서 QR 스캔하면 <strong>작업 선택 화면</strong>이 나와야 합니다!</li>
+        </ol>
+    </div>
+
+    <script>
+        // 테스트용 QR 데이터
+        const qrData = {
+            type: "location",
+            locationId: "test-location-001",
+            locationName: "테스트 구역",
+            locationCode: "TEST-001"
+        };
+        
+        // QR 코드 생성
+        const qrString = JSON.stringify(qrData);
+        new QRCode(document.getElementById("qrcode"), {
+            text: qrString,
+            width: 256,
+            height: 256
+        });
+        
+        // 데이터 표시
+        document.getElementById('qr-data').textContent = JSON.stringify(qrData, null, 2);
+    </script>
+</body>
+</html>
