@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>청소 업무 기록</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    <!-- EXIF 데이터 추출 라이브러리 -->
+    <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
+    <style>
+        .photo-preview {
+            position: relative;
+            display: inline-block;
+        }
+        .photo-preview img {
+            max-width: 150px;
+            max-height: 150px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+        .photo-preview .remove-btn {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #ef4444;
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .checklist-item {
+            transition: all 0.3s;
+        }
+        .checklist-item:hover {
+            background: #f3f4f6;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="min-h-screen pb-20">
+        <!-- 헤더 -->
+        <div class="bg-gradient-to-r from-green-600 to-green-700 text-white p-4 shadow-lg">
+            <div class="max-w-4xl mx-auto">
+                <h1 class="text-2xl font-bold flex items-center gap-2">
+                    <i class="fas fa-broom"></i>
+                    청소 업무 기록
+                </h1>
+                <p class="text-green-100 text-sm mt-1">오늘 청소한 내용을 사진과 함께 기록하세요</p>
+            </div>
+        </div>
+
+        <div class="max-w-4xl mx-auto p-4">
+            <!-- Step 1: 직원 선택 -->
+            <div id="step1-employee" class="bg-white rounded-lg shadow-md p-6 mb-4">
+                <div class="flex items-center gap-2 mb-4">
+                    <div class="w-8 h-8 bg-green-600 text-white rounded-full flex items-center justify-center font-bold">1</div>
+                    <h2 class="text-xl font-bold text-gray-800">직원 선택</h2>
+                </div>
+                
+                <input type="text" id="employeeSearch" placeholder="직원 이름 검색..." 
+                    class="w-full p-3 border border-gray-300 rounded-lg mb-4 focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                
+                <div id="employeeList" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                    <div class="text-center py-8 col-span-full text-gray-500">
+                        <i class="fas fa-spinner fa-spin text-3xl mb-2"></i>
+                        <p>직원 목록 로딩 중...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 2: 구역 선택 -->
+            <div id="step2-location" class="bg-white rounded-lg shadow-md p-6 mb-4 hidden">
+                <div class="flex items-center gap-2 mb-4">
+                    <div class="w-8 h-8 bg-green-600 text-white rounded-full flex items-center justify-center font-bold">2</div>
+                    <h2 class="text-xl font-bold text-gray-800">청소 구역 선택</h2>
+                </div>
+
+                <input type="text" id="locationSearch" placeholder="구역 이름 검색..." 
+                    class="w-full p-3 border border-gray-300 rounded-lg mb-4 focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                
+                <div id="locationList" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div class="text-center py-8 col-span-full text-gray-500">
+                        <i class="fas fa-spinner fa-spin text-3xl mb-2"></i>
+                        <p>구역 목록 로딩 중...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 3: 체크리스트 -->
+            <div id="step3-checklist" class="bg-white rounded-lg shadow-md p-6 mb-4 hidden">
+                <div class="flex items-center gap-2 mb-4">
+                    <div class="w-8 h-8 bg-green-600 text-white rounded-full flex items-center justify-center font-bold">3</div>
+                    <h2 class="text-xl font-bold text-gray-800">청소 항목 체크 (선택사항)</h2>
+                </div>
+                
+                <div id="checklistItems" class="space-y-2">
+                    <!-- 동적으로 생성됨 -->
+                </div>
+
+                <button onclick="skipChecklist()" class="mt-4 w-full py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">
+                    건너뛰기
+                </button>
+            </div>
+
+            <!-- Step 4: 사진 촬영 -->
+            <div id="step4-photos" class="bg-white rounded-lg shadow-md p-6 mb-4 hidden">
+                <div class="flex items-center gap-2 mb-4">
+                    <div class="w-8 h-8 bg-green-600 text-white rounded-full flex items-center justify-center font-bold">4</div>
+                    <h2 class="text-xl font-bold text-gray-800">청소 사진 촬영</h2>
+                </div>
+
+                <div class="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p class="text-sm text-blue-800">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        <strong>중요:</strong> 실시간으로 촬영한 사진만 업로드 가능합니다 (10분 이내)
+                    </p>
+                </div>
+
+                <input type="file" id="photoInput" accept="image/*" capture="environment" multiple
+                    class="hidden">
+                
+                <button onclick="document.getElementById('photoInput').click()" 
+                    class="w-full py-4 bg-green-600 text-white rounded-lg text-lg font-bold hover:bg-green-700 mb-4 flex items-center justify-center gap-2">
+                    <i class="fas fa-camera text-2xl"></i>
+                    사진 촬영하기 (<span id="photoCount">0</span>/30)
+                </button>
+
+                <div id="photoPreview" class="grid grid-cols-3 gap-3 mb-4">
+                    <!-- 미리보기 -->
+                </div>
+
+                <div id="uploadProgress" class="hidden mb-4">
+                    <div class="bg-gray-200 rounded-full h-3 overflow-hidden">
+                        <div id="progressBar" class="bg-green-600 h-full transition-all duration-300" style="width: 0%"></div>
+                    </div>
+                    <p class="text-sm text-gray-600 mt-2 text-center">
+                        업로드 중... <span id="uploadedCount">0</span>/<span id="totalCount">0</span>
+                    </p>
+                </div>
+
+                <button onclick="continueToNotes()" id="continueBtn" disabled
+                    class="w-full py-3 bg-gray-300 text-gray-500 rounded-lg font-bold cursor-not-allowed">
+                    다음 단계로 (최소 1장 필요)
+                </button>
+            </div>
+
+            <!-- Step 5: 메모 작성 -->
+            <div id="step5-notes" class="bg-white rounded-lg shadow-md p-6 mb-4 hidden">
+                <div class="flex items-center gap-2 mb-4">
+                    <div class="w-8 h-8 bg-green-600 text-white rounded-full flex items-center justify-center font-bold">5</div>
+                    <h2 class="text-xl font-bold text-gray-800">메모 작성 (선택사항)</h2>
+                </div>
+
+                <textarea id="notesInput" rows="4" placeholder="특이사항이나 추가 설명을 입력하세요..."
+                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"></textarea>
+
+                <div class="flex gap-3 mt-4">
+                    <button onclick="skipNotes()" class="flex-1 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">
+                        건너뛰기
+                    </button>
+                    <button onclick="submitTask()" class="flex-1 py-3 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700">
+                        제출하기
+                    </button>
+                </div>
+            </div>
+
+            <!-- 완료 화면 -->
+            <div id="successScreen" class="bg-white rounded-lg shadow-md p-6 text-center hidden">
+                <div class="text-6xl mb-4">🎉</div>
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">청소 기록 완료!</h2>
+                <p class="text-gray-600 mb-6">수고하셨습니다</p>
+
+                <div id="successDetail" class="bg-gray-50 rounded-lg p-4 mb-6 text-left">
+                    <!-- 상세 정보 -->
+                </div>
+
+                <div class="flex gap-3">
+                    <button onclick="location.reload()" class="flex-1 py-3 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700">
+                        새 기록 작성
+                    </button>
+                    <button onclick="location.href='work-admin.html'" class="flex-1 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">
+                        현황 보기
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== 전역 변수 ====================
+        const SUPABASE_URL = 'https://qgpqhtuynxhmgawakjxe.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_ujXj0mLf1casiQdVkc0fCA_G6exymqG';
+        const STORAGE_BUCKET = 'cleaning-photos';
+
+        let selectedEmployee = null;
+        let selectedLocation = null;
+        let uploadedPhotos = [];
+        let usedPhotoHashes = new Set();
+        let checkedItems = [];
+
+        // 구역별 체크리스트 정의
+        const LOCATION_CHECKLISTS = {
+            '로비': ['바닥 청소', '쓰레기통 비우기', '유리문 닦기', '소파 정리', '화분 물주기'],
+            '휴게실': ['테이블 닦기', '싱크대 청소', '냉장고 정리', '바닥 청소', '쓰레기통 비우기'],
+            '화장실': ['변기 청소', '세면대 청소', '거울 닦기', '바닥 청소', '휴지/비누 보충'],
+            '회의실': ['테이블 닦기', '의자 정리', '바닥 청소', '화이트보드 지우기', '쓰레기통 비우기'],
+            '복도': ['바닥 청소', '벽 먼지 제거', '계단 청소', '소화기 점검', '비상등 확인'],
+            '사무실': ['책상 정리', '바닥 청소', '쓰레기통 비우기', '창문 닦기', '공기청정기 필터 점검'],
+            '주차장': ['바닥 청소', '쓰레기 수거', '라인 확인', '조명 점검', '배수구 청소'],
+            '옥상': ['바닥 청소', '배수구 청소', '난간 점검', '쓰레기 수거', '안전장비 점검']
+        };
+
+        // ==================== 초기화 ====================
+        window.onload = function() {
+            loadEmployees();
+            setupPhotoInput();
+        };
+
+        // ==================== 직원 로드 ====================
+        async function loadEmployees() {
+            try {
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/employees?is_active=eq.true&order=name.asc&limit=100`, {
+                    headers: {
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                    }
+                });
+
+                if (!response.ok) throw new Error('직원 목록 로딩 실패');
+
+                const employees = await response.json();
+                displayEmployees(employees);
+                setupEmployeeSearch(employees);
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('employeeList').innerHTML = `
+                    <div class="col-span-full text-center py-8 text-red-600">
+                        <i class="fas fa-exclamation-circle text-3xl mb-2"></i>
+                        <p>직원 목록을 불러올 수 없습니다</p>
+                        <button onclick="loadEmployees()" class="mt-4 px-4 py-2 bg-green-600 text-white rounded-lg">다시 시도</button>
+                    </div>
+                `;
+            }
+        }
+
+        function displayEmployees(employees) {
+            const container = document.getElementById('employeeList');
+            container.innerHTML = employees.map(emp => `
+                <button onclick='selectEmployee(${JSON.stringify(emp)})' 
+                    class="p-4 border-2 border-gray-200 rounded-lg hover:border-green-500 hover:bg-green-50 transition text-center">
+                    <i class="fas fa-user text-2xl text-gray-400 mb-2"></i>
+                    <p class="font-bold text-gray-800">${emp.name}</p>
+                    <p class="text-sm text-gray-500">${emp.employee_number || ''}</p>
+                </button>
+            `).join('');
+        }
+
+        function setupEmployeeSearch(employees) {
+            document.getElementById('employeeSearch').addEventListener('input', (e) => {
+                const keyword = e.target.value.toLowerCase();
+                const filtered = employees.filter(emp => 
+                    emp.name.toLowerCase().includes(keyword) ||
+                    (emp.employee_number && emp.employee_number.includes(keyword))
+                );
+                displayEmployees(filtered);
+            });
+        }
+
+        function selectEmployee(employee) {
+            selectedEmployee = employee;
+            document.getElementById('step1-employee').classList.add('hidden');
+            document.getElementById('step2-location').classList.remove('hidden');
+            loadLocations();
+        }
+
+        // ==================== 구역 로드 ====================
+        async function loadLocations() {
+            try {
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/locations?is_active=eq.true&order=name.asc&limit=100`, {
+                    headers: {
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                    }
+                });
+
+                if (!response.ok) throw new Error('구역 목록 로딩 실패');
+
+                const locations = await response.json();
+                displayLocations(locations);
+                setupLocationSearch(locations);
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('locationList').innerHTML = `
+                    <div class="col-span-full text-center py-8 text-red-600">
+                        <i class="fas fa-exclamation-circle text-3xl mb-2"></i>
+                        <p>구역 목록을 불러올 수 없습니다</p>
+                        <button onclick="loadLocations()" class="mt-4 px-4 py-2 bg-green-600 text-white rounded-lg">다시 시도</button>
+                    </div>
+                `;
+            }
+        }
+
+        function displayLocations(locations) {
+            const container = document.getElementById('locationList');
+            container.innerHTML = locations.map(loc => `
+                <button onclick='selectLocation(${JSON.stringify(loc)})' 
+                    class="p-4 border-2 border-gray-200 rounded-lg hover:border-green-500 hover:bg-green-50 transition text-left flex items-center gap-3">
+                    <i class="fas fa-map-marker-alt text-3xl text-green-600"></i>
+                    <div>
+                        <p class="font-bold text-gray-800">${loc.name}</p>
+                        <p class="text-sm text-gray-500">${loc.code || ''}</p>
+                    </div>
+                </button>
+            `).join('');
+        }
+
+        function setupLocationSearch(locations) {
+            document.getElementById('locationSearch').addEventListener('input', (e) => {
+                const keyword = e.target.value.toLowerCase();
+                const filtered = locations.filter(loc => 
+                    loc.name.toLowerCase().includes(keyword) ||
+                    (loc.code && loc.code.toLowerCase().includes(keyword))
+                );
+                displayLocations(filtered);
+            });
+        }
+
+        function selectLocation(location) {
+            selectedLocation = location;
+            document.getElementById('step2-location').classList.add('hidden');
+            document.getElementById('step3-checklist').classList.remove('hidden');
+            generateChecklist(location.name);
+        }
+
+        // ==================== 체크리스트 ====================
+        function generateChecklist(locationName) {
+            // 구역 이름에서 키워드 찾기
+            let items = [];
+            for (let key in LOCATION_CHECKLISTS) {
+                if (locationName.includes(key)) {
+                    items = LOCATION_CHECKLISTS[key];
+                    break;
+                }
+            }
+
+            // 기본 체크리스트
+            if (items.length === 0) {
+                items = ['바닥 청소', '쓰레기통 비우기', '먼지 제거', '환기하기', '정리정돈'];
+            }
+
+            const container = document.getElementById('checklistItems');
+            container.innerHTML = items.map((item, idx) => `
+                <label class="checklist-item flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer">
+                    <input type="checkbox" value="${item}" class="w-5 h-5 text-green-600 rounded" onchange="updateChecklist()">
+                    <span class="text-gray-700">${item}</span>
+                </label>
+            `).join('');
+        }
+
+        function updateChecklist() {
+            checkedItems = Array.from(document.querySelectorAll('#checklistItems input:checked'))
+                .map(cb => cb.value);
+        }
+
+        function skipChecklist() {
+            checkedItems = [];
+            document.getElementById('step3-checklist').classList.add('hidden');
+            document.getElementById('step4-photos').classList.remove('hidden');
+        }
+
+        // ==================== 사진 업로드 ====================
+        function setupPhotoInput() {
+            document.getElementById('photoInput').addEventListener('change', handlePhotoSelect);
+        }
+
+        async function handlePhotoSelect(event) {
+            const files = Array.from(event.target.files);
+            
+            if (uploadedPhotos.length + files.length > 30) {
+                alert('최대 30장까지만 업로드 가능합니다');
+                return;
+            }
+
+            document.getElementById('uploadProgress').classList.remove('hidden');
+            document.getElementById('totalCount').textContent = files.length;
+
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                
+                // 1. EXIF 검증
+                const isValid = await validatePhotoTime(file);
+                if (!isValid) {
+                    alert(`${file.name}: 10분 이내에 촬영한 사진만 업로드 가능합니다`);
+                    continue;
+                }
+
+                // 2. 해시 계산 (중복 체크)
+                const hash = await calculateFileHash(file);
+                if (usedPhotoHashes.has(hash)) {
+                    alert(`${file.name}: 이미 사용된 사진입니다`);
+                    continue;
+                }
+
+                // 3. 업로드
+                try {
+                    const url = await uploadPhoto(file);
+                    uploadedPhotos.push({
+                        url: url,
+                        hash: hash,
+                        name: file.name
+                    });
+                    usedPhotoHashes.add(hash);
+
+                    // 미리보기 추가
+                    addPhotoPreview(url, uploadedPhotos.length - 1);
+                    updatePhotoCount();
+                    
+                    document.getElementById('uploadedCount').textContent = i + 1;
+                } catch (error) {
+                    console.error('Upload error:', error);
+                    alert(`${file.name} 업로드 실패: ${error.message}`);
+                }
+            }
+
+            document.getElementById('uploadProgress').classList.add('hidden');
+            event.target.value = ''; // 초기화
+        }
+
+        async function validatePhotoTime(file) {
+            return new Promise((resolve) => {
+                EXIF.getData(file, function() {
+                    const dateTime = EXIF.getTag(this, 'DateTimeOriginal');
+                    
+                    if (!dateTime) {
+                        // EXIF 데이터가 없으면 파일 수정 시간으로 체크
+                        const fileTime = file.lastModified;
+                        const now = Date.now();
+                        const diffMinutes = (now - fileTime) / 1000 / 60;
+                        resolve(diffMinutes <= 10);
+                        return;
+                    }
+
+                    // EXIF 날짜 파싱: "2024:01:06 15:30:45"
+                    const parts = dateTime.split(' ');
+                    const dateParts = parts[0].split(':');
+                    const timeParts = parts[1].split(':');
+                    const photoDate = new Date(
+                        dateParts[0], dateParts[1] - 1, dateParts[2],
+                        timeParts[0], timeParts[1], timeParts[2]
+                    );
+
+                    const now = new Date();
+                    const diffMinutes = (now - photoDate) / 1000 / 60;
+                    resolve(diffMinutes <= 10);
+                });
+            });
+        }
+
+        async function calculateFileHash(file) {
+            const buffer = await file.arrayBuffer();
+            const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        async function uploadPhoto(file) {
+            const fileName = `${Date.now()}_${selectedLocation.code}_${selectedEmployee.name}_${file.name}`;
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const response = await fetch(`${SUPABASE_URL}/storage/v1/object/${STORAGE_BUCKET}/${fileName}`, {
+                method: 'POST',
+                headers: {
+                    'apikey': SUPABASE_ANON_KEY,
+                    'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                },
+                body: file
+            });
+
+            if (!response.ok) {
+                throw new Error('업로드 실패');
+            }
+
+            return `${SUPABASE_URL}/storage/v1/object/public/${STORAGE_BUCKET}/${fileName}`;
+        }
+
+        function addPhotoPreview(url, index) {
+            const container = document.getElementById('photoPreview');
+            const div = document.createElement('div');
+            div.className = 'photo-preview';
+            div.innerHTML = `
+                <img src="${url}" alt="사진 ${index + 1}">
+                <div class="remove-btn" onclick="removePhoto(${index})">
+                    <i class="fas fa-times"></i>
+                </div>
+            `;
+            container.appendChild(div);
+        }
+
+        function removePhoto(index) {
+            const photo = uploadedPhotos[index];
+            usedPhotoHashes.delete(photo.hash);
+            uploadedPhotos.splice(index, 1);
+            
+            // 미리보기 재구성
+            document.getElementById('photoPreview').innerHTML = '';
+            uploadedPhotos.forEach((p, i) => addPhotoPreview(p.url, i));
+            updatePhotoCount();
+        }
+
+        function updatePhotoCount() {
+            document.getElementById('photoCount').textContent = uploadedPhotos.length;
+            
+            const continueBtn = document.getElementById('continueBtn');
+            if (uploadedPhotos.length > 0) {
+                continueBtn.disabled = false;
+                continueBtn.className = 'w-full py-3 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700';
+            } else {
+                continueBtn.disabled = true;
+                continueBtn.className = 'w-full py-3 bg-gray-300 text-gray-500 rounded-lg font-bold cursor-not-allowed';
+            }
+        }
+
+        function continueToNotes() {
+            document.getElementById('step4-photos').classList.add('hidden');
+            document.getElementById('step5-notes').classList.remove('hidden');
+        }
+
+        function skipNotes() {
+            submitTask();
+        }
+
+        // ==================== 제출 ====================
+        async function submitTask() {
+            if (uploadedPhotos.length === 0) {
+                alert('최소 1장의 사진이 필요합니다');
+                return;
+            }
+
+            const notes = document.getElementById('notesInput').value.trim();
+
+            const taskData = {
+                employee_id: selectedEmployee.id,
+                employee_name: selectedEmployee.name,
+                employee_number: selectedEmployee.employee_number,
+                location_id: selectedLocation.id,
+                location_name: selectedLocation.name,
+                location_code: selectedLocation.code,
+                checklist_items: checkedItems,
+                photo_urls: uploadedPhotos.map(p => p.url),
+                photo_hashes: uploadedPhotos.map(p => p.hash),
+                photo_count: uploadedPhotos.length,
+                notes: notes || null,
+                photo_taken_at: new Date().toISOString(),
+                submitted_at: new Date().toISOString(),
+                status: 'completed',
+                device_info: navigator.userAgent
+            };
+
+            try {
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/cleaning_tasks`, {
+                    method: 'POST',
+                    headers: {
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                        'Content-Type': 'application/json',
+                        'Prefer': 'return=representation'
+                    },
+                    body: JSON.stringify(taskData)
+                });
+
+                if (!response.ok) throw new Error('제출 실패');
+
+                const result = await response.json();
+                showSuccess(result[0]);
+            } catch (error) {
+                console.error('Submit error:', error);
+                alert('제출 중 오류가 발생했습니다: ' + error.message);
+            }
+        }
+
+        function showSuccess(task) {
+            document.getElementById('step5-notes').classList.add('hidden');
+            document.getElementById('successScreen').classList.remove('hidden');
+
+            const detail = document.getElementById('successDetail');
+            detail.innerHTML = `
+                <div class="space-y-2">
+                    <p><strong>직원:</strong> ${task.employee_name}</p>
+                    <p><strong>구역:</strong> ${task.location_name}</p>
+                    <p><strong>사진:</strong> ${task.photo_count}장</p>
+                    <p><strong>제출 시간:</strong> ${new Date(task.submitted_at).toLocaleString('ko-KR')}</p>
+                    ${task.checklist_items.length > 0 ? `<p><strong>완료 항목:</strong> ${task.checklist_items.join(', ')}</p>` : ''}
+                    ${task.notes ? `<p><strong>메모:</strong> ${task.notes}</p>` : ''}
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>
