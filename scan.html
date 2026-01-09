@@ -278,11 +278,15 @@
             }
         }
 
-        // QR 스캔 성공
+        // QR 스캔 성공 (🚨 디버깅 버전)
         async function onScanSuccess(decodedText, decodedResult) {
+            // 🚨 디버깅: QR 스캔 즉시 알림
+            alert('🔵 QR 스캔됨!\n\n내용: ' + decodedText.substring(0, 100));
+            
             // 중복 처리 방지
             if (isProcessing) {
                 console.log('⏳ Already processing... IGNORED');
+                alert('⏳ 이미 처리 중입니다!');
                 return;
             }
             
@@ -297,16 +301,19 @@
                     await html5QrCode.stop();
                     html5QrCode = null;
                     console.log('✅ Scanner stopped');
+                    alert('✅ 스캐너 중지됨!');
                 } catch (err) {
                     console.error('Scanner stop error:', err);
+                    alert('❌ 스캐너 중지 오류: ' + err.message);
                 }
             }
             
             try {
                 const qrData = JSON.parse(decodedText);
+                alert('✅ JSON 파싱 성공!\n\ntype: ' + qrData.type);
                 
                 if (qrData.type !== 'location') {
-                    alert('올바른 구역 QR 코드가 아닙니다.');
+                    alert('❌ 올바른 구역 QR 코드가 아닙니다.\n\ntype이 "' + qrData.type + '"입니다.');
                     isProcessing = false;
                     return;
                 }
@@ -318,16 +325,18 @@
                     code: qrData.locationCode
                 };
                 console.log('🔵 scannedLocation saved:', scannedLocation);
+                alert('✅ 구역 정보 저장 완료!\n\n구역명: ' + scannedLocation.name);
                 
                 // 약간의 지연 후 화면 전환 (UI 안정화)
                 setTimeout(() => {
                     console.log('➡️ Calling showMenuSelection()...');
+                    alert('➡️ 메뉴 선택 화면으로 전환합니다!');
                     showMenuSelection();
                 }, 300);
                 
             } catch (error) {
                 console.error('❌ Scan error:', error);
-                alert('QR 코드 처리 중 오류가 발생했습니다.');
+                alert('❌ QR 코드 처리 중 오류!\n\n' + error.message + '\n\n스캔 내용:\n' + decodedText);
                 isProcessing = false;
             }
         }
