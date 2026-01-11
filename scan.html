@@ -44,11 +44,33 @@
     <!-- 메인 컨텐츠 -->
     <div class="container mx-auto px-4 py-6">
         
+        <!-- Step 0: QR 스캔 (첫 화면) -->
+        <div id="step-qr-scan" class="bg-white rounded-lg shadow-md p-4 md:p-6 mb-6">
+            <h2 class="text-lg md:text-xl font-bold mb-4 text-center">
+                <i class="fas fa-qrcode mr-2"></i>구역 QR 코드 스캔
+            </h2>
+            <p class="text-sm md:text-base text-gray-600 mb-4 text-center">구역의 QR 코드를 스캔하세요</p>
+            
+            <!-- QR 스캐너 -->
+            <div id="reader" class="mb-4"></div>
+            
+            <!-- 스캔 상태 -->
+            <div id="scan-status" class="text-center py-4 text-gray-500">
+                <i class="fas fa-camera text-3xl mb-2"></i>
+                <p>카메라를 활성화하는 중...</p>
+            </div>
+        </div>
+
         <!-- Step 1: 작업 선택 (출석 or 청소) -->
-        <div id="step-menu-selection" class="bg-white rounded-lg shadow-md p-4 md:p-6 mb-6">
+        <div id="step-menu-selection" class="bg-white rounded-lg shadow-md p-4 md:p-6 mb-6 hidden">
             <h2 class="text-lg md:text-xl font-bold mb-4 text-center">
                 <i class="fas fa-list mr-2"></i>Step 1: 작업 선택
             </h2>
+            <div id="location-info" class="bg-blue-50 rounded-lg p-4 mb-6 text-center">
+                <i class="fas fa-map-marker-alt text-blue-600 text-3xl mb-2"></i>
+                <h3 class="text-xl font-bold" id="location-name-display">-</h3>
+                <p class="text-gray-600" id="location-code-display">-</p>
+            </div>
             <p class="text-sm md:text-base text-gray-600 mb-6 text-center">수행할 작업을 선택하세요</p>
             
             <div class="space-y-4">
@@ -94,43 +116,16 @@
             </button>
         </div>
 
-        <!-- Step 3: 구역 선택 (QR 스캔 or 목록) -->
-        <div id="step-location-qr" class="bg-white rounded-lg shadow-md p-4 md:p-6 mb-6 hidden">
-            <h2 class="text-lg md:text-xl font-bold mb-4">
-                <i class="fas fa-map-marker-alt mr-2"></i>Step 3: 구역 선택
+        <!-- Step 3: 구역 정보 표시 -->
+        <div id="step-location-info" class="bg-white rounded-lg shadow-md p-4 md:p-6 mb-6 hidden">
+            <h2 class="text-lg md:text-xl font-bold mb-4 text-center">
+                <i class="fas fa-map-marker-alt mr-2"></i>스캔된 구역
             </h2>
-            <p class="text-sm md:text-base text-gray-600 mb-4">QR 코드를 스캔하거나 목록에서 선택하세요</p>
-            
-            <!-- QR 스캐너 -->
-            <div id="reader" class="mb-4"></div>
-            
-            <!-- 스캔 상태 -->
-            <div id="scan-status" class="text-center py-4 text-gray-500">
-                <i class="fas fa-camera text-3xl mb-2"></i>
-                <p>카메라를 활성화하는 중...</p>
+            <div class="bg-blue-50 rounded-lg p-6 text-center mb-4">
+                <i class="fas fa-map-marker-alt text-blue-600 text-4xl mb-3"></i>
+                <h3 class="text-2xl font-bold" id="scanned-location-name">-</h3>
+                <p class="text-gray-600" id="scanned-location-code">-</p>
             </div>
-            
-            <div class="my-4 text-center text-gray-500">
-                <span class="bg-gray-100 px-4 py-2 rounded-full text-sm">또는</span>
-            </div>
-            
-            <!-- 구역 목록 -->
-            <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-2">구역 검색</label>
-                <input type="text" id="location-search-qr" placeholder="구역 이름 또는 코드로 검색..." 
-                    class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-            </div>
-            
-            <div id="locations-grid-qr" class="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-64 overflow-y-auto">
-                <div class="col-span-full text-center text-gray-500 py-8">
-                    <i class="fas fa-spinner fa-spin text-3xl mb-2"></i>
-                    <p>구역 목록 로딩 중...</p>
-                </div>
-            </div>
-            
-            <button onclick="backToEmployeeSelection()" class="mt-4 w-full bg-gray-200 text-gray-700 px-4 py-3 rounded-lg hover:bg-gray-300">
-                <i class="fas fa-arrow-left mr-2"></i>이전 단계로
-            </button>
         </div>
 
         <!-- Step 4-A: 출석 완료 (출석 모드) -->
@@ -148,20 +143,27 @@
         <!-- Step 4: 사진 촬영 (청소 모드) -->
         <div id="step-photo-capture" class="bg-white rounded-lg shadow-md p-4 md:p-6 mb-6 hidden">
             <h2 class="text-lg md:text-xl font-bold mb-4">
-                <i class="fas fa-camera mr-2"></i>Step 4: 청소 사진 촬영
+                <i class="fas fa-camera mr-2"></i>청소 사진 촬영
             </h2>
             
+            <!-- 현재 작업 중인 구역 정보 -->
             <div class="bg-green-50 rounded-lg p-4 mb-4">
                 <div class="flex items-center justify-between mb-2">
                     <div>
-                        <p class="font-semibold">직원: <span id="selected-employee-name">-</span></p>
-                        <p class="text-sm text-gray-600">구역: <span id="selected-location-name">-</span></p>
+                        <p class="font-semibold">직원: <span id="current-employee-name">-</span></p>
+                        <p class="text-sm text-gray-600">현재 구역: <span id="current-location-name">-</span></p>
                     </div>
                     <div class="text-green-600 text-right">
-                        <p class="text-2xl font-bold" id="photo-count">0</p>
-                        <p class="text-xs">장 업로드됨</p>
+                        <p class="text-2xl font-bold" id="current-photo-count">0</p>
+                        <p class="text-xs">장</p>
                     </div>
                 </div>
+            </div>
+            
+            <!-- 작업 완료 목록 -->
+            <div id="completed-tasks-summary" class="mb-4 hidden">
+                <h3 class="text-sm font-semibold text-gray-700 mb-2">완료한 구역</h3>
+                <div id="completed-tasks-list" class="space-y-2"></div>
             </div>
             
             <input type="file" id="photo-input" accept="image/*" capture="environment" multiple class="hidden">
@@ -183,12 +185,18 @@
                 <p class="text-sm text-center mt-2" id="upload-status">업로드 중...</p>
             </div>
             
-            <button onclick="submitCleaning()" id="submit-btn" class="w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 disabled:bg-gray-400" disabled>
-                <i class="fas fa-check mr-2"></i>제출하기
-            </button>
+            <div class="space-y-3">
+                <button onclick="addCurrentTask()" id="add-task-btn" class="w-full bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 disabled:bg-gray-400" disabled>
+                    <i class="fas fa-plus mr-2"></i>이 구역 완료 & 다른 구역 추가
+                </button>
+                
+                <button onclick="submitAllCleaning()" id="submit-all-btn" class="w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 disabled:bg-gray-400" disabled>
+                    <i class="fas fa-check-double mr-2"></i>전체 제출 (<span id="total-tasks-count">0</span>개 구역)
+                </button>
+            </div>
             
-            <button onclick="backToLocationQR()" class="mt-2 w-full bg-gray-200 text-gray-700 px-4 py-3 rounded-lg hover:bg-gray-300">
-                <i class="fas fa-arrow-left mr-2"></i>이전 단계로
+            <button onclick="cancelCleaning()" class="mt-2 w-full bg-gray-200 text-gray-700 px-4 py-3 rounded-lg hover:bg-gray-300">
+                <i class="fas fa-times mr-2"></i>취소
             </button>
         </div>
 
@@ -221,13 +229,15 @@
         let selectedLocation = null;
         let employees = [];
         let locations = [];
-        let uploadedPhotos = [];
+        let currentPhotos = []; // 현재 구역 사진
+        let cleaningTasks = []; // 완료한 청소 작업들
         let isProcessing = false; // 중복 스캔 방지
 
         // 페이지 로드 시 초기화
         document.addEventListener('DOMContentLoaded', async function() {
             console.log('✅ Page loaded');
-            // QR 스캐너는 Step 3에서 시작
+            // QR 스캐너 즉시 시작
+            await startScanner();
             await loadEmployees();
             await loadLocations();
         });
@@ -303,15 +313,17 @@
                 }
                 
                 // 스캔된 구역 정보 저장
-                const location = {
+                scannedLocation = {
                     id: qrData.locationId,
                     name: qrData.locationName,
                     code: qrData.locationCode
                 };
-                console.log('✅ QR scanned location:', location);
+                console.log('✅ QR scanned location:', scannedLocation);
                 
-                // 구역 선택 처리
-                handleLocationSelected(location);
+                // 메뉴 선택 화면으로
+                setTimeout(() => {
+                    showMenuSelection();
+                }, 300);
                 
             } catch (error) {
                 console.error('❌ QR parse error:', error);
@@ -324,6 +336,17 @@
         // QR 스캔 에러 (무시)
         function onScanError(errorMessage) {
             // 무시
+        }
+
+        // 메뉴 선택 화면 표시
+        function showMenuSelection() {
+            console.log('🟢 showMenuSelection() CALLED');
+            document.getElementById('step-qr-scan').classList.add('hidden');
+            document.getElementById('step-menu-selection').classList.remove('hidden');
+            
+            // 구역 정보 표시
+            document.getElementById('location-name-display').textContent = scannedLocation.name;
+            document.getElementById('location-code-display').textContent = scannedLocation.code;
         }
 
         // 모드 선택 (출석 or 청소)
@@ -412,28 +435,24 @@
             
             console.log('👤 Selected employee:', selectedEmployee.name);
             
-            // 모든 경우 구역 선택 화면으로 (QR 스캔 or 목록 선택)
-            showLocationQR();
-        }
-
-        // 구역 선택 화면 표시 (QR + 목록)
-        function showLocationQR() {
-            document.getElementById('step-employee-selection').classList.add('hidden');
-            document.getElementById('step-location-qr').classList.remove('hidden');
-            displayLocationsQR(locations);
-            // QR 스캐너 시작
-            startScanner();
+            if (currentMode === 'attendance') {
+                // 출석 모드: 바로 저장
+                saveAttendance();
+            } else {
+                // 청소 모드: 사진 촬영으로
+                showPhotoCapture();
+            }
         }
 
         // 출석 저장
-        async function saveAttendance(location) {
+        async function saveAttendance() {
             const attendanceData = {
                 employee_id: selectedEmployee.id,
                 employee_name: selectedEmployee.name,
                 employee_number: selectedEmployee.employee_number || '',
-                location_id: location.id,
-                location_name: location.name,
-                location_code: location.code,
+                location_id: scannedLocation.id,
+                location_name: scannedLocation.name,
+                location_code: scannedLocation.code,
                 scan_time: new Date().toISOString(),
                 device_info: navigator.userAgent
             };
@@ -458,7 +477,7 @@
 
         // 출석 완료 표시
         function showAttendanceComplete(record) {
-            document.getElementById('step-location-qr').classList.add('hidden');
+            document.getElementById('step-employee-selection').classList.add('hidden');
             document.getElementById('step-attendance-complete').classList.remove('hidden');
             
             const resultDiv = document.getElementById('attendance-result');
@@ -473,29 +492,15 @@
             `;
         }
 
-        // QR 스캔 화면의 구역 목록 표시
-        function displayLocationsQR(locationList) {
-            const grid = document.getElementById('locations-grid-qr');
+        // 사진 촬영 화면 표시
+        function showPhotoCapture() {
+            document.getElementById('step-employee-selection').classList.add('hidden');
+            document.getElementById('step-photo-capture').classList.remove('hidden');
             
-            if (locationList.length === 0) {
-                grid.innerHTML = '<div class="col-span-full text-center text-gray-500 py-4">등록된 구역이 없습니다.</div>';
-                return;
-            }
-            
-            grid.innerHTML = locationList.map(loc => {
-                return `
-                    <button onclick="selectLocationFromList('${loc.id}')" 
-                        class="p-3 border-2 border-gray-200 rounded-lg hover:border-blue-600 hover:bg-blue-50 transition text-left">
-                        <div class="flex items-center">
-                            <i class="fas fa-map-marker-alt text-blue-600 text-lg mr-2"></i>
-                            <div>
-                                <div class="font-semibold text-sm">${loc.name}</div>
-                                <div class="text-xs text-gray-500">${loc.code}</div>
-                            </div>
-                        </div>
-                    </button>
-                `;
-            }).join('');
+            document.getElementById('current-employee-name').textContent = selectedEmployee.name;
+            document.getElementById('current-location-name').textContent = scannedLocation.name;
+            updateCurrentPhotoCount();
+            updateCompletedTasksSummary();
         }
 
         // 구역 목록 로드
@@ -519,61 +524,7 @@
 
 
 
-        // 구역 검색 (QR 화면)
-        document.addEventListener('DOMContentLoaded', function() {
-            const searchInput = document.getElementById('location-search-qr');
-            if (searchInput) {
-                searchInput.addEventListener('input', function(e) {
-                    const searchTerm = e.target.value.toLowerCase();
-                    const filtered = searchTerm === '' ? locations : locations.filter(loc => 
-                        loc.name.toLowerCase().includes(searchTerm) ||
-                        (loc.code && loc.code.toLowerCase().includes(searchTerm))
-                    );
-                    displayLocationsQR(filtered);
-                });
-            }
-        });
 
-        // 목록에서 구역 선택
-        function selectLocationFromList(locationId) {
-            const location = locations.find(loc => loc.id === locationId);
-            
-            if (!location) {
-                alert('구역 정보를 찾을 수 없습니다.');
-                return;
-            }
-            
-            console.log('📍 Selected location from list:', location.name);
-            handleLocationSelected(location);
-        }
-
-        // 구역 선택 처리 (QR 또는 목록)
-        function handleLocationSelected(location) {
-            selectedLocation = location;
-            
-            // 스캐너 중지
-            if (html5QrCode) {
-                html5QrCode.stop().catch(err => console.error('Scanner stop error:', err));
-                html5QrCode = null;
-            }
-            
-            if (currentMode === 'attendance') {
-                // 출석 모드: 바로 저장
-                saveAttendance(location);
-            } else {
-                // 청소 모드: 사진 촬영으로
-                showPhotoCapture();
-            }
-        }
-
-        // 사진 촬영 화면 표시
-        function showPhotoCapture() {
-            document.getElementById('step-location-qr').classList.add('hidden');
-            document.getElementById('step-photo-capture').classList.remove('hidden');
-            
-            document.getElementById('selected-employee-name').textContent = selectedEmployee.name;
-            document.getElementById('selected-location-name').textContent = selectedLocation.name;
-        }
 
         // 사진 촬영
         function capturePhotos() {
@@ -587,76 +538,135 @@
                 
                 if (files.length === 0) return;
                 
-                if (uploadedPhotos.length + files.length > 30) {
+                if (currentPhotos.length + files.length > 30) {
                     alert('최대 30장까지만 업로드할 수 있습니다.');
                     return;
                 }
                 
-                // 사진 업로드
-                await uploadPhotos(files);
-            });
-        });
-
-        // 사진 업로드
-        async function uploadPhotos(files) {
-            const progressDiv = document.getElementById('upload-progress');
-            const progressBar = document.getElementById('upload-progress-bar');
-            const statusText = document.getElementById('upload-status');
-            const submitBtn = document.getElementById('submit-btn');
-            
-            progressDiv.classList.remove('hidden');
-            submitBtn.disabled = true;
-            
-            for (let i = 0; i < files.length; i++) {
-                const file = files[i];
-                const progress = ((i + 1) / files.length) * 100;
-                
-                progressBar.style.width = progress + '%';
-                statusText.textContent = `업로드 중... ${i + 1}/${files.length}`;
-                
-                try {
-                    // EXIF 검증 (10분 이내 촬영)
+                // 사진 추가 (즉시 업로드하지 않고 메모리에만 저장)
+                for (const file of files) {
+                    // EXIF 검증
                     const isValid = await validatePhotoTime(file);
                     if (!isValid) {
                         alert(`${file.name}: 10분 이내에 촬영한 사진만 업로드 가능합니다.`);
                         continue;
                     }
                     
-                    // 파일명 생성
-                    const timestamp = Date.now();
-                    const fileName = `${timestamp}_${selectedLocation.code}_${selectedEmployee.name}_${file.name}`;
-                    
-                    // Supabase Storage 업로드
-                    const { data, error } = await supabaseClient.storage
-                        .from('cleaning-photos')
-                        .upload(fileName, file);
-                    
-                    if (error) throw error;
-                    
-                    // URL 가져오기
-                    const { data: urlData } = supabaseClient.storage
-                        .from('cleaning-photos')
-                        .getPublicUrl(fileName);
-                    
-                    uploadedPhotos.push({
-                        url: urlData.publicUrl,
-                        fileName: fileName
-                    });
-                    
-                    console.log('✅ Photo uploaded:', fileName);
-                    
-                } catch (error) {
-                    console.error('❌ Upload error:', error);
-                    alert(`사진 업로드 실패: ${file.name}`);
+                    currentPhotos.push(file);
                 }
+                
+                updatePhotoPreview();
+                updateCurrentPhotoCount();
+                updateAddTaskButton();
+            });
+        });
+
+        // 사진 미리보기 업데이트
+        function updatePhotoPreview() {
+            const previewDiv = document.getElementById('photo-preview');
+            previewDiv.innerHTML = currentPhotos.map((file, index) => {
+                const url = URL.createObjectURL(file);
+                return `
+                    <div class="relative">
+                        <img src="${url}" class="w-full h-24 object-cover rounded-lg">
+                        <button onclick="removePhoto(${index})" class="absolute top-1 right-1 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-700">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 사진 삭제
+        function removePhoto(index) {
+            currentPhotos.splice(index, 1);
+            updatePhotoPreview();
+            updateCurrentPhotoCount();
+            updateAddTaskButton();
+        }
+
+        // 현재 사진 개수 업데이트
+        function updateCurrentPhotoCount() {
+            document.getElementById('current-photo-count').textContent = currentPhotos.length;
+        }
+
+        // "이 구역 완료" 버튼 활성화
+        function updateAddTaskButton() {
+            const addBtn = document.getElementById('add-task-btn');
+            addBtn.disabled = currentPhotos.length === 0;
+        }
+
+        // "전체 제출" 버튼 업데이트
+        function updateSubmitAllButton() {
+            const submitBtn = document.getElementById('submit-all-btn');
+            const count = document.getElementById('total-tasks-count');
+            count.textContent = cleaningTasks.length;
+            submitBtn.disabled = cleaningTasks.length === 0;
+        }
+
+        // 이 구역 완료 & 다른 구역 추가
+        function addCurrentTask() {
+            if (currentPhotos.length === 0) {
+                alert('사진을 추가하세요.');
+                return;
             }
             
-            progressDiv.classList.add('hidden');
-            updatePhotoPreview();
-            updatePhotoCount();
+            // 현재 작업 저장
+            cleaningTasks.push({
+                location: scannedLocation,
+                photos: [...currentPhotos]
+            });
             
-            if (uploadedPhotos.length > 0) {
-                submitBtn.disabled = false;
+            console.log(`✅ Added task for ${scannedLocation.name}: ${currentPhotos.length} photos`);
+            
+            // 현재 사진 초기화
+            currentPhotos = [];
+            updatePhotoPreview();
+            updateCurrentPhotoCount();
+            updateAddTaskButton();
+            updateSubmitAllButton();
+            updateCompletedTasksSummary();
+            
+            // 다른 구역 QR 스캔하러 가기
+            alert(`${scannedLocation.name} 작업이 추가되었습니다!\n\n다른 구역의 QR 코드를 스캔하세요.`);
+            
+            // QR 스캔 화면으로
+            document.getElementById('step-photo-capture').classList.add('hidden');
+            document.getElementById('step-qr-scan').classList.remove('hidden');
+            isProcessing = false;
+            startScanner();
+        }
+
+        // 완료한 작업 요약 표시
+        function updateCompletedTasksSummary() {
+            const summaryDiv = document.getElementById('completed-tasks-summary');
+            const listDiv = document.getElementById('completed-tasks-list');
+            
+            if (cleaningTasks.length === 0) {
+                summaryDiv.classList.add('hidden');
+                return;
+            }
+            
+            summaryDiv.classList.remove('hidden');
+            listDiv.innerHTML = cleaningTasks.map((task, index) => `
+                <div class="bg-gray-50 p-3 rounded-lg flex items-center justify-between">
+                    <div>
+                        <p class="font-semibold text-sm">${task.location.name}</p>
+                        <p class="text-xs text-gray-600">${task.photos.length}장</p>
+                    </div>
+                    <button onclick="removeTask(${index})" class="text-red-600 hover:text-red-800">
+                        <i class="fas fa-trash text-sm"></i>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        // 작업 삭제
+        function removeTask(index) {
+            if (confirm(`${cleaningTasks[index].location.name} 작업을 삭제하시겠습니까?`)) {
+                cleaningTasks.splice(index, 1);
+                updateCompletedTasksSummary();
+                updateSubmitAllButton();
             }
         }
 
@@ -687,112 +697,126 @@
             });
         }
 
-        // 사진 미리보기 업데이트
-        function updatePhotoPreview() {
-            const previewDiv = document.getElementById('photo-preview');
-            previewDiv.innerHTML = uploadedPhotos.map((photo, index) => `
-                <div class="relative">
-                    <img src="${photo.url}" class="w-full h-24 object-cover rounded-lg">
-                    <button onclick="removePhoto(${index})" class="absolute top-1 right-1 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-700">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-            `).join('');
-        }
-
-        // 사진 삭제
-        function removePhoto(index) {
-            uploadedPhotos.splice(index, 1);
-            updatePhotoPreview();
-            updatePhotoCount();
-            
-            if (uploadedPhotos.length === 0) {
-                document.getElementById('submit-btn').disabled = true;
+        // 전체 제출 (일괄 업로드)
+        async function submitAllCleaning() {
+            if (cleaningTasks.length === 0) {
+                alert('제출할 작업이 없습니다.');
+                return;
             }
-        }
-
-        // 사진 개수 업데이트
-        function updatePhotoCount() {
-            document.getElementById('photo-count').textContent = uploadedPhotos.length;
-        }
-
-        // 청소 기록 제출
-        async function submitCleaning() {
-            const cleaningData = {
-                employee_id: selectedEmployee.id,
-                employee_name: selectedEmployee.name,
-                employee_number: selectedEmployee.employee_number || '',
-                location_id: selectedLocation.id,
-                location_name: selectedLocation.name,
-                location_code: selectedLocation.code,
-                photo_urls: uploadedPhotos.map(p => p.url),
-                photo_count: uploadedPhotos.length,
-                photo_taken_at: new Date().toISOString(),
-                submitted_at: new Date().toISOString(),
-                status: 'completed',
-                device_info: navigator.userAgent
-            };
+            
+            const progressDiv = document.getElementById('upload-progress');
+            const progressBar = document.getElementById('upload-progress-bar');
+            const statusText = document.getElementById('upload-status');
+            const submitBtn = document.getElementById('submit-all-btn');
+            const addBtn = document.getElementById('add-task-btn');
+            
+            progressDiv.classList.remove('hidden');
+            submitBtn.disabled = true;
+            addBtn.disabled = true;
             
             try {
-                const { data, error } = await supabaseClient
-                    .from('cleaning_tasks')
-                    .insert([cleaningData])
-                    .select()
-                    .single();
+                let totalPhotos = 0;
+                let uploadedCount = 0;
                 
-                if (error) throw error;
+                // 총 사진 개수 계산
+                cleaningTasks.forEach(task => totalPhotos += task.photos.length);
                 
-                console.log('✅ Cleaning record saved');
-                showCleaningComplete(data);
+                // 각 작업별로 처리
+                for (const task of cleaningTasks) {
+                    const photoUrls = [];
+                    
+                    // 사진 업로드
+                    for (const file of task.photos) {
+                        const timestamp = Date.now();
+                        const fileName = `${timestamp}_${task.location.code}_${selectedEmployee.name}_${file.name}`;
+                        
+                        // Supabase Storage 업로드
+                        const { data, error } = await supabaseClient.storage
+                            .from('cleaning-photos')
+                            .upload(fileName, file);
+                        
+                        if (error) throw error;
+                        
+                        // URL 가져오기
+                        const { data: urlData } = supabaseClient.storage
+                            .from('cleaning-photos')
+                            .getPublicUrl(fileName);
+                        
+                        photoUrls.push(urlData.publicUrl);
+                        
+                        uploadedCount++;
+                        const progress = (uploadedCount / totalPhotos) * 100;
+                        progressBar.style.width = progress + '%';
+                        statusText.textContent = `업로드 중... ${uploadedCount}/${totalPhotos}`;
+                    }
+                    
+                    // DB에 기록 저장
+                    const cleaningData = {
+                        employee_id: selectedEmployee.id,
+                        employee_name: selectedEmployee.name,
+                        employee_number: selectedEmployee.employee_number || '',
+                        location_id: task.location.id,
+                        location_name: task.location.name,
+                        location_code: task.location.code,
+                        photo_urls: photoUrls,
+                        photo_count: photoUrls.length,
+                        photo_taken_at: new Date().toISOString(),
+                        submitted_at: new Date().toISOString(),
+                        status: 'completed',
+                        device_info: navigator.userAgent
+                    };
+                    
+                    const { error: dbError } = await supabaseClient
+                        .from('cleaning_tasks')
+                        .insert([cleaningData]);
+                    
+                    if (dbError) throw dbError;
+                }
+                
+                progressDiv.classList.add('hidden');
+                console.log('✅ All cleaning tasks saved');
+                showCleaningComplete();
                 
             } catch (error) {
-                console.error('❌ Error saving cleaning:', error);
-                alert('청소 기록 저장 중 오류가 발생했습니다.');
+                console.error('❌ Error submitting cleaning:', error);
+                alert('청소 기록 제출 중 오류가 발생했습니다: ' + error.message);
+                progressDiv.classList.add('hidden');
+                submitBtn.disabled = false;
+                addBtn.disabled = false;
             }
         }
 
         // 청소 완료 표시
-        function showCleaningComplete(record) {
+        function showCleaningComplete() {
             document.getElementById('step-photo-capture').classList.add('hidden');
             document.getElementById('step-cleaning-complete').classList.remove('hidden');
             
             const resultDiv = document.getElementById('cleaning-result');
             
+            let totalPhotos = 0;
+            cleaningTasks.forEach(task => totalPhotos += task.photos.length);
+            
             resultDiv.innerHTML = `
                 <div class="text-left space-y-2">
-                    <p><span class="font-semibold">직원:</span> ${record.employee_name}</p>
-                    <p><span class="font-semibold">구역:</span> ${record.location_name}</p>
-                    <p><span class="font-semibold">사진:</span> ${record.photo_count}장</p>
-                    <p><span class="font-semibold">시간:</span> ${formatDateTime(new Date(record.submitted_at))}</p>
+                    <p><span class="font-semibold">직원:</span> ${selectedEmployee.name}</p>
+                    <p><span class="font-semibold">청소 구역:</span> ${cleaningTasks.length}개</p>
+                    <p><span class="font-semibold">총 사진:</span> ${totalPhotos}장</p>
+                    <p><span class="font-semibold">시간:</span> ${formatDateTime(new Date())}</p>
                 </div>
             `;
+        }
+
+        // 청소 취소
+        function cancelCleaning() {
+            if (confirm('작업을 취소하시겠습니까? 모든 데이터가 사라집니다.')) {
+                resetAll();
+            }
         }
 
         // 네비게이션 함수들
         function backToMenu() {
             document.getElementById('step-employee-selection').classList.add('hidden');
             document.getElementById('step-menu-selection').classList.remove('hidden');
-        }
-
-        function backToEmployeeSelection() {
-            // 스캐너 중지
-            if (html5QrCode) {
-                html5QrCode.stop().catch(err => console.error('Scanner stop error:', err));
-                html5QrCode = null;
-            }
-            isProcessing = false;
-            document.getElementById('step-location-qr').classList.add('hidden');
-            document.getElementById('step-employee-selection').classList.remove('hidden');
-        }
-
-        function backToLocationQR() {
-            uploadedPhotos = [];
-            updatePhotoPreview();
-            updatePhotoCount();
-            document.getElementById('step-photo-capture').classList.add('hidden');
-            document.getElementById('step-location-qr').classList.remove('hidden');
-            // 스캐너 재시작
-            startScanner();
         }
 
         function resetAll() {
@@ -807,18 +831,20 @@
             scannedLocation = null;
             selectedEmployee = null;
             selectedLocation = null;
-            uploadedPhotos = [];
+            currentPhotos = [];
+            cleaningTasks = [];
             isProcessing = false;
             
             // 모든 섹션 숨기기
+            document.getElementById('step-menu-selection').classList.add('hidden');
             document.getElementById('step-employee-selection').classList.add('hidden');
-            document.getElementById('step-location-qr').classList.add('hidden');
             document.getElementById('step-photo-capture').classList.add('hidden');
             document.getElementById('step-attendance-complete').classList.add('hidden');
             document.getElementById('step-cleaning-complete').classList.add('hidden');
             
-            // Step 1 작업 선택 화면으로
-            document.getElementById('step-menu-selection').classList.remove('hidden');
+            // QR 스칔 화면으로
+            document.getElementById('step-qr-scan').classList.remove('hidden');
+            startScanner();
         }
 
         // 날짜/시간 포맷팅
