@@ -224,52 +224,23 @@
             const urlParams = new URLSearchParams(window.location.search);
             const locationId = urlParams.get('id');
             const locationName = urlParams.get('name');
-            const locationCode = urlParams.get('code');
+            const locationCode = urlParams.get('location'); // ✅ 'location' 파라미터가 코드임!
             
-            // URL 해시(#)에서 JSON 데이터 읽기 (기존 QR 코드 호환)
-            const hash = window.location.hash.substring(1); // # 제거
+            console.log('📍 URL Parameters:', { locationId, locationName, locationCode });
             
             if (locationId && locationName && locationCode) {
-                // 방법 1: URL 파라미터 방식 (새로운 방식)
+                // URL 파라미터 방식
                 scannedLocation = {
                     id: locationId,
                     name: decodeURIComponent(locationName),
-                    code: decodeURIComponent(locationCode)
+                    code: locationCode
                 };
                 
-                console.log('✅ Location from URL params:', scannedLocation);
+                console.log('✅ Location loaded:', scannedLocation);
                 showMenuSelection();
-            } else if (hash) {
-                // 방법 2: JSON 해시 방식 (기존 QR 코드)
-                try {
-                    // URL 인코딩 여부 확인 후 파싱
-                    let qrData;
-                    try {
-                        // 먼저 디코딩 시도
-                        qrData = JSON.parse(decodeURIComponent(hash));
-                    } catch (e) {
-                        // 디코딩 실패하면 그대로 파싱
-                        qrData = JSON.parse(hash);
-                    }
-                    
-                    if (qrData.type === 'location' && qrData.locationId && qrData.locationName && qrData.locationCode) {
-                        scannedLocation = {
-                            id: qrData.locationId,
-                            name: qrData.locationName,
-                            code: qrData.locationCode
-                        };
-                        
-                        console.log('✅ Location from JSON hash:', scannedLocation);
-                        showMenuSelection();
-                    } else {
-                        alert('올바른 구역 QR 코드가 아닙니다.');
-                    }
-                } catch (error) {
-                    console.error('❌ JSON parse error:', error);
-                    alert('QR 코드 형식이 올바르지 않습니다.');
-                }
             } else {
                 // 구역 정보가 없으면 에러
+                console.error('❌ Missing parameters:', { locationId, locationName, locationCode });
                 alert('올바른 QR 코드가 아닙니다.\n구역 정보가 포함된 QR 코드를 스캔하세요.');
             }
             
