@@ -300,13 +300,21 @@
             isProcessing = true;
             console.log('🔵 QR SCANNED:', decodedText);
             
-            // 즉시 스캐너 중지
+            // 즉시 스캐너 중지 및 DOM 정리
             if (html5QrCode) {
                 try {
                     console.log('🛑 Stopping scanner...');
                     await html5QrCode.stop();
+                    await html5QrCode.clear();
                     html5QrCode = null;
-                    console.log('✅ Scanner stopped');
+                    
+                    // reader div 내용 완전히 비우기
+                    const readerDiv = document.getElementById('reader');
+                    if (readerDiv) {
+                        readerDiv.innerHTML = '';
+                    }
+                    
+                    console.log('✅ Scanner stopped and cleared');
                 } catch (err) {
                     console.error('❌ Scanner stop error:', err);
                 }
@@ -319,7 +327,7 @@
                 if (qrData.type !== 'location') {
                     alert('올바른 구역 QR 코드가 아닙니다.');
                     isProcessing = false;
-                    startScanner();
+                    await startScanner();
                     return;
                 }
                 
@@ -331,16 +339,14 @@
                 };
                 console.log('✅ Scanned location:', scannedLocation);
                 
-                // 메뉴 선택 화면으로
-                setTimeout(() => {
-                    showMenuSelection();
-                }, 300);
+                // 메뉴 선택 화면으로 즉시 전환
+                showMenuSelection();
                 
             } catch (error) {
                 console.error('❌ QR parse error:', error);
                 alert('QR 코드 형식이 올바르지 않습니다.');
                 isProcessing = false;
-                startScanner();
+                await startScanner();
             }
         }
 
@@ -352,11 +358,20 @@
         // 메뉴 선택 화면 표시
         function showMenuSelection() {
             console.log('🟢 showMenuSelection()');
-            document.getElementById('step-qr-scan').classList.add('hidden');
-            document.getElementById('step-menu-selection').classList.remove('hidden');
+            
+            // QR 스캔 화면 완전히 숨기기
+            const qrScanDiv = document.getElementById('step-qr-scan');
+            qrScanDiv.style.display = 'none';
+            
+            // 메뉴 선택 화면 표시
+            const menuDiv = document.getElementById('step-menu-selection');
+            menuDiv.classList.remove('hidden');
+            menuDiv.style.display = 'block';
             
             document.getElementById('location-name-display').textContent = scannedLocation.name;
             document.getElementById('location-code-display').textContent = scannedLocation.code;
+            
+            console.log('✅ Menu selection screen shown');
         }
 
         // 모드 선택 (출석 or 청소)
@@ -746,8 +761,16 @@
         function resetAll() {
             // 스캐너 중지
             if (html5QrCode) {
-                html5QrCode.stop().catch(err => console.error('Scanner stop error:', err));
-                html5QrCode = null;
+                html5QrCode.stop().then(() => {
+                    html5QrCode.clear();
+                    html5QrCode = null;
+                }).catch(err => console.error('Scanner stop error:', err));
+            }
+            
+            // reader div 정리
+            const readerDiv = document.getElementById('reader');
+            if (readerDiv) {
+                readerDiv.innerHTML = '';
             }
             
             // 모든 변수 초기화
@@ -758,16 +781,20 @@
             isProcessing = false;
             
             // 모든 섹션 숨기기
-            document.getElementById('step-menu-selection').classList.add('hidden');
-            document.getElementById('step-employee-selection').classList.add('hidden');
-            document.getElementById('step-attendance-type').classList.add('hidden');
-            document.getElementById('step-photo-capture').classList.add('hidden');
-            document.getElementById('step-attendance-complete').classList.add('hidden');
-            document.getElementById('step-cleaning-complete').classList.add('hidden');
+            document.getElementById('step-menu-selection').style.display = 'none';
+            document.getElementById('step-employee-selection').style.display = 'none';
+            document.getElementById('step-attendance-type').style.display = 'none';
+            document.getElementById('step-photo-capture').style.display = 'none';
+            document.getElementById('step-attendance-complete').style.display = 'none';
+            document.getElementById('step-cleaning-complete').style.display = 'none';
             
             // QR 스캔 화면으로
-            document.getElementById('step-qr-scan').classList.remove('hidden');
-            startScanner();
+            document.getElementById('step-qr-scan').style.display = 'block';
+            
+            // 스캐너 재시작
+            setTimeout(() => {
+                startScanner();
+            }, 500);
         }
 
         // 날짜/시간 포맷팅
