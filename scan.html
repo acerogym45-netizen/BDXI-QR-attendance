@@ -242,7 +242,15 @@
             } else if (hash) {
                 // 방법 2: JSON 해시 방식 (기존 QR 코드)
                 try {
-                    const qrData = JSON.parse(decodeURIComponent(hash));
+                    // URL 인코딩 여부 확인 후 파싱
+                    let qrData;
+                    try {
+                        // 먼저 디코딩 시도
+                        qrData = JSON.parse(decodeURIComponent(hash));
+                    } catch (e) {
+                        // 디코딩 실패하면 그대로 파싱
+                        qrData = JSON.parse(hash);
+                    }
                     
                     if (qrData.type === 'location' && qrData.locationId && qrData.locationName && qrData.locationCode) {
                         scannedLocation = {
