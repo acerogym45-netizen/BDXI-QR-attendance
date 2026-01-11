@@ -44,33 +44,12 @@
     <!-- 메인 컨텐츠 -->
     <div class="container mx-auto px-4 py-6">
         
-        <!-- Step 1: QR 스캔 -->
-        <div id="step-qr-scan" class="bg-white rounded-lg shadow-md p-4 md:p-6 mb-6">
-            <h2 class="text-lg md:text-xl font-bold mb-4">
-                <i class="fas fa-qrcode mr-2"></i>Step 1: QR 코드 스캔
+        <!-- Step 1: 작업 선택 (출석 or 청소) -->
+        <div id="step-menu-selection" class="bg-white rounded-lg shadow-md p-4 md:p-6 mb-6">
+            <h2 class="text-lg md:text-xl font-bold mb-4 text-center">
+                <i class="fas fa-list mr-2"></i>Step 1: 작업 선택
             </h2>
-            <p class="text-sm md:text-base text-gray-600 mb-4">구역의 QR 코드를 스캔하세요</p>
-            
-            <!-- QR 스캐너 -->
-            <div id="reader" class="mb-4"></div>
-            
-            <!-- 스캔 상태 -->
-            <div id="scan-status" class="text-center py-4 text-gray-500">
-                <i class="fas fa-camera text-3xl mb-2"></i>
-                <p>카메라를 활성화하는 중...</p>
-            </div>
-        </div>
-
-        <!-- Step 2: 메뉴 선택 (출석 or 청소) -->
-        <div id="step-menu-selection" class="bg-white rounded-lg shadow-md p-4 md:p-6 mb-6 hidden">
-            <h2 class="text-lg md:text-xl font-bold mb-4">
-                <i class="fas fa-list mr-2"></i>Step 2: 작업 선택
-            </h2>
-            <div id="location-info" class="bg-blue-50 rounded-lg p-4 mb-6 text-center">
-                <i class="fas fa-map-marker-alt text-blue-600 text-3xl mb-2"></i>
-                <h3 class="text-xl font-bold" id="location-name-display">-</h3>
-                <p class="text-gray-600" id="location-code-display">-</p>
-            </div>
+            <p class="text-sm md:text-base text-gray-600 mb-6 text-center">수행할 작업을 선택하세요</p>
             
             <div class="space-y-4">
                 <button onclick="selectMode('attendance')" 
@@ -88,15 +67,12 @@
                 </button>
             </div>
             
-            <button onclick="resetToScan()" class="mt-4 w-full bg-gray-200 text-gray-700 px-4 py-3 rounded-lg hover:bg-gray-300">
-                <i class="fas fa-redo mr-2"></i>QR 다시 스캔
-            </button>
         </div>
 
-        <!-- Step 3: 직원 선택 -->
+        <!-- Step 2: 직원 선택 -->
         <div id="step-employee-selection" class="bg-white rounded-lg shadow-md p-4 md:p-6 mb-6 hidden">
             <h2 class="text-lg md:text-xl font-bold mb-4">
-                <i class="fas fa-user mr-2"></i>Step 3: 직원 선택
+                <i class="fas fa-user mr-2"></i>Step 2: 직원 선택
             </h2>
             <p class="text-sm md:text-base text-gray-600 mb-4" id="employee-instruction">본인의 이름을 선택하세요</p>
             
@@ -118,6 +94,45 @@
             </button>
         </div>
 
+        <!-- Step 3: 구역 선택 (QR 스캔 or 목록) -->
+        <div id="step-location-qr" class="bg-white rounded-lg shadow-md p-4 md:p-6 mb-6 hidden">
+            <h2 class="text-lg md:text-xl font-bold mb-4">
+                <i class="fas fa-map-marker-alt mr-2"></i>Step 3: 구역 선택
+            </h2>
+            <p class="text-sm md:text-base text-gray-600 mb-4">QR 코드를 스캔하거나 목록에서 선택하세요</p>
+            
+            <!-- QR 스캐너 -->
+            <div id="reader" class="mb-4"></div>
+            
+            <!-- 스캔 상태 -->
+            <div id="scan-status" class="text-center py-4 text-gray-500">
+                <i class="fas fa-camera text-3xl mb-2"></i>
+                <p>카메라를 활성화하는 중...</p>
+            </div>
+            
+            <div class="my-4 text-center text-gray-500">
+                <span class="bg-gray-100 px-4 py-2 rounded-full text-sm">또는</span>
+            </div>
+            
+            <!-- 구역 목록 -->
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">구역 검색</label>
+                <input type="text" id="location-search-qr" placeholder="구역 이름 또는 코드로 검색..." 
+                    class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            
+            <div id="locations-grid-qr" class="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-64 overflow-y-auto">
+                <div class="col-span-full text-center text-gray-500 py-8">
+                    <i class="fas fa-spinner fa-spin text-3xl mb-2"></i>
+                    <p>구역 목록 로딩 중...</p>
+                </div>
+            </div>
+            
+            <button onclick="backToEmployeeSelection()" class="mt-4 w-full bg-gray-200 text-gray-700 px-4 py-3 rounded-lg hover:bg-gray-300">
+                <i class="fas fa-arrow-left mr-2"></i>이전 단계로
+            </button>
+        </div>
+
         <!-- Step 4-A: 출석 완료 (출석 모드) -->
         <div id="step-attendance-complete" class="bg-white rounded-lg shadow-md p-4 md:p-6 mb-6 hidden">
             <div class="text-center">
@@ -130,35 +145,10 @@
             </div>
         </div>
 
-        <!-- Step 4-B: 구역 선택 (청소 모드) -->
-        <div id="step-location-selection" class="bg-white rounded-lg shadow-md p-4 md:p-6 mb-6 hidden">
-            <h2 class="text-lg md:text-xl font-bold mb-4">
-                <i class="fas fa-map-marker-alt mr-2"></i>Step 4: 청소 구역 선택
-            </h2>
-            <p class="text-sm md:text-base text-gray-600 mb-4">청소할 구역을 선택하세요</p>
-            
-            <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-2">구역 검색</label>
-                <input type="text" id="location-search" placeholder="구역 이름 또는 코드로 검색..." 
-                    class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
-            </div>
-            
-            <div id="locations-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                <div class="col-span-full text-center text-gray-500 py-8">
-                    <i class="fas fa-spinner fa-spin text-3xl mb-2"></i>
-                    <p>구역 목록 로딩 중...</p>
-                </div>
-            </div>
-            
-            <button onclick="backToEmployeeSelection()" class="mt-4 w-full bg-gray-200 text-gray-700 px-4 py-3 rounded-lg hover:bg-gray-300">
-                <i class="fas fa-arrow-left mr-2"></i>이전 단계로
-            </button>
-        </div>
-
-        <!-- Step 5: 사진 촬영 (청소 모드) -->
+        <!-- Step 4: 사진 촬영 (청소 모드) -->
         <div id="step-photo-capture" class="bg-white rounded-lg shadow-md p-4 md:p-6 mb-6 hidden">
             <h2 class="text-lg md:text-xl font-bold mb-4">
-                <i class="fas fa-camera mr-2"></i>Step 5: 청소 사진 촬영
+                <i class="fas fa-camera mr-2"></i>Step 4: 청소 사진 촬영
             </h2>
             
             <div class="bg-green-50 rounded-lg p-4 mb-4">
@@ -197,12 +187,12 @@
                 <i class="fas fa-check mr-2"></i>제출하기
             </button>
             
-            <button onclick="backToLocationSelection()" class="mt-2 w-full bg-gray-200 text-gray-700 px-4 py-3 rounded-lg hover:bg-gray-300">
+            <button onclick="backToLocationQR()" class="mt-2 w-full bg-gray-200 text-gray-700 px-4 py-3 rounded-lg hover:bg-gray-300">
                 <i class="fas fa-arrow-left mr-2"></i>이전 단계로
             </button>
         </div>
 
-        <!-- Step 6: 청소 완료 -->
+        <!-- Step 5: 청소 완료 -->
         <div id="step-cleaning-complete" class="bg-white rounded-lg shadow-md p-4 md:p-6 mb-6 hidden">
             <div class="text-center">
                 <i class="fas fa-check-circle text-green-600 text-6xl mb-4"></i>
@@ -237,7 +227,7 @@
         // 페이지 로드 시 초기화
         document.addEventListener('DOMContentLoaded', async function() {
             console.log('✅ Page loaded');
-            await startScanner();
+            // QR 스캐너는 Step 3에서 시작
             await loadEmployees();
             await loadLocations();
         });
@@ -313,18 +303,15 @@
                 }
                 
                 // 스캔된 구역 정보 저장
-                scannedLocation = {
+                const location = {
                     id: qrData.locationId,
                     name: qrData.locationName,
                     code: qrData.locationCode
                 };
-                console.log('✅ scannedLocation saved:', scannedLocation);
+                console.log('✅ QR scanned location:', location);
                 
-                // 약간의 지연 후 화면 전환 (UI 안정화)
-                setTimeout(() => {
-                    console.log('➡️ Calling showMenuSelection()...');
-                    showMenuSelection();
-                }, 300);
+                // 구역 선택 처리
+                handleLocationSelected(location);
                 
             } catch (error) {
                 console.error('❌ QR parse error:', error);
@@ -339,32 +326,10 @@
             // 무시
         }
 
-        // 메뉴 선택 화면 표시
-        function showMenuSelection() {
-            console.log('🟢 showMenuSelection() CALLED');
-            console.log('🟢 scannedLocation:', scannedLocation);
-            
-            const qrScanStep = document.getElementById('step-qr-scan');
-            const menuStep = document.getElementById('step-menu-selection');
-            
-            console.log('🟢 step-qr-scan element:', qrScanStep);
-            console.log('🟢 step-menu-selection element:', menuStep);
-            
-            qrScanStep.classList.add('hidden');
-            menuStep.classList.remove('hidden');
-            
-            console.log('🟢 step-qr-scan hidden:', qrScanStep.classList.contains('hidden'));
-            console.log('🟢 step-menu-selection hidden:', menuStep.classList.contains('hidden'));
-            
-            document.getElementById('location-name-display').textContent = scannedLocation.name;
-            document.getElementById('location-code-display').textContent = scannedLocation.code;
-            
-            console.log('✅ showMenuSelection() COMPLETED');
-        }
-
         // 모드 선택 (출석 or 청소)
         function selectMode(mode) {
             currentMode = mode;
+            console.log('🔵 Selected mode:', mode);
             document.getElementById('step-menu-selection').classList.add('hidden');
             document.getElementById('step-employee-selection').classList.remove('hidden');
             
@@ -447,24 +412,28 @@
             
             console.log('👤 Selected employee:', selectedEmployee.name);
             
-            if (currentMode === 'attendance') {
-                // 출석 모드: 바로 출석 저장
-                saveAttendance();
-            } else {
-                // 청소 모드: 구역 선택으로 이동
-                showLocationSelection();
-            }
+            // 모든 경우 구역 선택 화면으로 (QR 스캔 or 목록 선택)
+            showLocationQR();
+        }
+
+        // 구역 선택 화면 표시 (QR + 목록)
+        function showLocationQR() {
+            document.getElementById('step-employee-selection').classList.add('hidden');
+            document.getElementById('step-location-qr').classList.remove('hidden');
+            displayLocationsQR(locations);
+            // QR 스캐너 시작
+            startScanner();
         }
 
         // 출석 저장
-        async function saveAttendance() {
+        async function saveAttendance(location) {
             const attendanceData = {
                 employee_id: selectedEmployee.id,
                 employee_name: selectedEmployee.name,
                 employee_number: selectedEmployee.employee_number || '',
-                location_id: scannedLocation.id,
-                location_name: scannedLocation.name,
-                location_code: scannedLocation.code,
+                location_id: location.id,
+                location_name: location.name,
+                location_code: location.code,
                 scan_time: new Date().toISOString(),
                 device_info: navigator.userAgent
             };
@@ -489,7 +458,7 @@
 
         // 출석 완료 표시
         function showAttendanceComplete(record) {
-            document.getElementById('step-employee-selection').classList.add('hidden');
+            document.getElementById('step-location-qr').classList.add('hidden');
             document.getElementById('step-attendance-complete').classList.remove('hidden');
             
             const resultDiv = document.getElementById('attendance-result');
@@ -504,11 +473,29 @@
             `;
         }
 
-        // 구역 선택 화면 표시
-        function showLocationSelection() {
-            document.getElementById('step-employee-selection').classList.add('hidden');
-            document.getElementById('step-location-selection').classList.remove('hidden');
-            displayLocations(locations);
+        // QR 스캔 화면의 구역 목록 표시
+        function displayLocationsQR(locationList) {
+            const grid = document.getElementById('locations-grid-qr');
+            
+            if (locationList.length === 0) {
+                grid.innerHTML = '<div class="col-span-full text-center text-gray-500 py-4">등록된 구역이 없습니다.</div>';
+                return;
+            }
+            
+            grid.innerHTML = locationList.map(loc => {
+                return `
+                    <button onclick="selectLocationFromList('${loc.id}')" 
+                        class="p-3 border-2 border-gray-200 rounded-lg hover:border-blue-600 hover:bg-blue-50 transition text-left">
+                        <div class="flex items-center">
+                            <i class="fas fa-map-marker-alt text-blue-600 text-lg mr-2"></i>
+                            <div>
+                                <div class="font-semibold text-sm">${loc.name}</div>
+                                <div class="text-xs text-gray-500">${loc.code}</div>
+                            </div>
+                        </div>
+                    </button>
+                `;
+            }).join('');
         }
 
         // 구역 목록 로드
@@ -530,60 +517,58 @@
             }
         }
 
-        // 구역 목록 표시
-        function displayLocations(locationList) {
-            const grid = document.getElementById('locations-grid');
-            
-            if (locationList.length === 0) {
-                grid.innerHTML = '<div class="col-span-full text-center text-gray-500 py-4">등록된 구역이 없습니다.</div>';
-                return;
-            }
-            
-            grid.innerHTML = locationList.map(loc => {
-                return `
-                    <button onclick="selectLocation('${loc.id}')" 
-                        class="p-4 border-2 border-gray-200 rounded-lg hover:border-green-600 hover:bg-green-50 transition text-left">
-                        <div class="flex items-center mb-2">
-                            <i class="fas fa-map-marker-alt text-green-600 text-xl mr-3"></i>
-                            <div>
-                                <div class="font-semibold">${loc.name}</div>
-                                <div class="text-xs text-gray-500">${loc.code}</div>
-                            </div>
-                        </div>
-                        ${loc.building ? `<div class="text-xs text-gray-400">${loc.building} ${loc.floor || ''}</div>` : ''}
-                    </button>
-                `;
-            }).join('');
-        }
 
-        // 구역 검색
+
+        // 구역 검색 (QR 화면)
         document.addEventListener('DOMContentLoaded', function() {
-            document.getElementById('location-search').addEventListener('input', function(e) {
-                const searchTerm = e.target.value.toLowerCase();
-                const filtered = searchTerm === '' ? locations : locations.filter(loc => 
-                    loc.name.toLowerCase().includes(searchTerm) ||
-                    (loc.code && loc.code.toLowerCase().includes(searchTerm))
-                );
-                displayLocations(filtered);
-            });
+            const searchInput = document.getElementById('location-search-qr');
+            if (searchInput) {
+                searchInput.addEventListener('input', function(e) {
+                    const searchTerm = e.target.value.toLowerCase();
+                    const filtered = searchTerm === '' ? locations : locations.filter(loc => 
+                        loc.name.toLowerCase().includes(searchTerm) ||
+                        (loc.code && loc.code.toLowerCase().includes(searchTerm))
+                    );
+                    displayLocationsQR(filtered);
+                });
+            }
         });
 
-        // 구역 선택
-        function selectLocation(locationId) {
-            selectedLocation = locations.find(loc => loc.id === locationId);
+        // 목록에서 구역 선택
+        function selectLocationFromList(locationId) {
+            const location = locations.find(loc => loc.id === locationId);
             
-            if (!selectedLocation) {
+            if (!location) {
                 alert('구역 정보를 찾을 수 없습니다.');
                 return;
             }
             
-            console.log('📍 Selected location:', selectedLocation.name);
-            showPhotoCapture();
+            console.log('📍 Selected location from list:', location.name);
+            handleLocationSelected(location);
+        }
+
+        // 구역 선택 처리 (QR 또는 목록)
+        function handleLocationSelected(location) {
+            selectedLocation = location;
+            
+            // 스캐너 중지
+            if (html5QrCode) {
+                html5QrCode.stop().catch(err => console.error('Scanner stop error:', err));
+                html5QrCode = null;
+            }
+            
+            if (currentMode === 'attendance') {
+                // 출석 모드: 바로 저장
+                saveAttendance(location);
+            } else {
+                // 청소 모드: 사진 촬영으로
+                showPhotoCapture();
+            }
         }
 
         // 사진 촬영 화면 표시
         function showPhotoCapture() {
-            document.getElementById('step-location-selection').classList.add('hidden');
+            document.getElementById('step-location-qr').classList.add('hidden');
             document.getElementById('step-photo-capture').classList.remove('hidden');
             
             document.getElementById('selected-employee-name').textContent = selectedEmployee.name;
@@ -784,53 +769,56 @@
         }
 
         // 네비게이션 함수들
-        function resetToScan() {
-            isProcessing = false; // 플래그 리셋
-            document.getElementById('step-menu-selection').classList.add('hidden');
-            document.getElementById('step-qr-scan').classList.remove('hidden');
-            // 스캐너 다시 시작
-            startScanner();
-        }
-
         function backToMenu() {
             document.getElementById('step-employee-selection').classList.add('hidden');
             document.getElementById('step-menu-selection').classList.remove('hidden');
         }
 
         function backToEmployeeSelection() {
-            document.getElementById('step-location-selection').classList.add('hidden');
+            // 스캐너 중지
+            if (html5QrCode) {
+                html5QrCode.stop().catch(err => console.error('Scanner stop error:', err));
+                html5QrCode = null;
+            }
+            isProcessing = false;
+            document.getElementById('step-location-qr').classList.add('hidden');
             document.getElementById('step-employee-selection').classList.remove('hidden');
         }
 
-        function backToLocationSelection() {
+        function backToLocationQR() {
             uploadedPhotos = [];
             updatePhotoPreview();
             updatePhotoCount();
             document.getElementById('step-photo-capture').classList.add('hidden');
-            document.getElementById('step-location-selection').classList.remove('hidden');
+            document.getElementById('step-location-qr').classList.remove('hidden');
+            // 스캐너 재시작
+            startScanner();
         }
 
         function resetAll() {
+            // 스캐너 중지
+            if (html5QrCode) {
+                html5QrCode.stop().catch(err => console.error('Scanner stop error:', err));
+                html5QrCode = null;
+            }
+            
             // 모든 변수 초기화
             currentMode = null;
             scannedLocation = null;
             selectedEmployee = null;
             selectedLocation = null;
             uploadedPhotos = [];
-            isProcessing = false; // 플래그 리셋
+            isProcessing = false;
             
             // 모든 섹션 숨기기
-            document.getElementById('step-menu-selection').classList.add('hidden');
             document.getElementById('step-employee-selection').classList.add('hidden');
-            document.getElementById('step-location-selection').classList.add('hidden');
+            document.getElementById('step-location-qr').classList.add('hidden');
             document.getElementById('step-photo-capture').classList.add('hidden');
             document.getElementById('step-attendance-complete').classList.add('hidden');
             document.getElementById('step-cleaning-complete').classList.add('hidden');
             
-            // QR 스캔 화면으로
-            document.getElementById('step-qr-scan').classList.remove('hidden');
-            // 스캐너 다시 시작
-            startScanner();
+            // Step 1 작업 선택 화면으로
+            document.getElementById('step-menu-selection').classList.remove('hidden');
         }
 
         // 날짜/시간 포맷팅
