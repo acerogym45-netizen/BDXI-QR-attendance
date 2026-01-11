@@ -560,12 +560,11 @@
                     
                     if (error) throw error;
                     
-                    // URL 가져오기
-                    const { data: urlData } = supabaseClient.storage
-                        .from('cleaning-photos')
-                        .getPublicUrl(fileName);
+                    // URL 가져오기 (Public URL 강제 생성)
+                    const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/cleaning-photos/${fileName}`;
+                    photoUrls.push(publicUrl);
                     
-                    photoUrls.push(urlData.publicUrl);
+                    console.log('✅ Photo uploaded:', fileName, publicUrl);
                     
                     uploadedCount++;
                     const progress = (uploadedCount / totalPhotos) * 100;
