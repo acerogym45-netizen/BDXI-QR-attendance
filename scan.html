@@ -8,6 +8,17 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@1"></script>
     <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
+    <style>
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: translate(-50%, -20px); }
+            20% { opacity: 1; transform: translate(-50%, 0); }
+            80% { opacity: 1; transform: translate(-50%, 0); }
+            100% { opacity: 0; transform: translate(-50%, -20px); }
+        }
+        .animate-fade-in-out {
+            animation: fadeInOut 2s ease-in-out;
+        }
+    </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
     <!-- 네비게이션 -->
@@ -164,13 +175,29 @@
                 </div>
             </div>
             
-            <input type="file" id="photo-input" accept="image/*" capture="environment" multiple class="hidden">
+            <!-- 파일 선택 input (카메라 직접 촬영) -->
+            <input type="file" id="photo-input-camera" accept="image/*" capture="environment" multiple class="hidden">
             
-            <button onclick="capturePhotos()" class="w-full bg-green-600 text-white px-6 py-4 rounded-lg hover:bg-green-700 mb-4">
-                <i class="fas fa-camera text-2xl mb-2"></i>
-                <p class="font-bold">사진 촬영하기</p>
-                <p class="text-sm text-green-100">최대 30장까지 가능</p>
-            </button>
+            <!-- 파일 선택 input (갤러리에서 선택) -->
+            <input type="file" id="photo-input-gallery" accept="image/*" multiple class="hidden">
+            
+            <div class="grid grid-cols-2 gap-3 mb-4">
+                <button onclick="capturePhotos()" class="bg-gradient-to-br from-green-500 to-green-600 text-white px-6 py-4 rounded-lg hover:shadow-xl transition transform hover:-translate-y-1">
+                    <i class="fas fa-camera text-3xl mb-2"></i>
+                    <p class="font-bold">📷 사진 촬영</p>
+                    <p class="text-xs text-green-100 mt-1">카메라 열기</p>
+                </button>
+                
+                <button onclick="selectFromGallery()" class="bg-gradient-to-br from-blue-500 to-blue-600 text-white px-6 py-4 rounded-lg hover:shadow-xl transition transform hover:-translate-y-1">
+                    <i class="fas fa-images text-3xl mb-2"></i>
+                    <p class="font-bold">🖼️ 갤러리</p>
+                    <p class="text-xs text-blue-100 mt-1">사진 선택</p>
+                </button>
+            </div>
+            
+            <div class="bg-yellow-50 border-l-4 border-yellow-500 p-3 mb-4 text-sm">
+                <p class="text-yellow-800"><i class="fas fa-info-circle mr-2"></i><strong>팁:</strong> 청소 후 사진을 여러 장 촬영해두고, '갤러리' 버튼으로 한 번에 선택하세요! (최대 30장)</p>
+            </div>
             
             <!-- 사진 미리보기 -->
             <div id="photo-preview" class="grid grid-cols-3 gap-2 mb-4"></div>
@@ -490,43 +517,87 @@
             updateCurrentPhotoCount();
         }
 
-        // 사진 촬영
+        // 사진 촬영 (카메라 직접 열기)
         function capturePhotos() {
-            document.getElementById('photo-input').click();
+            document.getElementById('photo-input-camera').click();
+        }
+        
+        // 갤러리에서 선택
+        function selectFromGallery() {
+            document.getElementById('photo-input-gallery').click();
         }
 
-        // 사진 선택 시
+        // 사진 선택 핸들러 (카메라 + 갤러리 공통)
+        async function handlePhotoSelection(files) {
+            if (files.length === 0) return;
+            
+            // 30장 제한 확인
+            if (currentPhotos.length + files.length > 30) {
+                alert(`최대 30장까지만 업로드할 수 있습니다.\n현재: ${currentPhotos.length}장, 선택: ${files.length}장`);
+                return;
+            }
+            
+            // 로딩 표시
+            let validCount = 0;
+            let invalidCount = 0;
+            
+            // 사진 검증 및 추가
+            for (const file of files) {
+                // EXIF 시간 검증
+                const isValid = await validatePhotoTime(file);
+                if (!isValid) {
+                    invalidCount++;
+                    console.warn(`❌ Invalid photo: ${file.name}`);
+                    continue;
+                }
+                
+                currentPhotos.push(file);
+                validCount++;
+            }
+            
+            // 결과 알림
+            if (invalidCount > 0) {
+                alert(`✅ ${validCount}장 추가됨\n❌ ${invalidCount}장 제외됨 (10분 이내 촬영 사진만 가능)`);
+            } else if (validCount > 0) {
+                // Toast 메시지 (간단한 알림)
+                showToast(`✅ ${validCount}장 추가됨!`);
+            }
+            
+            updatePhotoPreview();
+            updateCurrentPhotoCount();
+            updateSubmitButton();
+        }
+        
+        // Toast 메시지 표시
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'fixed top-20 left-1/2 transform -translate-x-1/2 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-fade-in-out';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.remove();
+            }, 2000);
+        }
+        
+        // 사진 선택 시 (카메라)
         document.addEventListener('DOMContentLoaded', function() {
-            const photoInput = document.getElementById('photo-input');
-            if (photoInput) {
-                photoInput.addEventListener('change', async function(e) {
+            const photoCameraInput = document.getElementById('photo-input-camera');
+            if (photoCameraInput) {
+                photoCameraInput.addEventListener('change', async function(e) {
                     const files = Array.from(e.target.files);
-                    
-                    if (files.length === 0) return;
-                    
-                    if (currentPhotos.length + files.length > 30) {
-                        alert('최대 30장까지만 업로드할 수 있습니다.');
-                        return;
-                    }
-                    
-                    // 사진 추가
-                    for (const file of files) {
-                        // EXIF 검증
-                        const isValid = await validatePhotoTime(file);
-                        if (!isValid) {
-                            alert(`${file.name}: 10분 이내에 촬영한 사진만 업로드 가능합니다.`);
-                            continue;
-                        }
-                        
-                        currentPhotos.push(file);
-                    }
-                    
-                    updatePhotoPreview();
-                    updateCurrentPhotoCount();
-                    updateSubmitButton();
-                    
-                    // 파일 input 초기화
-                    e.target.value = '';
+                    await handlePhotoSelection(files);
+                    e.target.value = ''; // input 초기화
+                });
+            }
+            
+            // 사진 선택 시 (갤러리)
+            const photoGalleryInput = document.getElementById('photo-input-gallery');
+            if (photoGalleryInput) {
+                photoGalleryInput.addEventListener('change', async function(e) {
+                    const files = Array.from(e.target.files);
+                    await handlePhotoSelection(files);
+                    e.target.value = ''; // input 초기화
                 });
             }
         });
