@@ -35,6 +35,9 @@
                     <a href="records.html" class="hover:text-blue-200">
                         <i class="fas fa-chart-bar mr-1"></i>기록
                     </a>
+                    <a href="?mode=cleaning_all" class="hover:text-purple-200 bg-purple-500 px-3 py-1 rounded-lg">
+                        <i class="fas fa-broom mr-1"></i>미화 전용
+                    </a>
                 </div>
             </div>
         </div>
@@ -565,21 +568,38 @@
         function displayEmployees(employeeList) {
             const grid = document.getElementById('employees-grid');
             
-            if (employeeList.length === 0) {
-                grid.innerHTML = '<div class="col-span-full text-center text-gray-500 py-4">등록된 직원이 없습니다.</div>';
+            // 미화 전용 모드일 경우 직책에 '미화'가 포함된 직원만 필터링
+            let filteredList = employeeList;
+            if (isCleaningAllMode) {
+                filteredList = employeeList.filter(emp => {
+                    const position = emp.position || '';
+                    return position.includes('미화');
+                });
+                console.log(`🧹 미화 전용: ${filteredList.length}명 / ${employeeList.length}명`);
+            }
+            
+            if (filteredList.length === 0) {
+                if (isCleaningAllMode) {
+                    grid.innerHTML = '<div class="col-span-full text-center text-purple-500 py-4">미화 직책의 직원이 없습니다.</div>';
+                } else {
+                    grid.innerHTML = '<div class="col-span-full text-center text-gray-500 py-4">등록된 직원이 없습니다.</div>';
+                }
                 return;
             }
             
-            grid.innerHTML = employeeList.map(emp => {
+            grid.innerHTML = filteredList.map(emp => {
                 const initial = emp.name.charAt(0);
+                const borderColor = isCleaningAllMode ? 'border-purple-200 hover:border-purple-600 hover:bg-purple-50' : 'border-gray-200 hover:border-blue-600 hover:bg-blue-50';
+                const bgColor = isCleaningAllMode ? 'bg-purple-600' : 'bg-blue-600';
                 return `
                     <button onclick="selectEmployee('${emp.id}')" 
-                        class="p-3 md:p-4 border-2 border-gray-200 rounded-lg hover:border-blue-600 hover:bg-blue-50 transition text-center">
-                        <div class="w-10 h-10 md:w-12 md:h-12 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold mx-auto mb-2">
+                        class="p-3 md:p-4 border-2 ${borderColor} rounded-lg transition text-center">
+                        <div class="w-10 h-10 md:w-12 md:h-12 ${bgColor} rounded-full flex items-center justify-center text-white font-bold mx-auto mb-2">
                             ${initial}
                         </div>
                         <div class="font-semibold text-sm md:text-base">${emp.name}</div>
                         <div class="text-xs text-gray-500">${emp.employee_number || ''}</div>
+                        ${emp.position ? `<div class="text-xs text-purple-600 mt-1">${emp.position}</div>` : ''}
                     </button>
                 `;
             }).join('');
@@ -591,9 +611,10 @@
             if (searchInput) {
                 searchInput.addEventListener('input', function(e) {
                     const searchTerm = e.target.value.toLowerCase();
-                    const filtered = searchTerm === '' ? employees : employees.filter(emp => 
+                    let filtered = searchTerm === '' ? employees : employees.filter(emp => 
                         emp.name.toLowerCase().includes(searchTerm) ||
-                        (emp.employee_number && emp.employee_number.toLowerCase().includes(searchTerm))
+                        (emp.employee_number && emp.employee_number.toLowerCase().includes(searchTerm)) ||
+                        (emp.position && emp.position.toLowerCase().includes(searchTerm))
                     );
                     displayEmployees(filtered);
                 });
@@ -686,7 +707,6 @@
         // 사진 촬영 화면 표시
         function showPhotoCapture() {
             document.getElementById('step-employee-selection').classList.add('hidden');
-            document.getElementById('step-location-selection').classList.add('hidden');
             document.getElementById('step-photo-capture').classList.remove('hidden');
             
             document.getElementById('current-employee-name').textContent = selectedEmployee.name;
@@ -958,13 +978,7 @@
         // 청소 취소
         function cancelCleaning() {
             if (confirm('작업을 취소하시겠습니까? 모든 데이터가 사라집니다.')) {
-                if (isCleaningAllMode) {
-                    // 미화 전용 모드: 구역 선택으로 복귀
-                    currentPhotos = [];
-                    showLocationSelection();
-                } else {
-                    resetAll();
-                }
+                resetAll();
             }
         }
 
@@ -994,12 +1008,9 @@
             document.getElementById('step-photo-capture').classList.add('hidden');
             document.getElementById('step-attendance-complete').classList.add('hidden');
             document.getElementById('step-cleaning-complete').classList.add('hidden');
-            document.getElementById('step-location-selection').classList.add('hidden');
             
             // 타이머 다시 시작
-            if (!isCleaningAllMode) {
-                startSessionTimer();
-            }
+            startSessionTimer();
             
             // 메뉴 선택 화면으로
             document.getElementById('step-menu-selection').classList.remove('hidden');
