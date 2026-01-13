@@ -88,6 +88,41 @@
             </div>
         </div>
 
+        <!-- Step 2: 구역 선택 (미화 전용 모드) -->
+        <div id="step-location-selection" class="bg-white rounded-lg shadow-md p-4 md:p-6 mb-6 hidden">
+            <div class="bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg p-4 mb-6 text-center text-white">
+                <i class="fas fa-broom text-4xl mb-2"></i>
+                <h2 class="text-xl font-bold">🧹 미화 전용 모드</h2>
+                <p class="text-sm text-purple-100 mt-2">청소할 구역을 선택하세요</p>
+            </div>
+            
+            <div class="bg-purple-50 rounded-lg p-4 mb-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="font-semibold">미화원: <span id="cleaner-employee-name">-</span></p>
+                        <p class="text-sm text-gray-600">오늘 진행 상황</p>
+                    </div>
+                    <div class="text-purple-600 text-right">
+                        <p class="text-2xl font-bold" id="completed-locations-count">0</p>
+                        <p class="text-xs">구역 완료</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="locations-grid" class="space-y-3 mb-4">
+                <div class="text-center text-gray-500 py-8">
+                    <i class="fas fa-spinner fa-spin text-3xl mb-2"></i>
+                    <p>구역 목록 로딩 중...</p>
+                </div>
+            </div>
+            
+            <button onclick="finishAllCleaning()" class="w-full bg-gradient-to-br from-green-500 to-green-600 text-white px-6 py-4 rounded-lg hover:shadow-xl transition transform hover:-translate-y-1">
+                <i class="fas fa-check-circle text-2xl mb-2"></i>
+                <p class="font-bold text-xl">✅ 모든 청소 완료</p>
+                <p class="text-sm text-green-100 mt-1">오늘 청소를 종료합니다</p>
+            </button>
+        </div>
+
         <!-- Step 2: 직원 선택 -->
         <div id="step-employee-selection" class="bg-white rounded-lg shadow-md p-4 md:p-6 mb-6 hidden">
             <h2 class="text-lg md:text-xl font-bold mb-4">
@@ -253,7 +288,7 @@
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         // 전역 변수
-        let currentMode = null; // 'attendance' or 'cleaning'
+        let currentMode = null; // 'attendance' or 'cleaning' or 'cleaning_all'
         let scannedLocation = null;
         let selectedEmployee = null;
         let employees = [];
@@ -261,21 +296,42 @@
         let sessionTimer = null; // 5분 타이머
         let sessionStartTime = null; // 세션 시작 시간
         const SESSION_DURATION = 5 * 60 * 1000; // 5분 (밀리초)
+        let allLocations = []; // 전체 구역 목록
+        let completedLocations = []; // 완료된 구역 ID 목록
+        let isCleaningAllMode = false; // 미화 전용 모드 여부
 
         // 페이지 로드 시 초기화
         document.addEventListener('DOMContentLoaded', async function() {
             console.log('✅ Page loaded');
             
-            // URL 파라미터에서 구역 정보 읽기
+            // URL 파라미터에서 구역 정보 또는 모드 읽기
             const urlParams = new URLSearchParams(window.location.search);
+            const mode = urlParams.get('mode');
             const locationId = urlParams.get('id');
             const locationName = urlParams.get('name');
-            const locationCode = urlParams.get('location'); // ✅ 'location' 파라미터가 코드임!
+            const locationCode = urlParams.get('location');
             
-            console.log('📍 URL Parameters:', { locationId, locationName, locationCode });
+            console.log('📍 URL Parameters:', { mode, locationId, locationName, locationCode });
             
-            if (locationId && locationName && locationCode) {
-                // URL 파라미터 방식
+            // 미화 전용 모드 확인
+            if (mode === 'cleaning_all') {
+                console.log('🧹 미화 전용 모드 활성화!');
+                isCleaningAllMode = true;
+                currentMode = 'cleaning_all';
+                
+                // 타이머 시작하지 않음 (미화 전용은 시간 제한 없음)
+                document.getElementById('timer-display').classList.add('hidden');
+                
+                // 직원 선택 화면으로 바로 이동
+                document.getElementById('step-menu-selection').classList.add('hidden');
+                document.getElementById('step-employee-selection').classList.remove('hidden');
+                document.getElementById('employee-instruction').textContent = '미화원을 선택하세요';
+                
+                // 구역 목록 로드
+                await loadLocations();
+            }
+            else if (locationId && locationName && locationCode) {
+                // 기존 모드: 구역별 QR 코드
                 scannedLocation = {
                     id: locationId,
                     name: decodeURIComponent(locationName),
@@ -363,6 +419,123 @@
             }
         }
 
+        // 구역 목록 로드 (미화 전용 모드)
+        async function loadLocations() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('locations')
+                    .select('*')
+                    .eq('is_active', true)
+                    .order('name', { ascending: true });
+                
+                if (error) throw error;
+                
+                allLocations = data || [];
+                console.log(`✅ Loaded ${allLocations.length} locations`);
+                
+            } catch (error) {
+                console.error('❌ Error loading locations:', error);
+                allLocations = [];
+            }
+        }
+
+        // 구역 선택 화면 표시 (미화 전용 모드)
+        function showLocationSelection() {
+            document.getElementById('step-employee-selection').classList.add('hidden');
+            document.getElementById('step-photo-capture').classList.add('hidden');
+            document.getElementById('step-cleaning-complete').classList.add('hidden');
+            document.getElementById('step-location-selection').classList.remove('hidden');
+            
+            document.getElementById('cleaner-employee-name').textContent = selectedEmployee.name;
+            document.getElementById('completed-locations-count').textContent = completedLocations.length;
+            
+            displayLocations();
+        }
+
+        // 구역 목록 표시
+        function displayLocations() {
+            const grid = document.getElementById('locations-grid');
+            
+            if (allLocations.length === 0) {
+                grid.innerHTML = '<div class="text-center text-gray-500 py-4">등록된 구역이 없습니다.</div>';
+                return;
+            }
+            
+            grid.innerHTML = allLocations.map(loc => {
+                const isCompleted = completedLocations.includes(loc.id);
+                
+                if (isCompleted) {
+                    // 완료된 구역
+                    return `
+                        <div class="bg-green-50 border-2 border-green-500 rounded-lg p-4 flex items-center justify-between">
+                            <div class="flex items-center">
+                                <i class="fas fa-check-circle text-green-600 text-2xl mr-3"></i>
+                                <div>
+                                    <p class="font-bold text-green-800">${loc.name}</p>
+                                    <p class="text-sm text-green-600">${loc.code}</p>
+                                </div>
+                            </div>
+                            <span class="bg-green-600 text-white px-3 py-1 rounded-full text-sm font-bold">완료</span>
+                        </div>
+                    `;
+                } else {
+                    // 미완료 구역
+                    return `
+                        <button onclick="selectLocation('${loc.id}')" 
+                            class="w-full bg-white border-2 border-gray-300 rounded-lg p-4 flex items-center justify-between hover:border-purple-500 hover:bg-purple-50 transition">
+                            <div class="flex items-center">
+                                <i class="fas fa-map-marker-alt text-gray-400 text-2xl mr-3"></i>
+                                <div class="text-left">
+                                    <p class="font-bold text-gray-800">${loc.name}</p>
+                                    <p class="text-sm text-gray-600">${loc.code}</p>
+                                </div>
+                            </div>
+                            <span class="bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-purple-700">
+                                <i class="fas fa-broom mr-1"></i>청소하기
+                            </span>
+                        </button>
+                    `;
+                }
+            }).join('');
+        }
+
+        // 구역 선택 (미화 전용 모드)
+        function selectLocation(locationId) {
+            const location = allLocations.find(loc => loc.id === locationId);
+            
+            if (!location) {
+                alert('구역 정보를 찾을 수 없습니다.');
+                return;
+            }
+            
+            scannedLocation = {
+                id: location.id,
+                name: location.name,
+                code: location.code
+            };
+            
+            console.log('📍 Selected location:', scannedLocation);
+            
+            // 사진 촬영 화면으로
+            showPhotoCapture();
+        }
+
+        // 모든 청소 완료
+        function finishAllCleaning() {
+            if (completedLocations.length === 0) {
+                alert('아직 완료된 구역이 없습니다.');
+                return;
+            }
+            
+            if (confirm(`총 ${completedLocations.length}개 구역을 완료했습니다.\n오늘 청소를 종료하시겠습니까?`)) {
+                showToast(`🎉 총 ${completedLocations.length}개 구역 청소 완료!`);
+                
+                setTimeout(() => {
+                    window.location.reload();
+                }, 2000);
+            }
+        }
+
         // 직원 목록 로드
         async function loadEmployees() {
             try {
@@ -438,7 +611,10 @@
             
             console.log('👤 Selected employee:', selectedEmployee.name);
             
-            if (currentMode === 'attendance') {
+            if (isCleaningAllMode) {
+                // 미화 전용 모드: 구역 선택 화면으로
+                showLocationSelection();
+            } else if (currentMode === 'attendance') {
                 // 출석 모드: 근태 타입 선택으로
                 showAttendanceTypeSelection();
             } else {
@@ -510,6 +686,7 @@
         // 사진 촬영 화면 표시
         function showPhotoCapture() {
             document.getElementById('step-employee-selection').classList.add('hidden');
+            document.getElementById('step-location-selection').classList.add('hidden');
             document.getElementById('step-photo-capture').classList.remove('hidden');
             
             document.getElementById('current-employee-name').textContent = selectedEmployee.name;
@@ -760,12 +937,34 @@
                     <p><span class="font-semibold">시간:</span> ${formatDateTime(new Date())}</p>
                 </div>
             `;
+            
+            // 미화 전용 모드인 경우
+            if (isCleaningAllMode) {
+                // 완료된 구역 목록에 추가
+                if (!completedLocations.includes(scannedLocation.id)) {
+                    completedLocations.push(scannedLocation.id);
+                }
+                
+                // 사진 초기화
+                currentPhotos = [];
+                
+                // 2초 후 구역 선택 화면으로 복귀
+                setTimeout(() => {
+                    showLocationSelection();
+                }, 2000);
+            }
         }
 
         // 청소 취소
         function cancelCleaning() {
             if (confirm('작업을 취소하시겠습니까? 모든 데이터가 사라집니다.')) {
-                resetAll();
+                if (isCleaningAllMode) {
+                    // 미화 전용 모드: 구역 선택으로 복귀
+                    currentPhotos = [];
+                    showLocationSelection();
+                } else {
+                    resetAll();
+                }
             }
         }
 
@@ -795,9 +994,12 @@
             document.getElementById('step-photo-capture').classList.add('hidden');
             document.getElementById('step-attendance-complete').classList.add('hidden');
             document.getElementById('step-cleaning-complete').classList.add('hidden');
+            document.getElementById('step-location-selection').classList.add('hidden');
             
             // 타이머 다시 시작
-            startSessionTimer();
+            if (!isCleaningAllMode) {
+                startSessionTimer();
+            }
             
             // 메뉴 선택 화면으로
             document.getElementById('step-menu-selection').classList.remove('hidden');
