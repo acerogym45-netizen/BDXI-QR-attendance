@@ -303,7 +303,7 @@
         let completedLocations = [];
         let isCleaningAllMode = false;
 
-        // ✨ 사진 압축 함수 추가 (70~80% 용량 절감!)
+        // 사진 압축 함수
         async function compressImage(file, maxWidth = 1920, quality = 0.7) {
             return new Promise((resolve) => {
                 const reader = new FileReader();
@@ -316,7 +316,6 @@
                         let width = img.width;
                         let height = img.height;
 
-                        // 최대 너비 제한
                         if (width > maxWidth) {
                             height = (height * maxWidth) / width;
                             width = maxWidth;
@@ -721,7 +720,7 @@
             document.getElementById('photo-input-gallery').click();
         }
 
-        // ✨ 사진 선택 핸들러 (압축 적용!)
+        // ✨ 사진 선택 핸들러 (미화 전용 모드에서는 시간 검증 제외!)
         async function handlePhotoSelection(files) {
             if (files.length === 0) return;
             
@@ -734,14 +733,16 @@
             let invalidCount = 0;
             
             for (const file of files) {
-                const isValid = await validatePhotoTime(file);
-                if (!isValid) {
-                    invalidCount++;
-                    console.warn(`❌ Invalid photo: ${file.name}`);
-                    continue;
+                // ✨ 미화 전용 모드에서는 시간 검증 건너뜀!
+                if (!isCleaningAllMode) {
+                    const isValid = await validatePhotoTime(file);
+                    if (!isValid) {
+                        invalidCount++;
+                        console.warn(`❌ Invalid photo: ${file.name}`);
+                        continue;
+                    }
                 }
                 
-                // ✨ 사진 압축 적용!
                 const compressedFile = await compressImage(file);
                 currentPhotos.push(compressedFile);
                 validCount++;
@@ -750,7 +751,10 @@
             if (invalidCount > 0) {
                 alert(`✅ ${validCount}장 추가됨\n❌ ${invalidCount}장 제외됨 (10분 이내 촬영 사진만 가능)`);
             } else if (validCount > 0) {
-                showToast(`✅ ${validCount}장 추가됨! (용량 절감 적용)`);
+                const message = isCleaningAllMode 
+                    ? `✅ ${validCount}장 추가됨! (용량 절감 적용, 시간 제한 없음)`
+                    : `✅ ${validCount}장 추가됨! (용량 절감 적용)`;
+                showToast(message);
             }
             
             updatePhotoPreview();
