@@ -291,23 +291,59 @@
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         // 전역 변수
-        let currentMode = null; // 'attendance' or 'cleaning' or 'cleaning_all'
+        let currentMode = null;
         let scannedLocation = null;
         let selectedEmployee = null;
         let employees = [];
-        let currentPhotos = []; // 현재 사진들
-        let sessionTimer = null; // 5분 타이머
-        let sessionStartTime = null; // 세션 시작 시간
-        const SESSION_DURATION = 5 * 60 * 1000; // 5분 (밀리초)
-        let allLocations = []; // 전체 구역 목록
-        let completedLocations = []; // 완료된 구역 ID 목록
-        let isCleaningAllMode = false; // 미화 전용 모드 여부
+        let currentPhotos = [];
+        let sessionTimer = null;
+        let sessionStartTime = null;
+        const SESSION_DURATION = 5 * 60 * 1000;
+        let allLocations = [];
+        let completedLocations = [];
+        let isCleaningAllMode = false;
+
+        // ✨ 사진 압축 함수 추가 (70~80% 용량 절감!)
+        async function compressImage(file, maxWidth = 1920, quality = 0.7) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = (event) => {
+                    const img = new Image();
+                    img.src = event.target.result;
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let width = img.width;
+                        let height = img.height;
+
+                        // 최대 너비 제한
+                        if (width > maxWidth) {
+                            height = (height * maxWidth) / width;
+                            width = maxWidth;
+                        }
+
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+
+                        canvas.toBlob((blob) => {
+                            const compressedFile = new File([blob], file.name, {
+                                type: 'image/jpeg',
+                                lastModified: Date.now(),
+                            });
+                            console.log(`🗜️ 압축: ${(file.size / 1024 / 1024).toFixed(2)}MB → ${(compressedFile.size / 1024 / 1024).toFixed(2)}MB`);
+                            resolve(compressedFile);
+                        }, 'image/jpeg', quality);
+                    };
+                };
+            });
+        }
 
         // 페이지 로드 시 초기화
         document.addEventListener('DOMContentLoaded', async function() {
             console.log('✅ Page loaded');
             
-            // URL 파라미터에서 구역 정보 또는 모드 읽기
             const urlParams = new URLSearchParams(window.location.search);
             const mode = urlParams.get('mode');
             const locationId = urlParams.get('id');
@@ -316,25 +352,19 @@
             
             console.log('📍 URL Parameters:', { mode, locationId, locationName, locationCode });
             
-            // 미화 전용 모드 확인
             if (mode === 'cleaning_all') {
                 console.log('🧹 미화 전용 모드 활성화!');
                 isCleaningAllMode = true;
                 currentMode = 'cleaning_all';
                 
-                // 타이머 시작하지 않음 (미화 전용은 시간 제한 없음)
                 document.getElementById('timer-display').classList.add('hidden');
-                
-                // 직원 선택 화면으로 바로 이동
                 document.getElementById('step-menu-selection').classList.add('hidden');
                 document.getElementById('step-employee-selection').classList.remove('hidden');
                 document.getElementById('employee-instruction').textContent = '미화원을 선택하세요';
                 
-                // 구역 목록 로드
                 await loadLocations();
             }
             else if (locationId && locationName && locationCode) {
-                // 기존 모드: 구역별 QR 코드
                 scannedLocation = {
                     id: locationId,
                     name: decodeURIComponent(locationName),
@@ -342,19 +372,16 @@
                 };
                 
                 console.log('✅ Location loaded:', scannedLocation);
-                startSessionTimer(); // 타이머 시작
+                startSessionTimer();
                 showMenuSelection();
             } else {
-                // 구역 정보가 없으면 에러
                 console.error('❌ Missing parameters:', { locationId, locationName, locationCode });
                 alert('올바른 QR 코드가 아닙니다.\n구역 정보가 포함된 QR 코드를 스캔하세요.');
             }
             
-            // 직원 목록 로드
             await loadEmployees();
         });
 
-        // 메뉴 선택 화면 표시
         function showMenuSelection() {
             console.log('🟢 showMenuSelection()');
             document.getElementById('location-name-display').textContent = scannedLocation.name;
@@ -363,29 +390,24 @@
             console.log('✅ Menu selection screen shown');
         }
 
-        // 5분 타이머 시작
         function startSessionTimer() {
             sessionStartTime = Date.now();
             document.getElementById('timer-display').classList.remove('hidden');
             
-            // 매 초마다 업데이트
             sessionTimer = setInterval(() => {
                 const elapsed = Date.now() - sessionStartTime;
                 const remaining = SESSION_DURATION - elapsed;
                 
                 if (remaining <= 0) {
-                    // 시간 초과
                     clearInterval(sessionTimer);
                     alert('⏰ 시간이 초과되어 자동으로 초기화됩니다.');
                     window.location.reload();
                 } else {
-                    // 남은 시간 표시
                     const minutes = Math.floor(remaining / 60000);
                     const seconds = Math.floor((remaining % 60000) / 1000);
                     document.getElementById('timer-countdown').textContent = 
                         `${minutes}:${String(seconds).padStart(2, '0')}`;
                     
-                    // 1분 미만이면 빨간색으로 경고
                     const timerDisplay = document.getElementById('timer-display');
                     if (remaining < 60000) {
                         timerDisplay.classList.remove('bg-yellow-50', 'border-yellow-500');
@@ -399,7 +421,6 @@
             console.log('⏰ Session timer started (5 minutes)');
         }
 
-        // 타이머 정지
         function stopSessionTimer() {
             if (sessionTimer) {
                 clearInterval(sessionTimer);
@@ -408,7 +429,6 @@
             }
         }
 
-        // 모드 선택 (출석 or 청소)
         function selectMode(mode) {
             currentMode = mode;
             console.log('🔵 Selected mode:', mode);
@@ -422,7 +442,6 @@
             }
         }
 
-        // 구역 목록 로드 (미화 전용 모드)
         async function loadLocations() {
             try {
                 const { data, error } = await supabaseClient
@@ -442,7 +461,6 @@
             }
         }
 
-        // 구역 선택 화면 표시 (미화 전용 모드)
         function showLocationSelection() {
             document.getElementById('step-employee-selection').classList.add('hidden');
             document.getElementById('step-photo-capture').classList.add('hidden');
@@ -455,7 +473,6 @@
             displayLocations();
         }
 
-        // 구역 목록 표시
         function displayLocations() {
             const grid = document.getElementById('locations-grid');
             
@@ -468,7 +485,6 @@
                 const isCompleted = completedLocations.includes(loc.id);
                 
                 if (isCompleted) {
-                    // 완료된 구역
                     return `
                         <div class="bg-green-50 border-2 border-green-500 rounded-lg p-4 flex items-center justify-between">
                             <div class="flex items-center">
@@ -482,7 +498,6 @@
                         </div>
                     `;
                 } else {
-                    // 미완료 구역
                     return `
                         <button onclick='selectLocation("${loc.id}")' 
                             class="w-full bg-white border-2 border-gray-300 rounded-lg p-4 flex items-center justify-between hover:border-purple-500 hover:bg-purple-50 transition">
@@ -502,7 +517,6 @@
             }).join('');
         }
 
-        // 구역 선택 (미화 전용 모드)
         function selectLocation(locationId) {
             const location = allLocations.find(loc => loc.id === locationId);
             
@@ -518,12 +532,9 @@
             };
             
             console.log('📍 Selected location:', scannedLocation);
-            
-            // 사진 촬영 화면으로
             showPhotoCapture();
         }
 
-        // 모든 청소 완료
         function finishAllCleaning() {
             if (completedLocations.length === 0) {
                 alert('아직 완료된 구역이 없습니다.');
@@ -539,7 +550,6 @@
             }
         }
 
-        // 직원 목록 로드
         async function loadEmployees() {
             try {
                 const { data, error } = await supabaseClient
@@ -564,11 +574,9 @@
             }
         }
 
-        // 직원 목록 표시
         function displayEmployees(employeeList) {
             const grid = document.getElementById('employees-grid');
             
-            // 미화 전용 모드일 경우 직책에 '미화'가 포함된 직원만 필터링
             let filteredList = employeeList;
             if (isCleaningAllMode) {
                 filteredList = employeeList.filter(emp => {
@@ -605,7 +613,6 @@
             }).join('');
         }
 
-        // 직원 검색
         document.addEventListener('DOMContentLoaded', function() {
             const searchInput = document.getElementById('employee-search');
             if (searchInput) {
@@ -621,7 +628,6 @@
             }
         });
 
-        // 직원 선택
         function selectEmployee(employeeId) {
             selectedEmployee = employees.find(emp => emp.id === employeeId);
             
@@ -633,18 +639,14 @@
             console.log('👤 Selected employee:', selectedEmployee.name);
             
             if (isCleaningAllMode) {
-                // 미화 전용 모드: 구역 선택 화면으로
                 showLocationSelection();
             } else if (currentMode === 'attendance') {
-                // 출석 모드: 근태 타입 선택으로
                 showAttendanceTypeSelection();
             } else {
-                // 청소 모드: 사진 촬영으로
                 showPhotoCapture();
             }
         }
 
-        // 근태 타입 선택 화면 표시
         function showAttendanceTypeSelection() {
             document.getElementById('step-employee-selection').classList.add('hidden');
             document.getElementById('step-attendance-type').classList.remove('hidden');
@@ -653,7 +655,6 @@
             document.getElementById('attendance-location-name').textContent = scannedLocation.name;
         }
 
-        // 근태 타입 선택
         async function selectAttendanceType(type) {
             const attendanceData = {
                 employee_id: selectedEmployee.id,
@@ -677,7 +678,7 @@
                 if (error) throw error;
                 
                 console.log('✅ Attendance saved');
-                stopSessionTimer(); // 타이머 정지
+                stopSessionTimer();
                 showAttendanceComplete(data);
                 
             } catch (error) {
@@ -686,7 +687,6 @@
             }
         }
 
-        // 출석 완료 표시
         function showAttendanceComplete(record) {
             document.getElementById('step-attendance-type').classList.add('hidden');
             document.getElementById('step-attendance-complete').classList.remove('hidden');
@@ -704,7 +704,6 @@
             `;
         }
 
-        // 사진 촬영 화면 표시
         function showPhotoCapture() {
             document.getElementById('step-employee-selection').classList.add('hidden');
             document.getElementById('step-photo-capture').classList.remove('hidden');
@@ -714,33 +713,27 @@
             updateCurrentPhotoCount();
         }
 
-        // 사진 촬영 (카메라 직접 열기)
         function capturePhotos() {
             document.getElementById('photo-input-camera').click();
         }
         
-        // 갤러리에서 선택
         function selectFromGallery() {
             document.getElementById('photo-input-gallery').click();
         }
 
-        // 사진 선택 핸들러 (카메라 + 갤러리 공통)
+        // ✨ 사진 선택 핸들러 (압축 적용!)
         async function handlePhotoSelection(files) {
             if (files.length === 0) return;
             
-            // 30장 제한 확인
             if (currentPhotos.length + files.length > 30) {
                 alert(`최대 30장까지만 업로드할 수 있습니다.\n현재: ${currentPhotos.length}장, 선택: ${files.length}장`);
                 return;
             }
             
-            // 로딩 표시
             let validCount = 0;
             let invalidCount = 0;
             
-            // 사진 검증 및 추가
             for (const file of files) {
-                // EXIF 시간 검증
                 const isValid = await validatePhotoTime(file);
                 if (!isValid) {
                     invalidCount++;
@@ -748,16 +741,16 @@
                     continue;
                 }
                 
-                currentPhotos.push(file);
+                // ✨ 사진 압축 적용!
+                const compressedFile = await compressImage(file);
+                currentPhotos.push(compressedFile);
                 validCount++;
             }
             
-            // 결과 알림
             if (invalidCount > 0) {
                 alert(`✅ ${validCount}장 추가됨\n❌ ${invalidCount}장 제외됨 (10분 이내 촬영 사진만 가능)`);
             } else if (validCount > 0) {
-                // Toast 메시지 (간단한 알림)
-                showToast(`✅ ${validCount}장 추가됨!`);
+                showToast(`✅ ${validCount}장 추가됨! (용량 절감 적용)`);
             }
             
             updatePhotoPreview();
@@ -765,7 +758,6 @@
             updateSubmitButton();
         }
         
-        // Toast 메시지 표시
         function showToast(message) {
             const toast = document.createElement('div');
             toast.className = 'fixed top-20 left-1/2 transform -translate-x-1/2 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-fade-in-out';
@@ -777,29 +769,26 @@
             }, 2000);
         }
         
-        // 사진 선택 시 (카메라)
         document.addEventListener('DOMContentLoaded', function() {
             const photoCameraInput = document.getElementById('photo-input-camera');
             if (photoCameraInput) {
                 photoCameraInput.addEventListener('change', async function(e) {
                     const files = Array.from(e.target.files);
                     await handlePhotoSelection(files);
-                    e.target.value = ''; // input 초기화
+                    e.target.value = '';
                 });
             }
             
-            // 사진 선택 시 (갤러리)
             const photoGalleryInput = document.getElementById('photo-input-gallery');
             if (photoGalleryInput) {
                 photoGalleryInput.addEventListener('change', async function(e) {
                     const files = Array.from(e.target.files);
                     await handlePhotoSelection(files);
-                    e.target.value = ''; // input 초기화
+                    e.target.value = '';
                 });
             }
         });
 
-        // 사진 미리보기 업데이트
         function updatePhotoPreview() {
             const previewDiv = document.getElementById('photo-preview');
             previewDiv.innerHTML = currentPhotos.map((file, index) => {
@@ -815,7 +804,6 @@
             }).join('');
         }
 
-        // 사진 삭제
         function removePhoto(index) {
             currentPhotos.splice(index, 1);
             updatePhotoPreview();
@@ -823,31 +811,26 @@
             updateSubmitButton();
         }
 
-        // 현재 사진 개수 업데이트
         function updateCurrentPhotoCount() {
             document.getElementById('current-photo-count').textContent = currentPhotos.length;
         }
 
-        // 제출 버튼 활성화
         function updateSubmitButton() {
             const submitBtn = document.getElementById('submit-cleaning-btn');
             submitBtn.disabled = currentPhotos.length === 0;
         }
 
-        // EXIF 시간 검증 (10분 이내)
         async function validatePhotoTime(file) {
             return new Promise((resolve) => {
                 EXIF.getData(file, function() {
                     const dateTime = EXIF.getTag(this, 'DateTimeOriginal');
                     
                     if (!dateTime) {
-                        // EXIF 없으면 파일 수정시간으로 확인
                         const fileTime = new Date(file.lastModified);
                         const now = new Date();
                         const diff = now - fileTime;
-                        resolve(diff < 10 * 60 * 1000); // 10분
+                        resolve(diff < 10 * 60 * 1000);
                     } else {
-                        // EXIF 시간 파싱
                         const parts = dateTime.split(' ');
                         const datePart = parts[0].replace(/:/g, '-');
                         const timePart = parts[1];
@@ -855,13 +838,12 @@
                         
                         const now = new Date();
                         const diff = now - photoTime;
-                        resolve(diff < 10 * 60 * 1000); // 10분
+                        resolve(diff < 10 * 60 * 1000);
                     }
                 });
             });
         }
 
-        // 청소 제출 (일괄 업로드)
         async function submitCleaning() {
             if (currentPhotos.length === 0) {
                 alert('사진을 추가하세요.');
@@ -881,21 +863,17 @@
                 let uploadedCount = 0;
                 const totalPhotos = currentPhotos.length;
                 
-                // 사진 업로드
                 for (const file of currentPhotos) {
                     const timestamp = Date.now();
-                    // 파일명에서 한글 제거 (Supabase Storage 호환)
                     const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
                     const fileName = `${timestamp}_${scannedLocation.code}_${selectedEmployee.id}_${sanitizedFileName}`;
                     
-                    // Supabase Storage 업로드
                     const { data, error } = await supabaseClient.storage
                         .from('cleaning-photos')
                         .upload(fileName, file);
                     
                     if (error) throw error;
                     
-                    // URL 가져오기 (Public URL 강제 생성)
                     const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/cleaning-photos/${fileName}`;
                     photoUrls.push(publicUrl);
                     
@@ -907,7 +885,6 @@
                     statusText.textContent = `업로드 중... ${uploadedCount}/${totalPhotos}`;
                 }
                 
-                // DB에 기록 저장
                 const cleaningData = {
                     employee_id: selectedEmployee.id,
                     employee_name: selectedEmployee.name,
@@ -931,7 +908,7 @@
                 
                 progressDiv.classList.add('hidden');
                 console.log('✅ Cleaning saved');
-                stopSessionTimer(); // 타이머 정지
+                stopSessionTimer();
                 showCleaningComplete();
                 
             } catch (error) {
@@ -942,7 +919,6 @@
             }
         }
 
-        // 청소 완료 표시
         function showCleaningComplete() {
             document.getElementById('step-photo-capture').classList.add('hidden');
             document.getElementById('step-cleaning-complete').classList.remove('hidden');
@@ -958,31 +934,25 @@
                 </div>
             `;
             
-            // 미화 전용 모드인 경우
             if (isCleaningAllMode) {
-                // 완료된 구역 목록에 추가
                 if (!completedLocations.includes(scannedLocation.id)) {
                     completedLocations.push(scannedLocation.id);
                 }
                 
-                // 사진 초기화
                 currentPhotos = [];
                 
-                // 2초 후 구역 선택 화면으로 복귀
                 setTimeout(() => {
                     showLocationSelection();
                 }, 2000);
             }
         }
 
-        // 청소 취소
         function cancelCleaning() {
             if (confirm('작업을 취소하시겠습니까? 모든 데이터가 사라집니다.')) {
                 resetAll();
             }
         }
 
-        // 네비게이션 함수들
         function backToMenu() {
             document.getElementById('step-employee-selection').classList.add('hidden');
             document.getElementById('step-menu-selection').classList.remove('hidden');
@@ -994,29 +964,23 @@
         }
 
         function resetAll() {
-            // 타이머 정지
             stopSessionTimer();
             
-            // 모든 변수 초기화
             currentMode = null;
             selectedEmployee = null;
             currentPhotos = [];
             
-            // 모든 섹션 숨기기
             document.getElementById('step-employee-selection').classList.add('hidden');
             document.getElementById('step-attendance-type').classList.add('hidden');
             document.getElementById('step-photo-capture').classList.add('hidden');
             document.getElementById('step-attendance-complete').classList.add('hidden');
             document.getElementById('step-cleaning-complete').classList.add('hidden');
             
-            // 타이머 다시 시작
             startSessionTimer();
             
-            // 메뉴 선택 화면으로
             document.getElementById('step-menu-selection').classList.remove('hidden');
         }
 
-        // 날짜/시간 포맷팅
         function formatDateTime(date) {
             const year = date.getFullYear();
             const month = String(date.getMonth() + 1).padStart(2, '0');
