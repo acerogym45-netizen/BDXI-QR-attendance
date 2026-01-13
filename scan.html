@@ -29,6 +29,22 @@
         </div>
     </nav>
 
+    <!-- 타이머 표시 -->
+    <div id="timer-display" class="bg-yellow-50 border-l-4 border-yellow-500 p-4 mb-4 hidden">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center">
+                <i class="fas fa-clock text-yellow-600 text-2xl mr-3"></i>
+                <div>
+                    <p class="font-bold text-yellow-800">남은 시간</p>
+                    <p class="text-sm text-yellow-700">시간이 초과되면 자동으로 초기화됩니다</p>
+                </div>
+            </div>
+            <div class="text-right">
+                <p class="text-3xl font-bold text-yellow-800" id="timer-countdown">5:00</p>
+            </div>
+        </div>
+    </div>
+
     <!-- 메인 컨텐츠 -->
     <div class="container mx-auto px-4 py-6">
         
@@ -215,6 +231,9 @@
         let selectedEmployee = null;
         let employees = [];
         let currentPhotos = []; // 현재 사진들
+        let sessionTimer = null; // 5분 타이머
+        let sessionStartTime = null; // 세션 시작 시간
+        const SESSION_DURATION = 5 * 60 * 1000; // 5분 (밀리초)
 
         // 페이지 로드 시 초기화
         document.addEventListener('DOMContentLoaded', async function() {
@@ -237,6 +256,7 @@
                 };
                 
                 console.log('✅ Location loaded:', scannedLocation);
+                startSessionTimer(); // 타이머 시작
                 showMenuSelection();
             } else {
                 // 구역 정보가 없으면 에러
@@ -253,7 +273,53 @@
             console.log('🟢 showMenuSelection()');
             document.getElementById('location-name-display').textContent = scannedLocation.name;
             document.getElementById('location-code-display').textContent = scannedLocation.code;
+            document.getElementById('timer-display').classList.remove('hidden');
             console.log('✅ Menu selection screen shown');
+        }
+
+        // 5분 타이머 시작
+        function startSessionTimer() {
+            sessionStartTime = Date.now();
+            document.getElementById('timer-display').classList.remove('hidden');
+            
+            // 매 초마다 업데이트
+            sessionTimer = setInterval(() => {
+                const elapsed = Date.now() - sessionStartTime;
+                const remaining = SESSION_DURATION - elapsed;
+                
+                if (remaining <= 0) {
+                    // 시간 초과
+                    clearInterval(sessionTimer);
+                    alert('⏰ 시간이 초과되어 자동으로 초기화됩니다.');
+                    window.location.reload();
+                } else {
+                    // 남은 시간 표시
+                    const minutes = Math.floor(remaining / 60000);
+                    const seconds = Math.floor((remaining % 60000) / 1000);
+                    document.getElementById('timer-countdown').textContent = 
+                        `${minutes}:${String(seconds).padStart(2, '0')}`;
+                    
+                    // 1분 미만이면 빨간색으로 경고
+                    const timerDisplay = document.getElementById('timer-display');
+                    if (remaining < 60000) {
+                        timerDisplay.classList.remove('bg-yellow-50', 'border-yellow-500');
+                        timerDisplay.classList.add('bg-red-50', 'border-red-500');
+                        document.getElementById('timer-countdown').classList.remove('text-yellow-800');
+                        document.getElementById('timer-countdown').classList.add('text-red-800');
+                    }
+                }
+            }, 1000);
+            
+            console.log('⏰ Session timer started (5 minutes)');
+        }
+
+        // 타이머 정지
+        function stopSessionTimer() {
+            if (sessionTimer) {
+                clearInterval(sessionTimer);
+                sessionTimer = null;
+                console.log('⏰ Session timer stopped');
+            }
         }
 
         // 모드 선택 (출석 or 청소)
@@ -387,6 +453,7 @@
                 if (error) throw error;
                 
                 console.log('✅ Attendance saved');
+                stopSessionTimer(); // 타이머 정지
                 showAttendanceComplete(data);
                 
             } catch (error) {
@@ -596,6 +663,7 @@
                 
                 progressDiv.classList.add('hidden');
                 console.log('✅ Cleaning saved');
+                stopSessionTimer(); // 타이머 정지
                 showCleaningComplete();
                 
             } catch (error) {
@@ -642,6 +710,9 @@
         }
 
         function resetAll() {
+            // 타이머 정지
+            stopSessionTimer();
+            
             // 모든 변수 초기화
             currentMode = null;
             selectedEmployee = null;
@@ -653,6 +724,9 @@
             document.getElementById('step-photo-capture').classList.add('hidden');
             document.getElementById('step-attendance-complete').classList.add('hidden');
             document.getElementById('step-cleaning-complete').classList.add('hidden');
+            
+            // 타이머 다시 시작
+            startSessionTimer();
             
             // 메뉴 선택 화면으로
             document.getElementById('step-menu-selection').classList.remove('hidden');
