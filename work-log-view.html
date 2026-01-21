@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>업무 일지 상세보기</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" />
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+      .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.8);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 50;
+        flex-direction: column;
+        gap: 1rem;
+      }
+      .photo-container {
+        position: relative;
+        width: 100%;
+        height: 250px;
+        background-color: #f3f4f6;
+        border-radius: 0.5rem;
+        overflow: hidden;
+        border: 1px solid #e5e7eb;
+      }
+      .photo-container img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .photo-label {
+        position: absolute;
+        top: 0;
+        left: 0;
+        background-color: rgba(0, 0, 0, 0.6);
+        color: white;
+        padding: 4px 12px;
+        font-size: 0.75rem;
+        border-bottom-right-radius: 0.5rem;
+        font-weight: bold;
+      }
+      .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 100;
+        justify-content: center;
+        align-items: center;
+      }
+      .modal.active {
+        display: flex;
+      }
+    </style>
+  </head>
+  <body class="bg-gray-50 text-gray-800">
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+      <i class="fas fa-spinner fa-spin fa-3x text-green-600"></i>
+      <span class="text-green-800 font-semibold">데이터를 불러오는 중...</span>
+    </div>
+
+    <div class="min-h-screen pb-20">
+      <!-- Header -->
+      <div class="bg-gradient-to-r from-green-600 to-green-700 text-white p-4 shadow-lg sticky top-0 z-10">
+        <div class="max-w-4xl mx-auto flex justify-between items-center">
+          <div class="flex items-center gap-4">
+            <a href="work-log-list.html" class="text-white hover:text-green-200">
+              <i class="fas fa-arrow-left text-xl"></i>
+            </a>
+            <div>
+              <h1 class="text-2xl font-bold flex items-center gap-2">
+                <i class="fas fa-file-alt"></i>
+                업무 일지 상세보기
+              </h1>
+            </div>
+          </div>
+          <div id="statusBadgeContainer">
+            <!-- Status badge will be inserted here -->
+          </div>
+        </div>
+      </div>
+
+      <div class="max-w-4xl mx-auto p-4 space-y-6">
+        <!-- 1. Basic Info -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+          <h2 class="text-lg font-bold text-gray-800 border-b pb-2 mb-4">
+            <i class="fas fa-info-circle text-green-600 mr-2"></i>기본 정보
+          </h2>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div>
+              <div class="text-sm text-gray-500 mb-1">날짜</div>
+              <div id="logDate" class="font-bold text-lg"></div>
+            </div>
+            <div>
+              <div class="text-sm text-gray-500 mb-1">날씨 / 온도</div>
+              <div id="logWeather" class="font-bold text-lg"></div>
+            </div>
+            <div>
+              <div class="text-sm text-gray-500 mb-1">작성자</div>
+              <div class="font-bold text-lg flex items-center gap-2">
+                <i class="fas fa-user-circle text-gray-400"></i>
+                <span id="logAuthor">센터장</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Time Table -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+          <h2 class="text-lg font-bold text-gray-800 border-b pb-2 mb-4">
+            <i class="fas fa-clock text-green-600 mr-2"></i>타임테이블 업무
+          </h2>
+          <div id="taskList" class="space-y-3">
+            <!-- Tasks populated by JS -->
+          </div>
+        </div>
+
+        <!-- 3. Cleaning Areas -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+          <h2 class="text-lg font-bold text-gray-800 border-b pb-2 mb-4">
+            <i class="fas fa-broom text-green-600 mr-2"></i>청소 구역 및 사진
+          </h2>
+          <div id="cleaningList" class="space-y-8">
+            <!-- Cleaning areas populated by JS -->
+          </div>
+        </div>
+
+        <!-- 4. Special Notes -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+          <h2 class="text-lg font-bold text-gray-800 border-b pb-2 mb-4">
+            <i class="fas fa-sticky-note text-green-600 mr-2"></i>특이사항
+          </h2>
+          <div id="specialNotes" class="bg-gray-50 p-4 rounded-lg text-gray-700 whitespace-pre-wrap min-h-[100px]">
+            <!-- Notes populated by JS -->
+          </div>
+        </div>
+
+        <!-- 5. Approval History -->
+        <div id="approvalSection" class="bg-white rounded-lg shadow-md p-6 hidden">
+          <h2 class="text-lg font-bold text-gray-800 border-b pb-2 mb-4">
+            <i class="fas fa-history text-green-600 mr-2"></i>결재 이력
+          </h2>
+          <div id="approvalList" class="space-y-4">
+            <!-- Approvals populated by JS -->
+          </div>
+        </div>
+
+        <!-- Action Buttons (Sticky Bottom) -->
+        <div
+          id="actionButtons"
+          class="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 p-4 shadow-lg flex justify-end gap-3 hidden z-40"
+        >
+          <button
+            onclick="openModal('reject')"
+            class="bg-red-500 text-white px-6 py-3 rounded-lg font-bold hover:bg-red-600 transition shadow-md flex items-center gap-2"
+          >
+            <i class="fas fa-times"></i> 반려
+          </button>
+          <button
+            onclick="openModal('approve')"
+            class="bg-green-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-green-700 transition shadow-md flex items-center gap-2"
+          >
+            <i class="fas fa-check"></i> 승인
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Approval/Rejection Modal -->
+    <div id="approvalModal" class="modal">
+      <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md mx-4">
+        <h3 id="modalTitle" class="text-xl font-bold mb-4 text-gray-800">승인 확인</h3>
+        <p id="modalDesc" class="text-gray-600 mb-4">이 업무 일지를 승인하시겠습니까?</p>
+
+        <div class="mb-4">
+          <label class="block text-gray-700 text-sm font-bold mb-2">
+            <span id="commentLabel">의견 (선택)</span>
+          </label>
+          <textarea
+            id="approvalComment"
+            rows="3"
+            class="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none"
+            placeholder="내용을 입력하세요..."
+          ></textarea>
+        </div>
+
+        <div class="flex justify-end gap-3">
+          <button
+            onclick="closeModal()"
+            class="px-4 py-2 bg-gray-200 text-gray-700 rounded font-bold hover:bg-gray-300 transition"
+          >
+            취소
+          </button>
+          <button
+            id="modalConfirmBtn"
+            onclick="submitDecision()"
+            class="px-4 py-2 bg-green-600 text-white rounded font-bold hover:bg-green-700 transition"
+          >
+            확인
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // ==================== CONFIGURATION ====================
+      const SUPABASE_URL = 'https://qgpqhtuynxhmgawakjxe.supabase.co';
+      const SUPABASE_ANON_KEY = 'sb_publishable_ujXj0mLf1casiQdVkc0fCA_G6exymqG';
+      const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+      // Mock Current User (Test as Team Leader)
+      const currentUser = {
+        id: 'temp-user-id',
+        name: '관리팀장',
+        role: 'team_leader', // Change to 'general_manager' to test final approval
+      };
+
+      // Status Config
+      const STATUS_CONFIG = {
+        draft: { label: '작성중', color: 'bg-gray-100 text-gray-700' },
+        pending_team_leader: { label: '팀장 검수 대기', color: 'bg-yellow-100 text-yellow-800' },
+        pending_manager: { label: '소장 검수 대기', color: 'bg-blue-100 text-blue-800' },
+        approved: { label: '승인 완료', color: 'bg-green-100 text-green-800' },
+        rejected: { label: '반려', color: 'bg-red-100 text-red-800' },
+      };
+
+      let workLogData = null;
+      let currentAction = ''; // 'approve' or 'reject'
+
+      // ==================== INITIALIZATION ====================
+      window.onload = function () {
+        const params = new URLSearchParams(window.location.search);
+        const id = params.get('id');
+
+        if (!id) {
+          alert('잘못된 접근입니다.');
+          window.location.href = 'work-log-list.html';
+          return;
+        }
+
+        loadWorkLogDetail(id);
+      };
+
+      // ==================== DATA LOADING ====================
+      async function loadWorkLogDetail(id) {
+        try {
+          const { data, error } = await supabase
+            .from('work_logs')
+            .select(
+              `
+              *,
+              work_log_tasks(*),
+              work_log_cleanings(*),
+              work_log_approvals(*)
+            `,
+            )
+            .eq('id', id)
+            .single();
+
+          if (error) throw error;
+
+          workLogData = data;
+          renderPage(data);
+        } catch (error) {
+          console.error('Error:', error);
+          alert('데이터를 불러오는데 실패했습니다.');
+        } finally {
+          document.getElementById('loadingOverlay').classList.add('hidden');
+        }
+      }
+
+      // ==================== RENDERING ====================
+      function renderPage(data) {
+        // 1. Header & Status
+        const statusInfo = STATUS_CONFIG[data.status] || STATUS_CONFIG.draft;
+        document.getElementById('statusBadgeContainer').innerHTML = `
+          <span class="px-3 py-1 rounded-full text-sm font-bold ${statusInfo.color}">
+            ${statusInfo.label}
+          </span>
+        `;
+
+        // 2. Basic Info
+        document.getElementById('logDate').innerText = data.date;
+        document.getElementById('logWeather').innerText = `${data.weather || '-'} / ${data.temperature || '-'}`;
+
+        // 3. Tasks
+        const taskList = document.getElementById('taskList');
+        if (data.work_log_tasks && data.work_log_tasks.length > 0) {
+          // Sort by order_index
+          const sortedTasks = data.work_log_tasks.sort((a, b) => a.order_index - b.order_index);
+          taskList.innerHTML = sortedTasks
+            .map(
+              (t) => `
+                <div class="flex items-start gap-3 p-3 bg-gray-50 rounded border border-gray-100">
+                  <div class="mt-1">
+                    ${
+                      t.is_completed
+                        ? '<i class="fas fa-check-square text-green-600 text-lg"></i>'
+                        : '<i class="far fa-square text-gray-400 text-lg"></i>'
+                    }
+                  </div>
+                  <div>
+                    <div class="font-bold text-gray-700 text-sm">${t.time_slot}</div>
+                    <div class="text-gray-800">${t.task_description}</div>
+                  </div>
+                </div>
+              `,
+            )
+            .join('');
+        } else {
+          taskList.innerHTML = '<p class="text-gray-500 italic">등록된 업무가 없습니다.</p>';
+        }
+
+        // 4. Cleaning Areas
+        const cleaningList = document.getElementById('cleaningList');
+        if (data.work_log_cleanings && data.work_log_cleanings.length > 0) {
+          cleaningList.innerHTML = data.work_log_cleanings
+            .map(
+              (c) => `
+                <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                  <h3 class="font-bold text-gray-800 mb-3 text-lg">${c.area_name}</h3>
+                  <div class="grid grid-cols-2 gap-4">
+                    <div>
+                      ${
+                        c.before_photo_url
+                          ? `
+                        <div class="photo-container">
+                          <img src="${c.before_photo_url}" onclick="window.open(this.src)" style="cursor: pointer;">
+                          <div class="photo-label">Before</div>
+                        </div>
+                      `
+                          : '<div class="h-32 bg-gray-200 rounded flex items-center justify-center text-gray-400 text-sm">사진 없음</div>'
+                      }
+                    </div>
+                    <div>
+                      ${
+                        c.after_photo_url
+                          ? `
+                        <div class="photo-container">
+                          <img src="${c.after_photo_url}" onclick="window.open(this.src)" style="cursor: pointer;">
+                          <div class="photo-label">After</div>
+                        </div>
+                      `
+                          : '<div class="h-32 bg-gray-200 rounded flex items-center justify-center text-gray-400 text-sm">사진 없음</div>'
+                      }
+                    </div>
+                  </div>
+                </div>
+              `,
+            )
+            .join('');
+        } else {
+          cleaningList.innerHTML = '<p class="text-gray-500 italic">등록된 청소 구역이 없습니다.</p>';
+        }
+
+        // 5. Notes
+        document.getElementById('specialNotes').innerText = data.special_notes || '특이사항 없음';
+
+        // 6. Approval History
+        if (data.work_log_approvals && data.work_log_approvals.length > 0) {
+          document.getElementById('approvalSection').classList.remove('hidden');
+          const sortedApprovals = data.work_log_approvals.sort(
+            (a, b) => new Date(a.approved_at) - new Date(b.approved_at),
+          );
+          document.getElementById('approvalList').innerHTML = sortedApprovals
+            .map(
+              (app) => `
+                <div class="flex gap-3 p-3 bg-gray-50 rounded border-l-4 ${
+                  app.status === 'rejected' ? 'border-red-500' : 'border-green-500'
+                }">
+                  <div class="mt-1">
+                    ${
+                      app.status === 'rejected'
+                        ? '<i class="fas fa-times-circle text-red-500 text-xl"></i>'
+                        : '<i class="fas fa-check-circle text-green-500 text-xl"></i>'
+                    }
+                  </div>
+                  <div>
+                    <div class="font-bold text-gray-800">
+                      ${getRoleName(app.approver_role)}
+                      <span class="text-xs font-normal text-gray-500 ml-2">
+                        ${new Date(app.approved_at).toLocaleString()}
+                      </span>
+                    </div>
+                    <div class="text-sm text-gray-600 mt-1">${app.comments || '의견 없음'}</div>
+                  </div>
+                </div>
+              `,
+            )
+            .join('');
+        }
+
+        // 7. Action Buttons Logic
+        checkPermissions(data);
+      }
+
+      function getRoleName(role) {
+        if (role === 'center_manager') return '센터장';
+        if (role === 'team_leader') return '관리팀장';
+        if (role === 'general_manager') return '관리소장';
+        return role;
+      }
+
+      function checkPermissions(data) {
+        const actionButtons = document.getElementById('actionButtons');
+        let showButtons = false;
+
+        // Logic for showing buttons based on status and user role
+        if (data.status === 'pending_team_leader' && currentUser.role === 'team_leader') {
+          showButtons = true;
+        } else if (data.status === 'pending_manager' && currentUser.role === 'general_manager') {
+          showButtons = true;
+        }
+
+        if (showButtons) {
+          actionButtons.classList.remove('hidden');
+          // Add padding to body so content isn't hidden behind fixed buttons
+          document.body.style.paddingBottom = '100px';
+        }
+      }
+
+      // ==================== MODAL & ACTIONS ====================
+      function openModal(action) {
+        currentAction = action;
+        const modal = document.getElementById('approvalModal');
+        const title = document.getElementById('modalTitle');
+        const desc = document.getElementById('modalDesc');
+        const label = document.getElementById('commentLabel');
+        const confirmBtn = document.getElementById('modalConfirmBtn');
+
+        if (action === 'approve') {
+          title.innerText = '승인 확인';
+          desc.innerText = '이 업무 일지를 승인하시겠습니까?';
+          label.innerText = '의견 (선택)';
+          confirmBtn.innerText = '승인';
+          confirmBtn.className = 'px-4 py-2 bg-green-600 text-white rounded font-bold hover:bg-green-700 transition';
+        } else {
+          title.innerText = '반려 확인';
+          desc.innerText = '이 업무 일지를 반려하시겠습니까?';
+          label.innerText = '반려 사유 (필수)';
+          confirmBtn.innerText = '반려';
+          confirmBtn.className = 'px-4 py-2 bg-red-600 text-white rounded font-bold hover:bg-red-700 transition';
+        }
+
+        document.getElementById('approvalComment').value = '';
+        modal.classList.add('active');
+      }
+
+      function closeModal() {
+        document.getElementById('approvalModal').classList.remove('active');
+      }
+
+      async function submitDecision() {
+        const comment = document.getElementById('approvalComment').value;
+
+        if (currentAction === 'reject' && !comment.trim()) {
+          alert('반려 사유를 반드시 입력해주세요.');
+          return;
+        }
+
+        document.getElementById('loadingOverlay').classList.remove('hidden');
+        closeModal();
+
+        try {
+          // Determine next status
+          let nextStatus = 'rejected';
+          if (currentAction === 'approve') {
+            if (workLogData.status === 'pending_team_leader') {
+              nextStatus = 'pending_manager';
+            } else if (workLogData.status === 'pending_manager') {
+              nextStatus = 'approved';
+            }
+          }
+
+          // 1. Insert Approval Record
+          const { error: approvalError } = await supabase.from('work_log_approvals').insert({
+            work_log_id: workLogData.id,
+            approver_role: currentUser.role,
+            // approver_id: currentUser.id, // Uncomment if auth is ready
+            status: currentAction === 'approve' ? 'approved' : 'rejected',
+            comments: comment,
+          });
+
+          if (approvalError) throw approvalError;
+
+          // 2. Update Work Log Status
+          const { error: updateError } = await supabase
+            .from('work_logs')
+            .update({ status: nextStatus })
+            .eq('id', workLogData.id);
+
+          if (updateError) throw updateError;
+
+          alert('성공적으로 처리되었습니다.');
+          window.location.reload();
+        } catch (error) {
+          console.error('Error:', error);
+          alert('처리 중 오류가 발생했습니다.');
+          document.getElementById('loadingOverlay').classList.add('hidden');
+        }
+      }
+    </script>
+  </body>
+</html>
