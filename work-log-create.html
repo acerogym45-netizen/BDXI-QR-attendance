@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>업무 일지 작성</title>
+    <!-- Tailwind CSS (기존 work.html 스타일 유지) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+      .photo-preview {
+        position: relative;
+        display: inline-block;
+        width: 100%;
+        height: 200px;
+      }
+      .photo-preview img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 8px;
+      }
+      .photo-preview .remove-btn {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        background: rgba(239, 68, 68, 0.9);
+        color: white;
+        border-radius: 50%;
+        width: 28px;
+        height: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      }
+      .step-active {
+        display: block;
+        animation: fadeIn 0.3s ease-in-out;
+      }
+      .step-hidden {
+        display: none;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        color: white;
+        font-size: 1.2rem;
+        flex-direction: column;
+        gap: 1rem;
+      }
+    </style>
+  </head>
+  <body class="bg-gray-50 text-gray-800">
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay hidden">
+      <i class="fas fa-spinner fa-spin fa-3x"></i>
+      <span id="loadingMessage">처리 중입니다...</span>
+    </div>
+
+    <div class="min-h-screen pb-20">
+      <!-- Header -->
+      <div class="bg-gradient-to-r from-green-600 to-green-700 text-white p-4 shadow-lg sticky top-0 z-10">
+        <div class="max-w-4xl mx-auto flex justify-between items-center">
+          <div>
+            <h1 class="text-2xl font-bold flex items-center gap-2">
+              <i class="fas fa-clipboard-list"></i>
+              업무 일지 작성
+            </h1>
+            <p class="text-green-100 text-sm mt-1">자이안센터 일일 업무 보고서</p>
+          </div>
+          <a href="work-log-list.html" class="text-white hover:text-green-200"> <i class="fas fa-list"></i> 목록 </a>
+        </div>
+      </div>
+
+      <div class="max-w-4xl mx-auto p-4">
+        <!-- Progress Bar -->
+        <div class="mb-6 bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+          <div
+            id="progressBar"
+            class="bg-green-600 h-2.5 rounded-full transition-all duration-300"
+            style="width: 20%"
+          ></div>
+        </div>
+
+        <!-- Step 1: Basic Info -->
+        <div id="step1" class="step-active bg-white rounded-lg shadow-md p-6 mb-4">
+          <div class="flex items-center gap-2 mb-6 border-b pb-4">
+            <div class="w-8 h-8 bg-green-600 text-white rounded-full flex items-center justify-center font-bold">1</div>
+            <h2 class="text-xl font-bold text-gray-800">기본 정보</h2>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label class="block text-gray-700 text-sm font-bold mb-2">
+                <i class="fas fa-calendar-alt mr-1"></i> 날짜
+              </label>
+              <input
+                type="date"
+                id="logDate"
+                class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-gray-50"
+                readonly
+              />
+            </div>
+
+            <div>
+              <label class="block text-gray-700 text-sm font-bold mb-2">
+                <i class="fas fa-user mr-1"></i> 작성자
+              </label>
+              <input
+                type="text"
+                value="센터장 (관리자)"
+                class="w-full p-3 border border-gray-300 rounded-lg bg-gray-100 text-gray-500"
+                readonly
+              />
+            </div>
+
+            <div>
+              <label class="block text-gray-700 text-sm font-bold mb-2">
+                <i class="fas fa-cloud-sun mr-1"></i> 날씨
+              </label>
+              <select
+                id="weather"
+                class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+              >
+                <option value="">선택하세요</option>
+                <option value="맑음">☀️ 맑음</option>
+                <option value="흐림">☁️ 흐림</option>
+                <option value="비">🌧️ 비</option>
+                <option value="눈">❄️ 눈</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-gray-700 text-sm font-bold mb-2">
+                <i class="fas fa-temperature-high mr-1"></i> 온도
+              </label>
+              <input
+                type="text"
+                id="temperature"
+                placeholder="예: 25°C"
+                class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+              />
+            </div>
+          </div>
+
+          <div class="mt-8 flex justify-end">
+            <button
+              onclick="nextStep(2)"
+              class="px-6 py-3 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700 shadow-md transition transform hover:scale-105"
+            >
+              다음 단계 <i class="fas fa-arrow-right ml-2"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Step 2: Time Table -->
+        <div id="step2" class="step-hidden bg-white rounded-lg shadow-md p-6 mb-4">
+          <div class="flex items-center gap-2 mb-6 border-b pb-4">
+            <div class="w-8 h-8 bg-green-600 text-white rounded-full flex items-center justify-center font-bold">2</div>
+            <h2 class="text-xl font-bold text-gray-800">타임테이블 업무 목록</h2>
+          </div>
+
+          <div id="taskList" class="space-y-4 mb-6">
+            <!-- Tasks will be added here dynamically -->
+          </div>
+
+          <button
+            onclick="addTask()"
+            class="w-full py-3 border-2 border-dashed border-green-300 text-green-600 rounded-lg font-bold hover:bg-green-50 transition mb-6"
+          >
+            <i class="fas fa-plus mr-2"></i> 업무 추가
+          </button>
+
+          <div class="flex justify-between mt-8">
+            <button
+              onclick="prevStep(1)"
+              class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-bold hover:bg-gray-300"
+            >
+              <i class="fas fa-arrow-left mr-2"></i> 이전
+            </button>
+            <button
+              onclick="nextStep(3)"
+              class="px-6 py-3 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700 shadow-md"
+            >
+              다음 단계 <i class="fas fa-arrow-right ml-2"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Step 3: Cleaning Areas -->
+        <div id="step3" class="step-hidden bg-white rounded-lg shadow-md p-6 mb-4">
+          <div class="flex items-center gap-2 mb-6 border-b pb-4">
+            <div class="w-8 h-8 bg-green-600 text-white rounded-full flex items-center justify-center font-bold">3</div>
+            <h2 class="text-xl font-bold text-gray-800">청소 구역 및 사진</h2>
+          </div>
+
+          <div class="mb-6">
+            <label class="block text-gray-700 text-sm font-bold mb-2">청소 구역 추가</label>
+            <div class="flex flex-wrap gap-2" id="areaButtons">
+              <!-- Area buttons will be generated here -->
+            </div>
+          </div>
+
+          <div id="cleaningAreasList" class="space-y-6">
+            <!-- Selected cleaning areas will appear here -->
+            <div
+              id="emptyAreaMessage"
+              class="text-center py-8 text-gray-500 bg-gray-50 rounded-lg border border-dashed border-gray-300"
+            >
+              <i class="fas fa-broom text-4xl mb-3 text-gray-300"></i>
+              <p>위 버튼을 눌러 청소 구역을 추가해주세요</p>
+            </div>
+          </div>
+
+          <div class="flex justify-between mt-8">
+            <button
+              onclick="prevStep(2)"
+              class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-bold hover:bg-gray-300"
+            >
+              <i class="fas fa-arrow-left mr-2"></i> 이전
+            </button>
+            <button
+              onclick="nextStep(4)"
+              class="px-6 py-3 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700 shadow-md"
+            >
+              다음 단계 <i class="fas fa-arrow-right ml-2"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Step 4: Special Notes -->
+        <div id="step4" class="step-hidden bg-white rounded-lg shadow-md p-6 mb-4">
+          <div class="flex items-center gap-2 mb-6 border-b pb-4">
+            <div class="w-8 h-8 bg-green-600 text-white rounded-full flex items-center justify-center font-bold">4</div>
+            <h2 class="text-xl font-bold text-gray-800">특이사항</h2>
+          </div>
+
+          <div class="mb-6">
+            <label class="block text-gray-700 text-sm font-bold mb-2"> 추가 보고 사항 </label>
+            <textarea
+              id="specialNotes"
+              rows="6"
+              class="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 resize-none"
+              placeholder="특이사항이나 전달할 내용을 입력하세요..."
+            ></textarea>
+          </div>
+
+          <div class="flex justify-between mt-8">
+            <button
+              onclick="prevStep(3)"
+              class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-bold hover:bg-gray-300"
+            >
+              <i class="fas fa-arrow-left mr-2"></i> 이전
+            </button>
+            <button
+              onclick="nextStep(5)"
+              class="px-6 py-3 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700 shadow-md"
+            >
+              검토 및 제출 <i class="fas fa-check ml-2"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Step 5: Review & Submit -->
+        <div id="step5" class="step-hidden bg-white rounded-lg shadow-md p-6 mb-4">
+          <div class="flex items-center gap-2 mb-6 border-b pb-4">
+            <div class="w-8 h-8 bg-green-600 text-white rounded-full flex items-center justify-center font-bold">5</div>
+            <h2 class="text-xl font-bold text-gray-800">검토 및 제출</h2>
+          </div>
+
+          <div class="bg-gray-50 p-6 rounded-lg space-y-4 mb-6 text-sm">
+            <div class="flex justify-between border-b pb-2">
+              <span class="font-bold text-gray-600">날짜</span>
+              <span id="summaryDate" class="font-bold"></span>
+            </div>
+            <div class="flex justify-between border-b pb-2">
+              <span class="font-bold text-gray-600">날씨/온도</span>
+              <span id="summaryWeather"></span>
+            </div>
+            <div class="flex justify-between border-b pb-2">
+              <span class="font-bold text-gray-600">등록된 업무</span>
+              <span id="summaryTaskCount">0 건</span>
+            </div>
+            <div class="flex justify-between border-b pb-2">
+              <span class="font-bold text-gray-600">청소 구역</span>
+              <span id="summaryAreaCount">0 곳</span>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <button
+              onclick="submitWorkLog('draft')"
+              class="py-4 bg-gray-600 text-white rounded-lg font-bold hover:bg-gray-700 flex flex-col items-center justify-center gap-1"
+            >
+              <i class="fas fa-save text-xl"></i>
+              <span>임시 저장</span>
+            </button>
+            <button
+              onclick="submitWorkLog('pending_team_leader')"
+              class="py-4 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700 shadow-lg flex flex-col items-center justify-center gap-1"
+            >
+              <i class="fas fa-paper-plane text-xl"></i>
+              <span>제출하기</span>
+            </button>
+          </div>
+
+          <button onclick="prevStep(4)" class="w-full mt-4 py-3 text-gray-500 hover:text-gray-700 font-medium">
+            <i class="fas fa-arrow-left mr-1"></i> 수정하기
+          </button>
+        </div>
+
+        <!-- Success Screen -->
+        <div id="successScreen" class="step-hidden bg-white rounded-lg shadow-md p-8 text-center">
+          <div
+            class="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-4xl mx-auto mb-6"
+          >
+            <i class="fas fa-check"></i>
+          </div>
+          <h2 class="text-2xl font-bold text-gray-800 mb-2">제출 완료!</h2>
+          <p class="text-gray-600 mb-8">업무 일지가 성공적으로 저장되었습니다.</p>
+
+          <div class="flex flex-col gap-3">
+            <a
+              href="work-log-list.html"
+              class="w-full py-3 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700 shadow-md"
+            >
+              목록으로 이동
+            </a>
+            <button
+              onclick="location.reload()"
+              class="w-full py-3 bg-white border border-gray-300 text-gray-700 rounded-lg font-bold hover:bg-gray-50"
+            >
+              새 일지 작성
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hidden File Input for Photos -->
+    <input type="file" id="globalPhotoInput" accept="image/*" capture="environment" class="hidden" />
+
+    <script>
+      // ==================== CONFIGURATION ====================
+      const SUPABASE_URL = 'https://qgpqhtuynxhmgawakjxe.supabase.co';
+      const SUPABASE_ANON_KEY = 'sb_publishable_ujXj0mLf1casiQdVkc0fCA_G6exymqG';
+      const STORAGE_BUCKET = 'work-log-photos'; // Public bucket needs to be created
+
+      // Mock current user (In real app, get from auth)
+      const currentUser = {
+        id: 'temp-user-id', // TODO: Replace with real user ID
+        name: '센터장',
+        role: 'center_manager',
+      };
+
+      const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+      // ==================== STATE ====================
+      let currentStep = 1;
+      let tasks = [];
+      let cleanings = []; // { id, area, beforeUrl, afterUrl, beforeFile, afterFile }
+      let activePhotoUpload = null; // { cleaningId, type }
+
+      const CLEANING_AREAS = [
+        '골프장',
+        '수영장',
+        '남자 사우나',
+        '여자 사우나',
+        '카페테리아',
+        '헬스장',
+        '다목적 체육관',
+        '게스트하우스',
+        '화장실',
+        '기타 구역(로비,홀 등)',
+      ];
+
+      // ==================== INITIALIZATION ====================
+      window.onload = function () {
+        // Set today's date
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('logDate').value = today;
+
+        // Add initial task
+        addTask();
+
+        // Initialize Area Buttons
+        renderAreaButtons();
+
+        // Setup Photo Input Listener
+        document.getElementById('globalPhotoInput').addEventListener('change', handlePhotoFileSelect);
+      };
+
+      // ==================== NAVIGATION ====================
+      function nextStep(step) {
+        if (!validateStep(step - 1)) return;
+        showStep(step);
+      }
+
+      function prevStep(step) {
+        showStep(step);
+      }
+
+      function showStep(step) {
+        // Hide all steps
+        for (let i = 1; i <= 5; i++) {
+          document.getElementById(`step${i}`).classList.remove('step-active');
+          document.getElementById(`step${i}`).classList.add('step-hidden');
+        }
+        document.getElementById('successScreen').classList.add('step-hidden');
+
+        // Show target step
+        document.getElementById(`step${step}`).classList.remove('step-hidden');
+        document.getElementById(`step${step}`).classList.add('step-active');
+
+        // Update Progress Bar
+        const progress = (step / 5) * 100;
+        document.getElementById('progressBar').style.width = `${progress}%`;
+
+        currentStep = step;
+
+        // Update Summary on Step 5
+        if (step === 5) updateSummary();
+      }
+
+      function validateStep(step) {
+        if (step === 1) {
+          const weather = document.getElementById('weather').value;
+          if (!weather) {
+            alert('날씨를 선택해주세요.');
+            return false;
+          }
+        }
+        if (step === 2) {
+          if (tasks.length === 0) {
+            alert('최소 하나의 업무를 추가해주세요.');
+            return false;
+          }
+          const invalidTask = tasks.find((t) => !t.time || !t.desc);
+          if (invalidTask) {
+            alert('모든 업무의 시간대와 내용을 입력해주세요.');
+            return false;
+          }
+        }
+        return true;
+      }
+
+      // ==================== TASK MANAGEMENT ====================
+      function addTask() {
+        const taskId = Date.now();
+        tasks.push({ id: taskId, time: '', desc: '', completed: false });
+        renderTasks();
+      }
+
+      function removeTask(id) {
+        tasks = tasks.filter((t) => t.id !== id);
+        renderTasks();
+      }
+
+      function updateTask(id, field, value) {
+        const task = tasks.find((t) => t.id === id);
+        if (task) task[field] = value;
+      }
+
+      function renderTasks() {
+        const container = document.getElementById('taskList');
+        container.innerHTML = '';
+
+        tasks.forEach((task, index) => {
+          const div = document.createElement('div');
+          div.className = 'flex gap-3 items-start p-4 bg-gray-50 rounded-lg border border-gray-200';
+          div.innerHTML = `
+                    <div class="flex-shrink-0 w-8 h-8 bg-green-600 text-white rounded-full flex items-center justify-center font-bold text-sm mt-1">
+                        ${index + 1}
+                    </div>
+                    <div class="flex-1 grid grid-cols-1 gap-3">
+                        <input type="text" placeholder="시간 (예: 09:00-10:00)" value="${task.time}" 
+                            onchange="updateTask(${task.id}, 'time', this.value)"
+                            class="w-full p-2 border border-gray-300 rounded focus:ring-1 focus:ring-green-500 text-sm">
+                        <input type="text" placeholder="업무 내용" value="${task.desc}" 
+                            onchange="updateTask(${task.id}, 'desc', this.value)"
+                            class="w-full p-2 border border-gray-300 rounded focus:ring-1 focus:ring-green-500 text-sm">
+                    </div>
+                    <div class="flex flex-col gap-2 items-center">
+                        <label class="flex items-center gap-1 text-xs text-gray-600 cursor-pointer">
+                            <input type="checkbox" ${task.completed ? 'checked' : ''} 
+                                onchange="updateTask(${task.id}, 'completed', this.checked)"
+                                class="w-4 h-4 text-green-600 rounded">
+                            완료
+                        </label>
+                        <button onclick="removeTask(${task.id})" class="text-red-500 hover:bg-red-50 p-1 rounded">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+          container.appendChild(div);
+        });
+      }
+
+      // ==================== CLEANING AREA MANAGEMENT ====================
+      function renderAreaButtons() {
+        const container = document.getElementById('areaButtons');
+        container.innerHTML = CLEANING_AREAS.map(
+          (area) => `
+                <button onclick="addCleaningArea('${area}')" 
+                    class="px-3 py-2 bg-white border border-green-200 text-green-700 rounded-full text-sm hover:bg-green-50 transition shadow-sm">
+                    + ${area}
+                </button>
+            `,
+        ).join('');
+      }
+
+      function addCleaningArea(areaName) {
+        if (cleanings.find((c) => c.area === areaName)) {
+          alert('이미 추가된 구역입니다.');
+          return;
+        }
+
+        const id = Date.now();
+        cleanings.push({
+          id,
+          area: areaName,
+          beforeUrl: null,
+          afterUrl: null,
+          beforeFile: null,
+          afterFile: null,
+        });
+        renderCleaningAreas();
+      }
+
+      function removeCleaningArea(id) {
+        cleanings = cleanings.filter((c) => c.id !== id);
+        renderCleaningAreas();
+      }
+
+      function renderCleaningAreas() {
+        const container = document.getElementById('cleaningAreasList');
+        const emptyMsg = document.getElementById('emptyAreaMessage');
+
+        if (cleanings.length === 0) {
+          container.innerHTML = '';
+          container.appendChild(emptyMsg);
+          emptyMsg.style.display = 'block';
+          return;
+        }
+
+        emptyMsg.style.display = 'none';
+        container.innerHTML = cleanings
+          .map(
+            (c) => `
+                <div class="border border-gray-300 rounded-lg p-4 bg-white shadow-sm">
+                    <div class="flex justify-between items-center mb-4 pb-2 border-b">
+                        <h3 class="font-bold text-lg text-gray-800">${c.area}</h3>
+                        <button onclick="removeCleaningArea(${c.id})" class="text-red-500 hover:bg-red-50 p-2 rounded-full">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <!-- Before Photo -->
+                        <div>
+                            <p class="text-xs font-bold text-gray-500 mb-2 uppercase">작업 전 (Before)</p>
+                            ${
+                              c.beforeUrl
+                                ? `
+                                <div class="photo-preview">
+                                    <img src="${c.beforeUrl}">
+                                    <div class="remove-btn" onclick="removePhoto(${c.id}, 'before')">
+                                        <i class="fas fa-times"></i>
+                                    </div>
+                                </div>
+                            `
+                                : `
+                                <button onclick="triggerPhotoUpload(${c.id}, 'before')" 
+                                    class="w-full h-[150px] border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center gap-2 hover:bg-gray-50 hover:border-green-400 transition text-gray-400">
+                                    <i class="fas fa-camera text-2xl"></i>
+                                    <span class="text-xs">사진 촬영/업로드</span>
+                                </button>
+                            `
+                            }
+                        </div>
+
+                        <!-- After Photo -->
+                        <div>
+                            <p class="text-xs font-bold text-gray-500 mb-2 uppercase">작업 후 (After)</p>
+                            ${
+                              c.afterUrl
+                                ? `
+                                <div class="photo-preview">
+                                    <img src="${c.afterUrl}">
+                                    <div class="remove-btn" onclick="removePhoto(${c.id}, 'after')">
+                                        <i class="fas fa-times"></i>
+                                    </div>
+                                </div>
+                            `
+                                : `
+                                <button onclick="triggerPhotoUpload(${c.id}, 'after')" 
+                                    class="w-full h-[150px] border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center gap-2 hover:bg-gray-50 hover:border-green-400 transition text-gray-400">
+                                    <i class="fas fa-camera text-2xl"></i>
+                                    <span class="text-xs">사진 촬영/업로드</span>
+                                </button>
+                            `
+                            }
+                        </div>
+                    </div>
+                </div>
+            `,
+          )
+          .join('');
+      }
+
+      // ==================== PHOTO UPLOAD ====================
+      function triggerPhotoUpload(cleaningId, type) {
+        activePhotoUpload = { cleaningId, type };
+        document.getElementById('globalPhotoInput').click();
+      }
+
+      function handlePhotoFileSelect(event) {
+        const file = event.target.files[0];
+        if (!file || !activePhotoUpload) return;
+
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          const cleaning = cleanings.find((c) => c.id === activePhotoUpload.cleaningId);
+          if (cleaning) {
+            if (activePhotoUpload.type === 'before') {
+              cleaning.beforeUrl = e.target.result; // Preview URL
+              cleaning.beforeFile = file; // Actual file for upload
+            } else {
+              cleaning.afterUrl = e.target.result;
+              cleaning.afterFile = file;
+            }
+            renderCleaningAreas();
+          }
+        };
+        reader.readAsDataURL(file);
+        event.target.value = ''; // Reset input
+      }
+
+      function removePhoto(cleaningId, type) {
+        const cleaning = cleanings.find((c) => c.id === cleaningId);
+        if (cleaning) {
+          if (type === 'before') {
+            cleaning.beforeUrl = null;
+            cleaning.beforeFile = null;
+          } else {
+            cleaning.afterUrl = null;
+            cleaning.afterFile = null;
+          }
+          renderCleaningAreas();
+        }
+      }
+
+      // ==================== SUBMISSION ====================
+      function updateSummary() {
+        document.getElementById('summaryDate').innerText = document.getElementById('logDate').value;
+        const weather = document.getElementById('weather').value;
+        const temp = document.getElementById('temperature').value;
+        document.getElementById('summaryWeather').innerText = `${weather} / ${temp || '-'}`;
+        document.getElementById('summaryTaskCount').innerText = `${tasks.length} 건`;
+        document.getElementById('summaryAreaCount').innerText = `${cleanings.length} 곳`;
+      }
+
+      async function uploadFileToSupabase(file) {
+        if (!file) return null;
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
+        const filePath = `temp/${fileName}`;
+
+        const { data, error } = await supabase.storage.from(STORAGE_BUCKET).upload(filePath, file);
+
+        if (error) {
+          console.error('Upload Error:', error);
+          throw error;
+        }
+
+        const {
+          data: { publicUrl },
+        } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(filePath);
+
+        return publicUrl;
+      }
+
+      async function submitWorkLog(status) {
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        loadingOverlay.classList.remove('hidden');
+
+        try {
+          // 1. Upload all photos first
+          document.getElementById('loadingMessage').innerText = '사진 업로드 중...';
+
+          for (const cleaning of cleanings) {
+            if (cleaning.beforeFile) {
+              cleaning.uploadedBeforeUrl = await uploadFileToSupabase(cleaning.beforeFile);
+            }
+            if (cleaning.afterFile) {
+              cleaning.uploadedAfterUrl = await uploadFileToSupabase(cleaning.afterFile);
+            }
+          }
+
+          // 2. Create Work Log
+          document.getElementById('loadingMessage').innerText = '데이터 저장 중...';
+
+          const logData = {
+            date: document.getElementById('logDate').value,
+            author_id: currentUser.id, // Replace with real auth ID
+            weather: document.getElementById('weather').value,
+            temperature: document.getElementById('temperature').value,
+            special_notes: document.getElementById('specialNotes').value,
+            status: status,
+          };
+
+          const { data: workLog, error: logError } = await supabase.from('work_logs').insert(logData).select().single();
+
+          if (logError) throw logError;
+
+          const workLogId = workLog.id;
+
+          // 3. Insert Tasks
+          if (tasks.length > 0) {
+            const tasksData = tasks.map((t, idx) => ({
+              work_log_id: workLogId,
+              time_slot: t.time,
+              task_description: t.desc,
+              is_completed: t.completed,
+              order_index: idx,
+            }));
+
+            const { error: tasksError } = await supabase.from('work_log_tasks').insert(tasksData);
+
+            if (tasksError) throw tasksError;
+          }
+
+          // 4. Insert Cleanings
+          if (cleanings.length > 0) {
+            const cleaningsData = cleanings.map((c) => ({
+              work_log_id: workLogId,
+              area_name: c.area,
+              before_photo_url: c.uploadedBeforeUrl || null,
+              after_photo_url: c.uploadedAfterUrl || null,
+            }));
+
+            const { error: cleaningsError } = await supabase.from('work_log_cleanings').insert(cleaningsData);
+
+            if (cleaningsError) throw cleaningsError;
+          }
+
+          // Success
+          loadingOverlay.classList.add('hidden');
+
+          // Hide step 5, Show success
+          document.getElementById('step5').classList.remove('step-active');
+          document.getElementById('step5').classList.add('step-hidden');
+          document.getElementById('successScreen').classList.remove('step-hidden');
+          document.getElementById('successScreen').classList.add('step-active');
+        } catch (error) {
+          console.error('Submission Error:', error);
+          loadingOverlay.classList.add('hidden');
+          alert('저장 중 오류가 발생했습니다: ' + error.message);
+        }
+      }
+    </script>
+  </body>
+</html>
