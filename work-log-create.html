@@ -614,13 +614,6 @@
           // 5. Insert Cleanings (using uploaded URLs)
           const cleanings = [];
           for (const area of selectedAreas) {
-            // Get URLs from state (updated by uploadPhoto function)
-            // Note: In a real app, uploadPhoto should return the URL and we map it here.
-            // But for simplicity, we rely on the state being updated or we need to track it better.
-            // Since uploadPhoto updates areaPhotos[area][type] with the public URL, we use that.
-            // Wait, handleFileSelect set it to base64 preview. We need to ensure it's the URL.
-            // Let's modify logic slightly: uploadPhoto should update the state to the remote URL.
-
             cleanings.push({
               work_log_id: logId,
               area_name: area,
