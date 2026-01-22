@@ -143,30 +143,7 @@
               </select>
             </div>
 
-            <div class="grid grid-cols-2 gap-4">
-              <div>
-                <label class="block text-gray-700 font-bold mb-2">날씨</label>
-                <select
-                  id="logWeather"
-                  class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                >
-                  <option value="맑음">☀️ 맑음</option>
-                  <option value="구름조금">⛅ 구름조금</option>
-                  <option value="흐림">☁️ 흐림</option>
-                  <option value="비">🌧️ 비</option>
-                  <option value="눈">❄️ 눈</option>
-                </select>
-              </div>
-              <div>
-                <label class="block text-gray-700 font-bold mb-2">온도 (°C)</label>
-                <input
-                  type="text"
-                  id="logTemp"
-                  placeholder="예: 24"
-                  class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                />
-              </div>
-            </div>
+
           </div>
         </div>
 
@@ -335,7 +312,7 @@
       };
 
       // ==================== NAVIGATION ====================
-      function nextStep() {
+      window.nextStep = function() {
         if (!validateStep(currentStep)) return;
 
         if (currentStep < totalSteps) {
@@ -354,7 +331,7 @@
         }
       }
 
-      function prevStep() {
+      window.prevStep = function() {
         if (currentStep > 1) {
           currentStep--;
           updateUI();
@@ -432,7 +409,7 @@
       }
 
       // ==================== STEP 2: TASKS ====================
-      function addTask() {
+      window.addTask = function() {
         const taskList = document.getElementById('taskList');
         const id = Date.now();
 
@@ -457,13 +434,13 @@
         taskList.insertAdjacentHTML('beforeend', html);
       }
 
-      function removeTask(id) {
+      window.removeTask = function(id) {
         const el = document.getElementById(`task-${id}`);
         if (el) el.remove();
       }
 
       // ==================== STEP 3: AREAS ====================
-      function renderAreaGrid() {
+      window.renderAreaGrid = function() {
         const grid = document.getElementById('areaGrid');
         grid.innerHTML = CLEANING_AREAS.map(
           (area) => `
@@ -478,7 +455,7 @@
         ).join('');
       }
 
-      function toggleArea(area, btn) {
+      window.toggleArea = function(area, btn) {
         if (selectedAreas.has(area)) {
           selectedAreas.delete(area);
           btn.className =
@@ -493,7 +470,7 @@
       }
 
       // ==================== STEP 4: PHOTOS ====================
-      function renderPhotoUploaders() {
+      window.renderPhotoUploaders = function() {
         const list = document.getElementById('photoUploadList');
         list.innerHTML = '';
 
@@ -551,11 +528,11 @@
         });
       }
 
-      function triggerFile(type, area) {
+      window.triggerFile = function(type, area) {
         document.getElementById(`file-${type}-${area}`).click();
       }
 
-      function handleFileSelect(event, type, area) {
+      window.handleFileSelect = function(event, type, area) {
         const file = event.target.files[0];
         if (file) {
           // Preview immediately
@@ -581,7 +558,7 @@
       }
 
       // ==================== SUBMISSION ====================
-      async function submitLog(actionType) {
+      window.submitLog = async function(actionType) {
         showLoading(true);
         try {
           // 1. Upload Photos First
@@ -599,8 +576,8 @@
           const workLog = {
             date: document.getElementById('logDate').value,
             author_id: 'temp-user-id', // Assuming auth is handled elsewhere or mock
-            weather: document.getElementById('logWeather').value,
-            temperature: document.getElementById('logTemp').value,
+            weather: null,
+            temperature: null,
             special_notes: document.getElementById('specialNotes').value,
             status: actionType === 'submit' ? 'pending_team_leader' : 'draft',
             created_at: new Date().toISOString(),
