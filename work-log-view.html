@@ -9,6 +9,9 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" />
     <!-- Supabase JS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- jsPDF Library for PDF Generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
       .loading-overlay {
         position: fixed;
@@ -68,7 +71,7 @@
   </head>
   <body class="bg-gray-50 text-gray-800">
     <!-- Loading Overlay -->
-    <div id="loadingOverlay" class="loading-overlay">
+    <div id="loadingOverlay" class="loading-overlay hidden">
       <i class="fas fa-spinner fa-spin fa-3x text-green-600"></i>
       <span class="text-green-800 font-semibold">데이터를 불러오는 중...</span>
     </div>
@@ -95,6 +98,16 @@
       </div>
 
       <div class="max-w-4xl mx-auto p-4 space-y-6">
+        <!-- PDF Download Button -->
+        <div class="flex justify-center mb-6">
+          <button
+            onclick="downloadPDF()"
+            class="bg-blue-600 text-white px-8 py-3 rounded-lg font-bold hover:bg-blue-700 transition shadow-md flex items-center gap-2"
+          >
+            <i class="fas fa-file-pdf"></i> PDF 다운로드
+          </button>
+        </div>
+
         <!-- 1. Basic Info -->
         <div class="bg-white rounded-lg shadow-md p-6">
           <h2 class="text-lg font-bold text-gray-800 border-b pb-2 mb-4">
@@ -331,7 +344,7 @@
           // 3. Tasks
           const taskList = document.getElementById('taskList');
           if (data.work_log_tasks && data.work_log_tasks.length > 0) {
-            const sortedTasks = data.work_log_tasks; // already sorted by query
+            const sortedTasks = data.work_log_tasks;
             taskList.innerHTML = sortedTasks
               .map(
                 (t) => `
@@ -403,7 +416,7 @@
           // 6. Approval History
           if (data.work_log_approvals && data.work_log_approvals.length > 0) {
             document.getElementById('approvalSection').classList.remove('hidden');
-            const sortedApprovals = data.work_log_approvals; // already sorted
+            const sortedApprovals = data.work_log_approvals;
             document.getElementById('approvalList').innerHTML = sortedApprovals
               .map(
                 (app) => `
@@ -447,7 +460,6 @@
           const actionButtons = document.getElementById('actionButtons');
           let showButtons = false;
 
-          // Logic for showing buttons based on status and user role
           if (data.status === 'pending_team_leader' && currentUser.role === 'team_leader') {
             showButtons = true;
           } else if (data.status === 'pending_manager' && currentUser.role === 'general_manager') {
@@ -456,7 +468,6 @@
 
           if (showButtons) {
             actionButtons.classList.remove('hidden');
-            // Add padding to body so content isn't hidden behind fixed buttons
             document.body.style.paddingBottom = '100px';
           }
         }
@@ -504,7 +515,6 @@
           closeModal();
 
           try {
-            // Determine next status
             let nextStatus = 'rejected';
             if (currentAction === 'approve') {
               if (workLogData.status === 'pending_team_leader') {
@@ -514,18 +524,15 @@
               }
             }
 
-            // 1. Insert Approval Record
             const { error: approvalError } = await supabase.from('work_log_approvals').insert({
               work_log_id: workLogData.id,
               approver_role: currentUser.role,
-              // approver_id: currentUser.id, // Uncomment if auth is ready
               status: currentAction === 'approve' ? 'approved' : 'rejected',
               comments: comment,
             });
 
             if (approvalError) throw approvalError;
 
-            // 2. Update Work Log Status
             const { error: updateError } = await supabase
               .from('work_logs')
               .update({ status: nextStatus })
@@ -541,6 +548,177 @@
             document.getElementById('loadingOverlay').classList.add('hidden');
           }
         };
+
+        // ==================== PDF GENERATION ====================
+        window.downloadPDF = async function() {
+          showLoading(true, 'PDF 생성 중...');
+          
+          try {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({
+              orientation: 'portrait',
+              unit: 'mm',
+              format: 'a4'
+            });
+
+            doc.setFontSize(18);
+            doc.setFont(undefined, 'bold');
+            doc.text('업무 일지', 105, 20, { align: 'center' });
+            
+            doc.setFontSize(12);
+            doc.setFont(undefined, 'normal');
+            let yPos = 35;
+            
+            doc.text(`날짜: ${workLogData.date}`, 20, yPos);
+            yPos += 8;
+            doc.text(`날씨: ${workLogData.weather || '-'}`, 20, yPos);
+            yPos += 8;
+            doc.text(`온도: ${workLogData.temperature || '-'}`, 20, yPos);
+            yPos += 8;
+            doc.text(`작성자: 센터장`, 20, yPos);
+            yPos += 15;
+
+            doc.setFontSize(14);
+            doc.setFont(undefined, 'bold');
+            doc.text('타임테이블 업무', 20, yPos);
+            yPos += 8;
+            
+            doc.setFontSize(10);
+            doc.setFont(undefined, 'normal');
+            
+            if (workLogData.work_log_tasks && workLogData.work_log_tasks.length > 0) {
+              workLogData.work_log_tasks.forEach((task) => {
+                const checkMark = task.is_completed ? '[✓]' : '[ ]';
+                doc.text(`${checkMark} ${task.time_slot} - ${task.task_description}`, 25, yPos);
+                yPos += 6;
+                if (yPos > 270) {
+                  doc.addPage();
+                  yPos = 20;
+                }
+              });
+            } else {
+              doc.text('등록된 업무가 없습니다.', 25, yPos);
+              yPos += 6;
+            }
+            
+            yPos += 10;
+
+            doc.setFontSize(14);
+            doc.setFont(undefined, 'bold');
+            doc.text('청소 구역', 20, yPos);
+            yPos += 8;
+            
+            doc.setFontSize(10);
+            doc.setFont(undefined, 'normal');
+            
+            if (workLogData.work_log_cleanings && workLogData.work_log_cleanings.length > 0) {
+              for (const cleaning of workLogData.work_log_cleanings) {
+                doc.text(`• ${cleaning.area_name}`, 25, yPos);
+                yPos += 6;
+                
+                if (cleaning.before_photo_url || cleaning.after_photo_url) {
+                  yPos += 5;
+                  
+                  if (yPos > 220) {
+                    doc.addPage();
+                    yPos = 20;
+                  }
+                  
+                  try {
+                    let xPos = 25;
+                    
+                    if (cleaning.before_photo_url) {
+                      const beforeImg = await loadImageAsDataURL(cleaning.before_photo_url);
+                      doc.addImage(beforeImg, 'JPEG', xPos, yPos, 60, 45);
+                      doc.setFontSize(8);
+                      doc.text('Before', xPos, yPos + 48);
+                      xPos += 65;
+                    }
+                    
+                    if (cleaning.after_photo_url) {
+                      const afterImg = await loadImageAsDataURL(cleaning.after_photo_url);
+                      doc.addImage(afterImg, 'JPEG', xPos, yPos, 60, 45);
+                      doc.setFontSize(8);
+                      doc.text('After', xPos, yPos + 48);
+                    }
+                    
+                    yPos += 55;
+                  } catch (imgError) {
+                    console.error('사진 로드 실패:', imgError);
+                    doc.setFontSize(8);
+                    doc.text('(사진 로드 실패)', 30, yPos);
+                    yPos += 6;
+                  }
+                  
+                  doc.setFontSize(10);
+                }
+                
+                yPos += 5;
+                
+                if (yPos > 270) {
+                  doc.addPage();
+                  yPos = 20;
+                }
+              }
+            } else {
+              doc.text('등록된 청소 구역이 없습니다.', 25, yPos);
+              yPos += 6;
+            }
+            
+            yPos += 10;
+
+            if (yPos > 250) {
+              doc.addPage();
+              yPos = 20;
+            }
+            
+            doc.setFontSize(14);
+            doc.setFont(undefined, 'bold');
+            doc.text('특이사항', 20, yPos);
+            yPos += 8;
+            
+            doc.setFontSize(10);
+            doc.setFont(undefined, 'normal');
+            const notes = workLogData.special_notes || '특이사항 없음';
+            const splitNotes = doc.splitTextToSize(notes, 170);
+            doc.text(splitNotes, 25, yPos);
+
+            const fileName = `업무일지_${workLogData.date}.pdf`;
+            doc.save(fileName);
+            
+            showLoading(false);
+            alert('PDF 다운로드가 완료되었습니다.');
+          } catch (error) {
+            console.error('PDF 생성 오류:', error);
+            showLoading(false);
+            alert('PDF 생성 중 오류가 발생했습니다.');
+          }
+        };
+
+        async function loadImageAsDataURL(url) {
+          return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.crossOrigin = 'Anonymous';
+            img.onload = function() {
+              const canvas = document.createElement('canvas');
+              canvas.width = img.width;
+              canvas.height = img.height;
+              const ctx = canvas.getContext('2d');
+              ctx.drawImage(img, 0, 0);
+              resolve(canvas.toDataURL('image/jpeg', 0.8));
+            };
+            img.onerror = reject;
+            img.src = url;
+          });
+        }
+
+        function showLoading(show, text = '데이터를 불러오는 중...') {
+          const overlay = document.getElementById('loadingOverlay');
+          const loadingText = overlay.querySelector('span');
+          if (loadingText) loadingText.innerText = text;
+          if (show) overlay.classList.remove('hidden');
+          else overlay.classList.add('hidden');
+        }
       })();
     </script>
   </body>
