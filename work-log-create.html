@@ -137,27 +137,17 @@
           try {
             const startOfDay = `${selectedDate}T00:00:00`;
             const endOfDay = `${selectedDate}T23:59:59`;
-            const { data: attendanceData, error: attendanceError } = await supabase
-              .from('attendance_records')
-              .select('*')
-              .gte('scan_time', startOfDay)
-              .lte('scan_time', endOfDay)
-              .order('scan_time');
+            const { data: attendanceData, error: attendanceError } = await supabase.from('attendance_records').select('*').gte('scan_time', startOfDay).lte('scan_time', endOfDay).order('scan_time');
             if (attendanceError) { console.warn('근태 기록 조회 실패:', attendanceError); }
+            console.log('[자동 가져오기] 조회된 데이터:', attendanceData);
             let fetchedInfo = [];
             if (attendanceData && attendanceData.length > 0) {
               document.getElementById('taskList').innerHTML = '';
-              const employeeMap = {};
               attendanceData.forEach(record => {
-                const empName = record.location_name || '직원';
-                if (!employeeMap[empName]) employeeMap[empName] = { in: null, out: null };
                 const time = new Date(record.scan_time).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false });
-                if (record.attendance_type === '출근') employeeMap[empName].in = time;
-                else if (record.attendance_type === '퇴근') employeeMap[empName].out = time;
-              });
-              Object.keys(employeeMap).forEach(empName => {
-                if (employeeMap[empName].in) addTaskWithData(employeeMap[empName].in, `${empName} 출근`, true);
-                if (employeeMap[empName].out) addTaskWithData(employeeMap[empName].out, `${empName} 퇴근`, true);
+                const workerName = record.location_name || '직원';
+                const typeLabel = record.attendance_type === '출근' ? '출근' : '퇴근';
+                addTaskWithData(time, `${workerName} ${typeLabel}`, true);
               });
               fetchedInfo.push(`근태 기록: ${attendanceData.length}건`);
             } else { fetchedInfo.push('근태 기록: 0건'); }
