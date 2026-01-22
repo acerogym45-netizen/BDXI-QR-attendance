@@ -667,8 +667,12 @@
           }
 
           console.log('[제출] 완료!');
-          alert('성공적으로 저장되었습니다!');
-          window.location.href = 'work-log-list.html';
+          if (confirm('성공적으로 저장되었습니다!\n\n새로운 일지를 작성하시겠습니까?')) {
+            window.location.reload(); // 페이지 새로고침으로 다시 작성
+          } else {
+            // 목록 페이지로 이동하지 않고 현재 페이지 유지
+            alert('작성이 완료되었습니다.');
+          }
         } catch (error) {
           console.error('❌ [제출 에러]:', error);
           alert('저장 중 오류가 발생했습니다:\n\n' + error.message + '\n\n자세한 내용은 개발자 도구(F12)의 Console을 확인해주세요.');
