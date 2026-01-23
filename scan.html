@@ -622,6 +622,7 @@
         try {
           const { error } = await supabaseClient.from('attendance_records').insert({
             employee_id: selectedEmployee.id,
+            employee_name: selectedEmployee.name,
             location_id: scannedLocation.id,
             location_name: scannedLocation.name,
             attendance_type: type,
@@ -723,8 +724,10 @@
           }
 
           const { error: dbError } = await supabaseClient.from('cleaning_tasks').insert({
-            worker_name: selectedEmployee.name,
-            area: scannedLocation.name,
+            employee_id: selectedEmployee.id,
+            employee_name: selectedEmployee.name,
+            location_id: scannedLocation.id,
+            location_name: scannedLocation.name,
             photo_urls: photoUrls,
             created_at: new Date().toISOString(),
           });
