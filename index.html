@@ -392,6 +392,10 @@
     </div>
 
     <script>
+      const SUPABASE_URL = 'https://qgpqhtuynxhmgawakjxe.supabase.co';
+      const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFncHFodHV5bnhobWdhd2FranhIIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzcwMjgyOTcsImV4cCI6MjA1MjYwNDI5N30.mxhVhABLmDKX-xOW0K8UQ9iTSYPiykn88JTH44CkB0I';
+      const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
       // Tab Switching
       function showTab(tabName) {
         document.querySelectorAll('.tab-content').forEach((el) => el.classList.add('hidden'));
