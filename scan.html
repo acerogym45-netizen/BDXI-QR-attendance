@@ -341,7 +341,7 @@
     <script>
       const SUPABASE_URL = 'https://qgpqhtuynxhmgawakjxe.supabase.co';
       const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFncHFodHV5bnhobWdhd2FranhIIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzcwMjgyOTcsImV4cCI6MjA1MjYwNDI5N30.mxhVhABLmDKX-xOW0K8UQ9iTSYPiykn88JTH44CkB0I';
-      const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
       let currentStep = 1;
       let selectedEmployee = null;
@@ -350,7 +350,7 @@
 
       window.addEventListener('DOMContentLoaded', async () => {
         const statusDot = document.getElementById('connectionStatus');
-        if (supabase) {
+        if (supabaseClient) {
           statusDot.classList.remove('bg-red-400');
           statusDot.classList.add('bg-green-500');
         }
@@ -360,25 +360,34 @@
 
       async function loadEmployees() {
         const select = document.getElementById('employeeSelect');
+        console.log('🔄 직원 목록 로딩 시작...');
         try {
-          const { data, error } = await supabase.from('employees').select('*').eq('status', 'active').order('name', { ascending: true });
-          if (error) throw error;
+          const { data, error } = await supabaseClient.from('employees').select('*').eq('status', 'active').order('name', { ascending: true });
+          console.log('📊 직원 데이터:', data);
+          console.log('❌ 에러:', error);
+          if (error) {
+            console.error('Supabase 에러:', error);
+            throw error;
+          }
           select.innerHTML = '<option value="">-- 직원 선택 --</option>';
           if (data && data.length > 0) {
+            console.log(`✅ ${data.length}명의 직원 로드 완료`);
             data.forEach((emp) => {
               const option = document.createElement('option');
               option.value = emp.id;
-              option.textContent = `${emp.name} ${emp.employee_number ? '(' + emp.employee_number + ')' : ''}`;
+              option.textContent = `${emp.name}${emp.employee_number ? ' (' + emp.employee_number + ')' : ''}`;
               option.dataset.name = emp.name;
               select.appendChild(option);
+              console.log(`  - ${emp.name} 추가됨`);
             });
           } else {
-            select.innerHTML = '<option value="">등록된 직원이 없습니다.</option>';
+            console.warn('⚠️ 등록된 직원이 없습니다');
+            select.innerHTML = '<option value="">등록된 직원이 없습니다</option>';
           }
         } catch (err) {
-          console.error('Error loading employees:', err);
-          select.innerHTML = '<option value="">목록 로드 실패 (새로고침 필요)</option>';
-          alert('직원 목록을 불러오는데 실패했습니다.');
+          console.error('❌ 직원 목록 로드 실패:', err);
+          select.innerHTML = '<option value="">❌ 로드 실패 (새로고침 필요)</option>';
+          alert(`직원 목록을 불러올 수 없습니다.\n\n에러: ${err.message}`);
         }
       }
 
@@ -388,7 +397,7 @@
         if (locId) {
           showLoading(true);
           try {
-            const { data, error } = await supabase.from('locations').select('*').eq('id', locId).single();
+            const { data, error } = await supabaseClient.from('locations').select('*').eq('id', locId).single();
             if (error) throw error;
             if (data) {
               scannedLocation = data;
@@ -429,11 +438,8 @@
       }
 
       function prevStep(targetLogicalStep) {
-        if (targetLogicalStep === 1) {
-          goToStep('step1');
-        } else if (targetLogicalStep === 2) {
-          goToStep('step2');
-        }
+        if (targetLogicalStep === 1) goToStep('step1');
+        else if (targetLogicalStep === 2) goToStep('step2');
       }
 
       function selectEmployee() {
@@ -454,11 +460,8 @@
       }
 
       function selectTaskType(type) {
-        if (type === 'attendance') {
-          goToStep('step2-attendance');
-        } else if (type === 'cleaning') {
-          goToStep('step2-cleaning');
-        }
+        if (type === 'attendance') goToStep('step2-attendance');
+        else if (type === 'cleaning') goToStep('step2-cleaning');
       }
 
       function updateLocationBanner() {
@@ -473,7 +476,7 @@
         showLoading(true);
         const now = new Date().toISOString();
         try {
-          const { error } = await supabase.from('attendance_records').insert({
+          const { error } = await supabaseClient.from('attendance_records').insert({
             employee_id: selectedEmployee.id,
             location_id: scannedLocation.id,
             location_name: scannedLocation.name,
@@ -545,12 +548,12 @@
             const fileExt = file.name.split('.').pop();
             const fileName = `${selectedEmployee.id}_${timestamp}_${i}.${fileExt}`;
             const filePath = `${fileName}`;
-            const { error: uploadError } = await supabase.storage.from('work-log-photos').upload(filePath, file);
+            const { error: uploadError } = await supabaseClient.storage.from('work-log-photos').upload(filePath, file);
             if (uploadError) throw uploadError;
-            const { data: urlData } = supabase.storage.from('work-log-photos').getPublicUrl(filePath);
+            const { data: urlData } = supabaseClient.storage.from('work-log-photos').getPublicUrl(filePath);
             photoUrls.push(urlData.publicUrl);
           }
-          const { error: dbError } = await supabase.from('cleaning_tasks').insert({
+          const { error: dbError } = await supabaseClient.from('cleaning_tasks').insert({
             worker_name: selectedEmployee.name,
             area: scannedLocation.name,
             photo_urls: photoUrls,
