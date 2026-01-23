@@ -435,14 +435,10 @@
     </div>
 
     <script>
-      // ==========================================
-      // CONFIGURATION
-      // ==========================================
       const SUPABASE_URL = 'https://qgpqhtuynxhmgawakjxe.supabase.co';
       const SUPABASE_ANON_KEY =
         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFncHFodHV5bnhobWdhd2FranhlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcyOTQyNTEsImV4cCI6MjA4Mjg3MDI1MX0.WNljQIKDbeZCDlXe8fpBdZs58XRFfujGt7lBGfq_pVg';
 
-      // Initialize Supabase Client
       const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
         auth: {
           persistSession: false,
@@ -455,15 +451,11 @@
         },
       });
 
-      // State Variables
       let currentStep = 1;
       let selectedEmployee = null;
       let scannedLocation = null;
       let uploadedPhotos = [];
 
-      // ==========================================
-      // INITIALIZATION
-      // ==========================================
       window.addEventListener('DOMContentLoaded', async () => {
         const statusDot = document.getElementById('connectionStatus');
         if (supabaseClient) {
@@ -475,9 +467,6 @@
         await checkUrlForLocation();
       });
 
-      // ==========================================
-      // DATA LOADING
-      // ==========================================
       async function loadEmployees() {
         const select = document.getElementById('employeeSelect');
         console.log('🔄 직원 목록 로딩 시작...');
@@ -533,8 +522,14 @@
             if (data) {
               scannedLocation = data;
 
-              const scanTime = Date.now();
-              sessionStorage.setItem('qr_scan_time', scanTime);
+              const existingScanTime = sessionStorage.getItem('qr_scan_time');
+              if (!existingScanTime) {
+                const scanTime = Date.now();
+                sessionStorage.setItem('qr_scan_time', scanTime);
+                console.log('✅ 새로운 QR 스캔 시간 기록:', new Date(scanTime).toLocaleTimeString());
+              } else {
+                console.log('✅ 기존 QR 스캔 시간 유지:', new Date(parseInt(existingScanTime)).toLocaleTimeString());
+              }
 
               updateLocationBanner();
               startSessionTimer();
@@ -586,9 +581,6 @@
         setInterval(updateTimer, 1000);
       }
 
-      // ==========================================
-      // NAVIGATION & WORKFLOW
-      // ==========================================
       function updateProgress(step) {
         for (let i = 1; i <= 2; i++) {
           const circle = document.getElementById(`progress-${i}`);
@@ -659,9 +651,6 @@
         document.getElementById('bannerBuildingFloor').textContent = `${scannedLocation.building || ''} ${scannedLocation.floor || ''}`;
       }
 
-      // ==========================================
-      // ACTION: ATTENDANCE
-      // ==========================================
       async function submitAttendance(type) {
         if (!confirm(`${selectedEmployee.name}님, [${scannedLocation.name}]에서\n'${type}' 기록하시겠습니까?`)) return;
 
@@ -682,7 +671,11 @@
           if (error) throw error;
 
           alert('출퇴근 기록이 완료되었습니다! 오늘도 좋은 하루 되세요.');
-          location.reload();
+
+          uploadedPhotos = [];
+          selectedEmployee = null;
+          document.getElementById('employeeSelect').value = '';
+          goToStep('step1');
         } catch (err) {
           console.error('Submission error:', err);
           alert('기록 저장 중 오류가 발생했습니다: ' + err.message);
@@ -691,9 +684,6 @@
         }
       }
 
-      // ==========================================
-      // ACTION: CLEANING
-      // ==========================================
       async function compressImage(file, maxWidth = 1920, quality = 0.8) {
         return new Promise((resolve) => {
           const reader = new FileReader();
@@ -842,7 +832,13 @@
           if (dbError) throw dbError;
 
           alert('청소 작업 내역이 제출되었습니다!');
-          location.reload();
+
+          uploadedPhotos = [];
+          selectedEmployee = null;
+          document.getElementById('employeeSelect').value = '';
+          document.getElementById('photoPreviewGrid').innerHTML = '';
+          document.getElementById('photoInput').value = '';
+          goToStep('step1');
         } catch (err) {
           console.error('Cleaning submit error:', err);
           alert('사진 업로드 또는 제출 중 오류가 발생했습니다: ' + err.message);
@@ -851,9 +847,6 @@
         }
       }
 
-      // ==========================================
-      // UTILS
-      // ==========================================
       function showLoading(show, options = {}) {
         const overlay = document.getElementById('loadingOverlay');
         const title = document.getElementById('loadingTitle');
