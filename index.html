@@ -1,1242 +1,998 @@
-<html lang="ko" data-theme="light"><head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>관리자 대시보드 | KINDWON</title>
+<!DOCTYPE html>
+<html lang="ko" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>KINDWON Admin Dashboard</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap"
+      rel="stylesheet"
+    />
 
-    <!-- Tailwind CSS -->
+    <!-- CDNs -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
-    <!-- Supabase JS v2 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- SheetJS (Excel Export) -->
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
-    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- JSZip & FileSaver -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 
     <style>
-      :root {
-        --kindwon-green: #1b5e3e;
-        --kindwon-green-light: #2d6e4f;
-        --kindwon-green-lighter: #4a9370;
-        --kindwon-green-pale: #e8f5e9;
-        --bg-color: #f3f4f6;
-        --card-bg: #ffffff;
-        --text-color: #1f2937;
-      }
-
-      [data-theme="dark"] {
-        --bg-color: #111827;
-        --card-bg: #1f2937;
-        --text-color: #f3f4f6;
-      }
-
       body {
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans KR', Roboto, Helvetica, Arial, sans-serif;
-        background-color: var(--bg-color);
-        color: var(--text-color);
-        min-height: 100vh;
-        margin: 0;
-        transition: background-color 0.3s, color 0.3s;
+        font-family: 'Noto Sans KR', sans-serif;
       }
-
-      .kindwon-gradient {
-        background: linear-gradient(135deg, var(--kindwon-green) 0%, var(--kindwon-green-light) 100%);
+      .bg-gradient-brand {
+        background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
       }
-
-      .card-premium {
-        background: var(--card-bg);
-        border-radius: 16px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        transition: all 0.3s ease;
+      .text-brand {
+        color: #1b5e3e;
       }
-
-      .nav-tab {
-        padding: 1rem 1.5rem;
-        cursor: pointer;
+      .bg-brand {
+        background-color: #1b5e3e;
+      }
+      .tab-active {
+        border-bottom: 3px solid #1b5e3e;
+        color: #1b5e3e;
+        font-weight: 700;
+      }
+      .tab-inactive {
         border-bottom: 3px solid transparent;
-        font-weight: 600;
-        color: #9ca3af;
-        transition: all 0.2s;
-        white-space: nowrap;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
+        color: #6b7280;
       }
-
-      .nav-tab.active {
-        border-bottom-color: var(--kindwon-green);
-        color: var(--kindwon-green);
-        background-color: var(--kindwon-green-pale);
-      }
-      
-      [data-theme="dark"] .nav-tab.active {
-          background-color: rgba(27, 94, 62, 0.2);
-      }
-
-      .nav-tab:hover:not(.active) {
-        color: var(--kindwon-green-light);
-        background-color: rgba(0,0,0,0.05);
-      }
-
-      .photo-grid-item {
-        aspect-ratio: 1;
-        position: relative;
-        overflow: hidden;
-        border-radius: 12px;
-        cursor: pointer;
-        transition: transform 0.2s, border-color 0.2s;
-        border: 2px solid transparent;
-      }
-
-      .photo-grid-item.selected {
-        border-color: var(--kindwon-green);
-        transform: scale(0.95);
-      }
-      
-      .photo-grid-item:hover {
-        transform: scale(1.02);
-        z-index: 10;
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-      }
-
-      .photo-grid-item img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-      }
-      
-      .selection-checkbox {
-          position: absolute;
-          top: 8px;
-          right: 8px;
-          width: 24px;
-          height: 24px;
-          background: white;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          border: 2px solid #ddd;
-          z-index: 20;
-          opacity: 0;
-          transition: all 0.2s;
-      }
-      
-      .selection-mode .selection-checkbox {
-          opacity: 1;
-      }
-      
-      .photo-grid-item.selected .selection-checkbox {
-          background: var(--kindwon-green);
-          border-color: var(--kindwon-green);
-          color: white;
-      }
-
-      .photo-overlay {
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
-        padding: 12px;
-        color: white;
-        font-size: 0.8rem;
-        transform: translateY(100%);
-        transition: transform 0.3s;
-      }
-      
-      .photo-grid-item:hover .photo-overlay {
-          transform: translateY(0);
-      }
-
-      .loading-spinner {
-        border: 3px solid rgba(255,255,255,0.3);
-        border-top: 3px solid var(--kindwon-green);
+      .loader {
+        border: 3px solid #f3f3f3;
+        border-top: 3px solid #1b5e3e;
         border-radius: 50%;
         width: 24px;
         height: 24px;
         animation: spin 1s linear infinite;
+        margin: 20px auto;
       }
-
       @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
       }
-      
-      .refresh-btn.spinning i {
-          animation: spin 1s linear infinite;
+      /* Smooth transitions */
+      * {
+        transition:
+          color 0.2s ease,
+          background-color 0.2s ease;
       }
 
+      /* Modal */
       .modal-backdrop {
-        background-color: rgba(0, 0, 0, 0.85);
-        backdrop-filter: blur(4px);
+        backdrop-filter: blur(8px);
+        animation: fadeIn 0.2s ease;
       }
-      
-      /* Toast Notification */
-      #toast-container {
-          position: fixed;
-          bottom: 20px;
-          right: 20px;
-          z-index: 100;
-          display: flex;
-          flex-direction: column;
-          gap: 10px;
-      }
-      
-      .toast {
-          min-width: 300px;
-          background: white;
-          color: #333;
-          padding: 16px;
-          border-radius: 8px;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          transform: translateX(100%);
-          animation: slideIn 0.3s forwards;
-          border-left: 4px solid var(--kindwon-green);
-      }
-      
-      @keyframes slideIn {
-          to { transform: translateX(0); }
-      }
-      
-      @keyframes slideOut {
-          to { transform: translateX(120%); opacity: 0; }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
       }
 
-      .btn-primary {
-        background-color: var(--kindwon-green);
-        color: white;
-        transition: all 0.2s;
-      }
-      .btn-primary:hover {
-        background-color: var(--kindwon-green-light);
-        transform: translateY(-1px);
-      }
-      
-      /* Mobile Optimizations */
-      .mobile-card-view {
-          display: none;
-      }
-      
-      @media (max-width: 768px) {
-          .desktop-table-view { display: none; }
-          .mobile-card-view { display: block; }
-          .nav-tab span { display: none; } 
-          .nav-tab { padding: 1rem; }
-          .nav-tab.active span { display: inline; }
-      }
-
-      /* Login Screen */
-      #loginScreen {
-        background-image: linear-gradient(135deg, var(--kindwon-green) 0%, #111827 100%);
-      }
-      
-      .skeleton {
-          background: #eee;
-          background: linear-gradient(110deg, #ececec 8%, #f5f5f5 18%, #ececec 33%);
-          border-radius: 5px;
-          background-size: 200% 100%;
-          animation: 1.5s shine linear infinite;
-      }
-      
-      @keyframes shine {
-          to { background-position-x: -200%; }
+      /* Dropdown */
+      .dropdown-item:hover {
+        background-color: #f3f4f6;
       }
     </style>
-  <style>*, ::before, ::after{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }::backdrop{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }/* ! tailwindcss v3.4.17 | MIT License | https://tailwindcss.com */*,::after,::before{box-sizing:border-box;border-width:0;border-style:solid;border-color:#e5e7eb}::after,::before{--tw-content:''}:host,html{line-height:1.5;-webkit-text-size-adjust:100%;-moz-tab-size:4;tab-size:4;font-family:ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";font-feature-settings:normal;font-variation-settings:normal;-webkit-tap-highlight-color:transparent}body{margin:0;line-height:inherit}hr{height:0;color:inherit;border-top-width:1px}abbr:where([title]){-webkit-text-decoration:underline dotted;text-decoration:underline dotted}h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit}a{color:inherit;text-decoration:inherit}b,strong{font-weight:bolder}code,kbd,pre,samp{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;font-feature-settings:normal;font-variation-settings:normal;font-size:1em}small{font-size:80%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sub{bottom:-.25em}sup{top:-.5em}table{text-indent:0;border-color:inherit;border-collapse:collapse}button,input,optgroup,select,textarea{font-family:inherit;font-feature-settings:inherit;font-variation-settings:inherit;font-size:100%;font-weight:inherit;line-height:inherit;letter-spacing:inherit;color:inherit;margin:0;padding:0}button,select{text-transform:none}button,input:where([type=button]),input:where([type=reset]),input:where([type=submit]){-webkit-appearance:button;background-color:transparent;background-image:none}:-moz-focusring{outline:auto}:-moz-ui-invalid{box-shadow:none}progress{vertical-align:baseline}::-webkit-inner-spin-button,::-webkit-outer-spin-button{height:auto}[type=search]{-webkit-appearance:textfield;outline-offset:-2px}::-webkit-search-decoration{-webkit-appearance:none}::-webkit-file-upload-button{-webkit-appearance:button;font:inherit}summary{display:list-item}blockquote,dd,dl,figure,h1,h2,h3,h4,h5,h6,hr,p,pre{margin:0}fieldset{margin:0;padding:0}legend{padding:0}menu,ol,ul{list-style:none;margin:0;padding:0}dialog{padding:0}textarea{resize:vertical}input::placeholder,textarea::placeholder{opacity:1;color:#9ca3af}[role=button],button{cursor:pointer}:disabled{cursor:default}audio,canvas,embed,iframe,img,object,svg,video{display:block;vertical-align:middle}img,video{max-width:100%;height:auto}[hidden]:where(:not([hidden=until-found])){display:none}.fixed{position:fixed}.absolute{position:absolute}.relative{position:relative}.sticky{position:sticky}.inset-0{inset:0px}.-top-12{top:-3rem}.bottom-0{bottom:0px}.left-0{left:0px}.left-2\.5{left:0.625rem}.left-3{left:0.75rem}.right-0{right:0px}.right-4{right:1rem}.top-0{top:0px}.top-2\.5{top:0.625rem}.top-4{top:1rem}.top-\[110px\]{top:110px}.top-\[56px\]{top:56px}.z-20{z-index:20}.z-30{z-index:30}.z-40{z-index:40}.z-50{z-index:50}.z-\[60\]{z-index:60}.z-\[65\]{z-index:65}.z-\[70\]{z-index:70}.mx-auto{margin-left:auto;margin-right:auto}.mb-1{margin-bottom:0.25rem}.mb-2{margin-bottom:0.5rem}.mb-3{margin-bottom:0.75rem}.mb-4{margin-bottom:1rem}.mb-6{margin-bottom:1.5rem}.mb-8{margin-bottom:2rem}.ml-1{margin-left:0.25rem}.mr-1{margin-right:0.25rem}.mr-2{margin-right:0.5rem}.mt-1{margin-top:0.25rem}.mt-2{margin-top:0.5rem}.mt-3{margin-top:0.75rem}.mt-4{margin-top:1rem}.mt-6{margin-top:1.5rem}.block{display:block}.flex{display:flex}.inline-flex{display:inline-flex}.grid{display:grid}.hidden{display:none}.aspect-square{aspect-ratio:1 / 1}.h-1\.5{height:0.375rem}.h-10{height:2.5rem}.h-12{height:3rem}.h-16{height:4rem}.h-2{height:0.5rem}.h-20{height:5rem}.h-24{height:6rem}.h-40{height:10rem}.h-64{height:16rem}.h-8{height:2rem}.h-full{height:100%}.max-h-\[80vh\]{max-height:80vh}.max-h-\[90vh\]{max-height:90vh}.min-h-screen{min-height:100vh}.w-10{width:2.5rem}.w-16{width:4rem}.w-2{width:0.5rem}.w-20{width:5rem}.w-24{width:6rem}.w-full{width:100%}.min-w-\[140px\]{min-width:140px}.min-w-max{min-width:max-content}.max-w-4xl{max-width:56rem}.max-w-5xl{max-width:64rem}.max-w-7xl{max-width:80rem}.max-w-full{max-width:100%}.max-w-md{max-width:28rem}.max-w-sm{max-width:24rem}.flex-1{flex:1 1 0%}.shrink-0{flex-shrink:0}.translate-x-full{--tw-translate-x:100%;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.transform{transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}@keyframes pulse{50%{opacity:.5}}.animate-pulse{animation:pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite}.cursor-default{cursor:default}.cursor-pointer{cursor:pointer}.grid-cols-2{grid-template-columns:repeat(2, minmax(0, 1fr))}.grid-cols-3{grid-template-columns:repeat(3, minmax(0, 1fr))}.flex-col{flex-direction:column}.flex-wrap{flex-wrap:wrap}.items-start{align-items:flex-start}.items-end{align-items:flex-end}.items-center{align-items:center}.justify-end{justify-content:flex-end}.justify-center{justify-content:center}.justify-between{justify-content:space-between}.justify-around{justify-content:space-around}.gap-1{gap:0.25rem}.gap-2{gap:0.5rem}.gap-3{gap:0.75rem}.gap-4{gap:1rem}.gap-6{gap:1.5rem}.space-y-3 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(0.75rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(0.75rem * var(--tw-space-y-reverse))}.space-y-4 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(1rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(1rem * var(--tw-space-y-reverse))}.space-y-6 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(1.5rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(1.5rem * var(--tw-space-y-reverse))}.divide-y > :not([hidden]) ~ :not([hidden]){--tw-divide-y-reverse:0;border-top-width:calc(1px * calc(1 - var(--tw-divide-y-reverse)));border-bottom-width:calc(1px * var(--tw-divide-y-reverse))}.divide-gray-100 > :not([hidden]) ~ :not([hidden]){--tw-divide-opacity:1;border-color:rgb(243 244 246 / var(--tw-divide-opacity, 1))}.overflow-hidden{overflow:hidden}.overflow-x-auto{overflow-x:auto}.overflow-y-auto{overflow-y:auto}.whitespace-nowrap{white-space:nowrap}.rounded{border-radius:0.25rem}.rounded-2xl{border-radius:1rem}.rounded-full{border-radius:9999px}.rounded-lg{border-radius:0.5rem}.rounded-md{border-radius:0.375rem}.rounded-xl{border-radius:0.75rem}.border{border-width:1px}.border-2{border-width:2px}.border-b{border-bottom-width:1px}.border-b-4{border-bottom-width:4px}.border-l{border-left-width:1px}.border-l-4{border-left-width:4px}.border-r{border-right-width:1px}.border-t{border-top-width:1px}.border-none{border-style:none}.border-blue-500{--tw-border-opacity:1;border-color:rgb(59 130 246 / var(--tw-border-opacity, 1))}.border-gray-100{--tw-border-opacity:1;border-color:rgb(243 244 246 / var(--tw-border-opacity, 1))}.border-gray-200{--tw-border-opacity:1;border-color:rgb(229 231 235 / var(--tw-border-opacity, 1))}.border-gray-300{--tw-border-opacity:1;border-color:rgb(209 213 219 / var(--tw-border-opacity, 1))}.border-green-500{--tw-border-opacity:1;border-color:rgb(34 197 94 / var(--tw-border-opacity, 1))}.border-orange-500{--tw-border-opacity:1;border-color:rgb(249 115 22 / var(--tw-border-opacity, 1))}.border-purple-500{--tw-border-opacity:1;border-color:rgb(168 85 247 / var(--tw-border-opacity, 1))}.border-white\/30{border-color:rgb(255 255 255 / 0.3)}.border-t-green-600{--tw-border-opacity:1;border-top-color:rgb(22 163 74 / var(--tw-border-opacity, 1))}.bg-black{--tw-bg-opacity:1;background-color:rgb(0 0 0 / var(--tw-bg-opacity, 1))}.bg-blue-50{--tw-bg-opacity:1;background-color:rgb(239 246 255 / var(--tw-bg-opacity, 1))}.bg-blue-600{--tw-bg-opacity:1;background-color:rgb(37 99 235 / var(--tw-bg-opacity, 1))}.bg-gray-100{--tw-bg-opacity:1;background-color:rgb(243 244 246 / var(--tw-bg-opacity, 1))}.bg-gray-200{--tw-bg-opacity:1;background-color:rgb(229 231 235 / var(--tw-bg-opacity, 1))}.bg-gray-50{--tw-bg-opacity:1;background-color:rgb(249 250 251 / var(--tw-bg-opacity, 1))}.bg-gray-800{--tw-bg-opacity:1;background-color:rgb(31 41 55 / var(--tw-bg-opacity, 1))}.bg-green-100{--tw-bg-opacity:1;background-color:rgb(220 252 231 / var(--tw-bg-opacity, 1))}.bg-green-400{--tw-bg-opacity:1;background-color:rgb(74 222 128 / var(--tw-bg-opacity, 1))}.bg-orange-500{--tw-bg-opacity:1;background-color:rgb(249 115 22 / var(--tw-bg-opacity, 1))}.bg-purple-50{--tw-bg-opacity:1;background-color:rgb(250 245 255 / var(--tw-bg-opacity, 1))}.bg-purple-600{--tw-bg-opacity:1;background-color:rgb(147 51 234 / var(--tw-bg-opacity, 1))}.bg-transparent{background-color:transparent}.bg-white{--tw-bg-opacity:1;background-color:rgb(255 255 255 / var(--tw-bg-opacity, 1))}.bg-white\/10{background-color:rgb(255 255 255 / 0.1)}.bg-opacity-90{--tw-bg-opacity:0.9}.bg-gradient-to-br{background-image:linear-gradient(to bottom right, var(--tw-gradient-stops))}.bg-gradient-to-r{background-image:linear-gradient(to right, var(--tw-gradient-stops))}.from-green-800{--tw-gradient-from:#166534 var(--tw-gradient-from-position);--tw-gradient-to:rgb(22 101 52 / 0) var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from), var(--tw-gradient-to)}.from-white{--tw-gradient-from:#fff var(--tw-gradient-from-position);--tw-gradient-to:rgb(255 255 255 / 0) var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from), var(--tw-gradient-to)}.to-gray-50{--tw-gradient-to:#f9fafb var(--tw-gradient-to-position)}.to-green-600{--tw-gradient-to:#16a34a var(--tw-gradient-to-position)}.object-contain{object-fit:contain}.p-0\.5{padding:0.125rem}.p-1{padding:0.25rem}.p-2{padding:0.5rem}.p-2\.5{padding:0.625rem}.p-3{padding:0.75rem}.p-4{padding:1rem}.p-5{padding:1.25rem}.p-6{padding:1.5rem}.p-8{padding:2rem}.px-1\.5{padding-left:0.375rem;padding-right:0.375rem}.px-2{padding-left:0.5rem;padding-right:0.5rem}.px-3{padding-left:0.75rem;padding-right:0.75rem}.px-4{padding-left:1rem;padding-right:1rem}.px-6{padding-left:1.5rem;padding-right:1.5rem}.py-0\.5{padding-top:0.125rem;padding-bottom:0.125rem}.py-1{padding-top:0.25rem;padding-bottom:0.25rem}.py-1\.5{padding-top:0.375rem;padding-bottom:0.375rem}.py-12{padding-top:3rem;padding-bottom:3rem}.py-16{padding-top:4rem;padding-bottom:4rem}.py-2{padding-top:0.5rem;padding-bottom:0.5rem}.py-2\.5{padding-top:0.625rem;padding-bottom:0.625rem}.py-3{padding-top:0.75rem;padding-bottom:0.75rem}.py-4{padding-top:1rem;padding-bottom:1rem}.pb-1{padding-bottom:0.25rem}.pb-20{padding-bottom:5rem}.pl-2{padding-left:0.5rem}.pl-6{padding-left:1.5rem}.pl-8{padding-left:2rem}.pr-3{padding-right:0.75rem}.pt-3{padding-top:0.75rem}.text-left{text-align:left}.text-center{text-align:center}.text-right{text-align:right}.font-mono{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace}.text-2xl{font-size:1.5rem;line-height:2rem}.text-3xl{font-size:1.875rem;line-height:2.25rem}.text-4xl{font-size:2.25rem;line-height:2.5rem}.text-5xl{font-size:3rem;line-height:1}.text-\[10px\]{font-size:10px}.text-lg{font-size:1.125rem;line-height:1.75rem}.text-sm{font-size:0.875rem;line-height:1.25rem}.text-xl{font-size:1.25rem;line-height:1.75rem}.text-xs{font-size:0.75rem;line-height:1rem}.font-bold{font-weight:700}.font-medium{font-weight:500}.uppercase{text-transform:uppercase}.leading-tight{line-height:1.25}.tracking-\[0\.5em\]{letter-spacing:0.5em}.tracking-wider{letter-spacing:0.05em}.text-blue-500{--tw-text-opacity:1;color:rgb(59 130 246 / var(--tw-text-opacity, 1))}.text-blue-600{--tw-text-opacity:1;color:rgb(37 99 235 / var(--tw-text-opacity, 1))}.text-gray-200{--tw-text-opacity:1;color:rgb(229 231 235 / var(--tw-text-opacity, 1))}.text-gray-300{--tw-text-opacity:1;color:rgb(209 213 219 / var(--tw-text-opacity, 1))}.text-gray-400{--tw-text-opacity:1;color:rgb(156 163 175 / var(--tw-text-opacity, 1))}.text-gray-500{--tw-text-opacity:1;color:rgb(107 114 128 / var(--tw-text-opacity, 1))}.text-gray-600{--tw-text-opacity:1;color:rgb(75 85 99 / var(--tw-text-opacity, 1))}.text-gray-700{--tw-text-opacity:1;color:rgb(55 65 81 / var(--tw-text-opacity, 1))}.text-gray-800{--tw-text-opacity:1;color:rgb(31 41 55 / var(--tw-text-opacity, 1))}.text-green-100{--tw-text-opacity:1;color:rgb(220 252 231 / var(--tw-text-opacity, 1))}.text-green-500{--tw-text-opacity:1;color:rgb(34 197 94 / var(--tw-text-opacity, 1))}.text-green-600{--tw-text-opacity:1;color:rgb(22 163 74 / var(--tw-text-opacity, 1))}.text-green-700{--tw-text-opacity:1;color:rgb(21 128 61 / var(--tw-text-opacity, 1))}.text-orange-500{--tw-text-opacity:1;color:rgb(249 115 22 / var(--tw-text-opacity, 1))}.text-purple-500{--tw-text-opacity:1;color:rgb(168 85 247 / var(--tw-text-opacity, 1))}.text-purple-600{--tw-text-opacity:1;color:rgb(147 51 234 / var(--tw-text-opacity, 1))}.text-red-400{--tw-text-opacity:1;color:rgb(248 113 113 / var(--tw-text-opacity, 1))}.text-red-500{--tw-text-opacity:1;color:rgb(239 68 68 / var(--tw-text-opacity, 1))}.text-white{--tw-text-opacity:1;color:rgb(255 255 255 / var(--tw-text-opacity, 1))}.opacity-10{opacity:0.1}.opacity-70{opacity:0.7}.opacity-90{opacity:0.9}.shadow-2xl{--tw-shadow:0 25px 50px -12px rgb(0 0 0 / 0.25);--tw-shadow-colored:0 25px 50px -12px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.shadow-lg{--tw-shadow:0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);--tw-shadow-colored:0 10px 15px -3px var(--tw-shadow-color), 0 4px 6px -4px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.shadow-md{--tw-shadow:0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);--tw-shadow-colored:0 4px 6px -1px var(--tw-shadow-color), 0 2px 4px -2px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.shadow-sm{--tw-shadow:0 1px 2px 0 rgb(0 0 0 / 0.05);--tw-shadow-colored:0 1px 2px 0 var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.shadow-xl{--tw-shadow:0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);--tw-shadow-colored:0 20px 25px -5px var(--tw-shadow-color), 0 8px 10px -6px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.outline-none{outline:2px solid transparent;outline-offset:2px}.drop-shadow-lg{--tw-drop-shadow:drop-shadow(0 10px 8px rgb(0 0 0 / 0.04)) drop-shadow(0 4px 3px rgb(0 0 0 / 0.1));filter:var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow)}.transition{transition-property:color, background-color, border-color, fill, stroke, opacity, box-shadow, transform, filter, -webkit-text-decoration-color, -webkit-backdrop-filter;transition-property:color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;transition-property:color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter, -webkit-text-decoration-color, -webkit-backdrop-filter;transition-timing-function:cubic-bezier(0.4, 0, 0.2, 1);transition-duration:150ms}.transition-opacity{transition-property:opacity;transition-timing-function:cubic-bezier(0.4, 0, 0.2, 1);transition-duration:150ms}.transition-transform{transition-property:transform;transition-timing-function:cubic-bezier(0.4, 0, 0.2, 1);transition-duration:150ms}.duration-300{transition-duration:300ms}.hover\:border-blue-500:hover{--tw-border-opacity:1;border-color:rgb(59 130 246 / var(--tw-border-opacity, 1))}.hover\:border-purple-500:hover{--tw-border-opacity:1;border-color:rgb(168 85 247 / var(--tw-border-opacity, 1))}.hover\:bg-blue-700:hover{--tw-bg-opacity:1;background-color:rgb(29 78 216 / var(--tw-bg-opacity, 1))}.hover\:bg-gray-100:hover{--tw-bg-opacity:1;background-color:rgb(243 244 246 / var(--tw-bg-opacity, 1))}.hover\:bg-gray-200:hover{--tw-bg-opacity:1;background-color:rgb(229 231 235 / var(--tw-bg-opacity, 1))}.hover\:bg-gray-50:hover{--tw-bg-opacity:1;background-color:rgb(249 250 251 / var(--tw-bg-opacity, 1))}.hover\:bg-gray-900:hover{--tw-bg-opacity:1;background-color:rgb(17 24 39 / var(--tw-bg-opacity, 1))}.hover\:bg-purple-700:hover{--tw-bg-opacity:1;background-color:rgb(126 34 206 / var(--tw-bg-opacity, 1))}.hover\:bg-red-50:hover{--tw-bg-opacity:1;background-color:rgb(254 242 242 / var(--tw-bg-opacity, 1))}.hover\:bg-white:hover{--tw-bg-opacity:1;background-color:rgb(255 255 255 / var(--tw-bg-opacity, 1))}.hover\:text-gray-300:hover{--tw-text-opacity:1;color:rgb(209 213 219 / var(--tw-text-opacity, 1))}.hover\:text-gray-600:hover{--tw-text-opacity:1;color:rgb(75 85 99 / var(--tw-text-opacity, 1))}.hover\:text-gray-800:hover{--tw-text-opacity:1;color:rgb(31 41 55 / var(--tw-text-opacity, 1))}.hover\:text-green-200:hover{--tw-text-opacity:1;color:rgb(187 247 208 / var(--tw-text-opacity, 1))}.hover\:text-green-600:hover{--tw-text-opacity:1;color:rgb(22 163 74 / var(--tw-text-opacity, 1))}.hover\:text-red-200:hover{--tw-text-opacity:1;color:rgb(254 202 202 / var(--tw-text-opacity, 1))}.hover\:text-red-700:hover{--tw-text-opacity:1;color:rgb(185 28 28 / var(--tw-text-opacity, 1))}.hover\:underline:hover{-webkit-text-decoration-line:underline;text-decoration-line:underline}.hover\:opacity-100:hover{opacity:1}.hover\:shadow-lg:hover{--tw-shadow:0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);--tw-shadow-colored:0 10px 15px -3px var(--tw-shadow-color), 0 4px 6px -4px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.hover\:shadow-sm:hover{--tw-shadow:0 1px 2px 0 rgb(0 0 0 / 0.05);--tw-shadow-colored:0 1px 2px 0 var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.focus\:border-blue-500:focus{--tw-border-opacity:1;border-color:rgb(59 130 246 / var(--tw-border-opacity, 1))}.focus\:border-green-600:focus{--tw-border-opacity:1;border-color:rgb(22 163 74 / var(--tw-border-opacity, 1))}.focus\:border-purple-500:focus{--tw-border-opacity:1;border-color:rgb(168 85 247 / var(--tw-border-opacity, 1))}.focus\:outline-none:focus{outline:2px solid transparent;outline-offset:2px}.focus\:ring-0:focus{--tw-ring-offset-shadow:var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);--tw-ring-shadow:var(--tw-ring-inset) 0 0 0 calc(0px + var(--tw-ring-offset-width)) var(--tw-ring-color);box-shadow:var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000)}.active\:scale-95:active{--tw-scale-x:.95;--tw-scale-y:.95;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.group:hover .group-hover\:bg-blue-600{--tw-bg-opacity:1;background-color:rgb(37 99 235 / var(--tw-bg-opacity, 1))}.group:hover .group-hover\:bg-purple-600{--tw-bg-opacity:1;background-color:rgb(147 51 234 / var(--tw-bg-opacity, 1))}.group:hover .group-hover\:text-white{--tw-text-opacity:1;color:rgb(255 255 255 / var(--tw-text-opacity, 1))}.group:hover .group-hover\:opacity-20{opacity:0.2}@media (min-width: 640px){.sm\:inline{display:inline}}@media (min-width: 768px){.md\:block{display:block}.md\:inline{display:inline}.md\:flex{display:flex}.md\:hidden{display:none}.md\:w-48{width:12rem}.md\:w-64{width:16rem}.md\:w-auto{width:auto}.md\:grid-cols-2{grid-template-columns:repeat(2, minmax(0, 1fr))}.md\:grid-cols-4{grid-template-columns:repeat(4, minmax(0, 1fr))}.md\:flex-row{flex-direction:row}.md\:items-center{align-items:center}.md\:gap-4{gap:1rem}.md\:p-6{padding:1.5rem}.md\:pb-0{padding-bottom:0px}}@media (min-width: 1024px){.lg\:inline{display:inline}.lg\:w-auto{width:auto}.lg\:flex-none{flex:none}.lg\:grid-cols-2{grid-template-columns:repeat(2, minmax(0, 1fr))}.lg\:grid-cols-4{grid-template-columns:repeat(4, minmax(0, 1fr))}.lg\:grid-cols-6{grid-template-columns:repeat(6, minmax(0, 1fr))}.lg\:flex-row{flex-direction:row}.lg\:border-t-0{border-top-width:0px}.lg\:pt-0{padding-top:0px}}</style></head>
-  <body>
-    <!-- ================= Toast Container ================= -->
-    <div id="toast-container"></div>
-
-    <!-- ================= Login Screen ================= -->
-    <div id="loginScreen" class="fixed inset-0 z-50 flex flex-col items-center justify-center p-4">
-      <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center">
-        <div class="mb-6">
-          <img src="https://www.genspark.ai/api/files/s/UmgxPvd3" alt="KINDWON" class="h-12 mx-auto mb-4">
-          <h2 class="text-2xl font-bold text-gray-800">관리자 로그인</h2>
-          <p class="text-sm text-gray-500">직원 업무 시스템 관리자 페이지</p>
+  </head>
+  <body class="bg-gray-50 min-h-screen">
+    <!-- LOGIN VIEW -->
+    <div id="view-login" class="fixed inset-0 z-50 flex items-center justify-center bg-gradient-brand hidden">
+      <div
+        class="bg-white p-10 rounded-2xl shadow-2xl w-full max-w-md text-center transform transition-all hover:scale-[1.01]"
+      >
+        <div class="mb-10">
+          <img src="https://www.genspark.ai/api/files/s/UmgxPvd3" alt="KINDWON Logo" class="h-16 mx-auto" />
         </div>
 
-        <div class="mb-6">
-          <input type="password" id="pinInput" placeholder="PIN 번호 입력" class="w-full text-center text-3xl tracking-[0.5em] p-4 border-2 border-gray-200 rounded-xl focus:border-green-600 focus:outline-none transition mb-6 font-mono" maxlength="10" onkeypress="if(event.key === 'Enter') checkLogin()">
-          <button onclick="checkLogin()" class="w-full btn-primary font-bold py-4 rounded-xl shadow-lg transition transform active:scale-95 text-lg">
-            대시보드 입장
+        <h1 class="text-3xl font-extrabold text-gray-800 mb-2">관리자 로그인</h1>
+        <p class="text-gray-500 mb-2 text-sm">KINDWON 직원 업무 관리 시스템</p>
+        <p class="text-gray-400 mb-8 text-xs">🔒 보안 접속을 위해 PIN 번호를 입력하세요</p>
+
+        <div class="space-y-4">
+          <input
+            type="password"
+            id="inp-pin"
+            placeholder="PIN 번호 입력"
+            class="w-full text-center text-2xl font-bold tracking-[0.3em] py-4 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-green-600 transition-colors"
+            maxlength="10"
+            onkeypress="if (event.key === 'Enter') app.login();"
+          />
+
+          <button
+            onclick="app.login()"
+            class="w-full bg-brand hover:bg-green-800 text-white font-bold py-4 rounded-xl shadow-lg transition-all active:scale-95"
+          >
+            입장하기
           </button>
         </div>
-        <p id="loginError" class="text-red-500 text-sm hidden font-bold animate-pulse">
-          <i class="fas fa-exclamation-circle mr-1"></i>비밀번호가 일치하지 않습니다.
+        <p id="msg-error" class="text-red-500 mt-4 text-sm font-bold hidden">
+          <i class="fas fa-exclamation-circle"></i> PIN 번호가 올바르지 않습니다.
         </p>
       </div>
     </div>
 
-    <!-- ================= Main Application ================= -->
-    <div id="appContainer" class="hidden flex flex-col min-h-screen pb-20 md:pb-0">
+    <!-- DASHBOARD VIEW -->
+    <div id="view-dashboard" class="min-h-screen flex flex-col hidden">
       <!-- Header -->
-      <header class="kindwon-gradient text-white shadow-lg sticky top-0 z-40">
-        <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+      <header class="bg-white border-b sticky top-0 z-40 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 h-16 flex justify-between items-center">
           <div class="flex items-center gap-4">
-            <img src="https://www.genspark.ai/api/files/s/UmgxPvd3" alt="Logo" class="h-8 bg-white rounded p-0.5">
+            <img src="https://www.genspark.ai/api/files/s/UmgxPvd3" alt="Logo" class="h-10" />
+            <span class="text-gray-300">|</span>
             <div>
-              <h1 class="font-bold text-lg leading-tight hidden md:block">관리자 대시보드</h1>
-              <div class="flex items-center gap-2 text-xs opacity-90">
-                 <span id="lastUpdatedTime" class="hidden md:inline">업데이트: 방금 전</span>
-                 <span id="liveIndicator" class="w-2 h-2 bg-green-400 rounded-full animate-pulse" title="실시간 연결됨"></span>
-              </div>
+              <div class="font-bold text-gray-800 text-lg">KINDWON</div>
+              <div class="text-xs text-gray-400 -mt-1">관리자 시스템</div>
             </div>
           </div>
           <div class="flex items-center gap-3">
-             <div class="hidden md:flex items-center bg-white/10 rounded-lg px-2 py-1 mr-2">
-                 <span class="text-xs mr-2">자동 갱신</span>
-                 <select id="refreshInterval" class="bg-transparent text-xs border-none focus:ring-0 cursor-pointer" onchange="setAutoRefresh(this.value)">
-                     <option value="0" class="text-gray-800">끔</option>
-                     <option value="30000" class="text-gray-800">30초</option>
-                     <option value="60000" class="text-gray-800">1분</option>
-                     <option value="300000" class="text-gray-800">5분</option>
-                 </select>
-             </div>
-             
-             <!-- Go to Employee Page Button -->
-             <a href="/scan.html" class="text-white hover:text-green-200 transition text-sm font-bold border border-white/30 px-3 py-1 rounded-lg flex items-center gap-1" title="직원 업무 시스템으로 이동">
-                <i class="fas fa-qrcode"></i>
-                <span class="hidden lg:inline">직원 페이지</span>
-             </a>
-
-            <button onclick="logout()" class="text-white hover:text-red-200 transition text-sm font-bold border border-white/30 px-3 py-1 rounded-lg flex items-center gap-1">
-              <i class="fas fa-sign-out-alt"></i> <span class="hidden md:inline">로그아웃</span>
+            <div
+              class="hidden md:flex items-center gap-2 text-sm text-gray-500 bg-gray-50 px-3 py-1.5 rounded-lg border"
+            >
+              <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+              <span id="live-time" class="font-mono">00:00:00</span>
+            </div>
+            <button
+              onclick="app.logout()"
+              class="text-gray-500 hover:text-red-600 px-3 py-2 rounded-lg hover:bg-red-50 transition"
+            >
+              <i class="fas fa-sign-out-alt mr-2"></i>로그아웃
             </button>
           </div>
         </div>
       </header>
-      
-      <!-- Mini Stats Bar (Sticky below header) -->
-      <div class="bg-white border-b sticky top-[56px] z-30 shadow-sm overflow-x-auto">
-          <div class="max-w-7xl mx-auto px-4 py-2 flex gap-6 text-sm min-w-max">
-              <div class="flex items-center gap-2">
-                  <span class="text-gray-500">오늘 출근:</span>
-                  <span class="font-bold text-green-600" id="miniStatPresent">-</span>
-              </div>
-              <div class="flex items-center gap-2 border-l pl-6">
-                  <span class="text-gray-500">출근율:</span>
-                  <span class="font-bold text-blue-600" id="miniStatRate">-</span>
-              </div>
-              <div class="flex items-center gap-2 border-l pl-6">
-                  <span class="text-gray-500">청소 작업:</span>
-                  <span class="font-bold text-purple-600" id="miniStatCleaning">-</span>
-              </div>
-          </div>
-      </div>
 
-      <!-- Navigation Tabs -->
-      <nav class="bg-white shadow-sm border-b z-20 overflow-x-auto hide-scrollbar">
-        <div class="max-w-7xl mx-auto px-2 flex">
-          <button onclick="switchTab('gallery')" class="nav-tab active" id="tab-gallery">
-            <i class="fas fa-images text-lg"></i>
-            <span>청소 갤러리</span>
-            <span class="ml-1 px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded-full text-xs" id="badge-gallery">0</span>
-          </button>
-          <button onclick="switchTab('history')" class="nav-tab" id="tab-history">
-            <i class="fas fa-list-alt text-lg"></i>
-            <span>상세 조회</span>
-          </button>
-          <button onclick="switchTab('stats')" class="nav-tab" id="tab-stats">
-            <i class="fas fa-chart-pie text-lg"></i>
-            <span>통계 요약</span>
-          </button>
-          <button onclick="switchTab('data')" class="nav-tab" id="tab-data">
-            <i class="fas fa-file-export text-lg"></i>
-            <span>데이터 관리</span>
-          </button>
+      <!-- Navigation -->
+      <nav class="bg-white border-b shadow-sm sticky top-16 z-30">
+        <div class="max-w-7xl mx-auto px-4">
+          <div class="flex space-x-8">
+            <button
+              onclick="app.switchTab('gallery')"
+              class="nav-tab tab-active py-4 px-2 text-sm font-medium transition-colors flex items-center gap-2"
+            >
+              <i class="fas fa-images text-lg"></i> 청소 갤러리
+            </button>
+            <button
+              onclick="app.switchTab('history')"
+              class="nav-tab tab-inactive py-4 px-2 text-sm font-medium transition-colors flex items-center gap-2"
+            >
+              <i class="fas fa-list-alt text-lg"></i> 상세 조회
+            </button>
+            <button
+              onclick="app.switchTab('stats')"
+              class="nav-tab tab-inactive py-4 px-2 text-sm font-medium transition-colors flex items-center gap-2"
+            >
+              <i class="fas fa-chart-pie text-lg"></i> 통계 요약
+            </button>
+            <button
+              onclick="app.switchTab('data')"
+              class="nav-tab tab-inactive py-4 px-2 text-sm font-medium transition-colors flex items-center gap-2"
+            >
+              <i class="fas fa-database text-lg"></i> 데이터 관리
+            </button>
+          </div>
         </div>
       </nav>
 
       <!-- Content Area -->
-      <main class="flex-1 max-w-7xl mx-auto w-full p-4 md:p-6 space-y-6">
-        
-        <!-- ================= TAB 1: Cleaning Gallery ================= -->
-        <section id="section-gallery" class="space-y-4">
-          <!-- Filter & Action Bar -->
-          <div class="card-premium p-4 flex flex-col lg:flex-row gap-4 justify-between sticky top-[110px] z-20">
-            <div class="flex flex-col md:flex-row gap-2 w-full lg:w-auto overflow-x-auto pb-1 md:pb-0">
-               <!-- Quick Date Filters -->
-               <div class="flex bg-gray-100 p-1 rounded-lg shrink-0">
-                   <button onclick="setDateFilter('today')" class="px-3 py-1 text-xs rounded-md font-medium hover:bg-white hover:shadow-sm transition">오늘</button>
-                   <button onclick="setDateFilter('yesterday')" class="px-3 py-1 text-xs rounded-md font-medium hover:bg-white hover:shadow-sm transition">어제</button>
-                   <button onclick="setDateFilter('week')" class="px-3 py-1 text-xs rounded-md font-medium hover:bg-white hover:shadow-sm transition">이번주</button>
-               </div>
-               
-              <div class="relative min-w-[140px]">
-                <input type="date" id="galleryDate" class="pl-8 pr-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:border-green-600 w-full text-sm" onchange="loadGallery()">
-                <i class="fas fa-calendar absolute left-2.5 top-2.5 text-gray-400 text-xs"></i>
+      <main class="flex-1 bg-gray-50 p-4 md:p-8">
+        <div class="max-w-7xl mx-auto">
+          <!-- TAB 1: Gallery -->
+          <div id="tab-gallery" class="tab-content space-y-6">
+            <!-- Filters -->
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-wrap gap-4 items-center">
+              <div class="flex items-center gap-2">
+                <i class="fas fa-calendar text-gray-400"></i>
+                <input
+                  type="date"
+                  id="filter-date"
+                  class="border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                />
               </div>
-              
-              <select id="galleryLocation" class="py-1.5 px-3 border border-gray-300 rounded-lg focus:outline-none focus:border-green-600 bg-white text-sm" onchange="loadGallery()">
-                <option value="">전체 위치</option>
-              </select>
-              
-              <select id="galleryEmployee" class="py-1.5 px-3 border border-gray-300 rounded-lg focus:outline-none focus:border-green-600 bg-white text-sm" onchange="loadGallery()">
-                <option value="">전체 직원</option>
-              </select>
-            </div>
-            
-            <div class="flex gap-2 w-full lg:w-auto border-t lg:border-t-0 pt-3 lg:pt-0">
-              <button id="selectModeBtn" onclick="toggleSelectionMode()" class="flex-1 lg:flex-none px-4 py-2 border border-gray-300 hover:bg-gray-50 text-gray-700 rounded-lg transition text-sm font-medium flex items-center justify-center gap-2">
-                 <i class="fas fa-check-square"></i> 선택 모드
+
+              <div class="flex items-center gap-2 relative dropdown-container">
+                <i class="fas fa-user text-gray-400"></i>
+                <input
+                  type="text"
+                  id="filter-employee-input"
+                  placeholder="직원 이름 검색"
+                  class="border rounded-lg px-3 py-2 text-sm w-40 focus:ring-2 focus:ring-green-500 outline-none"
+                />
+                <div
+                  id="filter-employee-dropdown"
+                  class="dropdown-list absolute top-full left-8 w-40 bg-white border rounded-lg shadow-lg mt-1 max-h-48 overflow-y-auto hidden z-20"
+                ></div>
+              </div>
+
+              <div class="flex items-center gap-2">
+                <i class="fas fa-map-marker-alt text-gray-400"></i>
+                <select
+                  id="filter-location"
+                  class="border rounded-lg px-3 py-2 text-sm w-32 focus:ring-2 focus:ring-green-500 outline-none"
+                >
+                  <option value="전체">전체 위치</option>
+                </select>
+              </div>
+
+              <button
+                onclick="app.applyGalleryFilters()"
+                class="bg-gray-800 hover:bg-gray-900 text-white px-4 py-2 rounded-lg text-sm transition shadow-md ml-auto"
+              >
+                <i class="fas fa-search mr-2"></i>검색
               </button>
-              
-              <button id="downloadSelectedBtn" onclick="downloadSelectedPhotos()" class="hidden flex-1 lg:flex-none px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition text-sm font-medium shadow-sm flex items-center justify-center gap-2">
-                 <i class="fas fa-download"></i> 다운로드 (<span id="selectedCount">0</span>)
-              </button>
-
-              <button onclick="loadGallery()" class="refresh-btn flex-1 lg:flex-none px-4 py-2 bg-gray-800 hover:bg-gray-900 text-white rounded-lg transition text-sm font-medium shadow-sm flex items-center justify-center gap-2">
-                <i class="fas fa-sync-alt"></i> <span class="hidden sm:inline">새로고침</span>
+              <button
+                onclick="app.resetGalleryFilters()"
+                class="text-gray-500 hover:text-gray-700 px-3 py-2 text-sm border rounded-lg hover:bg-gray-50 transition"
+              >
+                초기화
               </button>
             </div>
-          </div>
 
-          <!-- Gallery Grid -->
-          <div id="galleryGrid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 md:gap-4">
-            <!-- Photos will be injected here -->
-          </div>
-
-          <div id="galleryEmpty" class="hidden flex flex-col items-center justify-center py-16 text-gray-400">
-            <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                <i class="fas fa-camera text-4xl text-gray-300"></i>
+            <!-- Gallery Grid -->
+            <div class="flex justify-between items-center">
+              <h2 class="text-xl font-bold text-gray-800">
+                📸 청소 작업 갤러리
+                <span id="gallery-count" class="text-sm text-gray-500 font-normal"></span>
+              </h2>
+              <button
+                onclick="app.loadGallery()"
+                class="text-sm bg-white border px-3 py-1 rounded shadow-sm hover:bg-gray-50"
+              >
+                <i class="fas fa-sync-alt mr-1"></i>새로고침
+              </button>
             </div>
-            <h3 class="text-lg font-bold text-gray-600">사진이 없습니다</h3>
-            <p class="text-sm">선택한 날짜나 조건에 해당하는 청소 기록이 없습니다.</p>
-          </div>
 
-          <div id="galleryLoading" class="hidden grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 md:gap-4">
-             <!-- Skeleton Loaders -->
-             <div class="aspect-square rounded-xl skeleton"></div>
-             <div class="aspect-square rounded-xl skeleton"></div>
-             <div class="aspect-square rounded-xl skeleton"></div>
-             <div class="aspect-square rounded-xl skeleton"></div>
-             <div class="aspect-square rounded-xl skeleton"></div>
-             <div class="aspect-square rounded-xl skeleton"></div>
-          </div>
-        </section>
-
-        <!-- ================= TAB 2: Work History ================= -->
-        <section id="section-history" class="hidden space-y-4">
-          <!-- Filter Bar -->
-          <div class="card-premium p-4 flex flex-col md:flex-row gap-4 justify-between items-end md:items-center">
-            <div class="w-full md:w-auto space-y-3">
-                 <div class="flex flex-wrap gap-2">
-                     <div class="flex items-center bg-white border border-gray-300 rounded-lg overflow-hidden">
-                        <input type="date" id="historyStartDate" class="py-1.5 px-3 text-sm focus:outline-none border-r border-gray-200">
-                        <span class="px-2 text-gray-400 text-xs">~</span>
-                        <input type="date" id="historyEndDate" class="py-1.5 px-3 text-sm focus:outline-none">
-                     </div>
-                     
-                     <div class="flex bg-gray-100 p-1 rounded-lg">
-                        <button onclick="setHistoryFilter('all')" class="px-3 py-1 text-xs rounded font-medium bg-white shadow-sm text-gray-800" id="filter-all">전체</button>
-                        <button onclick="setHistoryFilter('in')" class="px-3 py-1 text-xs rounded font-medium text-gray-500 hover:text-gray-800" id="filter-in">출근만</button>
-                        <button onclick="setHistoryFilter('out')" class="px-3 py-1 text-xs rounded font-medium text-gray-500 hover:text-gray-800" id="filter-out">퇴근완료</button>
-                     </div>
-                 </div>
-                 
-                 <div class="flex gap-2">
-                     <select id="historyEmployee" class="py-1.5 px-3 border border-gray-300 rounded-lg text-sm w-full md:w-48">
-                        <option value="">전체 직원</option>
-                     </select>
-                     <div class="relative w-full md:w-64">
-                         <i class="fas fa-search absolute left-3 top-2.5 text-gray-400 text-xs"></i>
-                         <input type="text" id="employeeSearch" placeholder="이름으로 검색..." class="pl-8 pr-3 py-1.5 w-full border border-gray-300 rounded-lg text-sm" onkeyup="filterHistoryTable()">
-                     </div>
-                 </div>
-            </div>
-            
-            <button onclick="loadHistory()" class="refresh-btn btn-primary px-6 py-2.5 rounded-lg font-medium shadow-md w-full md:w-auto flex justify-center items-center gap-2">
-              <i class="fas fa-search"></i> 조회하기
-            </button>
-          </div>
-
-          <!-- Data Table (Desktop) -->
-          <div class="card-premium overflow-hidden desktop-table-view">
-            <div class="overflow-x-auto">
-              <table class="w-full text-sm text-left">
-                <thead class="bg-gray-50 text-gray-700 font-bold border-b text-xs uppercase tracking-wider">
-                  <tr>
-                    <th class="p-4 whitespace-nowrap">날짜</th>
-                    <th class="p-4 whitespace-nowrap">직원명</th>
-                    <th class="p-4 whitespace-nowrap">출근 시간</th>
-                    <th class="p-4 whitespace-nowrap">퇴근 시간</th>
-                    <th class="p-4 whitespace-nowrap">근무 시간</th>
-                    <th class="p-4 whitespace-nowrap text-center">청소 작업</th>
-                    <th class="p-4 whitespace-nowrap text-center">상태</th>
-                    <th class="p-4 whitespace-nowrap text-center">관리</th>
-                  </tr>
-                </thead>
-                <tbody id="historyTableBody" class="divide-y divide-gray-100 bg-white">
-                  <!-- Rows injected here -->
-                </tbody>
-              </table>
+            <div id="gallery-grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+              <!-- Items injected by JS -->
             </div>
           </div>
-          
-          <!-- Card View (Mobile) -->
-          <div id="historyMobileView" class="mobile-card-view space-y-3">
-              <!-- Mobile cards injected here -->
-          </div>
 
-          <div id="historyLoading" class="text-center py-12 hidden">
-            <div class="loading-spinner mx-auto mb-3 border-gray-300 border-t-green-600"></div>
-            <p class="text-gray-500 text-sm">데이터를 불러오는 중입니다...</p>
-          </div>
-          <div id="historyEmpty" class="text-center py-16 hidden">
-             <i class="fas fa-folder-open text-4xl text-gray-200 mb-3"></i>
-             <p class="text-gray-500">데이터가 없습니다.</p>
-          </div>
-        </section>
-
-        <!-- ================= TAB 3: Statistics ================= -->
-        <section id="section-stats" class="hidden space-y-6">
-          <div class="flex items-center justify-between">
-            <div>
-                <h2 class="text-xl font-bold text-gray-800">통계 대시보드</h2>
-                <p class="text-sm text-gray-500" id="statsDate">오늘 날짜 기준</p>
-            </div>
-            <button onclick="loadStats()" class="refresh-btn p-2 rounded-full hover:bg-gray-100 text-green-600 transition">
-              <i class="fas fa-sync-alt"></i>
-            </button>
-          </div>
-
-          <!-- Summary Cards -->
-          <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <div class="card-premium p-5 border-b-4 border-blue-500 relative overflow-hidden group">
-              <div class="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition">
-                  <i class="fas fa-users text-5xl text-blue-500"></i>
+          <!-- TAB 2: History -->
+          <div id="tab-history" class="tab-content hidden space-y-6">
+            <!-- Filters -->
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div class="space-y-1">
+                <label class="text-xs text-gray-500 font-bold">시작일</label>
+                <input type="date" id="hist-start" class="w-full border rounded-lg px-3 py-2 text-sm" />
               </div>
-              <p class="text-xs text-gray-500 font-bold uppercase mb-1">총 직원</p>
-              <h3 class="text-3xl font-bold text-gray-800" id="statTotalEmps">-</h3>
-              <p class="text-xs text-green-600 mt-2 font-medium"><i class="fas fa-check-circle mr-1"></i>활동 중</p>
-            </div>
-            <div class="card-premium p-5 border-b-4 border-green-500 relative overflow-hidden group">
-              <div class="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition">
-                  <i class="fas fa-sign-in-alt text-5xl text-green-500"></i>
+              <div class="space-y-1">
+                <label class="text-xs text-gray-500 font-bold">종료일</label>
+                <input type="date" id="hist-end" class="w-full border rounded-lg px-3 py-2 text-sm" />
               </div>
-              <p class="text-xs text-gray-500 font-bold uppercase mb-1">오늘 출근</p>
-              <h3 class="text-3xl font-bold text-gray-800" id="statPresent">-</h3>
-              <p class="text-xs text-gray-500 mt-2">명 출근 완료</p>
-            </div>
-            <div class="card-premium p-5 border-b-4 border-orange-500 relative overflow-hidden group">
-              <div class="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition">
-                  <i class="fas fa-percent text-5xl text-orange-500"></i>
+              <div class="space-y-1 relative dropdown-container">
+                <label class="text-xs text-gray-500 font-bold">직원</label>
+                <input
+                  type="text"
+                  id="hist-employee-input"
+                  placeholder="이름 검색"
+                  class="w-full border rounded-lg px-3 py-2 text-sm"
+                />
+                <div
+                  id="hist-employee-dropdown"
+                  class="dropdown-list absolute top-full left-0 w-full bg-white border rounded-lg shadow-lg mt-1 max-h-48 overflow-y-auto hidden z-20"
+                ></div>
               </div>
-              <p class="text-xs text-gray-500 font-bold uppercase mb-1">출근율</p>
-              <h3 class="text-3xl font-bold text-gray-800" id="statRate">0%</h3>
-              <div class="w-full bg-gray-200 rounded-full h-1.5 mt-3">
-                  <div id="statRateBar" class="bg-orange-500 h-1.5 rounded-full" style="width: 0%"></div>
+              <div class="space-y-1">
+                <label class="text-xs text-gray-500 font-bold">근태 유형</label>
+                <div class="flex gap-2">
+                  <select id="hist-type" class="flex-1 border rounded-lg px-3 py-2 text-sm">
+                    <option value="">전체</option>
+                    <option value="출근">출근</option>
+                    <option value="퇴근">퇴근</option>
+                    <option value="휴게 시작">휴게 시작</option>
+                    <option value="휴게 종료">휴게 종료</option>
+                  </select>
+                  <button
+                    onclick="app.applyHistoryFilters()"
+                    class="bg-brand text-white px-4 rounded-lg text-sm hover:bg-green-800"
+                  >
+                    조회
+                  </button>
+                </div>
               </div>
             </div>
-            <div class="card-premium p-5 border-b-4 border-purple-500 relative overflow-hidden group">
-              <div class="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition">
-                  <i class="fas fa-broom text-5xl text-purple-500"></i>
-              </div>
-              <p class="text-xs text-gray-500 font-bold uppercase mb-1">청소 작업</p>
-              <h3 class="text-3xl font-bold text-gray-800" id="statCleaning">-</h3>
-              <p class="text-xs text-purple-600 mt-2 font-medium">실시간 집계 중</p>
-            </div>
-          </div>
 
-          <!-- Charts Grid -->
-          <div class="grid lg:grid-cols-2 gap-6">
-              <!-- Chart 1: Daily Attendance -->
-              <div class="card-premium p-5">
-                  <h3 class="font-bold text-gray-700 mb-4 flex items-center gap-2">
-                      <i class="fas fa-chart-line text-green-600"></i> 주간 출근 추이 (최근 7일)
-                  </h3>
-                  <div class="relative h-64 w-full">
-                      <canvas id="chartAttendance"></canvas>
-                  </div>
-              </div>
-              
-              <!-- Chart 2: Cleaning Tasks by Location -->
-              <div class="card-premium p-5">
-                  <h3 class="font-bold text-gray-700 mb-4 flex items-center gap-2">
-                      <i class="fas fa-map-marker-alt text-purple-600"></i> 구역별 청소 작업 현황
-                  </h3>
-                  <div class="relative h-64 w-full">
-                      <canvas id="chartCleaning"></canvas>
-                  </div>
-              </div>
-          </div>
-          
-          <!-- Employee Performance Table -->
-          <div class="card-premium p-5">
-              <h3 class="font-bold text-gray-700 mb-4">직원별 근무 현황 (오늘)</h3>
+            <!-- Table -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
               <div class="overflow-x-auto">
-                  <table class="w-full text-sm">
-                      <thead class="bg-gray-50 text-gray-500 text-xs uppercase">
-                          <tr>
-                              <th class="px-4 py-3 text-left">직원명</th>
-                              <th class="px-4 py-3 text-center">상태</th>
-                              <th class="px-4 py-3 text-center">출근시간</th>
-                              <th class="px-4 py-3 text-right">근무시간</th>
-                          </tr>
-                      </thead>
-                      <tbody id="statsEmployeeTable" class="divide-y divide-gray-100">
-                          <!-- Injected -->
-                      </tbody>
-                  </table>
-              </div>
-          </div>
-        </section>
-
-        <!-- ================= TAB 4: Data Export ================= -->
-        <section id="section-data" class="hidden space-y-6">
-          <div class="card-premium p-8 text-center bg-gradient-to-br from-white to-gray-50">
-            <div class="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <i class="fas fa-file-excel text-3xl"></i>
-            </div>
-            <h2 class="text-2xl font-bold text-gray-800 mb-2">데이터 내보내기</h2>
-            <p class="text-gray-500 mb-8 max-w-md mx-auto">
-              지정한 기간의 근태 기록과 청소 작업 내역을 엑셀 파일(.xlsx)로 다운로드할 수 있습니다.
-            </p>
-
-            <div class="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-              <!-- Attendance Export -->
-              <div class="bg-white border-2 border-gray-100 rounded-2xl p-6 hover:border-blue-500 hover:shadow-lg transition cursor-default group text-left">
-                <div class="flex items-center gap-3 mb-4">
-                    <div class="p-3 bg-blue-50 text-blue-600 rounded-lg group-hover:bg-blue-600 group-hover:text-white transition">
-                        <i class="fas fa-user-clock text-xl"></i>
-                    </div>
-                    <h3 class="font-bold text-gray-800 text-lg">근태 기록</h3>
-                </div>
-                
-                <div class="space-y-4">
-                  <div>
-                      <label class="text-xs font-bold text-gray-400 uppercase block mb-1">조회 시작일</label>
-                      <input type="date" id="exportStartDate" class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:border-blue-500 outline-none">
-                  </div>
-                  <div>
-                      <label class="text-xs font-bold text-gray-400 uppercase block mb-1">조회 종료일</label>
-                      <input type="date" id="exportEndDate" class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:border-blue-500 outline-none">
-                  </div>
-                </div>
-                
-                <button onclick="exportData('attendance')" class="mt-6 w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-bold shadow-md transition flex items-center justify-center gap-2">
-                  <i class="fas fa-download"></i> 엑셀 다운로드
-                </button>
-              </div>
-
-              <!-- Cleaning Export -->
-              <div class="bg-white border-2 border-gray-100 rounded-2xl p-6 hover:border-purple-500 hover:shadow-lg transition cursor-default group text-left">
-                <div class="flex items-center gap-3 mb-4">
-                    <div class="p-3 bg-purple-50 text-purple-600 rounded-lg group-hover:bg-purple-600 group-hover:text-white transition">
-                        <i class="fas fa-broom text-xl"></i>
-                    </div>
-                    <h3 class="font-bold text-gray-800 text-lg">청소 내역</h3>
-                </div>
-                
-                <div class="space-y-4">
-                  <div>
-                      <label class="text-xs font-bold text-gray-400 uppercase block mb-1">조회 시작일</label>
-                      <input type="date" id="exportCleanStartDate" class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:border-purple-500 outline-none">
-                  </div>
-                  <div>
-                      <label class="text-xs font-bold text-gray-400 uppercase block mb-1">조회 종료일</label>
-                      <input type="date" id="exportCleanEndDate" class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:border-purple-500 outline-none">
-                  </div>
-                </div>
-                
-                <button onclick="exportData('cleaning')" class="mt-6 w-full bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-xl font-bold shadow-md transition flex items-center justify-center gap-2">
-                  <i class="fas fa-download"></i> 엑셀 다운로드
-                </button>
+                <table class="w-full text-left border-collapse">
+                  <thead class="bg-gray-50 text-gray-500 uppercase text-xs">
+                    <tr>
+                      <th class="px-6 py-3">시간</th>
+                      <th class="px-6 py-3">직원</th>
+                      <th class="px-6 py-3">위치</th>
+                      <th class="px-6 py-3">유형</th>
+                    </tr>
+                  </thead>
+                  <tbody id="history-list" class="divide-y divide-gray-100">
+                    <!-- JS Injected -->
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>
-        </section>
+
+          <!-- TAB 3: Stats -->
+          <div id="tab-stats" class="tab-content hidden space-y-8">
+            <!-- Period Selector -->
+            <div class="flex items-center justify-between">
+              <h2 class="text-xl font-bold text-gray-800">📊 통계 대시보드</h2>
+              <div class="flex items-center gap-2">
+                <select
+                  id="stats-period"
+                  onchange="app.changePeriod()"
+                  class="border rounded-lg px-3 py-2 text-sm shadow-sm"
+                >
+                  <option value="today">오늘</option>
+                  <option value="week" selected>최근 7일</option>
+                  <option value="month">이번 달</option>
+                  <option value="custom">직접 선택</option>
+                </select>
+
+                <div id="custom-range" class="hidden flex items-center gap-2 bg-white p-1 rounded-lg border shadow-sm">
+                  <input type="date" id="custom-start" class="text-sm border-none focus:ring-0" />
+                  <span class="text-gray-400">~</span>
+                  <input type="date" id="custom-end" class="text-sm border-none focus:ring-0" />
+                  <button onclick="app.loadStats()" class="bg-gray-800 text-white text-xs px-2 py-1 rounded">
+                    적용
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- KPI Cards -->
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+              <!-- Total Employees -->
+              <div
+                class="bg-white p-5 rounded-xl shadow-sm border-l-4 border-gray-500 relative overflow-hidden group hover:shadow-md transition"
+              >
+                <div class="flex justify-between items-start">
+                  <div>
+                    <p class="text-xs text-gray-500 font-bold uppercase mb-1">총원</p>
+                    <h3 class="text-2xl font-bold text-gray-800" id="stat-total">-</h3>
+                    <p class="text-xs text-gray-400 mt-1">명 (전체 직원)</p>
+                  </div>
+                  <div class="bg-gray-100 p-2 rounded-lg text-gray-600">
+                    <i class="fas fa-users"></i>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Absent -->
+              <div
+                class="bg-white p-5 rounded-xl shadow-sm border-l-4 border-red-500 relative overflow-hidden group hover:shadow-md transition"
+              >
+                <div class="flex justify-between items-start">
+                  <div>
+                    <p class="text-xs text-gray-500 font-bold uppercase mb-1">휴가/결근</p>
+                    <h3 class="text-2xl font-bold text-gray-800" id="stat-absent">-</h3>
+                    <p class="text-xs text-gray-400 mt-1">명 (미출근)</p>
+                  </div>
+                  <div class="bg-red-50 p-2 rounded-lg text-red-600">
+                    <i class="fas fa-umbrella-beach"></i>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Present -->
+              <div
+                class="bg-white p-5 rounded-xl shadow-sm border-l-4 border-blue-500 relative overflow-hidden group hover:shadow-md transition"
+              >
+                <div class="flex justify-between items-start">
+                  <div>
+                    <p class="text-xs text-gray-500 font-bold uppercase mb-1">현재원</p>
+                    <h3 class="text-2xl font-bold text-gray-800" id="stat-present">-</h3>
+                    <p class="text-xs text-gray-400 mt-1">명 (출근 완료)</p>
+                  </div>
+                  <div class="bg-blue-50 p-2 rounded-lg text-blue-600">
+                    <i class="fas fa-check-circle"></i>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Cleaning Tasks -->
+              <div
+                class="bg-white p-5 rounded-xl shadow-sm border-l-4 border-green-500 relative overflow-hidden group hover:shadow-md transition"
+              >
+                <div class="flex justify-between items-start">
+                  <div>
+                    <p class="text-xs text-gray-500 font-bold uppercase mb-1">청소 작업</p>
+                    <h3 class="text-2xl font-bold text-gray-800" id="stat-cleaning">-</h3>
+                    <p class="text-xs text-gray-400 mt-1">건 (갤러리 업로드)</p>
+                  </div>
+                  <div class="bg-green-50 p-2 rounded-lg text-green-600">
+                    <i class="fas fa-broom"></i>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Avg Hours -->
+              <div
+                class="bg-white p-5 rounded-xl shadow-sm border-l-4 border-purple-500 relative overflow-hidden group hover:shadow-md transition"
+              >
+                <div class="flex justify-between items-start">
+                  <div>
+                    <p class="text-xs text-gray-500 font-bold uppercase mb-1">평균 근무</p>
+                    <h3 class="text-2xl font-bold text-gray-800" id="stat-hours">-</h3>
+                    <p class="text-xs text-gray-400 mt-1">시간 (휴게 제외)</p>
+                  </div>
+                  <div class="bg-purple-50 p-2 rounded-lg text-purple-600">
+                    <i class="fas fa-clock"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Charts Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <!-- Daily Chart -->
+              <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+                <div class="flex items-center justify-between mb-4">
+                  <h3 class="font-bold text-gray-700">
+                    <i class="fas fa-chart-line mr-2 text-blue-500"></i>일별 출근 현황
+                  </h3>
+                </div>
+                <div class="h-64">
+                  <canvas id="daily-chart"></canvas>
+                </div>
+              </div>
+
+              <!-- Location Chart -->
+              <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+                <div class="flex items-center justify-between mb-4">
+                  <h3 class="font-bold text-gray-700">
+                    <i class="fas fa-map-marker-alt mr-2 text-red-500"></i>구역별 청소 작업
+                  </h3>
+                </div>
+                <div class="h-64">
+                  <canvas id="location-chart"></canvas>
+                </div>
+              </div>
+
+              <!-- Employee Chart -->
+              <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+                <div class="flex items-center justify-between mb-4">
+                  <h3 class="font-bold text-gray-700">
+                    <i class="fas fa-users mr-2 text-purple-500"></i>직원별 작업량 (Top 10)
+                  </h3>
+                </div>
+                <div class="h-64">
+                  <canvas id="employee-chart"></canvas>
+                </div>
+              </div>
+
+              <!-- Type Chart -->
+              <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+                <div class="flex items-center justify-between mb-4">
+                  <h3 class="font-bold text-gray-700">
+                    <i class="fas fa-pie-chart mr-2 text-yellow-500"></i>근태 유형 분포
+                  </h3>
+                </div>
+                <div class="h-64">
+                  <canvas id="type-chart"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB 4: Data -->
+          <div id="tab-data" class="tab-content hidden space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <!-- Excel Export -->
+              <div
+                class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 text-center hover:shadow-md transition"
+              >
+                <div
+                  class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl"
+                >
+                  <i class="fas fa-file-excel"></i>
+                </div>
+                <h3 class="text-lg font-bold text-gray-800 mb-2">데이터 백업</h3>
+                <p class="text-gray-500 text-sm mb-6">전체 데이터를 엑셀 파일로 다운로드합니다.</p>
+                <button
+                  onclick="app.downloadData()"
+                  class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded-lg transition"
+                >
+                  <i class="fas fa-download mr-2"></i>엑셀 다운로드
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       </main>
-      
-      <!-- Mobile Bottom Navigation (Visible only on mobile) -->
-      <div class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t z-40 flex justify-around p-2 pb-safe">
-         <button onclick="switchTab('gallery')" class="flex flex-col items-center p-2 text-gray-400 hover:text-green-600 nav-icon active" data-target="gallery">
-             <i class="fas fa-images text-xl mb-1"></i>
-             <span class="text-[10px]">갤러리</span>
-         </button>
-         <button onclick="switchTab('history')" class="flex flex-col items-center p-2 text-gray-400 hover:text-green-600 nav-icon" data-target="history">
-             <i class="fas fa-list-alt text-xl mb-1"></i>
-             <span class="text-[10px]">내역</span>
-         </button>
-         <button onclick="switchTab('stats')" class="flex flex-col items-center p-2 text-gray-400 hover:text-green-600 nav-icon" data-target="stats">
-             <i class="fas fa-chart-pie text-xl mb-1"></i>
-             <span class="text-[10px]">통계</span>
-         </button>
-         <button onclick="switchTab('data')" class="flex flex-col items-center p-2 text-gray-400 hover:text-green-600 nav-icon" data-target="data">
-             <i class="fas fa-file-export text-xl mb-1"></i>
-             <span class="text-[10px]">관리</span>
-         </button>
-      </div>
     </div>
 
-    <!-- ================= Image Modal ================= -->
-    <div id="imageModal" class="fixed inset-0 z-[60] modal-backdrop hidden flex items-center justify-center p-4 transition-opacity duration-300" onclick="closeModal()">
-      <div class="relative max-w-5xl w-full max-h-[90vh] flex flex-col items-center" onclick="event.stopPropagation()">
-        <button onclick="closeModal()" class="absolute -top-12 right-0 text-white text-3xl hover:text-gray-300 z-50 transition drop-shadow-lg">
+    <!-- Image Modal -->
+    <div
+      id="image-modal"
+      class="fixed inset-0 z-50 flex items-center justify-center hidden modal-backdrop bg-black/80"
+      onclick="app.closeModal()"
+    >
+      <div
+        class="bg-white p-1 rounded-xl shadow-2xl max-w-4xl w-full mx-4 overflow-hidden relative"
+        onclick="event.stopPropagation()"
+      >
+        <button
+          onclick="app.closeModal()"
+          class="absolute top-4 right-4 text-white bg-black/50 hover:bg-black/70 rounded-full w-8 h-8 flex items-center justify-center transition z-10"
+        >
           <i class="fas fa-times"></i>
         </button>
-        
-        <div class="bg-black rounded-lg shadow-2xl overflow-hidden relative w-full flex justify-center items-center bg-opacity-90 max-h-[80vh]">
-            <img id="modalImage" src="" alt="Full size" class="max-w-full max-h-[80vh] object-contain">
-        </div>
-        
-        <div class="bg-white w-full p-5 mt-4 rounded-xl shadow-xl transform transition-transform">
-          <div class="flex justify-between items-start">
-            <div class="flex items-center gap-4">
-               <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-700 font-bold text-lg">
-                   <i class="fas fa-user"></i>
-               </div>
-               <div>
-                  <h3 id="modalEmployee" class="font-bold text-gray-800 text-lg cursor-pointer hover:text-green-600 hover:underline" onclick="showEmployeeProfile()">직원 이름</h3>
-                  <div class="flex items-center gap-2 text-gray-500 text-sm">
-                      <i class="fas fa-map-marker-alt text-red-400"></i>
-                      <span id="modalLocation">위치 정보</span>
-                  </div>
-               </div>
-            </div>
-            <div class="text-right">
-              <p id="modalTime" class="text-sm font-mono text-gray-600 font-medium">2023-01-01 12:00</p>
-              <a id="downloadSingleBtn" href="#" download="" class="inline-flex items-center gap-1 text-xs bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-full mt-1 text-gray-700 transition">
-                  <i class="fas fa-download"></i> 원본 다운로드
-              </a>
+        <div class="flex flex-col md:flex-row h-[80vh]">
+          <div class="flex-1 bg-black flex items-center justify-center">
+            <img id="modal-image" src="" alt="상세 이미지" class="max-w-full max-h-full object-contain" />
+          </div>
+          <div class="w-full md:w-80 bg-white p-6 flex flex-col justify-center border-l">
+            <h3 class="text-lg font-bold text-gray-800 mb-1" id="modal-employee-name">-</h3>
+            <p class="text-sm text-gray-500 mb-6" id="modal-time">-</p>
+            <div class="space-y-4">
+              <div class="p-3 bg-gray-50 rounded-lg">
+                <p class="text-xs text-gray-400 mb-1">촬영 위치</p>
+                <p class="font-medium text-gray-700">정보 없음</p>
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
-
-    <!-- ================= Edit Modal ================= -->
-    <div id="editModal" class="fixed inset-0 z-[70] modal-backdrop hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden" onclick="event.stopPropagation()">
-            <div class="bg-gray-50 px-6 py-4 border-b flex justify-between items-center">
-                <h3 class="font-bold text-lg text-gray-800"><i class="fas fa-edit text-blue-500 mr-2"></i>기록 수정</h3>
-                <button onclick="closeEditModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
-            </div>
-            <div class="p-6 space-y-4">
-                <input type="hidden" id="editRecordId">
-                <div>
-                    <label class="block text-xs font-bold text-gray-500 mb-1">직원명</label>
-                    <input type="text" id="editEmpName" class="w-full bg-gray-100 border border-gray-200 rounded p-2 text-sm" disabled="">
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 mb-1">날짜</label>
-                        <input type="date" id="editDate" class="w-full border border-gray-300 rounded p-2 text-sm">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 mb-1">시간</label>
-                        <input type="time" id="editTime" class="w-full border border-gray-300 rounded p-2 text-sm">
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-gray-500 mb-1">유형</label>
-                    <select id="editType" class="w-full border border-gray-300 rounded p-2 text-sm">
-                        <option value="출근">출근</option>
-                        <option value="퇴근">퇴근</option>
-                        <option value="휴게 시작">휴게 시작</option>
-                        <option value="휴게 종료">휴게 종료</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-gray-500 mb-1">메모 (수정 사유)</label>
-                    <textarea id="editMemo" class="w-full border border-gray-300 rounded p-2 text-sm h-20" placeholder="수정 사유를 입력하세요..."></textarea>
-                </div>
-            </div>
-            <div class="bg-gray-50 px-6 py-4 flex justify-between">
-                <button onclick="deleteRecord()" class="text-red-500 hover:text-red-700 font-medium text-sm px-3 py-2 rounded hover:bg-red-50">
-                    <i class="fas fa-trash-alt mr-1"></i> 삭제
-                </button>
-                <div class="flex gap-2">
-                    <button onclick="closeEditModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-600 hover:bg-gray-100">취소</button>
-                    <button onclick="saveRecordEdit()" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 font-medium shadow-sm">저장</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- ================= Employee Profile Modal ================= -->
-    <div id="profileModal" class="fixed inset-0 z-[65] modal-backdrop hidden flex items-center justify-end">
-        <div class="bg-white w-full max-w-md h-full shadow-2xl flex flex-col transform transition-transform duration-300 translate-x-full" id="profilePanel" onclick="event.stopPropagation()">
-            <div class="bg-gradient-to-r from-green-800 to-green-600 p-6 text-white relative">
-                <button onclick="closeProfileModal()" class="absolute top-4 right-4 text-white opacity-70 hover:opacity-100">
-                    <i class="fas fa-times text-xl"></i>
-                </button>
-                <div class="flex items-center gap-4 mt-2">
-                    <div class="w-16 h-16 rounded-full bg-white text-green-700 flex items-center justify-center text-3xl font-bold shadow-lg">
-                        <span id="profileInitials">김</span>
-                    </div>
-                    <div>
-                        <h2 class="text-2xl font-bold" id="profileName">김직원</h2>
-                        <p class="text-green-100 text-sm" id="profileRole">직원</p>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="flex-1 overflow-y-auto p-6 space-y-6">
-                <!-- Profile Stats -->
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="bg-gray-50 p-4 rounded-xl text-center">
-                        <p class="text-xs text-gray-500 mb-1">이번 달 근무일</p>
-                        <h3 class="text-xl font-bold text-gray-800"><span id="profileDays">0</span>일</h3>
-                    </div>
-                    <div class="bg-gray-50 p-4 rounded-xl text-center">
-                        <p class="text-xs text-gray-500 mb-1">이번 달 근무시간</p>
-                        <h3 class="text-xl font-bold text-gray-800"><span id="profileHours">0</span>시간</h3>
-                    </div>
-                </div>
-
-                <!-- Recent Activity Chart -->
-                <div>
-                    <h4 class="font-bold text-gray-700 mb-3 text-sm border-l-4 border-green-500 pl-2">최근 활동</h4>
-                    <div class="h-40 w-full relative">
-                        <canvas id="chartProfileActivity"></canvas>
-                    </div>
-                </div>
-
-                <!-- Recent Photos -->
-                <div>
-                    <h4 class="font-bold text-gray-700 mb-3 text-sm border-l-4 border-green-500 pl-2">최근 작업 사진</h4>
-                    <div class="grid grid-cols-3 gap-2" id="profilePhotosGrid">
-                        <!-- Injected -->
-                    </div>
-                </div>
-            </div>
-            
-            <div class="p-4 border-t bg-gray-50">
-                <button onclick="closeProfileModal()" class="w-full py-3 bg-white border border-gray-300 rounded-xl text-gray-700 font-bold hover:bg-gray-50 transition shadow-sm">
-                    닫기
-                </button>
-            </div>
-        </div>
     </div>
 
     <script>
-      // ================= CONFIGURATION =================
+      // KINDWON Admin Dashboard - Option A + B (Stable Version)
+
+      // Config
       const SUPABASE_URL = 'https://qgpqhtuynxhmgawakjxe.supabase.co';
-      const SUPABASE_ANON_KEY =
+      const SUPABASE_KEY =
         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFncHFodHV5bnhobWdhd2FranhlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcyOTQyNTEsImV4cCI6MjA4Mjg3MDI1MX0.WNljQIKDbeZCDlXe8fpBdZs58XRFfujGt7lBGfq_pVg';
       const LOGIN_PIN = 'bdxi2026';
 
-      const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-      
-      // Global State
-      let selectionMode = false;
-      let selectedPhotos = new Set();
-      let refreshIntervalId = null;
-      let charts = {}; // Store Chart.js instances
+      const app = {
+        sb: null,
+        charts: {},
+        employeeList: [],
+        locationList: [],
 
-      // ================= AUTHENTICATION =================
-      function checkLogin() {
-        const input = document.getElementById('pinInput').value;
-        const errorMsg = document.getElementById('loginError');
+        init: function () {
+          try {
+            if (window.supabase) {
+              this.sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+              console.log('✅ Supabase Ready');
+            }
+          } catch (e) {
+            console.error(e);
+          }
 
-        if (input === LOGIN_PIN) {
-          sessionStorage.setItem('isAdminLoggedIn', 'true');
-          initDashboard();
-        } else {
-          errorMsg.classList.remove('hidden');
-          document.getElementById('pinInput').value = '';
-          setTimeout(() => errorMsg.classList.add('hidden'), 3000);
-        }
-      }
+          this.updateClock();
+          setInterval(() => this.updateClock(), 1000);
 
-      function logout() {
-        if (confirm('로그아웃 하시겠습니까?')) {
-          sessionStorage.removeItem('isAdminLoggedIn');
-          location.reload();
-        }
-      }
+          // Dropdown close
+          document.addEventListener('click', (e) => {
+            if (!e.target.closest('.dropdown-container')) {
+              document.querySelectorAll('.dropdown-list').forEach((el) => el.classList.add('hidden'));
+            }
+          });
 
-      function initDashboard() {
-        document.getElementById('loginScreen').classList.add('hidden');
-        document.getElementById('appContainer').classList.remove('hidden');
+          // Input Search Setup
+          this.setupSearch('filter-employee-input', 'filter-employee-dropdown');
+          this.setupSearch('hist-employee-input', 'hist-employee-dropdown');
+        },
 
-        // Initial Filters Setup
-        const today = new Date().toISOString().split('T')[0];
-        document.getElementById('galleryDate').value = today;
+        setupSearch: function (inputId, listId) {
+          const input = document.getElementById(inputId);
+          const list = document.getElementById(listId);
+          if (!input || !list) return;
 
-        // Default Dates for History (This Month)
-        const date = new Date();
-        const firstDay = new Date(date.getFullYear(), date.getMonth(), 1).toISOString().split('T')[0];
-        document.getElementById('historyStartDate').value = firstDay;
-        document.getElementById('historyEndDate').value = today;
-        document.getElementById('exportStartDate').value = firstDay;
-        document.getElementById('exportEndDate').value = today;
-        document.getElementById('exportCleanStartDate').value = firstDay;
-        document.getElementById('exportCleanEndDate').value = today;
+          const handler = () => {
+            const term = input.value.toLowerCase();
+            const filtered = this.employeeList.filter((e) => e.name.toLowerCase().includes(term));
 
-        // Load Data
-        loadMetadata();
-        loadGallery();
-        loadStats();
-        
-        // Start Update Timer
-        setInterval(updateTimeDisplay, 60000);
-        updateTimeDisplay();
-      }
+            list.innerHTML = '';
+            filtered.forEach((emp) => {
+              const div = document.createElement('div');
+              div.className = 'dropdown-item px-3 py-2 cursor-pointer text-sm';
+              div.textContent = emp.name;
+              div.onclick = () => {
+                input.value = emp.name;
+                list.classList.add('hidden');
+              };
+              list.appendChild(div);
+            });
 
-      window.onload = () => {
-        if (sessionStorage.getItem('isAdminLoggedIn') === 'true') {
-          initDashboard();
-        }
+            if (filtered.length > 0) list.classList.remove('hidden');
+            else list.classList.add('hidden');
+          };
+
+          input.addEventListener('input', handler);
+          input.addEventListener('focus', handler);
+        },
+
+        updateClock: function () {
+          const now = new Date();
+          const time = now.toLocaleTimeString('ko-KR', { hour12: false });
+          const el = document.getElementById('live-time');
+          if (el) el.textContent = time;
+        },
+
+        login: function () {
+          const pin = document.getElementById('inp-pin').value;
+          if (pin === LOGIN_PIN) {
+            sessionStorage.setItem('kindwon_login', 'true');
+            this.showDashboard();
+          } else {
+            document.getElementById('msg-error').classList.remove('hidden');
+          }
+        },
+
+        logout: function () {
+          if (confirm('로그아웃 하시겠습니까?')) {
+            sessionStorage.removeItem('kindwon_login');
+            location.reload();
+          }
+        },
+
+        checkLogin: function () {
+          if (sessionStorage.getItem('kindwon_login') === 'true') {
+            this.showDashboard();
+          } else {
+            document.getElementById('view-login').classList.remove('hidden');
+          }
+        },
+
+        showDashboard: function () {
+          document.getElementById('view-login').classList.add('hidden');
+          document.getElementById('view-dashboard').classList.remove('hidden');
+          this.switchTab('gallery');
+        },
+
+        switchTab: function (tab) {
+          document.querySelectorAll('.tab-content').forEach((el) => el.classList.add('hidden'));
+          document.getElementById(`tab-${tab}`).classList.remove('hidden');
+
+          document.querySelectorAll('.nav-tab').forEach((el) => {
+            el.classList.remove('tab-active');
+            el.classList.add('tab-inactive');
+          });
+
+          const btn = document.querySelector(`button[onclick="app.switchTab('${tab}')"]`);
+          if (btn) {
+            btn.classList.remove('tab-inactive');
+            btn.classList.add('tab-active');
+          }
+
+          if (tab === 'gallery') {
+            this.loadGallery();
+            this.loadMeta();
+          } else if (tab === 'history') {
+            this.loadHistory();
+            this.loadMeta();
+          } else if (tab === 'stats') {
+            this.loadStats();
+          }
+        },
+
+        loadMeta: async function () {
+          if (this.employeeList.length > 0) return;
+          try {
+            const { data } = await this.sb.from('employees').select('name').eq('status', 'active');
+            if (data) this.employeeList = data;
+
+            const locRes = await this.sb.from('locations').select('name').eq('status', 'active');
+            if (locRes.data) {
+              const select = document.getElementById('filter-location');
+              select.innerHTML = '<option value="전체">전체 위치</option>';
+              locRes.data.forEach((l) => {
+                const opt = document.createElement('option');
+                opt.value = l.name;
+                opt.textContent = l.name;
+                select.appendChild(opt);
+              });
+            }
+          } catch (e) {}
+        },
+
+        // Gallery
+        loadGallery: async function () {
+          const grid = document.getElementById('gallery-grid');
+          grid.innerHTML = '<div class="col-span-full text-center py-10"><div class="loader"></div></div>';
+
+          try {
+            let q = this.sb.from('cleaning_tasks').select('*').order('created_at', { ascending: false });
+
+            const date = document.getElementById('filter-date').value;
+            const emp = document.getElementById('filter-employee-input').value;
+            const loc = document.getElementById('filter-location').value;
+
+            if (date) {
+              q = q.gte('created_at', `${date}T00:00:00+09:00`).lte('created_at', `${date}T23:59:59+09:00`);
+            }
+            if (emp) q = q.ilike('employee_name', `%${emp}%`);
+            if (loc !== '전체') q = q.eq('location', loc);
+
+            const { data } = await q.limit(50);
+
+            grid.innerHTML = '';
+            if (data && data.length > 0) {
+              document.getElementById('gallery-count').textContent = `(${data.length}건)`;
+              data.forEach((item) => {
+                if (item.photo_url) {
+                  const div = document.createElement('div');
+                  div.className = 'gallery-item bg-white rounded-lg shadow hover:shadow-lg transition-shadow';
+                  div.innerHTML = `
+                    <img src="${item.photo_url}" class="w-full h-48 object-cover rounded-t-lg"
+                        onclick="app.openModal('${item.photo_url}', '${item.employee_name}', '${item.created_at}')">
+                    <div class="p-3">
+                        <div class="font-medium text-gray-800">${item.employee_name}</div>
+                        <div class="text-sm text-gray-500">
+                            ${new Date(item.created_at).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                        </div>
+                    </div>
+                `;
+                  grid.appendChild(div);
+                }
+              });
+            } else {
+              grid.innerHTML = '<div class="col-span-full text-center py-20 text-gray-400">데이터가 없습니다.</div>';
+              document.getElementById('gallery-count').textContent = '(0건)';
+            }
+          } catch (e) {
+            console.error(e);
+            grid.innerHTML = '<div class="col-span-full text-center text-red-500">오류 발생</div>';
+          }
+        },
+
+        applyGalleryFilters: function () {
+          this.loadGallery();
+        },
+        resetGalleryFilters: function () {
+          document.getElementById('filter-date').value = '';
+          document.getElementById('filter-employee-input').value = '';
+          document.getElementById('filter-location').value = '전체';
+          this.loadGallery();
+        },
+
+        openModal: function (url, name, time) {
+          document.getElementById('modal-image').src = url;
+          document.getElementById('modal-employee-name').textContent = name;
+          document.getElementById('modal-time').textContent = new Date(time).toLocaleString('ko-KR');
+          document.getElementById('image-modal').classList.remove('hidden');
+        },
+        closeModal: function () {
+          document.getElementById('image-modal').classList.add('hidden');
+        },
+
+        // History
+        loadHistory: async function () {
+          const list = document.getElementById('history-list');
+          list.innerHTML = '<tr><td colspan="4" class="text-center py-4"><div class="loader"></div></td></tr>';
+
+          try {
+            let q = this.sb.from('attendance_records').select('*').order('scan_time', { ascending: false });
+
+            const start = document.getElementById('hist-start').value;
+            const end = document.getElementById('hist-end').value;
+            const emp = document.getElementById('hist-employee-input').value;
+            const type = document.getElementById('hist-type').value;
+
+            if (start) q = q.gte('scan_time', `${start}T00:00:00+09:00`);
+            if (end) q = q.lte('scan_time', `${end}T23:59:59+09:00`);
+            if (emp) q = q.ilike('employee_name', `%${emp}%`);
+            if (type) q = q.eq('attendance_type', type);
+
+            const { data } = await q.limit(100);
+
+            list.innerHTML = '';
+            if (data && data.length > 0) {
+              data.forEach((row) => {
+                const tr = document.createElement('tr');
+                let color = 'bg-gray-100 text-gray-800';
+                if (row.attendance_type === '출근') color = 'bg-blue-100 text-blue-800';
+                if (row.attendance_type === '퇴근') color = 'bg-green-100 text-green-800';
+
+                tr.innerHTML = `
+                <td class="px-6 py-4 text-sm text-gray-900">${new Date(row.scan_time).toLocaleString('ko-KR')}</td>
+                <td class="px-6 py-4 text-sm text-gray-500">${row.employee_name}</td>
+                <td class="px-6 py-4 text-sm text-gray-500">${row.location || '-'}</td>
+                <td class="px-6 py-4"><span class="px-2 py-1 text-xs rounded-full ${color}">${row.attendance_type}</span></td>
+            `;
+                list.appendChild(tr);
+              });
+            } else {
+              list.innerHTML =
+                '<tr><td colspan="4" class="text-center py-10 text-gray-400">데이터가 없습니다.</td></tr>';
+            }
+          } catch (e) {
+            console.error(e);
+          }
+        },
+
+        applyHistoryFilters: function () {
+          this.loadHistory();
+        },
+
+        // Stats
+        loadStats: async function () {
+          const period = document.getElementById('stats-period').value;
+          const now = new Date();
+          let start, end;
+
+          if (period === 'today') {
+            start = end = now.toISOString().split('T')[0];
+          } else if (period === 'week') {
+            const d = new Date();
+            d.setDate(d.getDate() - 7);
+            start = d.toISOString().split('T')[0];
+            end = now.toISOString().split('T')[0];
+          } else if (period === 'month') {
+            start = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+            end = now.toISOString().split('T')[0];
+          } else {
+            start = document.getElementById('custom-start').value;
+            end = document.getElementById('custom-end').value;
+          }
+
+          if (!start) return;
+
+          try {
+            const [empRes, attRes, cleanRes] = await Promise.all([
+              this.sb.from('employees').select('id, name').eq('status', 'active'),
+              this.sb
+                .from('attendance_records')
+                .select('*')
+                .gte('scan_time', `${start}T00:00:00`)
+                .lte('scan_time', `${end}T23:59:59`),
+              this.sb
+                .from('cleaning_tasks')
+                .select('*')
+                .gte('created_at', `${start}T00:00:00`)
+                .lte('created_at', `${end}T23:59:59`),
+            ]);
+
+            const emps = empRes.data || [];
+            const atts = attRes.data || [];
+            const cleans = cleanRes.data || [];
+
+            // KPIs
+            const total = emps.length;
+            const presentSet = new Set(atts.filter((a) => a.attendance_type === '출근').map((a) => a.employee_name));
+            const present = presentSet.size;
+
+            // Calc Hours
+            let totalHours = 0,
+              days = 0;
+            const workMap = {};
+            atts.forEach((a) => {
+              const k = `${a.employee_name}-${a.scan_time.split('T')[0]}`;
+              if (!workMap[k]) workMap[k] = {};
+              workMap[k][a.attendance_type] = new Date(a.scan_time);
+            });
+
+            Object.values(workMap).forEach((d) => {
+              if (d['출근'] && d['퇴근']) {
+                let h = (d['퇴근'] - d['출근']) / 3600000;
+                if (d['휴게 시작'] && d['휴게 종료']) h -= (d['휴게 종료'] - d['휴게 시작']) / 3600000;
+                if (h > 0) {
+                  totalHours += h;
+                  days++;
+                }
+              }
+            });
+
+            document.getElementById('stat-total').textContent = total;
+            document.getElementById('stat-absent').textContent = total - present;
+            document.getElementById('stat-present').textContent = present;
+            document.getElementById('stat-cleaning').textContent = cleans.length;
+            document.getElementById('stat-hours').textContent = days > 0 ? (totalHours / days).toFixed(1) : '0.0';
+
+            // Charts
+            this.renderCharts(atts, cleans);
+          } catch (e) {
+            console.error(e);
+          }
+        },
+
+        changePeriod: function () {
+          const val = document.getElementById('stats-period').value;
+          const cust = document.getElementById('custom-range');
+          if (val === 'custom') cust.classList.remove('hidden');
+          else {
+            cust.classList.add('hidden');
+            this.loadStats();
+          }
+        },
+
+        renderCharts: function (atts, cleans) {
+          // Destroy old
+          Object.values(this.charts).forEach((c) => c && c.destroy());
+
+          // Daily
+          const dailyData = {};
+          atts
+            .filter((a) => a.attendance_type === '출근')
+            .forEach((a) => {
+              const d = a.scan_time.split('T')[0];
+              dailyData[d] = (dailyData[d] || 0) + 1;
+            });
+          this.charts.daily = new Chart(document.getElementById('daily-chart'), {
+            type: 'line',
+            data: {
+              labels: Object.keys(dailyData),
+              datasets: [{ label: '출근', data: Object.values(dailyData), borderColor: '#3b82f6', tension: 0.4 }],
+            },
+            options: { maintainAspectRatio: false },
+          });
+
+          // Location
+          const locData = {};
+          cleans.forEach((c) => (locData[c.location || '미정'] = (locData[c.location] || 0) + 1));
+          this.charts.loc = new Chart(document.getElementById('location-chart'), {
+            type: 'doughnut',
+            data: {
+              labels: Object.keys(locData),
+              datasets: [
+                { data: Object.values(locData), backgroundColor: ['#ef4444', '#f97316', '#eab308', '#22c55e'] },
+              ],
+            },
+            options: { maintainAspectRatio: false },
+          });
+
+          // Employee
+          const empData = {};
+          cleans.forEach((c) => (empData[c.employee_name] = (empData[c.employee_name] || 0) + 1));
+          const sortedEmp = Object.entries(empData)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 10);
+          this.charts.emp = new Chart(document.getElementById('employee-chart'), {
+            type: 'bar',
+            data: {
+              labels: sortedEmp.map((i) => i[0]),
+              datasets: [{ label: '작업수', data: sortedEmp.map((i) => i[1]), backgroundColor: '#8b5cf6' }],
+            },
+            options: { maintainAspectRatio: false, indexAxis: 'y' },
+          });
+
+          // Type
+          const typeData = {};
+          atts.forEach((a) => (typeData[a.attendance_type] = (typeData[a.attendance_type] || 0) + 1));
+          this.charts.type = new Chart(document.getElementById('type-chart'), {
+            type: 'pie',
+            data: {
+              labels: Object.keys(typeData),
+              datasets: [
+                { data: Object.values(typeData), backgroundColor: ['#22c55e', '#ef4444', '#f59e0b', '#8b5cf6'] },
+              ],
+            },
+            options: { maintainAspectRatio: false },
+          });
+        },
+
+        downloadData: async function () {
+          try {
+            const { data: emps } = await this.sb.from('employees').select('*');
+            const { data: atts } = await this.sb.from('attendance_records').select('*');
+
+            const wb = XLSX.utils.book_new();
+            if (emps) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(emps), '직원');
+            if (atts) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(atts), '근태');
+            XLSX.writeFile(wb, 'KINDWON_Data.xlsx');
+          } catch (e) {
+            alert('다운로드 실패');
+          }
+        },
       };
 
-      // ================= DATA LOADING =================
-      let employeesCache = [];
-      let locationsCache = [];
-
-      async function loadMetadata() {
-        // Load Employees
-        const { data: emps } = await supabase.from('employees').select('id, name').eq('status', 'active').order('name');
-        employeesCache = emps || [];
-
-        // Load Locations
-        const { data: locs } = await supabase.from('locations').select('id, name').order('name');
-        locationsCache = locs || [];
-
-        // Populate Dropdowns
-        const empSelects = ['galleryEmployee', 'historyEmployee'];
-        const locSelects = ['galleryLocation'];
-
-        empSelects.forEach((id) => {
-          const sel = document.getElementById(id);
-          const currentVal = sel.value;
-          sel.innerHTML = '<option value="">전체 직원</option>';
-          employeesCache.forEach((e) => {
-            const opt = document.createElement('option');
-            opt.value = e.id;
-            opt.textContent = e.name;
-            sel.appendChild(opt);
-          });
-          if(currentVal) sel.value = currentVal;
-        });
-
-        locSelects.forEach((id) => {
-          const sel = document.getElementById(id);
-          const currentVal = sel.value;
-          sel.innerHTML = '<option value="">전체 위치</option>';
-          locationsCache.forEach((l) => {
-            const opt = document.createElement('option');
-            opt.value = l.id;
-            opt.textContent = l.name;
-            sel.appendChild(opt);
-          });
-          if(currentVal) sel.value = currentVal;
-        });
-      }
-
-      // ================= TAB 1: GALLERY =================
-      async function loadGallery() {
-        const grid = document.getElementById('galleryGrid');
-        const loading = document.getElementById('galleryLoading');
-        const empty = document.getElementById('galleryEmpty');
-        const badge = document.getElementById('badge-gallery');
-        
-        // Start Spinner on buttons
-        document.querySelectorAll('.refresh-btn').forEach(btn => btn.classList.add('spinning'));
-
-        grid.innerHTML = '';
-        loading.classList.remove('hidden');
-        empty.classList.add('hidden');
-
-        const date = document.getElementById('galleryDate').value;
-        const locId = document.getElementById('galleryLocation').value;
-        const empId = document.getElementById('galleryEmployee').value;
-
-        // Query
-        let query = supabase.from('cleaning_tasks').select('*').order('created_at', { ascending: false });
-
-        if (date) {
-          const start = new Date(date);
-          start.setHours(0, 0, 0, 0);
-          const end = new Date(date);
-          end.setHours(23, 59, 59, 999);
-          query = query.gte('created_at', start.toISOString()).lte('created_at', end.toISOString());
-        }
-        if (locId) query = query.eq('location_id', locId);
-        if (empId) query = query.eq('employee_id', empId);
-
-        const { data, error } = await query;
-        
-        loading.classList.add('hidden');
-        document.querySelectorAll('.refresh-btn').forEach(btn => btn.classList.remove('spinning'));
-        updateTimeDisplay();
-
-        if (error || !data || data.length === 0) {
-          empty.classList.remove('hidden');
-          badge.textContent = '0';
-          return;
-        }
-
-        let photoCount = 0;
-        
-        data.forEach((task) => {
-          if (task.photo_urls && Array.isArray(task.photo_urls)) {
-            task.photo_urls.forEach((url, idx) => {
-              photoCount++;
-              const div = document.createElement('div');
-              div.className = 'photo-grid-item group bg-gray-100';
-              if(selectedPhotos.has(url)) div.classList.add('selected');
-              
-              // Click handler based on mode
-              div.onclick = (e) => {
-                  if(selectionMode) {
-                      togglePhotoSelection(div, url);
-                  } else {
-                      openModal(url, task);
-                  }
-              };
-
-              const time = new Date(task.created_at).toLocaleTimeString('ko-KR', {
-                hour: '2-digit',
-                minute: '2-digit',
-              });
-              
-              const isSelected = selectedPhotos.has(url);
-
-              div.innerHTML = `
-                <img src="${url}" loading="lazy" alt="Cleaning photo" class="transition-opacity duration-300 opacity-0" onload="this.classList.remove('opacity-0')">
-                
-                <!-- Selection Checkbox -->
-                <div class="selection-checkbox">
-                    <i class="fas fa-check text-xs"></i>
-                </div>
-                
-                <div class="photo-overlay ${selectionMode ? 'hidden' : ''}">
-                  <div class="font-bold truncate">${task.employee_name}</div>
-                  <div class="text-xs truncate opacity-90">${task.location_name}</div>
-                  <div class="text-xs text-gray-300 mt-1 flex items-center gap-1">
-                      <i class="far fa-clock"></i> ${time}
-                  </div>
-                </div>
-              `;
-              grid.appendChild(div);
-            });
-          }
-        });
-        
-        badge.textContent = photoCount;
-        
-        // Update selection UI if mode is active
-        if(selectionMode) {
-            document.body.classList.add('selection-mode');
-        }
-      }
-      
-      // Selection Mode Logic
-      function toggleSelectionMode() {
-          selectionMode = !selectionMode;
-          const body = document.body;
-          const btn = document.getElementById('selectModeBtn');
-          const downloadBtn = document.getElementById('downloadSelectedBtn');
-          
-          if(selectionMode) {
-              body.classList.add('selection-mode');
-              btn.classList.add('bg-gray-200');
-              btn.innerHTML = '<i class="fas fa-times"></i> 취소';
-              downloadBtn.classList.remove('hidden');
-              downloadBtn.classList.add('flex');
-              // Reload to show checkboxes without overlays if needed
-          } else {
-              body.classList.remove('selection-mode');
-              btn.classList.remove('bg-gray-200');
-              btn.innerHTML = '<i class="fas fa-check-square"></i> 선택 모드';
-              downloadBtn.classList.add('hidden');
-              downloadBtn.classList.remove('flex');
-              selectedPhotos.clear();
-              document.querySelectorAll('.photo-grid-item.selected').forEach(el => el.classList.remove('selected'));
-              updateSelectionCount();
-          }
-      }
-      
-      function togglePhotoSelection(el, url) {
-          if(selectedPhotos.has(url)) {
-              selectedPhotos.delete(url);
-              el.classList.remove('selected');
-          } else {
-              selectedPhotos.add(url);
-              el.classList.add('selected');
-          }
-          updateSelectionCount();
-      }
-      
-      function updateSelectionCount() {
-          document.getElementById('selectedCount').textContent = selectedPhotos.size;
-      }
-      
-      async function downloadSelectedPhotos() {
-          if(selectedPhotos.size === 0) {
-              showToast('선택된 사진이 없습니다.', 'error');
-              return;
-          }
-          
-          showToast('사진 압축 중입니다. 잠시만 기다려주세요...', 'info');
-          
-          const zip = new JSZip();
-          const folder = zip.folder("cleaning_photos");
-          const promises = [];
-          
-          let count = 0;
-          
-          for(let url of selectedPhotos) {
-              const filename = `photo_${++count}.jpg`;
-              const promise = fetch(url)
-                  .then(res => res.blob())
-                  .then(blob => {
-                      folder.file(filename, blob);
-                  });
-              promises.push(promise);
-          }
-          
-          try {
-              await Promise.all(promises);
-              const content = await zip.generateAsync({type:"blob"});
-              saveAs(content, `청소사진_일괄다운로드_${new Date().toISOString().slice(0,10)}.zip`);
-              showToast('다운로드가 시작되었습니다.', 'success');
-              
-              // Reset
-              toggleSelectionMode();
-          } catch(err) {
-              console.error(err);
-              showToast('다운로드 중 오류가 발생했습니다.', 'error');
-          }
-      }
-
-      // ================= TAB 2: HISTORY =================
-      async function loadHistory() {
-        const tbody = document.getElementById('historyTableBody');
-        const mobileView = document.getElementById('historyMobileView');
-        const loading = document.getElementById('historyLoading');
-        const empty = document.getElementById('historyEmpty');
-
-        tbody.innerHTML = '';
-        mobileView.innerHTML = '';
-        loading.classList.remove('hidden');
-        empty.classList.add('hidden');
-        document.querySelectorAll('.desktop-table-view, .mobile-card-view').forEach(el => el.classList.add('hidden'));
-
-        const start = document.getElementById('historyStartDate').value;
-        const end = document.getElementById('historyEndDate').value;
-        const empId = document.getElementById('historyEmployee').value;
-
-        if (!start || !end) {
-          showToast('조회 기간을 선택해주세요.', 'error');
-          loading.classList.add('hidden');
-          return;
-        }
-
-        // Queries
-        let attQuery = supabase
-          .from('attendance_records')
-          .select('*')
-          .gte('scan_time', new Date(start).toISOString())
-          .lte('scan_time', new Date(end + 'T23:59:59').toISOString())
-          .order('scan_time', { ascending: false });
-
-        if (empId) attQuery = attQuery.eq('employee_id', empId);
-
-        let cleanQuery = supabase
-          .from('cleaning_tasks')
-          .select('employee_id, employee_name, created_at')
-          .gte('created_at', new Date(start).toISOString())
-          .lte('created_at', new Date(end + 'T23:59:59').toISOString());
-
-        if (empId) cleanQuery = cleanQuery.eq('employee_id', empId);
-
-        const [attRes, cleanRes] = await Promise.all([attQuery, cleanQuery]);
-
-        if (attRes.error) {
-          console.error(attRes.error);
-          loading.classList.add('hidden');
-          return;
-        }
-
-        const records = attRes.data;
-        const cleaningTasks = cleanRes.data || [];
-
-        // Process Data
-        const grouped = {}; 
-
-        // Reverse to process oldest first to match pairs, then we sort later
-        const sortedRecords = [...records].reverse();
-        
-        sortedRecords.forEach((r) => {
-          const date = r.scan_time.split('T')[0];
-          const key = `${date}_${r.employee_id}`;
-
-          if (!grouped[key]) {
-            grouped[key] = {
-              id: r.id, // ID of attendance record
-              date: date,
-              empName: r.employee_name,
-              empId: r.employee_id,
-              inTime: null,
-              outTime: null,
-              cleanCount: 0,
-            };
-          }
-
-          if (r.attendance_type === '출근') {
-              if(!grouped[key].inTime) grouped[key].inTime = r.scan_time; 
-          }
-          if (r.attendance_type === '퇴근') grouped[key].outTime = r.scan_time; 
-        });
-
-        cleaningTasks.forEach((t) => {
-          const date = t.created_at.split('T')[0];
-          const key = `${date}_${t.employee_id}`;
-          if (!grouped[key]) {
-            grouped[key] = {
-              id: null,
-              date: date,
-              empName: t.employee_name,
-              empId: t.employee_id,
-              inTime: null,
-              outTime: null,
-              cleanCount: 0,
-            };
-          }
-          grouped[key].cleanCount++;
-        });
-
-        const sortedKeys = Object.keys(grouped).sort().reverse(); 
-        
-        loading.classList.add('hidden');
-        document.querySelector('.desktop-table-view').classList.remove('hidden');
-        document.querySelector('.mobile-card-view').classList.remove('hidden');
-
-        if (sortedKeys.length === 0) {
-          empty.classList.remove('hidden');
-          document.querySelectorAll('.desktop-table-view, .mobile-card-view').forEach(el => el.classList.add('hidden'));
-          return;
-        }
-
-        sortedKeys.forEach((key) => {
-          const item = grouped[key];
-          renderHistoryRow(item, tbody, mobileView);
-        });
-      }
-      
-      function renderHistoryRow(item, tbody, mobileView) {
-          const inTimeStr = item.inTime
-            ? new Date(item.inTime).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
-            : '-';
-          const outTimeStr = item.outTime
-            ? new Date(item.outTime).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
-            : '-';
-
-          // Duration
-          let durationStr = '-';
-          if (item.inTime && item.outTime) {
-            const diffMs = new Date(item.outTime) - new Date(item.inTime);
-            if (diffMs ><script defer src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" integrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon='{"rayId":"9c2835d98813feab","serverTiming":{"name":{"cfExtPri":true,"cfEdge":true,"cfOrigin":true,"cfL4":true,"cfSpeedBrain":true,"cfCacheStatus":true}},"version":"2025.9.1","token":"4edd5f8ec12a48cfa682ab8261b80a79"}' crossorigin="anonymous"></script>
-</body></html>
+      document.addEventListener('DOMContentLoaded', () => {
+        app.init();
+        app.checkLogin();
+      });
+    </script>
+  </body>
+</html>
