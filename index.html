@@ -731,12 +731,8 @@
           }
 
           data.forEach((loc, index) => {
-            // QR Data Object
-            const qrData = JSON.stringify({
-              location_id: loc.id,
-              location_name: loc.name,
-              code: loc.code,
-            });
+            // QR Data Object (Simplified for QR Code size limits)
+            const qrData = loc.code || loc.id;
 
             const card = document.createElement('div');
             card.className = 'bg-white p-6 rounded-xl shadow border border-gray-100 flex flex-col items-center';
