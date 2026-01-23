@@ -295,9 +295,8 @@
         let currentStep = 1;
         const totalSteps = 5;
 
-        // Form Data State
-        let cleaningAreas = []; // [{ area_name, worker_name, photos: [] }]
-        let areaPhotos = {}; // { '구역명': { before: url, after: url, beforeFile: file, afterFile: file } }
+        let cleaningAreas = [];
+        let areaPhotos = {};
 
         // ==================== INITIALIZATION ====================
         window.onload = function () {
@@ -305,6 +304,20 @@
           addAttendanceRecord();
           updateUI();
         };
+
+        // ==================== HELPER: 시간 포맷 (오전/오후) ====================
+        function formatTime(timeString) {
+          if (!timeString) return '';
+          
+          // ISO 타임스탬프에서 시간 추출: "2026-01-23T03:03:00" → "03:03"
+          let time = timeString.includes('T') ? timeString.split('T')[1].substring(0, 5) : timeString.substring(0, 5);
+          
+          const [hour, minute] = time.split(':').map(Number);
+          const period = hour < 12 ? '오전' : '오후';
+          const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+          
+          return `${period} ${String(displayHour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+        }
 
         // ==================== AUTO FETCH DATA ====================
         window.autoFetchData = async function () {
@@ -320,7 +333,9 @@
             const startTime = `${selectedDate}T00:00:00`;
             const endTime = `${selectedDate}T23:59:59`;
 
-            // 1. 근태 기록 조회 (attendance_records 테이블) - 실제 필드명 사용
+            console.log('🔍 [날짜 필터링]', startTime, '~', endTime);
+
+            // 1. 근태 기록 조회 (attendance_records 테이블) - scan_time으로 범위 조회
             const { data: attendanceData, error: attendanceError } = await supabase
               .from('attendance_records')
               .select('*')
@@ -329,37 +344,39 @@
               .order('scan_time', { ascending: true });
 
             if (attendanceError) {
-              console.warn('근태 기록 조회 실패:', attendanceError);
+              console.warn('❌ 근태 기록 조회 실패:', attendanceError);
             }
 
             console.log('✅ 조회된 근태 기록:', attendanceData);
+            console.log('📊 근태 기록 개수:', attendanceData ? attendanceData.length : 0);
 
             // 2. 청소 기록 조회 (cleaning_tasks 테이블)
             const { data: cleaningData, error: cleaningError } = await supabase
               .from('cleaning_tasks')
               .select('*')
-              .eq('date', selectedDate);
+              .gte('created_at', startTime)
+              .lte('created_at', endTime);
 
             if (cleaningError) {
-              console.warn('청소 기록 조회 실패:', cleaningError);
+              console.warn('❌ 청소 기록 조회 실패:', cleaningError);
             }
 
             console.log('✅ 조회된 청소 기록:', cleaningData);
 
             let fetchedInfo = [];
 
-            // 3. 근태 기록으로 리스트 생성 (실제 필드: scan_time, location_name, attendance_type)
+            // 3. 근태 기록으로 리스트 생성
             if (attendanceData && attendanceData.length > 0) {
               document.getElementById('attendanceList').innerHTML = '';
 
               attendanceData.forEach((record) => {
-                const scanTime = record.scan_time ? record.scan_time.substring(11, 16) : ''; // HH:MM
+                const formattedTime = formatTime(record.scan_time);
                 const workerName = record.location_name || '직원';
                 const attendanceType = record.attendance_type || '';
 
                 let recordDesc = `${workerName} ${attendanceType}`;
 
-                addAttendanceRecordWithData(scanTime, recordDesc, true);
+                addAttendanceRecordWithData(formattedTime, recordDesc, true);
               });
 
               fetchedInfo.push(`근태 기록: ${attendanceData.length}건`);
@@ -369,7 +386,6 @@
 
             // 4. 청소 기록 자동 삽입
             if (cleaningData && cleaningData.length > 0) {
-              // 구역별로 그룹화
               const areaMap = {};
               cleaningData.forEach((record) => {
                 const area = record.area || record.area_name || '미지정 구역';
@@ -384,7 +400,6 @@
 
               cleaningAreas = Object.values(areaMap);
 
-              // areaPhotos 초기화
               cleaningAreas.forEach((area) => {
                 if (!areaPhotos[area.area_name]) {
                   areaPhotos[area.area_name] = {
@@ -423,7 +438,7 @@
           <div class="attendance-item flex gap-2 items-center bg-gray-50 p-3 rounded border border-gray-200" id="attendance-${id}">
             <div class="flex-1 grid grid-cols-12 gap-2">
               <div class="col-span-3">
-                <input type="time" class="attendance-time w-full p-2 border rounded text-sm" value="${time || ''}" placeholder="시간">
+                <input type="text" class="attendance-time w-full p-2 border rounded text-sm bg-white" value="${time || ''}" placeholder="시간" readonly>
               </div>
               <div class="col-span-8">
                 <input type="text" class="attendance-desc w-full p-2 border rounded text-sm" value="${description || ''}" placeholder="직원명 출근/퇴근">
@@ -537,7 +552,7 @@
           <div class="attendance-item flex gap-2 items-center bg-gray-50 p-3 rounded border border-gray-200" id="attendance-${id}">
             <div class="flex-1 grid grid-cols-12 gap-2">
               <div class="col-span-3">
-                <input type="time" class="attendance-time w-full p-2 border rounded text-sm" placeholder="시간">
+                <input type="text" class="attendance-time w-full p-2 border rounded text-sm" placeholder="오전 09:00">
               </div>
               <div class="col-span-8">
                 <input type="text" class="attendance-desc w-full p-2 border rounded text-sm" placeholder="직원명 출근/퇴근">
@@ -573,7 +588,7 @@
           noDataMsg.classList.add('hidden');
           list.innerHTML = cleaningAreas
             .map(
-              (area, index) => `
+              (area) => `
             <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 flex items-center justify-between">
               <div>
                 <p class="font-bold text-gray-800">${area.area_name}</p>
@@ -676,9 +691,6 @@
         window.submitLog = async function (actionType) {
           showLoading(true, '저장 중입니다...');
           try {
-            console.log('[제출] 시작:', actionType);
-
-            // 1. Upload Photos
             const photoUploads = [];
             for (const area of cleaningAreas) {
               const areaName = area.area_name;
@@ -692,9 +704,7 @@
             }
 
             await Promise.all(photoUploads);
-            console.log('[사진 업로드] 완료');
 
-            // 2. Work Log
             const workLog = {
               date: document.getElementById('logDate').value,
               author_id: null,
@@ -706,11 +716,9 @@
             };
 
             const { data: logData, error: logError } = await supabase.from('work_logs').insert(workLog).select().single();
-
             if (logError) throw logError;
             const logId = logData.id;
 
-            // 3. Attendance Records
             const attendanceRecords = [];
             document.querySelectorAll('.attendance-item').forEach((el, index) => {
               const time = el.querySelector('.attendance-time').value;
@@ -731,7 +739,6 @@
               await supabase.from('work_log_tasks').insert(attendanceRecords);
             }
 
-            // 4. Cleanings
             const cleanings = [];
             for (const area of cleaningAreas) {
               const areaName = area.area_name;
