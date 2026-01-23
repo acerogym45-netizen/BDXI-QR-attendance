@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>QR 스캔 출석 | KINDWON</title>
+    <title>직원 출퇴근 | KINDWON</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -28,6 +28,7 @@
       .logo-image {
         height: 32px;
         width: auto;
+        object-fit: contain;
       }
 
       @media (max-width: 640px) {
@@ -183,10 +184,10 @@
       <div class="container mx-auto px-4 py-4">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-3">
-            <img src="https://www.genspark.ai/api/files/s/UmgxPvd3" alt="KINDWON" class="logo-image" />
+            <img src="https://www.genspark.ai/api/files/s/UmgxPvd3" alt="KINDWON" class="logo-image" onerror="this.style.display='none'" />
             <div class="hidden sm:block w-px h-8 bg-white opacity-30"></div>
             <h1 class="text-xl sm:text-2xl font-extrabold tracking-tight">
-              <i class="fas fa-qrcode mr-2"></i>청소 사진 촬영
+              <i class="fas fa-user-clock mr-2"></i>직원 출퇴근
             </h1>
           </div>
           <button onclick="goBack()" class="text-white hover:text-gray-200 transition font-medium">
@@ -364,7 +365,7 @@
 
     <script>
       const SUPABASE_URL = 'https://qgpqhtuynxhmgawakjxe.supabase.co';
-      const SUPABASE_ANON_KEY = 'sb_publishable_ujXj0mLf1casiQdVkc0fCA_G6exymqG';
+      const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFncHFodHV5bnhobWdhd2FranhIIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzcwMjgyOTcsImV4cCI6MjA1MjYwNDI5N30.mxhVhABLmDKX-xOW0K8UQ9iTSYPiykn88JTH44CkB0I';
       const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
       let html5QrCode;
