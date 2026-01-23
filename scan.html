@@ -222,11 +222,16 @@
             <p class="text-xs opacity-80 font-light">카인드원 & 마스터플래너</p>
           </div>
         </div>
-        <div
-          id="connectionStatus"
-          class="w-3 h-3 rounded-full bg-red-400 border-2 border-white"
-          title="연결 상태"
-        ></div>
+        <div class="flex flex-col items-end gap-1">
+          <div
+            id="connectionStatus"
+            class="w-3 h-3 rounded-full bg-red-400 border-2 border-white"
+            title="연결 상태"
+          ></div>
+          <div id="sessionTimer" class="text-xs opacity-90 font-mono hidden">
+            <i class="fas fa-clock mr-1"></i><span id="timerText">--:--</span>
+          </div>
+        </div>
       </div>
     </header>
 
@@ -545,20 +550,39 @@
       // 세션 타이머 시작 (30분 = 1800000ms)
       function startSessionTimer() {
         const SESSION_TIMEOUT = 30 * 60 * 1000; // 30분
+        const timerElement = document.getElementById('sessionTimer');
+        const timerText = document.getElementById('timerText');
         
-        // 1분마다 체크
-        setInterval(() => {
+        timerElement.classList.remove('hidden');
+        
+        // 1초마다 업데이트
+        const updateTimer = () => {
           const scanTime = sessionStorage.getItem('qr_scan_time');
           if (!scanTime) return;
           
           const elapsed = Date.now() - parseInt(scanTime);
+          const remaining = SESSION_TIMEOUT - elapsed;
           
-          if (elapsed > SESSION_TIMEOUT) {
+          if (remaining <= 0) {
             alert('⏰ QR 코드 세션이 만료되었습니다.\n\n보안을 위해 30분이 경과했습니다.\nQR 코드를 다시 스캔해주세요.');
             sessionStorage.removeItem('qr_scan_time');
             window.location.href = window.location.origin + '/scan.html';
+            return;
           }
-        }, 60000); // 1분마다 체크
+          
+          // 남은 시간 표시 (분:초)
+          const minutes = Math.floor(remaining / 60000);
+          const seconds = Math.floor((remaining % 60000) / 1000);
+          timerText.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+          
+          // 5분 이하일 때 경고색
+          if (remaining < 5 * 60 * 1000) {
+            timerText.parentElement.classList.add('text-red-300');
+          }
+        };
+        
+        updateTimer(); // 즉시 실행
+        setInterval(updateTimer, 1000); // 1초마다 업데이트
       }
 
       // ==========================================
@@ -730,11 +754,10 @@
 
         showLoading(true);
         try {
-          const photoUrls = [];
           const timestamp = Date.now();
 
-          for (let i = 0; i < uploadedPhotos.length; i++) {
-            const file = uploadedPhotos[i];
+          // 1. 병렬 업로드 (Promise.all 사용)
+          const uploadPromises = uploadedPhotos.map(async (file, i) => {
             const fileExt = file.name.split('.').pop();
             const fileName = `${selectedEmployee.id}_${timestamp}_${i}.${fileExt}`;
             const filePath = `${fileName}`;
@@ -743,11 +766,16 @@
 
             if (uploadError) throw uploadError;
 
+            // Get Public URL
             const { data: urlData } = supabaseClient.storage.from('work-log-photos').getPublicUrl(filePath);
 
-            photoUrls.push(urlData.publicUrl);
-          }
+            return urlData.publicUrl;
+          });
 
+          // 모든 업로드 병렬 처리
+          const photoUrls = await Promise.all(uploadPromises);
+
+          // 2. Insert DB Record
           const { error: dbError } = await supabaseClient.from('cleaning_tasks').insert({
             employee_id: selectedEmployee.id,
             employee_name: selectedEmployee.name,
