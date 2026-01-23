@@ -392,7 +392,6 @@
               id="photoInput"
               accept="image/*"
               multiple
-              capture="environment"
               class="hidden"
               onchange="handlePhotoSelect(event)"
             />
@@ -522,7 +521,13 @@
             if (error) throw error;
             if (data) {
               scannedLocation = data;
+              
+              // QR 스캔 시간 기록 (30분 세션 타임아웃)
+              const scanTime = Date.now();
+              sessionStorage.setItem('qr_scan_time', scanTime);
+              
               updateLocationBanner();
+              startSessionTimer();
               console.log('✅ QR 스캔 완료 - 위치:', data.name);
             }
           } catch (err) {
@@ -535,6 +540,25 @@
         } else {
           alert('QR 코드를 스캔하여 접속해주세요.');
         }
+      }
+
+      // 세션 타이머 시작 (30분 = 1800000ms)
+      function startSessionTimer() {
+        const SESSION_TIMEOUT = 30 * 60 * 1000; // 30분
+        
+        // 1분마다 체크
+        setInterval(() => {
+          const scanTime = sessionStorage.getItem('qr_scan_time');
+          if (!scanTime) return;
+          
+          const elapsed = Date.now() - parseInt(scanTime);
+          
+          if (elapsed > SESSION_TIMEOUT) {
+            alert('⏰ QR 코드 세션이 만료되었습니다.\n\n보안을 위해 30분이 경과했습니다.\nQR 코드를 다시 스캔해주세요.');
+            sessionStorage.removeItem('qr_scan_time');
+            window.location.href = window.location.origin + '/scan.html';
+          }
+        }, 60000); // 1분마다 체크
       }
 
       // ==========================================
