@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>봉담자이프라이드시티 출석 시스템 | KINDWON</title>
+    <title>카인드원 & 마스터플래너 | KINDWON</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link
       rel="stylesheet"
@@ -55,6 +55,7 @@
       .logo-image {
         height: 36px;
         width: auto;
+        object-fit: contain;
       }
 
       @media (max-width: 640px) {
@@ -136,24 +137,24 @@
       <div class="container mx-auto px-4 py-4">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-3">
-            <img src="https://www.genspark.ai/api/files/s/UmgxPvd3" alt="KINDWON" class="logo-image" />
+            <img src="https://www.genspark.ai/api/files/s/UmgxPvd3" alt="KINDWON" class="logo-image" onerror="this.style.display='none'" />
             <div class="hidden sm:block w-px h-8 bg-white opacity-30"></div>
             <h1 class="text-xl sm:text-2xl font-extrabold tracking-tight">
-              <i class="fas fa-home mr-2"></i>봉담자이프라이드시티 출석 시스템
+              <i class="fas fa-home mr-2"></i>카인드원 & 마스터플래너
             </h1>
           </div>
           <nav class="hidden md:flex gap-4">
-            <a href="#" class="text-white hover:text-gray-200 transition font-medium">
+            <a href="index.html" class="text-white hover:text-gray-200 transition font-medium">
               <i class="fas fa-home mr-1"></i>관리자
             </a>
             <a href="work-log-list.html" class="text-white hover:text-gray-200 transition font-medium">
-              <i class="fas fa-edit mr-1"></i>업무 일지 목록
+              <i class="fas fa-list mr-1"></i>업무 일지 목록
             </a>
             <a href="work-log-create.html" class="text-white hover:text-gray-200 transition font-medium">
               <i class="fas fa-plus-circle mr-1"></i>업무 일지 작성
             </a>
             <a href="records.html" class="text-white hover:text-gray-200 transition font-medium">
-              <i class="fas fa-user-clock mr-1"></i>QR 스캔
+              <i class="fas fa-user-clock mr-1"></i>출석 기록
             </a>
           </nav>
         </div>
@@ -165,28 +166,28 @@
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
         <!-- Card 1: 직원 출석 -->
         <div class="action-card" onclick="window.location.href='scan.html'">
-          <i class="fas fa-qrcode text-blue-500"></i>
+          <i class="fas fa-qrcode" style="color: #3b82f6;"></i>
           <h3 class="text-xl font-bold text-gray-800 mb-2">직원 출석</h3>
           <p class="text-gray-600 text-sm">QR 코드 스캔하기</p>
         </div>
 
         <!-- Card 2: 출석 기록 -->
         <div class="action-card" onclick="window.location.href='records.html'">
-          <i class="fas fa-chart-line text-green-500"></i>
+          <i class="fas fa-chart-line" style="color: #10b981;"></i>
           <h3 class="text-xl font-bold text-gray-800 mb-2">출석 기록</h3>
           <p class="text-gray-600 text-sm">통계 및 리스트</p>
         </div>
 
         <!-- Card 3: 청소 기록 -->
         <div class="action-card" onclick="window.location.href='work-admin.html'">
-          <i class="fas fa-broom text-orange-500"></i>
+          <i class="fas fa-broom" style="color: #f97316;"></i>
           <h3 class="text-xl font-bold text-gray-800 mb-2">청소 기록</h3>
           <p class="text-gray-600 text-sm">업무 기록하기</p>
         </div>
 
         <!-- Card 4: 청소 현황 -->
         <div class="action-card" onclick="window.location.href='work-view.html'">
-          <i class="fas fa-tasks text-purple-500"></i>
+          <i class="fas fa-tasks" style="color: #a855f7;"></i>
           <h3 class="text-xl font-bold text-gray-800 mb-2">청소 현황</h3>
           <p class="text-gray-600 text-sm">실시간 확인</p>
         </div>
@@ -392,7 +393,7 @@
 
     <script>
       const SUPABASE_URL = 'https://qgpqhtuynxhmgawakjxe.supabase.co';
-      const SUPABASE_ANON_KEY = 'sb_publishable_ujXj0mLf1casiQdVkc0fCA_G6exymqG';
+      const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFncHFodHV5bnhobWdhd2FranhIIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzcwMjgyOTcsImV4cCI6MjA1MjYwNDI5N30.mxhVhABLmDKX-xOW0K8UQ9iTSYPiykn88JTH44CkB0I';
       const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
       // Tab Switching
@@ -547,8 +548,10 @@
 
         // Generate QR codes
         data.forEach((area) => {
+          const qrContainer = document.createElement('canvas');
+          document.getElementById(`qr-${area.id}`).appendChild(qrContainer);
           QRCode.toCanvas(
-            document.getElementById(`qr-${area.id}`),
+            qrContainer,
             JSON.stringify({ location_id: area.id, location_name: area.name }),
             { width: 200 },
           );
@@ -562,7 +565,9 @@
 
         const qrContainer = document.getElementById('scanPageQR');
         qrContainer.innerHTML = '';
-        QRCode.toCanvas(qrContainer, scanURL, { width: 200 });
+        const canvas = document.createElement('canvas');
+        qrContainer.appendChild(canvas);
+        QRCode.toCanvas(canvas, scanURL, { width: 200 });
       }
 
       // Copy URL
