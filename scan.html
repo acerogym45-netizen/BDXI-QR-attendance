@@ -1,629 +1,595 @@
 <!DOCTYPE html>
 <html lang="ko">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>직원 출퇴근 | KINDWON</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-    <style>
-      :root {
-        --kindwon-green: #1b5e3e;
-        --kindwon-green-light: #2d6e4f;
-        --kindwon-green-lighter: #4a9370;
-        --kindwon-green-pale: #e8f5e9;
-      }
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>직원 출퇴근 | KINDWON</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" />
+  <!-- Supabase JS v2 -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- QR Code Scanner -->
+  <script src="https://unpkg.com/html5-qrcode"></script>
 
-      body {
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans KR', sans-serif;
-        overflow-x: hidden;
-      }
+  <style>
+    :root {
+      --kindwon-green: #1b5e3e;
+      --kindwon-green-light: #2d6e4f;
+      --kindwon-green-lighter: #4a9370;
+      --kindwon-green-pale: #e8f5e9;
+    }
 
-      .kindwon-gradient {
-        background: linear-gradient(135deg, var(--kindwon-green) 0%, var(--kindwon-green-light) 100%);
-      }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans KR', sans-serif;
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      min-height: 100vh;
+    }
 
+    .kindwon-gradient {
+      background: linear-gradient(135deg, var(--kindwon-green) 0%, var(--kindwon-green-light) 100%);
+    }
+
+    .card-premium {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s ease;
+    }
+
+    .card-premium:hover {
+      box-shadow: 0 15px 50px rgba(0, 0, 0, 0.15);
+      transform: translateY(-2px);
+    }
+
+    .btn-kindwon {
+      background: var(--kindwon-green);
+      color: white;
+      transition: all 0.3s ease;
+      font-weight: 700;
+      padding: 1rem 2rem;
+      border-radius: 12px;
+      border: none;
+      cursor: pointer;
+    }
+
+    .btn-kindwon:hover {
+      background: var(--kindwon-green-light);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(27, 94, 62, 0.4);
+    }
+
+    .btn-kindwon:active {
+      transform: translateY(0);
+    }
+
+    .btn-attendance {
+      padding: 1.25rem;
+      border-radius: 12px;
+      font-weight: 700;
+      transition: all 0.3s ease;
+      border: 2px solid transparent;
+      cursor: pointer;
+    }
+
+    .btn-attendance:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    }
+
+    .btn-attendance.selected {
+      border-color: var(--kindwon-green);
+      background: var(--kindwon-green-pale);
+      color: var(--kindwon-green);
+    }
+
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .logo-image {
+      height: 32px;
+      width: auto;
+      object-fit: contain;
+    }
+
+    @media (max-width: 640px) {
       .logo-image {
-        height: 32px;
-        width: auto;
-        object-fit: contain;
+        height: 28px;
       }
+    }
 
-      @media (max-width: 640px) {
-        .logo-image {
-          height: 28px;
-        }
-      }
+    .photo-preview-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 0.75rem;
+    }
 
-      .btn-kindwon {
-        background: var(--kindwon-green);
-        color: white;
-        transition: all 0.3s ease;
-      }
+    .photo-preview-item {
+      position: relative;
+      aspect-ratio: 1;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 2px solid #e5e7eb;
+    }
 
-      .btn-kindwon:hover {
-        background: var(--kindwon-green-light);
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(27, 94, 62, 0.3);
-      }
+    .photo-preview-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
 
-      .btn-outline-kindwon {
-        background: white;
-        color: var(--kindwon-green);
-        border: 2px solid var(--kindwon-green);
-        transition: all 0.3s ease;
-      }
+    .photo-preview-number {
+      position: absolute;
+      top: 4px;
+      left: 4px;
+      background: rgba(0, 0, 0, 0.7);
+      color: white;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+    }
 
-      .btn-outline-kindwon:hover {
-        background: var(--kindwon-green-pale);
-        transform: translateY(-1px);
-      }
+    .photo-preview-remove {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      background: rgba(239, 68, 68, 0.9);
+      color: white;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
 
-      .card-premium {
-        background: white;
-        border-radius: 16px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-        transition: all 0.3s ease;
-      }
+    .photo-preview-remove:hover {
+      background: rgba(220, 38, 38, 1);
+      transform: scale(1.1);
+    }
 
-      .attendance-btn {
-        padding: 1.5rem;
-        border-radius: 16px;
-        font-weight: 700;
-        font-size: 1.125rem;
-        transition: all 0.3s ease;
-        border: 3px solid transparent;
-        text-align: center;
-        cursor: pointer;
-      }
+    #qr-reader {
+      width: 100%;
+      max-width: 500px;
+      margin: 0 auto;
+    }
 
-      .attendance-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
-      }
+    #qr-reader video {
+      border-radius: 12px;
+    }
 
-      .attendance-btn.selected {
-        border-color: var(--kindwon-green);
-        box-shadow: 0 0 0 4px var(--kindwon-green-pale);
-      }
+    .hidden {
+      display: none !important;
+    }
 
-      #reader {
-        border-radius: 16px;
-        overflow: hidden;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-      }
+    .step-hidden {
+      display: none;
+    }
 
-      #reader video {
-        border-radius: 16px;
-      }
+    .animate-fade-in {
+      animation: fadeIn 0.5s ease-in;
+    }
 
-      .success-animation {
-        animation: successPulse 0.6s ease;
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
       }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
 
-      @keyframes successPulse {
-        0%,
-        100% {
-          transform: scale(1);
-        }
-        50% {
-          transform: scale(1.05);
-        }
-      }
+    .loading-spinner {
+      border: 4px solid #f3f4f6;
+      border-top: 4px solid var(--kindwon-green);
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+    }
 
-      .error-shake {
-        animation: errorShake 0.5s ease;
-      }
-
-      @keyframes errorShake {
-        0%,
-        100% {
-          transform: translateX(0);
-        }
-        25% {
-          transform: translateX(-10px);
-        }
-        75% {
-          transform: translateX(10px);
-        }
-      }
-
-      select:focus,
-      input:focus {
-        outline: none;
-        border-color: var(--kindwon-green);
-        box-shadow: 0 0 0 3px rgba(27, 94, 62, 0.1);
-      }
-
-      .photo-preview {
-        position: relative;
-        border-radius: 12px;
-        overflow: hidden;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-      }
-
-      .photo-preview img {
-        width: 100%;
-        height: auto;
-        display: block;
-      }
-
-      .photo-count {
-        position: absolute;
-        top: 8px;
-        right: 8px;
-        background: rgba(0, 0, 0, 0.7);
-        color: white;
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 0.875rem;
-        font-weight: 600;
-      }
-
-      .loading-spinner {
-        border: 3px solid rgba(27, 94, 62, 0.2);
-        border-top-color: var(--kindwon-green);
-        border-radius: 50%;
-        width: 40px;
-        height: 40px;
-        animation: spin 0.8s linear infinite;
-      }
-
-      @keyframes spin {
-        to {
-          transform: rotate(360deg);
-        }
-      }
-    </style>
-  </head>
-  <body class="bg-gray-50 min-h-screen">
-    <!-- Header -->
-    <header class="kindwon-gradient text-white shadow-lg sticky top-0 z-50">
-      <div class="container mx-auto px-4 py-4">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-3">
-            <img src="https://www.genspark.ai/api/files/s/UmgxPvd3" alt="KINDWON" class="logo-image" onerror="this.style.display='none'" />
-            <div class="hidden sm:block w-px h-8 bg-white opacity-30"></div>
-            <h1 class="text-xl sm:text-2xl font-extrabold tracking-tight">
-              <i class="fas fa-user-clock mr-2"></i>직원 출퇴근
-            </h1>
-          </div>
-          <button onclick="goBack()" class="text-white hover:text-gray-200 transition font-medium">
-            <i class="fas fa-arrow-left mr-2"></i>
-            <span class="hidden sm:inline">돌아가기</span>
-          </button>
-        </div>
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body class="pb-8">
+  <!-- Header -->
+  <div class="kindwon-gradient text-white p-4 shadow-lg">
+    <div class="max-w-2xl mx-auto">
+      <div class="logo-container justify-center">
+        <img src="https://www.genspark.ai/api/files/s/UmgxPvd3" alt="KINDWON" class="logo-image" onerror="this.style.display='none'" />
+        <div class="w-px h-6 bg-white opacity-30"></div>
+        <h1 class="text-xl font-extrabold tracking-tight">
+          <i class="fas fa-clock"></i> 직원 출퇴근
+        </h1>
       </div>
-    </header>
+      <p class="text-center text-white text-sm mt-2 opacity-90">카인드원 & 마스터플래너</p>
+    </div>
+  </div>
 
-    <!-- Main Content -->
-    <div class="container mx-auto px-4 py-6 max-w-2xl">
-      <!-- Step 1: Employee Selection -->
-      <div id="step1" class="card-premium p-6 mb-6">
-        <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
-          <i class="fas fa-user mr-3" style="color: var(--kindwon-green)"></i>
-          직원 선택
-        </h2>
-        <p class="text-gray-600 mb-4 text-sm">본인의 이름을 선택해주세요.</p>
-        <select id="employeeSelect" class="w-full p-4 border-2 border-gray-200 rounded-lg text-lg transition">
-          <option value="">직원을 선택하세요...</option>
-        </select>
-        <button
-          onclick="selectEmployee()"
-          class="w-full mt-4 btn-kindwon py-4 rounded-lg font-bold text-lg shadow-md"
-        >
-          다음 <i class="fas fa-arrow-right ml-2"></i>
+  <!-- Main Container -->
+  <div class="max-w-2xl mx-auto p-4 space-y-6">
+    <!-- STEP 1: Employee Selection -->
+    <div id="step1" class="card-premium p-6 animate-fade-in">
+      <h2 class="text-2xl font-bold mb-4" style="color: var(--kindwon-green);">
+        <i class="fas fa-user-circle mr-2"></i> 직원 선택
+      </h2>
+      <p class="text-gray-600 mb-4">본인의 이름을 선택해주세요.</p>
+      
+      <select id="employeeSelect" class="w-full p-3 border-2 border-gray-200 rounded-lg text-lg focus:border-green-600 focus:outline-none focus:ring-2 focus:ring-green-200 transition">
+        <option value="">-- 직원 선택 --</option>
+      </select>
+
+      <button onclick="selectEmployee()" class="btn-kindwon w-full mt-4">
+        다음 단계 <i class="fas fa-arrow-right ml-2"></i>
+      </button>
+    </div>
+
+    <!-- STEP 2: QR Scanner -->
+    <div id="step2" class="card-premium p-6 animate-fade-in step-hidden">
+      <h2 class="text-2xl font-bold mb-4" style="color: var(--kindwon-green);">
+        <i class="fas fa-qrcode mr-2"></i> 구역 QR 코드 스캔
+      </h2>
+      <p class="text-gray-600 mb-4">근무 구역의 QR 코드를 스캔해주세요.</p>
+
+      <div id="qr-reader" class="mb-4"></div>
+
+      <div id="scanResult" class="hidden p-4 rounded-lg bg-green-50 border-2 border-green-300 text-center">
+        <i class="fas fa-check-circle text-green-600 text-3xl mb-2"></i>
+        <p class="font-bold text-green-800 text-lg">스캔 완료!</p>
+        <p class="text-gray-700 mt-1">
+          구역: <span id="scannedLocationName" class="font-bold"></span>
+        </p>
+      </div>
+
+      <button onclick="prevStep(1)" class="w-full mt-4 px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-bold hover:bg-gray-300 transition">
+        <i class="fas fa-arrow-left mr-2"></i> 이전
+      </button>
+    </div>
+
+    <!-- STEP 3: Attendance Type Selection -->
+    <div id="step3" class="card-premium p-6 animate-fade-in step-hidden">
+      <h2 class="text-2xl font-bold mb-4" style="color: var(--kindwon-green);">
+        <i class="fas fa-clipboard-check mr-2"></i> 출퇴근 유형 선택
+      </h2>
+      <p class="text-gray-600 mb-4">출퇴근 유형을 선택해주세요.</p>
+
+      <div class="grid grid-cols-2 gap-3">
+        <button onclick="selectAttendanceType('출근')" class="btn-attendance bg-blue-100 text-blue-800 hover:bg-blue-200">
+          <i class="fas fa-sign-in-alt text-2xl mb-2"></i>
+          <div class="font-bold text-lg">출근</div>
+        </button>
+        <button onclick="selectAttendanceType('퇴근')" class="btn-attendance bg-orange-100 text-orange-800 hover:bg-orange-200">
+          <i class="fas fa-sign-out-alt text-2xl mb-2"></i>
+          <div class="font-bold text-lg">퇴근</div>
+        </button>
+        <button onclick="selectAttendanceType('휴게 시작')" class="btn-attendance bg-purple-100 text-purple-800 hover:bg-purple-200">
+          <i class="fas fa-coffee text-2xl mb-2"></i>
+          <div class="font-bold text-lg">휴게 시작</div>
+        </button>
+        <button onclick="selectAttendanceType('휴게 종료')" class="btn-attendance bg-green-100 text-green-800 hover:bg-green-200">
+          <i class="fas fa-play-circle text-2xl mb-2"></i>
+          <div class="font-bold text-lg">휴게 종료</div>
         </button>
       </div>
 
-      <!-- Step 2: QR Scan -->
-      <div id="step2" class="hidden">
-        <!-- Selected Employee Info -->
-        <div class="card-premium p-4 mb-6" style="background: var(--kindwon-green-pale)">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm font-semibold" style="color: var(--kindwon-green)">직원:</p>
-              <p class="text-xl font-bold text-gray-800" id="selectedEmployee">-</p>
-            </div>
-            <button
-              onclick="changeEmployee()"
-              class="text-sm font-semibold hover:underline"
-              style="color: var(--kindwon-green)"
-            >
-              <i class="fas fa-edit mr-1"></i>변경
-            </button>
-          </div>
-        </div>
+      <button onclick="prevStep(2)" class="w-full mt-4 px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-bold hover:bg-gray-300 transition">
+        <i class="fas fa-arrow-left mr-2"></i> 이전
+      </button>
+    </div>
 
-        <!-- QR Scanner -->
-        <div class="card-premium p-6 mb-6">
-          <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
-            <i class="fas fa-camera mr-3" style="color: var(--kindwon-green)"></i>
-            QR 코드 스캔
-          </h2>
-          <p class="text-gray-600 mb-4 text-sm">구역 QR 코드를 카메라로 스캔해주세요.</p>
-          <div id="reader" class="mb-4"></div>
-          <div id="scanResult" class="hidden mt-4 p-4 rounded-lg" style="background: var(--kindwon-green-pale)">
-            <p class="font-bold text-gray-800 mb-2" style="color: var(--kindwon-green)">
-              <i class="fas fa-check-circle mr-2"></i>스캔 완료!
-            </p>
-            <p class="text-gray-700">
-              구역: <span id="scannedLocation" class="font-bold">-</span>
-            </p>
-          </div>
-        </div>
+    <!-- STEP 4: Photo Upload (Optional) -->
+    <div id="step4" class="card-premium p-6 animate-fade-in step-hidden">
+      <h2 class="text-2xl font-bold mb-4" style="color: var(--kindwon-green);">
+        <i class="fas fa-camera mr-2"></i> 사진 촬영 (선택사항)
+      </h2>
+      <p class="text-gray-600 mb-4">작업 사진을 최대 30장까지 촬영/업로드 할 수 있습니다.</p>
 
-        <!-- Attendance Type Selection -->
-        <div id="attendanceTypeSection" class="card-premium p-6 mb-6 hidden">
-          <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
-            <i class="fas fa-clock mr-3" style="color: var(--kindwon-green)"></i>
-            출퇴근 선택
-          </h2>
-          <div class="grid grid-cols-2 gap-3">
-            <button onclick="selectAttendanceType('출근')" class="attendance-btn" style="background: #dbeafe; color: #1e40af">
-              <i class="fas fa-sign-in-alt text-2xl mb-2 block"></i>
-              출근
-            </button>
-            <button onclick="selectAttendanceType('퇴근')" class="attendance-btn" style="background: #fce7f3; color: #be185d">
-              <i class="fas fa-sign-out-alt text-2xl mb-2 block"></i>
-              퇴근
-            </button>
-            <button onclick="selectAttendanceType('휴게 시작')" class="attendance-btn" style="background: #fef3c7; color: #b45309">
-              <i class="fas fa-coffee text-2xl mb-2 block"></i>
-              휴게 시작
-            </button>
-            <button onclick="selectAttendanceType('휴게 종료')" class="attendance-btn" style="background: #d1fae5; color: #047857">
-              <i class="fas fa-play-circle text-2xl mb-2 block"></i>
-              휴게 종료
-            </button>
-          </div>
-        </div>
-
-        <!-- Photo Upload Section -->
-        <div id="photoSection" class="card-premium p-6 mb-6 hidden">
-          <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
-            <i class="fas fa-camera mr-3" style="color: var(--kindwon-green)"></i>
-            청소 사진 촬영
-          </h2>
-          <p class="text-gray-600 mb-4 text-sm">
-            청소 완료 후 사진을 촬영해주세요. (최대 30장)
-          </p>
-
-          <!-- Photo Preview Grid -->
-          <div id="photoPreviewGrid" class="grid grid-cols-2 gap-3 mb-4"></div>
-
-          <!-- Photo Count -->
-          <div class="flex items-center justify-between mb-4 p-3 rounded-lg" style="background: var(--kindwon-green-pale)">
-            <span class="font-semibold" style="color: var(--kindwon-green)">
-              <i class="fas fa-image mr-2"></i>
-              <span id="photoCount">0</span> 장
-            </span>
-            <span class="text-sm text-gray-600">최대 30장</span>
-          </div>
-
-          <!-- Upload Buttons -->
-          <div class="grid grid-cols-2 gap-3">
-            <button
-              onclick="triggerCamera()"
-              class="btn-kindwon py-4 rounded-lg font-bold shadow-md"
-            >
-              <i class="fas fa-camera mr-2"></i>사진 촬영
-            </button>
-            <button
-              onclick="triggerGallery()"
-              class="btn-outline-kindwon py-4 rounded-lg font-bold shadow-md"
-            >
-              <i class="fas fa-images mr-2"></i>갤러리
-            </button>
-          </div>
-
-          <input
-            type="file"
-            id="cameraInput"
-            accept="image/*"
-            capture="environment"
-            multiple
-            class="hidden"
-            onchange="handlePhotoSelect(event)"
-          />
-          <input
-            type="file"
-            id="galleryInput"
-            accept="image/*"
-            multiple
-            class="hidden"
-            onchange="handlePhotoSelect(event)"
-          />
-
-          <p class="text-xs text-gray-500 mt-3 text-center">
-            <i class="fas fa-info-circle mr-1"></i>
-            <strong>팁:</strong> 청소 후 사진을 여러 장 촬영해두고, '갤러리' 버튼으로 한 번에 선택하세요! (최대 30장)
-          </p>
-
-          <!-- Submit Button -->
-          <button
-            id="submitBtn"
-            onclick="submitAttendance()"
-            class="w-full mt-6 btn-kindwon py-4 rounded-lg font-bold text-lg shadow-md hidden"
-          >
-            제출하기 <i class="fas fa-check ml-2"></i>
-          </button>
-        </div>
+      <div class="mb-4">
+        <label for="photoInput" class="block w-full p-6 border-2 border-dashed border-gray-300 rounded-lg text-center cursor-pointer hover:border-green-500 hover:bg-green-50 transition">
+          <i class="fas fa-camera text-4xl text-gray-400 mb-2"></i>
+          <p class="font-bold text-gray-600">사진 촬영 / 선택</p>
+          <p class="text-sm text-gray-500">최대 30장</p>
+        </label>
+        <input type="file" id="photoInput" accept="image/*" multiple capture="environment" class="hidden" onchange="handlePhotoSelect(event)">
       </div>
 
-      <!-- Loading Overlay -->
-      <div id="loadingOverlay" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-white rounded-2xl p-8 text-center shadow-2xl">
-          <div class="loading-spinner mx-auto mb-4"></div>
-          <p class="text-lg font-bold text-gray-800" id="loadingText">업로드 중...</p>
-          <p class="text-sm text-gray-600 mt-2" id="uploadProgress">0 / 0</p>
-        </div>
+      <div id="photoPreviewGrid" class="photo-preview-grid mb-4">
+        <!-- Photo previews will be added here -->
+      </div>
+
+      <div class="flex gap-3">
+        <button onclick="prevStep(3)" class="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-bold hover:bg-gray-300 transition">
+          <i class="fas fa-arrow-left mr-2"></i> 이전
+        </button>
+        <button onclick="submitAttendance()" id="submitBtn" class="btn-kindwon flex-1">
+          <i class="fas fa-check mr-2"></i> 제출하기
+        </button>
       </div>
     </div>
 
-    <script>
-      const SUPABASE_URL = 'https://qgpqhtuynxhmgawakjxe.supabase.co';
-      const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFncHFodHV5bnhobWdhd2FranhIIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzcwMjgyOTcsImV4cCI6MjA1MjYwNDI5N30.mxhVhABLmDKX-xOW0K8UQ9iTSYPiykn88JTH44CkB0I';
-      const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white p-8 rounded-xl text-center">
+        <div class="loading-spinner mx-auto mb-4"></div>
+        <p class="font-bold text-lg" style="color: var(--kindwon-green);">처리 중...</p>
+        <p class="text-sm text-gray-600 mt-2">잠시만 기다려주세요.</p>
+      </div>
+    </div>
+  </div>
 
-      let html5QrCode;
-      let selectedEmployeeId = null;
-      let selectedEmployeeName = null;
-      let scannedLocationId = null;
-      let scannedLocationName = null;
-      let selectedAttendanceType = null;
-      let photoFiles = [];
+  <script>
+    const SUPABASE_URL = 'https://qgpqhtuynxhmgawakjxe.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFncHFodHV5bnhobWdhd2FranhIIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzcwMjgyOTcsImV4cCI6MjA1MjYwNDI5N30.mxhVhABLmDKX-xOW0K8UQ9iTSYPiykn88JTH44CkB0I';
+    const STORAGE_BUCKET = 'work-log-photos';
 
-      // Load Employees
-      async function loadEmployees() {
-        const { data, error } = await supabase.from('employees').select('*').eq('status', 'active').order('name');
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        const select = document.getElementById('employeeSelect');
-        if (error || !data || data.length === 0) {
-          select.innerHTML = '<option value="">직원 정보를 불러올 수 없습니다.</option>';
-          return;
-        }
+    let currentStep = 1;
+    let selectedEmployee = null;
+    let scannedLocation = null;
+    let selectedAttendanceType = null;
+    let uploadedPhotos = [];
+    let html5QrCode = null;
 
-        select.innerHTML =
-          '<option value="">직원을 선택하세요...</option>' +
-          data.map((emp) => `<option value="${emp.id}">${emp.name}</option>`).join('');
-      }
+    // Load employees on page load
+    window.onload = async function() {
+      await loadEmployees();
+    };
 
-      function selectEmployee() {
-        const select = document.getElementById('employeeSelect');
-        if (!select.value) {
-          alert('직원을 선택해주세요.');
-          return;
-        }
-
-        selectedEmployeeId = select.value;
-        selectedEmployeeName = select.options[select.selectedIndex].text;
-        document.getElementById('selectedEmployee').innerText = selectedEmployeeName;
-
-        document.getElementById('step1').classList.add('hidden');
-        document.getElementById('step2').classList.remove('hidden');
-
-        startQRScanner();
-      }
-
-      function changeEmployee() {
-        document.getElementById('step1').classList.remove('hidden');
-        document.getElementById('step2').classList.add('hidden');
-        stopQRScanner();
-      }
-
-      function startQRScanner() {
-        html5QrCode = new Html5Qrcode('reader');
-        html5QrCode
-          .start(
-            { facingMode: 'environment' },
-            {
-              fps: 10,
-              qrbox: { width: 250, height: 250 },
-            },
-            onScanSuccess,
-          )
-          .catch((err) => {
-            console.error('QR 스캐너 시작 실패:', err);
-            alert('카메라 접근에 실패했습니다.\n\n권한을 확인해주세요.');
-          });
-      }
-
-      function stopQRScanner() {
-        if (html5QrCode) {
-          html5QrCode
-            .stop()
-            .then(() => {
-              html5QrCode.clear();
-            })
-            .catch(() => {});
-        }
-      }
-
-      function onScanSuccess(decodedText) {
-        try {
-          const data = JSON.parse(decodedText);
-          scannedLocationId = data.location_id;
-          scannedLocationName = data.location_name;
-
-          document.getElementById('scanResult').classList.remove('hidden');
-          document.getElementById('scannedLocation').innerText = scannedLocationName;
-          document.getElementById('scanResult').classList.add('success-animation');
-
-          stopQRScanner();
-
-          // Show attendance type selection
-          document.getElementById('attendanceTypeSection').classList.remove('hidden');
-        } catch (error) {
-          console.error('QR 데이터 파싱 오류:', error);
-          alert('올바르지 않은 QR 코드입니다.');
-        }
-      }
-
-      function selectAttendanceType(type) {
-        selectedAttendanceType = type;
-
-        // Update button styles
-        document.querySelectorAll('.attendance-btn').forEach((btn) => btn.classList.remove('selected'));
-        event.target.closest('.attendance-btn').classList.add('selected');
-
-        // Show photo section
-        document.getElementById('photoSection').classList.remove('hidden');
-        document.getElementById('submitBtn').classList.remove('hidden');
-
-        // Scroll to photo section
-        document.getElementById('photoSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-
-      function triggerCamera() {
-        document.getElementById('cameraInput').click();
-      }
-
-      function triggerGallery() {
-        document.getElementById('galleryInput').click();
-      }
-
-      function handlePhotoSelect(event) {
-        const files = Array.from(event.target.files);
-        
-        if (photoFiles.length + files.length > 30) {
-          alert('최대 30장까지만 선택할 수 있습니다.');
-          return;
-        }
-
-        photoFiles.push(...files);
-        updatePhotoPreview();
-        event.target.value = ''; // Reset input
-      }
-
-      function updatePhotoPreview() {
-        const grid = document.getElementById('photoPreviewGrid');
-        document.getElementById('photoCount').innerText = photoFiles.length;
-
-        grid.innerHTML = photoFiles
-          .map(
-            (file, index) => `
-          <div class="photo-preview">
-            <img src="${URL.createObjectURL(file)}" alt="Photo ${index + 1}">
-            <div class="photo-count">${index + 1}</div>
-            <button 
-              onclick="removePhoto(${index})" 
-              class="absolute top-2 left-2 bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-red-600 transition shadow-lg"
-            >
-              <i class="fas fa-times"></i>
-            </button>
-          </div>
-        `,
-          )
-          .join('');
-      }
-
-      function removePhoto(index) {
-        photoFiles.splice(index, 1);
-        updatePhotoPreview();
-      }
-
-      async function submitAttendance() {
-        if (!selectedAttendanceType) {
-          alert('출퇴근 유형을 선택해주세요.');
-          return;
-        }
-
-        if (photoFiles.length === 0) {
-          if (!confirm('사진이 없습니다. 그대로 제출하시겠습니까?')) return;
-        }
-
-        showLoading(true);
-
-        try {
-          // 1. Upload Photos
-          const uploadedUrls = [];
-          for (let i = 0; i < photoFiles.length; i++) {
-            updateUploadProgress(i + 1, photoFiles.length);
-            const url = await uploadPhoto(photoFiles[i], i);
-            uploadedUrls.push(url);
-          }
-
-          // 2. Save Attendance Record
-          const { error: attendanceError } = await supabase.from('attendance_records').insert({
-            employee_id: selectedEmployeeId,
-            location_id: scannedLocationId,
-            location_name: scannedLocationName,
-            attendance_type: selectedAttendanceType,
-            scan_time: new Date().toISOString(),
-          });
-
-          if (attendanceError) throw attendanceError;
-
-          // 3. Save Cleaning Task
-          const { error: cleaningError } = await supabase.from('cleaning_tasks').insert({
-            worker_name: selectedEmployeeName,
-            area: scannedLocationName,
-            photo_urls: uploadedUrls,
-            created_at: new Date().toISOString(),
-          });
-
-          if (cleaningError) throw cleaningError;
-
-          showLoading(false);
-          alert(
-            `✅ 제출 완료!\n\n직원: ${selectedEmployeeName}\n구역: ${scannedLocationName}\n유형: ${selectedAttendanceType}\n사진: ${photoFiles.length}장`,
-          );
-
-          // Reset
-          resetForm();
-        } catch (error) {
-          showLoading(false);
-          console.error('제출 오류:', error);
-          alert('제출 중 오류가 발생했습니다.\n\n' + error.message);
-        }
-      }
-
-      async function uploadPhoto(file, index) {
-        const fileName = `${Date.now()}_${index}_${Math.random().toString(36).substr(2, 9)}.jpg`;
-        const filePath = `cleaning/${fileName}`;
-
-        const { error } = await supabase.storage.from('work-log-photos').upload(filePath, file);
+    async function loadEmployees() {
+      try {
+        const { data, error } = await supabase
+          .from('employees')
+          .select('*')
+          .eq('status', 'active')
+          .order('name', { ascending: true });
 
         if (error) throw error;
 
-        const { data } = supabase.storage.from('work-log-photos').getPublicUrl(filePath);
-        return data.publicUrl;
+        const select = document.getElementById('employeeSelect');
+        select.innerHTML = '<option value="">-- 직원 선택 --</option>';
+        
+        data.forEach(emp => {
+          const option = document.createElement('option');
+          option.value = emp.id;
+          option.textContent = `${emp.name} (${emp.employee_number || ''})`;
+          option.dataset.name = emp.name;
+          select.appendChild(option);
+        });
+      } catch (error) {
+        console.error('직원 목록 로드 실패:', error);
+        alert('직원 목록을 불러올 수 없습니다.');
+      }
+    }
+
+    function selectEmployee() {
+      const select = document.getElementById('employeeSelect');
+      if (!select.value) {
+        alert('직원을 선택해주세요.');
+        return;
       }
 
-      function showLoading(show) {
-        document.getElementById('loadingOverlay').classList.toggle('hidden', !show);
+      selectedEmployee = {
+        id: select.value,
+        name: select.options[select.selectedIndex].dataset.name
+      };
+
+      goToStep(2);
+      startQRScanner();
+    }
+
+    function startQRScanner() {
+      html5QrCode = new Html5Qrcode("qr-reader");
+      
+      html5QrCode.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: 250 },
+        onScanSuccess,
+        onScanError
+      ).catch(err => {
+        console.error('QR 스캐너 시작 실패:', err);
+        alert('카메라를 시작할 수 없습니다. 권한을 확인해주세요.');
+      });
+    }
+
+    function onScanSuccess(decodedText, decodedResult) {
+      try {
+        const data = JSON.parse(decodedText);
+        scannedLocation = {
+          id: data.location_id,
+          name: data.location_name
+        };
+
+        document.getElementById('scannedLocationName').textContent = scannedLocation.name;
+        document.getElementById('scanResult').classList.remove('hidden');
+
+        // Stop scanner
+        if (html5QrCode) {
+          html5QrCode.stop();
+        }
+
+        setTimeout(() => {
+          goToStep(3);
+        }, 1500);
+      } catch (error) {
+        console.error('QR 코드 파싱 실패:', error);
+        alert('유효하지 않은 QR 코드입니다.');
+      }
+    }
+
+    function onScanError(errorMessage) {
+      // Ignore scan errors (happens frequently during scanning)
+    }
+
+    function selectAttendanceType(type) {
+      selectedAttendanceType = type;
+      
+      // Visual feedback
+      document.querySelectorAll('.btn-attendance').forEach(btn => {
+        btn.classList.remove('selected');
+      });
+      event.target.closest('.btn-attendance').classList.add('selected');
+
+      setTimeout(() => {
+        goToStep(4);
+      }, 500);
+    }
+
+    function handlePhotoSelect(event) {
+      const files = Array.from(event.target.files);
+      
+      if (uploadedPhotos.length + files.length > 30) {
+        alert('최대 30장까지만 업로드할 수 있습니다.');
+        return;
       }
 
-      function updateUploadProgress(current, total) {
-        document.getElementById('uploadProgress').innerText = `${current} / ${total}`;
+      files.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          uploadedPhotos.push({
+            file: file,
+            preview: e.target.result
+          });
+          renderPhotoPreview();
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function renderPhotoPreview() {
+      const grid = document.getElementById('photoPreviewGrid');
+      grid.innerHTML = '';
+
+      uploadedPhotos.forEach((photo, index) => {
+        const div = document.createElement('div');
+        div.className = 'photo-preview-item';
+        div.innerHTML = `
+          <img src="${photo.preview}" alt="Photo ${index + 1}">
+          <div class="photo-preview-number">${index + 1}</div>
+          <div class="photo-preview-remove" onclick="removePhoto(${index})">
+            <i class="fas fa-times"></i>
+          </div>
+        `;
+        grid.appendChild(div);
+      });
+    }
+
+    function removePhoto(index) {
+      uploadedPhotos.splice(index, 1);
+      renderPhotoPreview();
+    }
+
+    async function submitAttendance() {
+      if (!selectedEmployee || !scannedLocation || !selectedAttendanceType) {
+        alert('모든 정보를 입력해주세요.');
+        return;
       }
 
-      function resetForm() {
-        scannedLocationId = null;
-        scannedLocationName = null;
-        selectedAttendanceType = null;
-        photoFiles = [];
+      showLoading(true);
 
-        document.getElementById('scanResult').classList.add('hidden');
-        document.getElementById('attendanceTypeSection').classList.add('hidden');
-        document.getElementById('photoSection').classList.add('hidden');
-        document.getElementById('photoPreviewGrid').innerHTML = '';
-        document.getElementById('photoCount').innerText = '0';
+      try {
+        // 1. Upload photos
+        const photoUrls = [];
+        for (const photo of uploadedPhotos) {
+          const fileName = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}.jpg`;
+          const filePath = `temp/${fileName}`;
 
-        startQRScanner();
-      }
+          const { error: uploadError } = await supabase.storage
+            .from(STORAGE_BUCKET)
+            .upload(filePath, photo.file);
 
-      function goBack() {
-        if (confirm('작업을 취소하고 돌아가시겠습니까?')) {
+          if (uploadError) throw uploadError;
+
+          const { data: urlData } = supabase.storage
+            .from(STORAGE_BUCKET)
+            .getPublicUrl(filePath);
+
+          photoUrls.push(urlData.publicUrl);
+        }
+
+        // 2. Insert attendance record
+        const now = new Date().toISOString();
+        const { error: attendanceError } = await supabase
+          .from('attendance_records')
+          .insert({
+            employee_id: selectedEmployee.id,
+            location_id: scannedLocation.id,
+            location_name: scannedLocation.name,
+            attendance_type: selectedAttendanceType,
+            scan_time: now
+          });
+
+        if (attendanceError) throw attendanceError;
+
+        // 3. Insert cleaning task (if photos exist)
+        if (photoUrls.length > 0) {
+          const { error: cleaningError } = await supabase
+            .from('cleaning_tasks')
+            .insert({
+              worker_name: selectedEmployee.name,
+              area: scannedLocation.name,
+              photo_urls: photoUrls,
+              created_at: now
+            });
+
+          if (cleaningError) throw cleaningError;
+        }
+
+        showLoading(false);
+        alert('출퇴근 기록이 완료되었습니다!');
+        
+        // Reset
+        if (confirm('다시 체크하시겠습니까?')) {
+          window.location.reload();
+        } else {
           window.location.href = 'index.html';
         }
+      } catch (error) {
+        console.error('제출 실패:', error);
+        showLoading(false);
+        alert('제출 중 오류가 발생했습니다:\n\n' + error.message);
       }
+    }
 
-      // Initialize
-      loadEmployees();
-    </script>
-  </body>
+    function goToStep(step) {
+      document.getElementById(`step${currentStep}`).classList.add('step-hidden');
+      currentStep = step;
+      document.getElementById(`step${step}`).classList.remove('step-hidden');
+      window.scrollTo(0, 0);
+    }
+
+    function prevStep(targetStep) {
+      if (html5QrCode && currentStep === 2) {
+        html5QrCode.stop();
+      }
+      goToStep(targetStep);
+    }
+
+    function showLoading(show) {
+      const overlay = document.getElementById('loadingOverlay');
+      if (show) {
+        overlay.classList.remove('hidden');
+      } else {
+        overlay.classList.add('hidden');
+      }
+    }
+  </script>
+</body>
 </html>
