@@ -625,6 +625,7 @@
             employee_name: selectedEmployee.name,
             location_id: scannedLocation.id,
             location_name: scannedLocation.name,
+            location_code: scannedLocation.code || scannedLocation.id,
             attendance_type: type,
             scan_time: now,
           });
