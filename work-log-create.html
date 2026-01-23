@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>업무 일지 작성</title>
+    <title>업무 일지 작성 | KINDWON</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome -->
@@ -11,23 +11,45 @@
     <!-- Supabase JS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
+      :root {
+        --kindwon-green: #1B5E3E;
+        --kindwon-green-light: #2D6E4F;
+        --kindwon-green-lighter: #4A9370;
+        --kindwon-green-pale: #E8F5E9;
+      }
+      
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans KR', sans-serif;
+      }
+
+      .kindwon-gradient {
+        background: linear-gradient(135deg, var(--kindwon-green) 0%, var(--kindwon-green-light) 100%);
+      }
+
       .step-indicator.active {
-        background-color: #16a34a;
+        background-color: var(--kindwon-green);
         color: white;
-        border-color: #16a34a;
+        border-color: var(--kindwon-green);
+        box-shadow: 0 2px 8px rgba(27, 94, 62, 0.3);
       }
+      
       .step-indicator.completed {
-        background-color: #16a34a;
+        background-color: var(--kindwon-green);
         color: white;
-        border-color: #16a34a;
+        border-color: var(--kindwon-green);
       }
+      
+      .step-line.active {
+        background-color: var(--kindwon-green);
+      }
+      
       .loading-overlay {
         position: fixed;
         top: 0;
         left: 0;
         width: 100%;
         height: 100%;
-        background: rgba(255, 255, 255, 0.9);
+        background: rgba(255, 255, 255, 0.95);
         display: flex;
         justify-content: center;
         align-items: center;
@@ -35,23 +57,100 @@
         flex-direction: column;
         gap: 1rem;
       }
+      
       .hidden-step {
         display: none;
+      }
+
+      .card-premium {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        transition: all 0.3s ease;
+      }
+
+      .card-premium:hover {
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+      }
+
+      .btn-kindwon {
+        background: var(--kindwon-green);
+        color: white;
+        transition: all 0.3s ease;
+      }
+
+      .btn-kindwon:hover {
+        background: var(--kindwon-green-light);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(27, 94, 62, 0.3);
+      }
+
+      .area-btn-selected {
+        border-color: var(--kindwon-green) !important;
+        background: var(--kindwon-green-pale) !important;
+        color: var(--kindwon-green) !important;
+      }
+
+      .logo-container {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .logo-image {
+        height: 32px;
+        width: auto;
+      }
+
+      @media (max-width: 640px) {
+        .logo-image {
+          height: 28px;
+        }
+      }
+
+      .animate-fade-in {
+        animation: fadeIn 0.5s ease-in;
+      }
+
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
+      input:focus, textarea:focus, select:focus {
+        outline: none;
+        border-color: var(--kindwon-green);
+        box-shadow: 0 0 0 3px rgba(27, 94, 62, 0.1);
+      }
+
+      .task-item {
+        transition: all 0.2s ease;
+      }
+
+      .task-item:hover {
+        background: #F9FAFB;
+        border-color: var(--kindwon-green-lighter);
       }
     </style>
   </head>
   <body class="bg-gray-50 text-gray-800 pb-24">
     <!-- Loading Overlay -->
     <div id="loadingOverlay" class="loading-overlay hidden">
-      <i class="fas fa-spinner fa-spin fa-3x text-green-600"></i>
-      <span id="loadingText" class="text-green-800 font-bold text-lg">처리중...</span>
+      <i class="fas fa-spinner fa-spin fa-3x" style="color: var(--kindwon-green);"></i>
+      <span id="loadingText" class="font-bold text-lg" style="color: var(--kindwon-green);">처리중...</span>
     </div>
 
     <!-- Header -->
-    <div class="bg-green-700 text-white p-4 shadow-lg sticky top-0 z-50">
+    <div class="kindwon-gradient text-white p-4 shadow-lg sticky top-0 z-50">
       <div class="max-w-3xl mx-auto flex justify-between items-center">
-        <h1 class="text-xl font-bold flex items-center gap-2"><i class="fas fa-edit"></i> 업무 일지 작성</h1>
-        <a href="work-log-list.html" class="text-green-100 hover:text-white text-sm">
+        <div class="logo-container">
+          <img src="https://www.genspark.ai/api/files/s/UmgxPvd3" alt="KINDWON" class="logo-image">
+          <div class="hidden sm:block w-px h-6 bg-white opacity-30 mx-2"></div>
+          <h1 class="text-lg sm:text-xl font-bold flex items-center gap-2">
+            <i class="fas fa-edit"></i> 업무 일지 작성
+          </h1>
+        </div>
+        <a href="work-log-list.html" class="text-white hover:text-gray-200 text-sm transition">
           <i class="fas fa-times"></i> 닫기
         </a>
       </div>
@@ -62,7 +161,7 @@
       <div class="flex items-center justify-between mb-8 px-2 relative">
         <div class="absolute top-1/2 left-0 w-full h-1 bg-gray-200 -z-10 transform -translate-y-1/2 rounded"></div>
         <div
-          class="absolute top-1/2 left-0 h-1 bg-green-600 -z-10 transform -translate-y-1/2 rounded transition-all duration-300"
+          class="absolute top-1/2 left-0 h-1 -z-10 transform -translate-y-1/2 rounded transition-all duration-300 kindwon-gradient"
           id="progressBar"
           style="width: 0%"
         ></div>
@@ -70,15 +169,15 @@
         <!-- Steps -->
         <div class="step-item flex flex-col items-center gap-1 bg-gray-50 px-2">
           <div
-            class="step-indicator w-8 h-8 rounded-full border-2 border-gray-300 flex items-center justify-center font-bold bg-white text-gray-400 transition-all active"
+            class="step-indicator w-10 h-10 rounded-full border-2 border-gray-300 flex items-center justify-center font-bold bg-white text-gray-400 transition-all active"
           >
             1
           </div>
-          <span class="text-xs font-medium text-green-700">기본</span>
+          <span class="text-xs font-semibold" style="color: var(--kindwon-green);">기본</span>
         </div>
         <div class="step-item flex flex-col items-center gap-1 bg-gray-50 px-2">
           <div
-            class="step-indicator w-8 h-8 rounded-full border-2 border-gray-300 flex items-center justify-center font-bold bg-white text-gray-400 transition-all"
+            class="step-indicator w-10 h-10 rounded-full border-2 border-gray-300 flex items-center justify-center font-bold bg-white text-gray-400 transition-all"
           >
             2
           </div>
@@ -86,7 +185,7 @@
         </div>
         <div class="step-item flex flex-col items-center gap-1 bg-gray-50 px-2">
           <div
-            class="step-indicator w-8 h-8 rounded-full border-2 border-gray-300 flex items-center justify-center font-bold bg-white text-gray-400 transition-all"
+            class="step-indicator w-10 h-10 rounded-full border-2 border-gray-300 flex items-center justify-center font-bold bg-white text-gray-400 transition-all"
           >
             3
           </div>
@@ -94,15 +193,15 @@
         </div>
         <div class="step-item flex flex-col items-center gap-1 bg-gray-50 px-2">
           <div
-            class="step-indicator w-8 h-8 rounded-full border-2 border-gray-300 flex items-center justify-center font-bold bg-white text-gray-400 transition-all"
+            class="step-indicator w-10 h-10 rounded-full border-2 border-gray-300 flex items-center justify-center font-bold bg-white text-gray-400 transition-all"
           >
             4
           </div>
-          <span class="text-xs font-medium text-gray-500">구역</span>
+          <span class="text-xs font-medium text-gray-500">청소</span>
         </div>
         <div class="step-item flex flex-col items-center gap-1 bg-gray-50 px-2">
           <div
-            class="step-indicator w-8 h-8 rounded-full border-2 border-gray-300 flex items-center justify-center font-bold bg-white text-gray-400 transition-all"
+            class="step-indicator w-10 h-10 rounded-full border-2 border-gray-300 flex items-center justify-center font-bold bg-white text-gray-400 transition-all"
           >
             5
           </div>
@@ -110,7 +209,7 @@
         </div>
         <div class="step-item flex flex-col items-center gap-1 bg-gray-50 px-2">
           <div
-            class="step-indicator w-8 h-8 rounded-full border-2 border-gray-300 flex items-center justify-center font-bold bg-white text-gray-400 transition-all"
+            class="step-indicator w-10 h-10 rounded-full border-2 border-gray-300 flex items-center justify-center font-bold bg-white text-gray-400 transition-all"
           >
             6
           </div>
@@ -122,36 +221,36 @@
       <form id="workLogForm" onsubmit="return false;">
         <!-- STEP 1: Basic Information -->
         <div id="step1" class="step-content">
-          <div class="bg-white rounded-lg shadow p-6 space-y-6 animate-fade-in">
-            <h2 class="text-xl font-bold text-gray-800 border-b pb-2">기본 정보 입력</h2>
+          <div class="card-premium p-6 space-y-6 animate-fade-in">
+            <h2 class="text-2xl font-bold text-gray-800 border-b-2 pb-3" style="border-color: var(--kindwon-green-pale);">기본 정보 입력</h2>
 
             <div>
-              <label class="block text-gray-700 font-bold mb-2">날짜 <span class="text-red-500">*</span></label>
+              <label class="block text-gray-700 font-semibold mb-2">날짜 <span class="text-red-500">*</span></label>
               <div class="flex gap-2">
                 <input
                   type="date"
                   id="logDate"
-                  class="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  class="flex-1 p-3 border-2 border-gray-200 rounded-lg transition"
                   required
                 />
                 <button
                   type="button"
                   onclick="autoFetchData()"
-                  class="bg-blue-600 text-white px-4 py-3 rounded-lg font-bold hover:bg-blue-700 transition shadow-md whitespace-nowrap"
+                  class="bg-blue-600 text-white px-4 py-3 rounded-lg font-semibold hover:bg-blue-700 transition shadow-md whitespace-nowrap"
                 >
                   <i class="fas fa-download mr-1"></i> 자동 가져오기
                 </button>
               </div>
-              <p class="text-xs text-gray-500 mt-1 ml-1">
+              <p class="text-xs text-gray-500 mt-2 ml-1">
                 * 날짜 선택 후 자동 가져오기를 클릭하면 청소/근태 기록을 불러옵니다.
               </p>
             </div>
 
             <div>
-              <label class="block text-gray-700 font-bold mb-2">작성자 <span class="text-red-500">*</span></label>
+              <label class="block text-gray-700 font-semibold mb-2">작성자 <span class="text-red-500">*</span></label>
               <select
                 id="logAuthor"
-                class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                class="w-full p-3 border-2 border-gray-200 rounded-lg transition"
               >
                 <option value="센터장">센터장</option>
                 <option value="부센터장">부센터장</option>
@@ -162,15 +261,15 @@
           </div>
         </div>
 
-        <!-- STEP 2: 근태 기록 -->
+        <!-- STEP 2: Attendance Records -->
         <div id="step2" class="step-content hidden-step">
-          <div class="bg-white rounded-lg shadow p-6 space-y-4">
-            <div class="flex justify-between items-center border-b pb-2">
-              <h2 class="text-xl font-bold text-gray-800">근태 기록</h2>
+          <div class="card-premium p-6 space-y-4 animate-fade-in">
+            <div class="flex justify-between items-center border-b-2 pb-3" style="border-color: var(--kindwon-green-pale);">
+              <h2 class="text-2xl font-bold text-gray-800">근태 기록</h2>
               <button
                 type="button"
-                onclick="addAttendance()"
-                class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-bold hover:bg-green-200"
+                onclick="addAttendanceRecord()"
+                class="btn-kindwon px-4 py-2 rounded-full text-sm font-semibold shadow-md"
               >
                 <i class="fas fa-plus"></i> 추가
               </button>
@@ -181,22 +280,22 @@
             </div>
 
             <div class="text-center pt-4">
-              <button type="button" onclick="addAttendance()" class="text-green-600 font-bold hover:underline">
+              <button type="button" onclick="addAttendanceRecord()" class="font-semibold hover:underline transition" style="color: var(--kindwon-green);">
                 <i class="fas fa-plus-circle"></i> 근태 기록 추가하기
               </button>
             </div>
           </div>
         </div>
 
-        <!-- STEP 3: 타임테이블 업무 -->
+        <!-- STEP 3: Timetable Tasks -->
         <div id="step3" class="step-content hidden-step">
-          <div class="bg-white rounded-lg shadow p-6 space-y-4">
-            <div class="flex justify-between items-center border-b pb-2">
-              <h2 class="text-xl font-bold text-gray-800">타임테이블 업무</h2>
+          <div class="card-premium p-6 space-y-4 animate-fade-in">
+            <div class="flex justify-between items-center border-b-2 pb-3" style="border-color: var(--kindwon-green-pale);">
+              <h2 class="text-2xl font-bold text-gray-800">타임테이블 업무</h2>
               <button
                 type="button"
                 onclick="addTask()"
-                class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-bold hover:bg-green-200"
+                class="btn-kindwon px-4 py-2 rounded-full text-sm font-semibold shadow-md"
               >
                 <i class="fas fa-plus"></i> 추가
               </button>
@@ -207,7 +306,7 @@
             </div>
 
             <div class="text-center pt-4">
-              <button type="button" onclick="addTask()" class="text-green-600 font-bold hover:underline">
+              <button type="button" onclick="addTask()" class="font-semibold hover:underline transition" style="color: var(--kindwon-green);">
                 <i class="fas fa-plus-circle"></i> 업무 항목 추가하기
               </button>
             </div>
@@ -216,8 +315,8 @@
 
         <!-- STEP 4: Cleaning Areas -->
         <div id="step4" class="step-content hidden-step">
-          <div class="bg-white rounded-lg shadow p-6">
-            <h2 class="text-xl font-bold text-gray-800 border-b pb-2 mb-4">청소 및 점검 구역 선택</h2>
+          <div class="card-premium p-6 animate-fade-in">
+            <h2 class="text-2xl font-bold text-gray-800 border-b-2 pb-3 mb-4" style="border-color: var(--kindwon-green-pale);">청소 및 점검 구역 선택</h2>
             <p class="text-sm text-gray-500 mb-4">오늘 점검하거나 청소한 구역을 모두 선택해주세요.</p>
 
             <div class="grid grid-cols-2 md:grid-cols-3 gap-3" id="areaGrid">
@@ -228,8 +327,8 @@
 
         <!-- STEP 5: Photos -->
         <div id="step5" class="step-content hidden-step">
-          <div class="bg-white rounded-lg shadow p-6">
-            <h2 class="text-xl font-bold text-gray-800 border-b pb-2 mb-4">사진 업로드</h2>
+          <div class="card-premium p-6 animate-fade-in">
+            <h2 class="text-2xl font-bold text-gray-800 border-b-2 pb-3 mb-4" style="border-color: var(--kindwon-green-pale);">사진 업로드</h2>
             <p class="text-sm text-gray-500 mb-6">선택한 구역의 전/후 사진을 등록해주세요.</p>
 
             <div id="photoUploadList" class="space-y-8">
@@ -240,27 +339,42 @@
 
         <!-- STEP 6: Special Notes & Review -->
         <div id="step6" class="step-content hidden-step">
-          <div class="bg-white rounded-lg shadow p-6 space-y-6">
-            <h2 class="text-xl font-bold text-gray-800 border-b pb-2">최종 확인 및 특이사항</h2>
+          <div class="card-premium p-6 space-y-6 animate-fade-in">
+            <h2 class="text-2xl font-bold text-gray-800 border-b-2 pb-3" style="border-color: var(--kindwon-green-pale);">최종 확인 및 특이사항</h2>
 
             <div>
-              <label class="block text-gray-700 font-bold mb-2">특이사항 / 비고</label>
+              <label class="block text-gray-700 font-semibold mb-2">특이사항 / 비고</label>
               <textarea
                 id="specialNotes"
                 rows="5"
-                class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                class="w-full p-3 border-2 border-gray-200 rounded-lg transition"
                 placeholder="오늘 업무 중 특이사항이나 전달사항을 입력하세요."
               ></textarea>
             </div>
 
-            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
-              <h3 class="font-bold text-gray-700 mb-2">작성 내용 요약</h3>
-              <ul class="text-sm text-gray-600 space-y-1">
-                <li>• 날짜: <span id="summaryDate" class="font-bold"></span></li>
-                <li>• 작성자: <span id="summaryAuthor" class="font-bold"></span></li>
-                <li>• 근태 기록: <span id="summaryAttendanceCount" class="font-bold">0</span>건</li>
-                <li>• 업무 항목: <span id="summaryTaskCount" class="font-bold">0</span>개</li>
-                <li>• 청소 구역: <span id="summaryAreaCount" class="font-bold">0</span>곳</li>
+            <div class="p-5 rounded-xl border-2" style="background: var(--kindwon-green-pale); border-color: var(--kindwon-green-lighter);">
+              <h3 class="font-bold text-gray-800 mb-3 text-lg">작성 내용 요약</h3>
+              <ul class="text-sm text-gray-700 space-y-2">
+                <li class="flex items-center gap-2">
+                  <i class="fas fa-calendar" style="color: var(--kindwon-green);"></i>
+                  날짜: <span id="summaryDate" class="font-bold"></span>
+                </li>
+                <li class="flex items-center gap-2">
+                  <i class="fas fa-user" style="color: var(--kindwon-green);"></i>
+                  작성자: <span id="summaryAuthor" class="font-bold"></span>
+                </li>
+                <li class="flex items-center gap-2">
+                  <i class="fas fa-user-clock" style="color: var(--kindwon-green);"></i>
+                  근태 기록: <span id="summaryAttendanceCount" class="font-bold">0</span>건
+                </li>
+                <li class="flex items-center gap-2">
+                  <i class="fas fa-tasks" style="color: var(--kindwon-green);"></i>
+                  업무 항목: <span id="summaryTaskCount" class="font-bold">0</span>개
+                </li>
+                <li class="flex items-center gap-2">
+                  <i class="fas fa-broom" style="color: var(--kindwon-green);"></i>
+                  청소 구역: <span id="summaryAreaCount" class="font-bold">0</span>곳
+                </li>
               </ul>
             </div>
           </div>
@@ -269,15 +383,15 @@
     </div>
 
     <!-- Navigation Buttons -->
-    <div class="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 p-4 shadow-lg z-40">
+    <div class="fixed bottom-0 left-0 w-full bg-white border-t-2 border-gray-200 p-4 shadow-2xl z-40">
       <div class="max-w-3xl mx-auto flex justify-between gap-3">
         <button
           type="button"
           id="prevBtn"
           onclick="prevStep()"
-          class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-bold hidden"
+          class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition hidden"
         >
-          이전
+          <i class="fas fa-arrow-left mr-2"></i> 이전
         </button>
 
         <div class="flex-1 flex justify-end gap-2">
@@ -285,16 +399,16 @@
             type="button"
             id="saveDraftBtn"
             onclick="submitLog('draft')"
-            class="px-4 py-3 bg-yellow-100 text-yellow-800 rounded-lg font-bold hidden"
+            class="px-4 py-3 bg-yellow-100 text-yellow-800 rounded-lg font-semibold hover:bg-yellow-200 transition hidden"
           >
-            임시저장
+            <i class="fas fa-save mr-1"></i> 임시저장
           </button>
 
           <button
             type="button"
             id="nextBtn"
             onclick="nextStep()"
-            class="px-8 py-3 bg-green-600 text-white rounded-lg font-bold shadow-md hover:bg-green-700 flex-1 md:flex-none text-center"
+            class="px-8 py-3 btn-kindwon rounded-lg font-semibold shadow-md flex-1 md:flex-none text-center"
           >
             다음 단계 <i class="fas fa-arrow-right ml-2"></i>
           </button>
@@ -303,7 +417,7 @@
             type="button"
             id="submitBtn"
             onclick="submitLog('submit')"
-            class="px-8 py-3 bg-green-600 text-white rounded-lg font-bold shadow-md hover:bg-green-700 hidden flex-1 md:flex-none"
+            class="px-8 py-3 btn-kindwon rounded-lg font-semibold shadow-md hidden flex-1 md:flex-none"
           >
             제출하기 <i class="fas fa-check ml-2"></i>
           </button>
@@ -340,14 +454,16 @@
 
         // Form Data State
         let selectedAreas = new Set();
-        let areaPhotos = {};
+        let areaPhotos = {}; // { '골프장': { before: url, after: url, beforeFile: file, afterFile: file } }
 
         // ==================== INITIALIZATION ====================
         window.onload = function () {
+          // Set default date to today
           document.getElementById('logDate').value = new Date().toISOString().split('T')[0];
-          addAttendance();
-          addTask();
+
+          // Initialize Cleaning Areas Grid
           renderAreaGrid();
+
           updateUI();
         };
 
@@ -367,7 +483,7 @@
 
             console.log('🔍 [필터링 범위]', startTime, '~', endTime);
 
-            // 1. 근태 기록 조회 (attendance_records)
+            // 1. 근태 기록 조회 (attendance_records 테이블) - scan_time으로 범위 조회
             const { data: attendanceData, error: attendanceError } = await supabase
               .from('attendance_records')
               .select('*')
@@ -379,15 +495,15 @@
               console.error('❌ 근태 기록 조회 실패:', attendanceError);
             } else {
               console.log('✅ 조회된 근태 기록:', attendanceData);
+              console.log('📊 근태 기록 개수:', attendanceData?.length || 0);
             }
 
-            // 2. 청소 기록 조회 (cleaning_tasks)
+            // 2. 청소 기록 조회 (cleaning_tasks 테이블)
             const { data: cleaningData, error: cleaningError } = await supabase
               .from('cleaning_tasks')
               .select('*')
               .gte('created_at', startTime)
-              .lte('created_at', endTime)
-              .order('created_at', { ascending: true });
+              .lte('created_at', endTime);
 
             if (cleaningError) {
               console.error('❌ 청소 기록 조회 실패:', cleaningError);
@@ -397,12 +513,13 @@
 
             let fetchedInfo = [];
 
-            // 3. 근태 기록 삽입 (STEP 2)
+            // 3. 근태 기록으로 근태 리스트 생성
             if (attendanceData && attendanceData.length > 0) {
               document.getElementById('attendanceList').innerHTML = '';
 
               attendanceData.forEach((record) => {
-                const scanTime = record.scan_time ? record.scan_time.substring(11, 16) : '';
+                // 시간 추출 및 포맷
+                const scanTime = record.scan_time ? record.scan_time.substring(11, 16) : ''; // HH:MM
                 const hour = parseInt(scanTime.split(':')[0]);
                 const period = hour < 12 ? '오전' : '오후';
                 const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
@@ -412,9 +529,11 @@
                 const workerName = record.location_name || '직원';
                 const attendanceType = record.attendance_type || '';
 
-                const attendanceDesc = `${workerName} ${attendanceType}`;
+                const desc = `${workerName} ${attendanceType}`;
 
-                addAttendanceWithData(formattedTime, attendanceDesc, true);
+                console.log(`📝 [근태 추가] ${formattedTime} - ${desc}`);
+
+                addAttendanceRecordWithData(formattedTime, desc);
               });
 
               fetchedInfo.push(`근태 기록: ${attendanceData.length}건`);
@@ -422,29 +541,32 @@
               fetchedInfo.push('근태 기록: 0건');
             }
 
-            // 4. 청소 기록 삽입 (STEP 3 타임테이블 업무)
+            // 4. 청소 기록으로 타임테이블 업무 생성
             if (cleaningData && cleaningData.length > 0) {
               document.getElementById('taskList').innerHTML = '';
 
               cleaningData.forEach((record) => {
-                const createdTime = record.created_at ? record.created_at.substring(11, 16) : '';
-                const areaName = record.area || record.area_name || '미지정 구역';
+                // 시간 추출
+                const createdTime = record.created_at ? record.created_at.substring(11, 16) : ''; // HH:MM
+                const area = record.area || record.area_name || '미지정 구역';
 
-                const taskDesc = `${areaName} 청소`;
+                const taskDesc = `${area} 청소`;
+
+                console.log(`📝 [업무 추가] ${createdTime} - ${taskDesc}`);
 
                 addTaskWithData(createdTime, taskDesc, true);
 
-                // 구역 자동 선택 (STEP 4)
-                selectedAreas.add(areaName);
-                if (!areaPhotos[areaName]) {
-                  areaPhotos[areaName] = { before: null, after: null };
+                // 구역 자동 선택
+                selectedAreas.add(area);
+                if (!areaPhotos[area]) {
+                  areaPhotos[area] = { before: null, after: null };
                 }
               });
 
               renderAreaGrid();
-              fetchedInfo.push(`청소 업무: ${cleaningData.length}건`);
+              fetchedInfo.push(`청소 기록: ${cleaningData.length}건`);
             } else {
-              fetchedInfo.push('청소 업무: 0건');
+              fetchedInfo.push('청소 기록: 0건');
             }
 
             showLoading(false);
@@ -461,25 +583,22 @@
           }
         };
 
-        // ==================== STEP 2: 근태 기록 ====================
-        window.addAttendance = function () {
+        // ==================== STEP 2: ATTENDANCE RECORDS ====================
+        window.addAttendanceRecord = function () {
           const list = document.getElementById('attendanceList');
           const id = Date.now();
 
           const html = `
-          <div class="attendance-item flex gap-2 items-center bg-gray-50 p-3 rounded border border-gray-200" id="attendance-${id}">
+          <div class="task-item flex gap-2 items-center bg-gray-50 p-3 rounded-lg border-2 border-gray-200" id="attendance-${id}">
             <div class="flex-1 grid grid-cols-12 gap-2">
-              <div class="col-span-3">
-                <input type="text" class="attendance-time w-full p-2 border rounded text-sm" placeholder="오전 09:00">
+              <div class="col-span-4">
+                <input type="text" class="attendance-time w-full p-2 border-2 border-gray-200 rounded text-sm transition" placeholder="오전 09:30">
               </div>
               <div class="col-span-8">
-                <input type="text" class="attendance-desc w-full p-2 border rounded text-sm" placeholder="직원명 출근/퇴근">
-              </div>
-              <div class="col-span-1 flex items-center justify-center">
-                <input type="checkbox" class="attendance-check w-5 h-5 text-green-600 rounded">
+                <input type="text" class="attendance-desc w-full p-2 border-2 border-gray-200 rounded text-sm transition" placeholder="홍길동 출근">
               </div>
             </div>
-            <button onclick="removeAttendance(${id})" class="text-red-400 hover:text-red-600 p-2">
+            <button onclick="removeAttendance(${id})" class="text-red-400 hover:text-red-600 p-2 transition">
               <i class="fas fa-trash"></i>
             </button>
           </div>
@@ -487,24 +606,21 @@
           list.insertAdjacentHTML('beforeend', html);
         };
 
-        window.addAttendanceWithData = function (time, description, completed) {
+        window.addAttendanceRecordWithData = function (time, description) {
           const list = document.getElementById('attendanceList');
           const id = Date.now() + Math.random();
 
           const html = `
-          <div class="attendance-item flex gap-2 items-center bg-gray-50 p-3 rounded border border-gray-200" id="attendance-${id}">
+          <div class="task-item flex gap-2 items-center bg-gray-50 p-3 rounded-lg border-2 border-gray-200" id="attendance-${id}">
             <div class="flex-1 grid grid-cols-12 gap-2">
-              <div class="col-span-3">
-                <input type="text" class="attendance-time w-full p-2 border rounded text-sm bg-white" value="${time || ''}" readonly>
+              <div class="col-span-4">
+                <input type="text" class="attendance-time w-full p-2 border-2 border-gray-200 rounded text-sm transition" value="${time || ''}" placeholder="오전 09:30">
               </div>
               <div class="col-span-8">
-                <input type="text" class="attendance-desc w-full p-2 border rounded text-sm" value="${description || ''}">
-              </div>
-              <div class="col-span-1 flex items-center justify-center">
-                <input type="checkbox" class="attendance-check w-5 h-5 text-green-600 rounded" ${completed ? 'checked' : ''}>
+                <input type="text" class="attendance-desc w-full p-2 border-2 border-gray-200 rounded text-sm transition" value="${description || ''}" placeholder="홍길동 출근">
               </div>
             </div>
-            <button onclick="removeAttendance(${id})" class="text-red-400 hover:text-red-600 p-2">
+            <button onclick="removeAttendance(${id})" class="text-red-400 hover:text-red-600 p-2 transition">
               <i class="fas fa-trash"></i>
             </button>
           </div>
@@ -517,25 +633,25 @@
           if (el) el.remove();
         };
 
-        // ==================== STEP 3: 타임테이블 업무 ====================
+        // ==================== STEP 3: TASKS ====================
         window.addTask = function () {
           const taskList = document.getElementById('taskList');
           const id = Date.now();
 
           const html = `
-          <div class="task-item flex gap-2 items-center bg-gray-50 p-3 rounded border border-gray-200" id="task-${id}">
+          <div class="task-item flex gap-2 items-center bg-gray-50 p-3 rounded-lg border-2 border-gray-200" id="task-${id}">
             <div class="flex-1 grid grid-cols-12 gap-2">
               <div class="col-span-3">
-                <input type="time" class="task-time w-full p-2 border rounded text-sm">
+                <input type="time" class="task-time w-full p-2 border-2 border-gray-200 rounded text-sm transition" placeholder="시간">
               </div>
               <div class="col-span-8">
-                <input type="text" class="task-desc w-full p-2 border rounded text-sm" placeholder="사무실 청소">
+                <input type="text" class="task-desc w-full p-2 border-2 border-gray-200 rounded text-sm transition" placeholder="사무실 청소">
               </div>
               <div class="col-span-1 flex items-center justify-center">
-                <input type="checkbox" class="task-check w-5 h-5 text-green-600 rounded">
+                <input type="checkbox" class="task-check w-5 h-5 rounded transition" style="accent-color: var(--kindwon-green);">
               </div>
             </div>
-            <button onclick="removeTask(${id})" class="text-red-400 hover:text-red-600 p-2">
+            <button onclick="removeTask(${id})" class="text-red-400 hover:text-red-600 p-2 transition">
               <i class="fas fa-trash"></i>
             </button>
           </div>
@@ -548,19 +664,19 @@
           const id = Date.now() + Math.random();
 
           const html = `
-          <div class="task-item flex gap-2 items-center bg-gray-50 p-3 rounded border border-gray-200" id="task-${id}">
+          <div class="task-item flex gap-2 items-center bg-gray-50 p-3 rounded-lg border-2 border-gray-200" id="task-${id}">
             <div class="flex-1 grid grid-cols-12 gap-2">
               <div class="col-span-3">
-                <input type="time" class="task-time w-full p-2 border rounded text-sm" value="${time || ''}">
+                <input type="time" class="task-time w-full p-2 border-2 border-gray-200 rounded text-sm transition" value="${time || ''}" placeholder="시간">
               </div>
               <div class="col-span-8">
-                <input type="text" class="task-desc w-full p-2 border rounded text-sm" value="${description || ''}">
+                <input type="text" class="task-desc w-full p-2 border-2 border-gray-200 rounded text-sm transition" value="${description || ''}" placeholder="업무 내용">
               </div>
               <div class="col-span-1 flex items-center justify-center">
-                <input type="checkbox" class="task-check w-5 h-5 text-green-600 rounded" ${completed ? 'checked' : ''}>
+                <input type="checkbox" class="task-check w-5 h-5 rounded transition" ${completed ? 'checked' : ''} style="accent-color: var(--kindwon-green);">
               </div>
             </div>
-            <button onclick="removeTask(${id})" class="text-red-400 hover:text-red-600 p-2">
+            <button onclick="removeTask(${id})" class="text-red-400 hover:text-red-600 p-2 transition">
               <i class="fas fa-trash"></i>
             </button>
           </div>
@@ -573,107 +689,17 @@
           if (el) el.remove();
         };
 
-        // ==================== NAVIGATION ====================
-        window.nextStep = function () {
-          if (!validateStep(currentStep)) return;
-
-          if (currentStep < totalSteps) {
-            currentStep++;
-            updateUI();
-            window.scrollTo(0, 0);
-
-            if (currentStep === 5) {
-              renderPhotoUploaders();
-            }
-            if (currentStep === 6) {
-              updateSummary();
-            }
-          }
-        };
-
-        window.prevStep = function () {
-          if (currentStep > 1) {
-            currentStep--;
-            updateUI();
-            window.scrollTo(0, 0);
-          }
-        };
-
-        function updateUI() {
-          document.querySelectorAll('.step-content').forEach((el, index) => {
-            if (index + 1 === currentStep) {
-              el.classList.remove('hidden-step');
-            } else {
-              el.classList.add('hidden-step');
-            }
-          });
-
-          const progressPercentage = ((currentStep - 1) / (totalSteps - 1)) * 100;
-          document.getElementById('progressBar').style.width = `${progressPercentage}%`;
-
-          document.querySelectorAll('.step-indicator').forEach((el, index) => {
-            const stepNum = index + 1;
-            el.classList.remove('active', 'completed', 'bg-green-600', 'text-white', 'border-green-600');
-            el.classList.add('bg-white', 'text-gray-400', 'border-gray-300');
-
-            if (stepNum < currentStep) {
-              el.classList.add('completed', 'bg-green-600', 'text-white', 'border-green-600');
-              el.innerHTML = '<i class="fas fa-check"></i>';
-            } else if (stepNum === currentStep) {
-              el.classList.add('active', 'bg-green-600', 'text-white', 'border-green-600');
-              el.innerHTML = stepNum;
-            } else {
-              el.innerHTML = stepNum;
-            }
-          });
-
-          const prevBtn = document.getElementById('prevBtn');
-          const nextBtn = document.getElementById('nextBtn');
-          const saveDraftBtn = document.getElementById('saveDraftBtn');
-          const submitBtn = document.getElementById('submitBtn');
-
-          if (currentStep === 1) prevBtn.classList.add('hidden');
-          else prevBtn.classList.remove('hidden');
-
-          if (currentStep === totalSteps) {
-            nextBtn.classList.add('hidden');
-            saveDraftBtn.classList.remove('hidden');
-            submitBtn.classList.remove('hidden');
-          } else {
-            nextBtn.classList.remove('hidden');
-            saveDraftBtn.classList.add('hidden');
-            submitBtn.classList.add('hidden');
-          }
-        }
-
-        function validateStep(step) {
-          if (step === 1) {
-            const date = document.getElementById('logDate').value;
-            const author = document.getElementById('logAuthor').value;
-            if (!date || !author) {
-              alert('날짜와 작성자를 입력해주세요.');
-              return false;
-            }
-          }
-          if (step === 4) {
-            if (selectedAreas.size === 0) {
-              if (!confirm('선택된 청소 구역이 없습니다. 계속 진행하시겠습니까?')) return false;
-            }
-          }
-          return true;
-        }
-
         // ==================== STEP 4: AREAS ====================
         window.renderAreaGrid = function () {
           const grid = document.getElementById('areaGrid');
           grid.innerHTML = CLEANING_AREAS.map(
             (area) => `
           <button type="button" 
-            class="area-btn p-4 rounded-lg border-2 text-center transition-all duration-200 hover:shadow-md ${selectedAreas.has(area) ? 'border-green-600 bg-green-50 text-green-700 font-bold' : 'border-gray-200 bg-white text-gray-600'}"
+            class="area-btn p-4 rounded-lg border-2 text-center transition-all duration-200 hover:shadow-md ${selectedAreas.has(area) ? 'area-btn-selected font-bold' : 'border-gray-200 bg-white text-gray-600'}"
             onclick="toggleArea('${area}', this)"
           >
             ${area}
-            ${selectedAreas.has(area) ? '<i class="fas fa-check-circle ml-2 text-green-600"></i>' : ''}
+            ${selectedAreas.has(area) ? '<i class="fas fa-check-circle ml-2"></i>' : ''}
           </button>
         `,
           ).join('');
@@ -688,8 +714,8 @@
           } else {
             selectedAreas.add(area);
             btn.className =
-              'area-btn p-4 rounded-lg border-2 text-center transition-all duration-200 hover:shadow-md border-green-600 bg-green-50 text-green-700 font-bold';
-            btn.innerHTML = `${area} <i class="fas fa-check-circle ml-2 text-green-600"></i>`;
+              'area-btn p-4 rounded-lg border-2 text-center transition-all duration-200 hover:shadow-md area-btn-selected font-bold';
+            btn.innerHTML = `${area} <i class="fas fa-check-circle ml-2"></i>`;
           }
         };
 
@@ -707,37 +733,39 @@
             if (!areaPhotos[area]) areaPhotos[area] = { before: null, after: null };
 
             const html = `
-            <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
+            <div class="border-2 border-gray-200 rounded-xl p-5 bg-gray-50">
               <h3 class="font-bold text-gray-800 mb-3 text-lg flex items-center">
-                <i class="fas fa-map-marker-alt text-green-600 mr-2"></i> ${area}
+                <i class="fas fa-map-marker-alt mr-2" style="color: var(--kindwon-green);"></i> ${area}
               </h3>
               <div class="grid grid-cols-2 gap-4">
+                <!-- Before Photo -->
                 <div class="space-y-2">
                   <div class="text-xs font-bold text-gray-500 uppercase">Before (작업 전)</div>
-                  <div class="relative w-full aspect-video bg-gray-200 rounded-lg overflow-hidden border border-dashed border-gray-400 flex items-center justify-center group cursor-pointer"
+                  <div class="relative w-full aspect-video bg-gray-200 rounded-lg overflow-hidden border-2 border-dashed border-gray-400 flex items-center justify-center group cursor-pointer transition hover:border-gray-500"
                        onclick="triggerFile('before', '${area}')">
                     ${
                       areaPhotos[area].before
                         ? `<img src="${areaPhotos[area].before}" class="w-full h-full object-cover">`
-                        : `<div class="text-center text-gray-400 group-hover:text-gray-600">
-                           <i class="fas fa-camera text-2xl mb-1"></i><br>
-                           <span class="text-xs">사진 촬영/선택</span>
+                        : `<div class="text-center text-gray-400 group-hover:text-gray-600 transition">
+                           <i class="fas fa-camera text-3xl mb-2"></i><br>
+                           <span class="text-xs font-semibold">사진 촬영/선택</span>
                          </div>`
                     }
                   </div>
                   <input type="file" id="file-before-${area}" class="hidden" accept="image/*" capture="environment" onchange="handleFileSelect(event, 'before', '${area}')">
                 </div>
 
+                <!-- After Photo -->
                 <div class="space-y-2">
                   <div class="text-xs font-bold text-gray-500 uppercase">After (작업 후)</div>
-                  <div class="relative w-full aspect-video bg-gray-200 rounded-lg overflow-hidden border border-dashed border-gray-400 flex items-center justify-center group cursor-pointer"
+                  <div class="relative w-full aspect-video bg-gray-200 rounded-lg overflow-hidden border-2 border-dashed border-gray-400 flex items-center justify-center group cursor-pointer transition hover:border-gray-500"
                        onclick="triggerFile('after', '${area}')">
                     ${
                       areaPhotos[area].after
                         ? `<img src="${areaPhotos[area].after}" class="w-full h-full object-cover">`
-                        : `<div class="text-center text-gray-400 group-hover:text-gray-600">
-                           <i class="fas fa-camera text-2xl mb-1"></i><br>
-                           <span class="text-xs">사진 촬영/선택</span>
+                        : `<div class="text-center text-gray-400 group-hover:text-gray-600 transition">
+                           <i class="fas fa-camera text-3xl mb-2"></i><br>
+                           <span class="text-xs font-semibold">사진 촬영/선택</span>
                          </div>`
                     }
                   </div>
@@ -772,28 +800,138 @@
         function updateSummary() {
           document.getElementById('summaryDate').innerText = document.getElementById('logDate').value;
           document.getElementById('summaryAuthor').innerText = document.getElementById('logAuthor').value;
-          document.getElementById('summaryAttendanceCount').innerText = document.querySelectorAll('.attendance-item').length;
-          document.getElementById('summaryTaskCount').innerText = document.querySelectorAll('.task-item').length;
+          document.getElementById('summaryAttendanceCount').innerText = document.querySelectorAll('#attendanceList .task-item').length;
+          document.getElementById('summaryTaskCount').innerText = document.querySelectorAll('#taskList .task-item').length;
           document.getElementById('summaryAreaCount').innerText = selectedAreas.size;
+        }
+
+        // ==================== NAVIGATION ====================
+        window.nextStep = function () {
+          if (!validateStep(currentStep)) return;
+
+          if (currentStep < totalSteps) {
+            currentStep++;
+            updateUI();
+            window.scrollTo(0, 0);
+
+            // Generate photo uploaders if entering step 5
+            if (currentStep === 5) {
+              renderPhotoUploaders();
+            }
+            // Update summary if entering step 6
+            if (currentStep === 6) {
+              updateSummary();
+            }
+          }
+        };
+
+        window.prevStep = function () {
+          if (currentStep > 1) {
+            currentStep--;
+            updateUI();
+            window.scrollTo(0, 0);
+          }
+        };
+
+        function updateUI() {
+          // 1. Show/Hide Steps
+          document.querySelectorAll('.step-content').forEach((el, index) => {
+            if (index + 1 === currentStep) {
+              el.classList.remove('hidden-step');
+            } else {
+              el.classList.add('hidden-step');
+            }
+          });
+
+          // 2. Update Progress Indicator
+          const progressPercentage = ((currentStep - 1) / (totalSteps - 1)) * 100;
+          document.getElementById('progressBar').style.width = `${progressPercentage}%`;
+
+          document.querySelectorAll('.step-indicator').forEach((el, index) => {
+            const stepNum = index + 1;
+            el.classList.remove('active', 'completed');
+            el.style.backgroundColor = '';
+            el.style.color = '';
+            el.style.borderColor = '';
+
+            if (stepNum < currentStep) {
+              el.classList.add('completed');
+              el.innerHTML = '<i class="fas fa-check"></i>';
+            } else if (stepNum === currentStep) {
+              el.classList.add('active');
+              el.innerHTML = stepNum;
+            } else {
+              el.innerHTML = stepNum;
+              el.style.backgroundColor = 'white';
+              el.style.color = '#9CA3AF';
+              el.style.borderColor = '#D1D5DB';
+            }
+          });
+
+          // 3. Update Buttons
+          const prevBtn = document.getElementById('prevBtn');
+          const nextBtn = document.getElementById('nextBtn');
+          const saveDraftBtn = document.getElementById('saveDraftBtn');
+          const submitBtn = document.getElementById('submitBtn');
+
+          // Prev Button
+          if (currentStep === 1) prevBtn.classList.add('hidden');
+          else prevBtn.classList.remove('hidden');
+
+          // Next/Submit Buttons
+          if (currentStep === totalSteps) {
+            nextBtn.classList.add('hidden');
+            saveDraftBtn.classList.remove('hidden');
+            submitBtn.classList.remove('hidden');
+          } else {
+            nextBtn.classList.remove('hidden');
+            saveDraftBtn.classList.add('hidden');
+            submitBtn.classList.add('hidden');
+          }
+        }
+
+        function validateStep(step) {
+          if (step === 1) {
+            const date = document.getElementById('logDate').value;
+            const author = document.getElementById('logAuthor').value;
+            if (!date || !author) {
+              alert('날짜와 작성자를 입력해주세요.');
+              return false;
+            }
+          }
+          if (step === 4) {
+            if (selectedAreas.size === 0) {
+              if (!confirm('선택된 청소 구역이 없습니다. 계속 진행하시겠습니까?')) return false;
+            }
+          }
+          return true;
         }
 
         // ==================== SUBMISSION ====================
         window.submitLog = async function (actionType) {
           showLoading(true, '저장 중입니다...');
           try {
+            console.log('[제출] 시작:', actionType);
+
+            // 1. Upload Photos First
             const photoUploads = [];
             for (const area of selectedAreas) {
               const data = areaPhotos[area];
               if (data.beforeFile) {
+                console.log('[사진 업로드 준비] Before:', area, data.beforeFile.name);
                 photoUploads.push(uploadPhoto(data.beforeFile, area, 'before'));
               }
               if (data.afterFile) {
+                console.log('[사진 업로드 준비] After:', area, data.afterFile.name);
                 photoUploads.push(uploadPhoto(data.afterFile, area, 'after'));
               }
             }
 
+            console.log('[사진 업로드] 시작:', photoUploads.length, '개');
             await Promise.all(photoUploads);
+            console.log('[사진 업로드] 완료');
 
+            // 2. Prepare Data
             const workLog = {
               date: document.getElementById('logDate').value,
               author_id: null,
@@ -803,32 +941,42 @@
               status: actionType === 'submit' ? 'pending_team_leader' : 'draft',
               created_at: new Date().toISOString(),
             };
+            console.log('[로그 데이터]:', workLog);
 
-            const { data: logData, error: logError } = await supabase.from('work_logs').insert(workLog).select().single();
-            if (logError) throw logError;
+            // 3. Insert Work Log
+            console.log('[DB 저장] work_logs 시작');
+            const { data: logData, error: logError } = await supabase
+              .from('work_logs')
+              .insert(workLog)
+              .select()
+              .single();
+
+            if (logError) {
+              console.error('[DB 에러] work_logs:', logError);
+              throw logError;
+            }
             const logId = logData.id;
+            console.log('[DB 저장] work_logs 완료, ID:', logId);
 
-            // 근태 기록 저장
+            // 4. Insert Attendance Records (from Step 2)
             const attendanceRecords = [];
-            document.querySelectorAll('.attendance-item').forEach((el, index) => {
+            document.querySelectorAll('#attendanceList .task-item').forEach((el, index) => {
               const time = el.querySelector('.attendance-time').value;
               const desc = el.querySelector('.attendance-desc').value;
-              const checked = el.querySelector('.attendance-check').checked;
               if (time || desc) {
                 attendanceRecords.push({
                   work_log_id: logId,
                   time_slot: time,
                   task_description: desc,
-                  is_completed: checked,
+                  is_completed: true,
                   order_index: index,
-                  task_type: 'attendance',
                 });
               }
             });
 
-            // 업무 항목 저장
+            // 5. Insert Tasks (from Step 3)
             const tasks = [];
-            document.querySelectorAll('.task-item').forEach((el, index) => {
+            document.querySelectorAll('#taskList .task-item').forEach((el, index) => {
               const time = el.querySelector('.task-time').value;
               const desc = el.querySelector('.task-desc').value;
               const checked = el.querySelector('.task-check').checked;
@@ -839,16 +987,23 @@
                   task_description: desc,
                   is_completed: checked,
                   order_index: index + attendanceRecords.length,
-                  task_type: 'work',
                 });
               }
             });
 
             const allTasks = [...attendanceRecords, ...tasks];
+
             if (allTasks.length > 0) {
-              await supabase.from('work_log_tasks').insert(allTasks);
+              console.log('[DB 저장] work_log_tasks 시작:', allTasks.length, '개');
+              const { error: taskError } = await supabase.from('work_log_tasks').insert(allTasks);
+              if (taskError) {
+                console.error('[DB 에러] work_log_tasks:', taskError);
+                throw taskError;
+              }
+              console.log('[DB 저장] work_log_tasks 완료');
             }
 
+            // 6. Insert Cleanings
             const cleanings = [];
             for (const area of selectedAreas) {
               cleanings.push({
@@ -861,15 +1016,28 @@
             }
 
             if (cleanings.length > 0) {
-              await supabase.from('work_log_cleanings').insert(cleanings);
+              console.log('[DB 저장] work_log_cleanings 시작:', cleanings.length, '개');
+              const { error: cleaningError } = await supabase.from('work_log_cleanings').insert(cleanings);
+              if (cleaningError) {
+                console.error('[DB 에러] work_log_cleanings:', cleaningError);
+                throw cleaningError;
+              }
+              console.log('[DB 저장] work_log_cleanings 완료');
             }
 
+            console.log('[제출] 완료!');
             if (confirm('성공적으로 저장되었습니다!\n\n새로운 일지를 작성하시겠습니까?')) {
               window.location.reload();
+            } else {
+              alert('작성이 완료되었습니다.');
             }
           } catch (error) {
             console.error('❌ [제출 에러]:', error);
-            alert('저장 중 오류가 발생했습니다:\n\n' + error.message);
+            alert(
+              '저장 중 오류가 발생했습니다:\n\n' +
+                error.message +
+                '\n\n자세한 내용은 개발자 도구(F12)의 Console을 확인해주세요.',
+            );
           } finally {
             showLoading(false);
           }
@@ -880,10 +1048,18 @@
           const fileName = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}_${type}.jpg`;
           const filePath = `temp/${fileName}`;
 
-          const { error } = await supabase.storage.from(STORAGE_BUCKET).upload(filePath, file);
-          if (error) throw error;
+          console.log('[사진 업로드]:', area, type, fileName);
+
+          const { data, error } = await supabase.storage.from(STORAGE_BUCKET).upload(filePath, file);
+
+          if (error) {
+            console.error(`❌ [사진 업로드 실패] ${area} ${type}:`, error);
+            throw error;
+          }
 
           const { data: publicUrlData } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(filePath);
+          console.log('[사진 업로드 성공]:', publicUrlData.publicUrl);
+
           areaPhotos[area][type] = publicUrlData.publicUrl;
           return publicUrlData.publicUrl;
         }
