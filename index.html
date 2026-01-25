@@ -1101,14 +1101,14 @@
                   </button>
                 </td>
               `;
-              
+
               // 이벤트 리스너 직접 연결
               const qrBtn = tr.querySelectorAll('button')[0];
               qrBtn.addEventListener('click', () => this.generateLocationQR(l.id, l.name));
-              
+
               const delBtn = tr.querySelectorAll('button')[1];
               delBtn.addEventListener('click', () => this.deleteItem('locations', l.id));
-              
+
               tbody.appendChild(tr);
             });
         },
@@ -1137,10 +1137,10 @@
         },
 
         // QR 코드 생성
-        generateLocationQR: function(locationId, locationName) {
+        generateLocationQR: function (locationId, locationName) {
           try {
             // 간단한 URL 방식으로 변경 (더 짧은 데이터)
-            const qrData = `https://kindwon.app/scan?loc=${locationId}&apt=${this.currentAptId}`;
+            const qrData = `https://bdxi-qr-attendance.vercel.app/scan?loc=${locationId}&apt=${this.currentAptId}`;
 
             // QR 코드 생성 (qrcode-generator 라이브러리)
             const qr = qrcode(0, 'M'); // Type 0 (자동 크기), Error correction M
@@ -1184,8 +1184,9 @@
             a.download = `QR_${locationName}_${APARTMENTS[this.currentAptId]}.png`;
             a.click();
 
-            alert(`✅ "${locationName}" QR 코드가 다운로드되었습니다!\n\n💡 이 QR 코드를 프린트해서 해당 구역에 부착하세요.\n\n📱 QR 코드 스캔 시 해당 구역으로 자동 연결됩니다.`);
-
+            alert(
+              `✅ "${locationName}" QR 코드가 다운로드되었습니다!\n\n💡 이 QR 코드를 프린트해서 해당 구역에 부착하세요.\n\n📱 QR 코드 스캔 시 해당 구역으로 자동 연결됩니다.`,
+            );
           } catch (error) {
             console.error('QR 생성 실패:', error);
             alert('❌ QR 코드 생성 중 오류가 발생했습니다.\n\n상세: ' + error.message);
@@ -1256,6 +1257,6 @@
 
       document.addEventListener('DOMContentLoaded', () => app.init());
     </script>
-  <script defer src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" integrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon='{"rayId":"9c363299fbbc8b66","serverTiming":{"name":{"cfExtPri":true,"cfEdge":true,"cfOrigin":true,"cfL4":true,"cfSpeedBrain":true,"cfCacheStatus":true}},"version":"2025.9.1","token":"4edd5f8ec12a48cfa682ab8261b80a79"}' crossorigin="anonymous"></script>
+  <script defer src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" integrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon='{"rayId":"9c367590ebc33270","serverTiming":{"name":{"cfExtPri":true,"cfEdge":true,"cfOrigin":true,"cfL4":true,"cfSpeedBrain":true,"cfCacheStatus":true}},"version":"2025.9.1","token":"4edd5f8ec12a48cfa682ab8261b80a79"}' crossorigin="anonymous"></script>
 </body>
 </html>
