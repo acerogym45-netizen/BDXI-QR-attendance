@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ko" data-theme="light">
   <head>
@@ -11,14 +12,13 @@
       href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap"
       rel="stylesheet"
     />
-
     <!-- CDNs -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
+    <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
     <style>
       body {
         font-family: 'Noto Sans KR', sans-serif;
@@ -58,14 +58,11 @@
           transform: rotate(360deg);
         }
       }
-      /* Smooth transitions */
       * {
         transition:
           color 0.2s ease,
           background-color 0.2s ease;
       }
-
-      /* Modal */
       .modal-backdrop {
         backdrop-filter: blur(8px);
         animation: fadeIn 0.2s ease;
@@ -78,8 +75,6 @@
           opacity: 1;
         }
       }
-
-      /* Dropdown */
       .dropdown-item:hover {
         background-color: #f3f4f6;
       }
@@ -94,11 +89,30 @@
         <div class="mb-10">
           <img src="https://www.genspark.ai/api/files/s/UmgxPvd3" alt="KINDWON Logo" class="h-16 mx-auto" />
         </div>
-
         <h1 class="text-3xl font-extrabold text-gray-800 mb-2">관리자 로그인</h1>
-        <p class="text-gray-500 mb-2 text-sm">KINDWON 직원 업무 관리 시스템</p>
-        <p class="text-gray-400 mb-8 text-xs">🔒 보안 접속을 위해 PIN 번호를 입력하세요</p>
+        <p class="text-gray-500 mb-6 text-sm">KINDWON 직원 업무 관리 시스템</p>
 
+        <!-- Apartment Selector -->
+        <div class="mb-6 text-left">
+          <label class="block text-sm font-bold text-gray-700 mb-2">아파트 단지 선택</label>
+          <div class="relative">
+            <select
+              id="login-apt-select"
+              class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-green-600 appearance-none bg-white text-gray-700 font-medium"
+            >
+              <option value="BJD001">봉담자이프라이드시티</option>
+              <option value="YDB002">용인동백센트럴</option>
+              <option value="SYT003">수원영통자이</option>
+              <option value="PGD004">평택고덕국제신도시</option>
+              <option value="ETC999">기타 단지</option>
+            </select>
+            <div class="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-gray-500">
+              <i class="fas fa-chevron-down"></i>
+            </div>
+          </div>
+        </div>
+
+        <p class="text-gray-400 mb-4 text-xs">🔒 보안 접속을 위해 PIN 번호를 입력하세요</p>
         <div class="space-y-4">
           <input
             type="password"
@@ -108,16 +122,15 @@
             maxlength="10"
             onkeypress="if (event.key === 'Enter') app.login();"
           />
-
           <button
             onclick="app.login()"
             class="w-full bg-brand hover:bg-green-800 text-white font-bold py-4 rounded-xl shadow-lg transition-all active:scale-95"
           >
-            입장하기
+            <i class="fas fa-sign-in-alt mr-2"></i>입장하기
           </button>
         </div>
-        <p id="msg-error" class="text-red-500 mt-4 text-sm font-bold hidden">
-          <i class="fas fa-exclamation-circle"></i> PIN 번호가 올바르지 않습니다.
+        <p id="msg-error" class="hidden mt-4 text-red-600 text-sm font-bold">
+          <i class="fas fa-exclamation-triangle mr-1"></i>PIN 번호가 올바르지 않습니다.
         </p>
       </div>
     </div>
@@ -137,14 +150,14 @@
           </div>
           <div class="flex items-center gap-3">
             <div
-              class="hidden md:flex items-center gap-2 text-sm text-gray-500 bg-gray-50 px-3 py-1.5 rounded-lg border"
+              id="current-apt-badge"
+              class="hidden md:flex items-center gap-2 text-sm font-bold text-brand bg-green-50 px-3 py-1.5 rounded-lg border border-green-200"
             >
-              <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-              <span id="live-time" class="font-mono">00:00:00</span>
+              <i class="fas fa-building"></i> <span id="apt-name-display">아파트명</span>
             </div>
             <button
               onclick="app.logout()"
-              class="text-gray-500 hover:text-red-600 px-3 py-2 rounded-lg hover:bg-red-50 transition"
+              class="px-4 py-2 text-sm bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition-colors"
             >
               <i class="fas fa-sign-out-alt mr-2"></i>로그아웃
             </button>
@@ -152,361 +165,455 @@
         </div>
       </header>
 
-      <!-- Navigation -->
-      <nav class="bg-white border-b shadow-sm sticky top-16 z-30">
+      <!-- Nav -->
+      <nav class="bg-white border-b sticky top-16 z-30 shadow-sm">
         <div class="max-w-7xl mx-auto px-4">
-          <div class="flex space-x-8">
+          <div class="flex space-x-8 overflow-x-auto">
             <button
               onclick="app.switchTab('gallery')"
-              class="nav-tab tab-active py-4 px-2 text-sm font-medium transition-colors flex items-center gap-2"
+              class="nav-tab py-4 px-2 text-sm font-medium transition-all tab-active whitespace-nowrap"
             >
-              <i class="fas fa-images text-lg"></i> 청소 갤러리
+              <i class="fas fa-images mr-2"></i>청소 갤러리
             </button>
             <button
               onclick="app.switchTab('history')"
-              class="nav-tab tab-inactive py-4 px-2 text-sm font-medium transition-colors flex items-center gap-2"
+              class="nav-tab py-4 px-2 text-sm font-medium transition-all tab-inactive whitespace-nowrap"
             >
-              <i class="fas fa-list-alt text-lg"></i> 상세 조회
+              <i class="fas fa-history mr-2"></i>상세 조회
             </button>
             <button
               onclick="app.switchTab('stats')"
-              class="nav-tab tab-inactive py-4 px-2 text-sm font-medium transition-colors flex items-center gap-2"
+              class="nav-tab py-4 px-2 text-sm font-medium transition-all tab-inactive whitespace-nowrap"
             >
-              <i class="fas fa-chart-pie text-lg"></i> 통계 요약
+              <i class="fas fa-chart-bar mr-2"></i>통계 요약
             </button>
             <button
               onclick="app.switchTab('data')"
-              class="nav-tab tab-inactive py-4 px-2 text-sm font-medium transition-colors flex items-center gap-2"
+              class="nav-tab py-4 px-2 text-sm font-medium transition-all tab-inactive whitespace-nowrap"
             >
-              <i class="fas fa-database text-lg"></i> 데이터 관리
+              <i class="fas fa-database mr-2"></i>데이터 관리
             </button>
           </div>
         </div>
       </nav>
 
-      <!-- Content Area -->
-      <main class="flex-1 bg-gray-50 p-4 md:p-8">
-        <div class="max-w-7xl mx-auto">
-          <!-- TAB 1: Gallery -->
-          <div id="tab-gallery" class="tab-content space-y-6">
-            <!-- Filters -->
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-wrap gap-4 items-center">
-              <div class="flex items-center gap-2">
-                <i class="fas fa-calendar text-gray-400"></i>
+      <!-- Main Content -->
+      <main class="flex-1 max-w-7xl w-full mx-auto px-4 py-6">
+        <!-- TAB 1: Gallery -->
+        <div id="tab-gallery" class="tab-content space-y-6">
+          <div class="bg-white p-6 rounded-xl shadow-sm border space-y-4">
+            <h3 class="font-bold text-gray-800 mb-4"><i class="fas fa-filter mr-2 text-brand"></i>필터</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">날짜</label>
                 <input
                   type="date"
                   id="filter-date"
-                  class="border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                  class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
                 />
               </div>
-
-              <div class="flex items-center gap-2 relative dropdown-container">
-                <i class="fas fa-user text-gray-400"></i>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">직원</label>
                 <input
                   type="text"
                   id="filter-employee-input"
-                  placeholder="직원 이름 검색"
-                  class="border rounded-lg px-3 py-2 text-sm w-40 focus:ring-2 focus:ring-green-500 outline-none"
+                  placeholder="이름 검색..."
+                  class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
                 />
-                <div
-                  id="filter-employee-dropdown"
-                  class="dropdown-list absolute top-full left-8 w-40 bg-white border rounded-lg shadow-lg mt-1 max-h-48 overflow-y-auto hidden z-20"
-                ></div>
               </div>
-
-              <div class="flex items-center gap-2">
-                <i class="fas fa-map-marker-alt text-gray-400"></i>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">위치</label>
                 <select
                   id="filter-location"
-                  class="border rounded-lg px-3 py-2 text-sm w-32 focus:ring-2 focus:ring-green-500 outline-none"
+                  class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
                 >
                   <option value="전체">전체 위치</option>
                 </select>
               </div>
-
+            </div>
+            <div class="flex gap-2">
               <button
-                onclick="app.applyGalleryFilters()"
-                class="bg-gray-800 hover:bg-gray-900 text-white px-4 py-2 rounded-lg text-sm transition shadow-md ml-auto"
+                onclick="app.loadGallery()"
+                class="px-4 py-2 bg-brand text-white rounded-lg hover:bg-green-700 transition-colors"
               >
-                <i class="fas fa-search mr-2"></i>검색
+                <i class="fas fa-search mr-2"></i>적용
               </button>
               <button
                 onclick="app.resetGalleryFilters()"
-                class="text-gray-500 hover:text-gray-700 px-3 py-2 text-sm border rounded-lg hover:bg-gray-50 transition"
+                class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
               >
-                초기화
+                <i class="fas fa-redo mr-2"></i>초기화
               </button>
-            </div>
-
-            <!-- Gallery Grid -->
-            <div class="flex justify-between items-center">
-              <h2 class="text-xl font-bold text-gray-800">
-                📸 청소 작업 갤러리
-                <span id="gallery-count" class="text-sm text-gray-500 font-normal"></span>
-              </h2>
-              <button
-                onclick="app.loadGallery()"
-                class="text-sm bg-white border px-3 py-1 rounded shadow-sm hover:bg-gray-50"
-              >
-                <i class="fas fa-sync-alt mr-1"></i>새로고침
-              </button>
-            </div>
-
-            <div id="gallery-grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-              <!-- Items injected by JS -->
             </div>
           </div>
+          <div class="flex justify-between items-center">
+            <h2 class="text-xl font-bold text-gray-800">
+              📸 청소 작업 갤러리 <span id="gallery-count" class="text-sm text-gray-500 font-normal"></span>
+            </h2>
+            <button
+              onclick="app.loadGallery()"
+              class="text-sm bg-white border px-3 py-1 rounded shadow-sm hover:bg-gray-50"
+            >
+              <i class="fas fa-sync-alt mr-1"></i>새로고침
+            </button>
+          </div>
+          <div id="gallery-grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4"></div>
+        </div>
 
-          <!-- TAB 2: History -->
-          <div id="tab-history" class="tab-content hidden space-y-6">
-            <!-- Filters -->
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div class="space-y-1">
-                <label class="text-xs text-gray-500 font-bold">시작일</label>
-                <input type="date" id="hist-start" class="w-full border rounded-lg px-3 py-2 text-sm" />
+        <!-- TAB 2: History -->
+        <div id="tab-history" class="tab-content space-y-6 hidden">
+          <div class="bg-white p-6 rounded-xl shadow-sm border space-y-4">
+            <h3 class="font-bold text-gray-800 mb-4"><i class="fas fa-filter mr-2 text-brand"></i>필터</h3>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">시작일</label
+                ><input
+                  type="date"
+                  id="hist-start"
+                  class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
+                />
               </div>
-              <div class="space-y-1">
-                <label class="text-xs text-gray-500 font-bold">종료일</label>
-                <input type="date" id="hist-end" class="w-full border rounded-lg px-3 py-2 text-sm" />
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">종료일</label
+                ><input
+                  type="date"
+                  id="hist-end"
+                  class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
+                />
               </div>
-              <div class="space-y-1 relative dropdown-container">
-                <label class="text-xs text-gray-500 font-bold">직원</label>
-                <input
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">직원</label
+                ><input
                   type="text"
                   id="hist-employee-input"
                   placeholder="이름 검색"
-                  class="w-full border rounded-lg px-3 py-2 text-sm"
+                  class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
                 />
-                <div
-                  id="hist-employee-dropdown"
-                  class="dropdown-list absolute top-full left-0 w-full bg-white border rounded-lg shadow-lg mt-1 max-h-48 overflow-y-auto hidden z-20"
-                ></div>
               </div>
-              <div class="space-y-1">
-                <label class="text-xs text-gray-500 font-bold">근태 유형</label>
-                <div class="flex gap-2">
-                  <select id="hist-type" class="flex-1 border rounded-lg px-3 py-2 text-sm">
-                    <option value="">전체</option>
-                    <option value="출근">출근</option>
-                    <option value="퇴근">퇴근</option>
-                    <option value="휴게 시작">휴게 시작</option>
-                    <option value="휴게 종료">휴게 종료</option>
-                  </select>
-                  <button
-                    onclick="app.applyHistoryFilters()"
-                    class="bg-brand text-white px-4 rounded-lg text-sm hover:bg-green-800"
-                  >
-                    조회
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <!-- Table -->
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-              <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
-                  <thead class="bg-gray-50 text-gray-500 uppercase text-xs">
-                    <tr>
-                      <th class="px-6 py-3">시간</th>
-                      <th class="px-6 py-3">직원</th>
-                      <th class="px-6 py-3">위치</th>
-                      <th class="px-6 py-3">유형</th>
-                    </tr>
-                  </thead>
-                  <tbody id="history-list" class="divide-y divide-gray-100">
-                    <!-- JS Injected -->
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-
-          <!-- TAB 3: Stats -->
-          <div id="tab-stats" class="tab-content hidden space-y-8">
-            <!-- Period Selector -->
-            <div class="flex items-center justify-between">
-              <h2 class="text-xl font-bold text-gray-800">📊 통계 대시보드</h2>
-              <div class="flex items-center gap-2">
-                <select
-                  id="stats-period"
-                  onchange="app.changePeriod()"
-                  class="border rounded-lg px-3 py-2 text-sm shadow-sm"
-                >
-                  <option value="today">오늘</option>
-                  <option value="week" selected>최근 7일</option>
-                  <option value="month">이번 달</option>
-                  <option value="custom">직접 선택</option>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">유형</label>
+                <select id="hist-type" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500">
+                  <option value="">전체</option>
+                  <option value="출근">출근</option>
+                  <option value="퇴근">퇴근</option>
+                  <option value="휴게 시작">휴게 시작</option>
+                  <option value="휴게 종료">휴게 종료</option>
                 </select>
-
-                <div id="custom-range" class="hidden flex items-center gap-2 bg-white p-1 rounded-lg border shadow-sm">
-                  <input type="date" id="custom-start" class="text-sm border-none focus:ring-0" />
-                  <span class="text-gray-400">~</span>
-                  <input type="date" id="custom-end" class="text-sm border-none focus:ring-0" />
-                  <button onclick="app.loadStats()" class="bg-gray-800 text-white text-xs px-2 py-1 rounded">
-                    적용
-                  </button>
-                </div>
               </div>
             </div>
-
-            <!-- KPI Cards -->
-            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-              <!-- Total Employees -->
-              <div
-                class="bg-white p-5 rounded-xl shadow-sm border-l-4 border-gray-500 relative overflow-hidden group hover:shadow-md transition"
-              >
-                <div class="flex justify-between items-start">
-                  <div>
-                    <p class="text-xs text-gray-500 font-bold uppercase mb-1">총원</p>
-                    <h3 class="text-2xl font-bold text-gray-800" id="stat-total">-</h3>
-                    <p class="text-xs text-gray-400 mt-1">명 (전체 직원)</p>
-                  </div>
-                  <div class="bg-gray-100 p-2 rounded-lg text-gray-600">
-                    <i class="fas fa-users"></i>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Absent -->
-              <div
-                class="bg-white p-5 rounded-xl shadow-sm border-l-4 border-red-500 relative overflow-hidden group hover:shadow-md transition"
-              >
-                <div class="flex justify-between items-start">
-                  <div>
-                    <p class="text-xs text-gray-500 font-bold uppercase mb-1">휴가/결근</p>
-                    <h3 class="text-2xl font-bold text-gray-800" id="stat-absent">-</h3>
-                    <p class="text-xs text-gray-400 mt-1">명 (미출근)</p>
-                  </div>
-                  <div class="bg-red-50 p-2 rounded-lg text-red-600">
-                    <i class="fas fa-umbrella-beach"></i>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Present -->
-              <div
-                class="bg-white p-5 rounded-xl shadow-sm border-l-4 border-blue-500 relative overflow-hidden group hover:shadow-md transition"
-              >
-                <div class="flex justify-between items-start">
-                  <div>
-                    <p class="text-xs text-gray-500 font-bold uppercase mb-1">현재원</p>
-                    <h3 class="text-2xl font-bold text-gray-800" id="stat-present">-</h3>
-                    <p class="text-xs text-gray-400 mt-1">명 (출근 완료)</p>
-                  </div>
-                  <div class="bg-blue-50 p-2 rounded-lg text-blue-600">
-                    <i class="fas fa-check-circle"></i>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Cleaning Tasks -->
-              <div
-                class="bg-white p-5 rounded-xl shadow-sm border-l-4 border-green-500 relative overflow-hidden group hover:shadow-md transition"
-              >
-                <div class="flex justify-between items-start">
-                  <div>
-                    <p class="text-xs text-gray-500 font-bold uppercase mb-1">청소 작업</p>
-                    <h3 class="text-2xl font-bold text-gray-800" id="stat-cleaning">-</h3>
-                    <p class="text-xs text-gray-400 mt-1">건 (갤러리 업로드)</p>
-                  </div>
-                  <div class="bg-green-50 p-2 rounded-lg text-green-600">
-                    <i class="fas fa-broom"></i>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Avg Hours -->
-              <div
-                class="bg-white p-5 rounded-xl shadow-sm border-l-4 border-purple-500 relative overflow-hidden group hover:shadow-md transition"
-              >
-                <div class="flex justify-between items-start">
-                  <div>
-                    <p class="text-xs text-gray-500 font-bold uppercase mb-1">평균 근무</p>
-                    <h3 class="text-2xl font-bold text-gray-800" id="stat-hours">-</h3>
-                    <p class="text-xs text-gray-400 mt-1">시간 (휴게 제외)</p>
-                  </div>
-                  <div class="bg-purple-50 p-2 rounded-lg text-purple-600">
-                    <i class="fas fa-clock"></i>
-                  </div>
-                </div>
-              </div>
+            <button onclick="app.loadHistory()" class="px-4 py-2 bg-brand text-white rounded-lg hover:bg-green-700">
+              <i class="fas fa-search mr-2"></i>검색
+            </button>
+          </div>
+          <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm">
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th class="px-4 py-3 text-left">날짜/시간</th>
+                    <th class="px-4 py-3 text-left">직원</th>
+                    <th class="px-4 py-3 text-left">유형</th>
+                    <th class="px-4 py-3 text-left">위치</th>
+                  </tr>
+                </thead>
+                <tbody id="history-list" class="divide-y divide-gray-100"></tbody>
+              </table>
             </div>
+          </div>
+        </div>
 
-            <!-- Charts Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <!-- Daily Chart -->
-              <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
-                <div class="flex items-center justify-between mb-4">
-                  <h3 class="font-bold text-gray-700">
-                    <i class="fas fa-chart-line mr-2 text-blue-500"></i>일별 출근 현황
-                  </h3>
+        <!-- TAB 3: Stats -->
+        <div id="tab-stats" class="tab-content space-y-6 hidden">
+          <!-- Filter -->
+          <div class="bg-white p-6 rounded-xl shadow-sm border">
+            <div class="flex items-center gap-4 mb-4">
+              <h3 class="font-bold text-gray-800"><i class="fas fa-calendar-alt mr-2 text-brand"></i>기간 조회</h3>
+              <select id="stats-period" onchange="app.changePeriod()" class="px-4 py-2 border rounded-lg text-sm">
+                <option value="today">오늘</option>
+                <option value="week">최근 7일</option>
+                <option value="month">이번 달</option>
+                <option value="custom">직접 선택</option>
+              </select>
+            </div>
+            <div id="custom-range" class="hidden flex gap-4 items-end">
+              <div>
+                <label class="block text-xs mb-1">시작일</label
+                ><input type="date" id="custom-start" class="px-3 py-2 border rounded-lg text-sm" />
+              </div>
+              <div>
+                <label class="block text-xs mb-1">종료일</label
+                ><input type="date" id="custom-end" class="px-3 py-2 border rounded-lg text-sm" />
+              </div>
+              <button
+                onclick="app.loadStats()"
+                class="px-4 py-2 bg-brand text-white rounded-lg hover:bg-green-700 text-sm"
+              >
+                조회
+              </button>
+            </div>
+          </div>
+
+          <!-- KPI Cards -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-l-4 border-l-blue-500">
+              <p class="text-sm text-gray-500 mb-1">총원</p>
+              <p class="text-3xl font-bold text-gray-800" id="stat-total">0</p>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-l-4 border-l-red-500">
+              <p class="text-sm text-gray-500 mb-1">휴가/결근</p>
+              <p class="text-3xl font-bold text-gray-800" id="stat-absent">0</p>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-l-4 border-l-green-500">
+              <p class="text-sm text-gray-500 mb-1">현재원</p>
+              <p class="text-3xl font-bold text-gray-800" id="stat-present">0</p>
+            </div>
+          </div>
+
+          <!-- Work Hours Table -->
+          <div class="bg-white p-6 rounded-xl shadow-sm border">
+            <div class="flex justify-between items-center mb-4">
+              <h3 class="font-bold text-gray-800">
+                <i class="fas fa-clock mr-2 text-blue-600"></i>개인별 근로시간 상세
+              </h3>
+              <button
+                onclick="app.downloadWorkHours()"
+                class="px-3 py-1.5 bg-green-600 text-white rounded-lg text-xs hover:bg-green-700"
+              >
+                <i class="fas fa-file-excel mr-1"></i>Excel 저장
+              </button>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm text-center">
+                <thead class="bg-gray-100 text-gray-600">
+                  <tr>
+                    <th class="py-2 px-2">직원명</th>
+                    <th class="py-2 px-2">일 평균</th>
+                    <th class="py-2 px-2">주당 근무일</th>
+                    <th class="py-2 px-2">총 시간</th>
+                    <th class="py-2 px-2">근무일수</th>
+                    <th class="py-2 px-2">상태</th>
+                  </tr>
+                </thead>
+                <tbody id="work-hours-table" class="divide-y divide-gray-100"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Cleaning Stats -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="cleaning-stats-container">
+            <!-- Location Stats -->
+            <div class="bg-white p-6 rounded-xl shadow-sm border">
+              <h3 class="font-bold text-gray-800 mb-4">📍 구역별 청소 현황</h3>
+              <div class="flex gap-4 mb-4 text-sm">
+                <div class="flex-1 bg-green-50 p-3 rounded text-center">
+                  <div class="font-bold text-green-700">BEST</div>
+                  <div id="location-best-name">-</div>
+                  <div id="location-best-count" class="text-xs text-gray-500">-</div>
                 </div>
-                <div class="h-64">
-                  <canvas id="daily-chart"></canvas>
+                <div class="flex-1 bg-red-50 p-3 rounded text-center">
+                  <div class="font-bold text-red-700">WORST</div>
+                  <div id="location-worst-name">-</div>
+                  <div id="location-worst-count" class="text-xs text-gray-500">-</div>
                 </div>
               </div>
-
-              <!-- Location Chart -->
-              <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
-                <div class="flex items-center justify-between mb-4">
-                  <h3 class="font-bold text-gray-700">
-                    <i class="fas fa-map-marker-alt mr-2 text-red-500"></i>구역별 청소 작업
-                  </h3>
+              <div class="space-y-2" id="location-top3"></div>
+            </div>
+            <!-- Employee Stats -->
+            <div class="bg-white p-6 rounded-xl shadow-sm border">
+              <h3 class="font-bold text-gray-800 mb-4">🏆 직원별 청소 현황</h3>
+              <div class="flex gap-4 mb-4 text-sm">
+                <div class="flex-1 bg-blue-50 p-3 rounded text-center">
+                  <div class="font-bold text-blue-700">BEST</div>
+                  <div id="employee-best-name">-</div>
+                  <div id="employee-best-count" class="text-xs text-gray-500">-</div>
                 </div>
-                <div class="h-64">
-                  <canvas id="location-chart"></canvas>
-                </div>
-              </div>
-
-              <!-- Employee Chart -->
-              <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
-                <div class="flex items-center justify-between mb-4">
-                  <h3 class="font-bold text-gray-700">
-                    <i class="fas fa-users mr-2 text-purple-500"></i>직원별 작업량 (Top 10)
-                  </h3>
-                </div>
-                <div class="h-64">
-                  <canvas id="employee-chart"></canvas>
+                <div class="flex-1 bg-gray-50 p-3 rounded text-center">
+                  <div class="font-bold text-gray-700">WORST</div>
+                  <div id="employee-worst-name">-</div>
+                  <div id="employee-worst-count" class="text-xs text-gray-500">-</div>
                 </div>
               </div>
+              <div class="space-y-2" id="employee-top3"></div>
+            </div>
+          </div>
 
-              <!-- Type Chart -->
-              <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
-                <div class="flex items-center justify-between mb-4">
-                  <h3 class="font-bold text-gray-700">
-                    <i class="fas fa-pie-chart mr-2 text-yellow-500"></i>근태 유형 분포
-                  </h3>
-                </div>
-                <div class="h-64">
-                  <canvas id="type-chart"></canvas>
-                </div>
+          <!-- Charts -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-white p-6 rounded-xl shadow-sm border">
+              <h3 class="font-bold mb-4 text-sm">일별 출근</h3>
+              <div class="h-64"><canvas id="daily-chart"></canvas></div>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-sm border">
+              <h3 class="font-bold mb-4 text-sm">구역별 작업</h3>
+              <div class="h-64"><canvas id="location-chart"></canvas></div>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-sm border">
+              <h3 class="font-bold mb-4 text-sm">직원별 작업</h3>
+              <div class="h-64"><canvas id="employee-chart"></canvas></div>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-sm border">
+              <h3 class="font-bold mb-4 text-sm">근태 유형</h3>
+              <div class="h-64"><canvas id="type-chart"></canvas></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 4: Data -->
+        <div id="tab-data" class="tab-content space-y-6 hidden">
+          <!-- Employee Management -->
+          <div class="bg-white p-6 rounded-xl shadow-sm border">
+            <div class="flex justify-between items-center mb-4">
+              <h3 class="font-bold text-gray-800 text-xl"><i class="fas fa-users mr-2 text-green-600"></i>직원 관리</h3>
+              <button
+                onclick="app.toggleEmployeeForm()"
+                class="px-3 py-1.5 bg-green-600 text-white rounded hover:bg-green-700 text-sm"
+              >
+                <i class="fas fa-plus mr-1"></i>추가
+              </button>
+            </div>
+            <div id="employee-form" class="hidden bg-green-50 p-4 rounded mb-4 border border-green-200">
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-2 mb-2">
+                <input type="text" id="emp-name" placeholder="이름 *" class="border p-2 rounded text-sm" />
+                <input type="text" id="emp-phone" placeholder="전화번호" class="border p-2 rounded text-sm" />
+                <input type="text" id="emp-position" placeholder="직급" class="border p-2 rounded text-sm" />
+              </div>
+              <button onclick="app.saveEmployee()" class="bg-green-600 text-white px-4 py-1.5 rounded text-sm">
+                저장
+              </button>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm">
+                <thead class="bg-gray-100">
+                  <tr>
+                    <th class="p-2 text-left">이름</th>
+                    <th class="p-2 text-left">전화</th>
+                    <th class="p-2 text-left">직급</th>
+                    <th class="p-2 text-center">관리</th>
+                  </tr>
+                </thead>
+                <tbody id="employee-list" class="divide-y"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Location Management -->
+          <div class="bg-white p-6 rounded-xl shadow-sm border">
+            <div class="flex justify-between items-center mb-4">
+              <h3 class="font-bold text-gray-800 text-xl">
+                <i class="fas fa-map-marker-alt mr-2 text-purple-600"></i>구역 관리
+              </h3>
+              <button
+                onclick="app.toggleLocationForm()"
+                class="px-3 py-1.5 bg-purple-600 text-white rounded hover:bg-purple-700 text-sm"
+              >
+                <i class="fas fa-plus mr-1"></i>추가
+              </button>
+            </div>
+            <div id="location-form" class="hidden bg-purple-50 p-4 rounded mb-4 border border-purple-200">
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-2 mb-2">
+                <input type="text" id="loc-name" placeholder="구역명 *" class="border p-2 rounded text-sm" />
+                <input type="text" id="loc-floor" placeholder="층수" class="border p-2 rounded text-sm" />
+                <input type="text" id="loc-desc" placeholder="설명" class="border p-2 rounded text-sm" />
+              </div>
+              <button onclick="app.saveLocation()" class="bg-purple-600 text-white px-4 py-1.5 rounded text-sm">
+                저장
+              </button>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm">
+                <thead class="bg-gray-100">
+                  <tr>
+                    <th class="p-2 text-left">구역명</th>
+                    <th class="p-2 text-left">층수</th>
+                    <th class="p-2 text-left">설명</th>
+                    <th class="p-2 text-center">관리</th>
+                  </tr>
+                </thead>
+                <tbody id="location-list" class="divide-y"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- CSV Upload -->
+          <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-xl shadow-sm border border-blue-200">
+            <h3 class="font-bold text-gray-800 mb-4 text-xl">📤 CSV 데이터 일괄 등록</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <!-- Employee CSV -->
+              <div class="bg-white p-4 rounded shadow border-l-4 border-green-500">
+                <div class="font-bold mb-2">👤 직원 (employees)</div>
+                <button
+                  onclick="app.downloadTemplate('employees')"
+                  class="text-xs bg-gray-100 px-2 py-1 rounded mb-2 block w-full"
+                >
+                  템플릿 다운로드
+                </button>
+                <input
+                  type="file"
+                  accept=".csv"
+                  onchange="app.handleCSVUpload(event, 'employees')"
+                  class="text-xs w-full"
+                />
+              </div>
+              <!-- Location CSV -->
+              <div class="bg-white p-4 rounded shadow border-l-4 border-purple-500">
+                <div class="font-bold mb-2">📍 위치 (locations)</div>
+                <button
+                  onclick="app.downloadTemplate('locations')"
+                  class="text-xs bg-gray-100 px-2 py-1 rounded mb-2 block w-full"
+                >
+                  템플릿 다운로드
+                </button>
+                <input
+                  type="file"
+                  accept=".csv"
+                  onchange="app.handleCSVUpload(event, 'locations')"
+                  class="text-xs w-full"
+                />
+              </div>
+              <!-- Cleaning CSV -->
+              <div class="bg-white p-4 rounded shadow border-l-4 border-orange-500">
+                <div class="font-bold mb-2">🧹 청소 (cleaning_tasks)</div>
+                <button
+                  onclick="app.downloadTemplate('cleaning_tasks')"
+                  class="text-xs bg-gray-100 px-2 py-1 rounded mb-2 block w-full"
+                >
+                  템플릿 다운로드
+                </button>
+                <input
+                  type="file"
+                  accept=".csv"
+                  onchange="app.handleCSVUpload(event, 'cleaning_tasks')"
+                  class="text-xs w-full"
+                />
+              </div>
+              <!-- Attendance CSV -->
+              <div class="bg-white p-4 rounded shadow border-l-4 border-blue-500">
+                <div class="font-bold mb-2">⏰ 근태 (attendance_records)</div>
+                <button
+                  onclick="app.downloadTemplate('attendance_records')"
+                  class="text-xs bg-gray-100 px-2 py-1 rounded mb-2 block w-full"
+                >
+                  템플릿 다운로드
+                </button>
+                <input
+                  type="file"
+                  accept=".csv"
+                  onchange="app.handleCSVUpload(event, 'attendance_records')"
+                  class="text-xs w-full"
+                />
               </div>
             </div>
           </div>
 
-          <!-- TAB 4: Data -->
-          <div id="tab-data" class="tab-content hidden space-y-6">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <!-- Excel Export -->
-              <div
-                class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 text-center hover:shadow-md transition"
-              >
-                <div
-                  class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl"
-                >
-                  <i class="fas fa-file-excel"></i>
-                </div>
-                <h3 class="text-lg font-bold text-gray-800 mb-2">데이터 백업</h3>
-                <p class="text-gray-500 text-sm mb-6">전체 데이터를 엑셀 파일로 다운로드합니다.</p>
-                <button
-                  onclick="app.downloadData()"
-                  class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded-lg transition"
-                >
-                  <i class="fas fa-download mr-2"></i>엑셀 다운로드
-                </button>
-              </div>
-            </div>
+          <!-- Excel Export -->
+          <div class="bg-white p-6 rounded-xl shadow-sm border">
+            <h3 class="font-bold text-gray-800 mb-2">📥 전체 데이터 백업</h3>
+            <button
+              onclick="app.downloadData()"
+              class="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 shadow-md w-full md:w-auto"
+            >
+              <i class="fas fa-download mr-2"></i>전체 Excel 다운로드
+            </button>
           </div>
         </div>
       </main>
@@ -515,132 +622,68 @@
     <!-- Image Modal -->
     <div
       id="image-modal"
-      class="fixed inset-0 z-50 flex items-center justify-center hidden modal-backdrop bg-black/80"
-      onclick="app.closeModal()"
+      class="fixed inset-0 z-50 hidden modal-backdrop bg-black/80 flex items-center justify-center p-4"
+      onclick="if (event.target === this) app.closeModal();"
     >
-      <div
-        class="bg-white p-1 rounded-xl shadow-2xl max-w-4xl w-full mx-4 overflow-hidden relative"
-        onclick="event.stopPropagation()"
-      >
-        <button
-          onclick="app.closeModal()"
-          class="absolute top-4 right-4 text-white bg-black/50 hover:bg-black/70 rounded-full w-8 h-8 flex items-center justify-center transition z-10"
-        >
-          <i class="fas fa-times"></i>
-        </button>
-        <div class="flex flex-col md:flex-row h-[80vh]">
-          <div class="flex-1 bg-black flex items-center justify-center">
-            <img id="modal-image" src="" alt="상세 이미지" class="max-w-full max-h-full object-contain" />
+      <div class="bg-white rounded-2xl max-w-4xl w-full max-h-full overflow-hidden shadow-2xl relative">
+        <div class="flex justify-between items-center p-4 border-b">
+          <div>
+            <p class="font-bold text-gray-800" id="modal-emp"></p>
+            <p class="text-sm text-gray-500" id="modal-time"></p>
           </div>
-          <div class="w-full md:w-80 bg-white p-6 flex flex-col justify-center border-l">
-            <h3 class="text-lg font-bold text-gray-800 mb-1" id="modal-employee-name">-</h3>
-            <p class="text-sm text-gray-500 mb-6" id="modal-time">-</p>
-            <div class="space-y-4">
-              <div class="p-3 bg-gray-50 rounded-lg">
-                <p class="text-xs text-gray-400 mb-1">촬영 위치</p>
-                <p class="font-medium text-gray-700">정보 없음</p>
-              </div>
-            </div>
-          </div>
+          <button onclick="app.closeModal()" class="text-2xl text-gray-400 hover:text-gray-600">×</button>
+        </div>
+        <div class="p-4 bg-black flex justify-center">
+          <img id="modal-img" src="" class="max-h-[80vh] object-contain" />
         </div>
       </div>
     </div>
 
     <script>
-      // KINDWON Admin Dashboard - Option A + B (Stable Version)
-
-      // Config
       const SUPABASE_URL = 'https://qgpqhtuynxhmgawakjxe.supabase.co';
-      const SUPABASE_KEY =
+      const SUPABASE_ANON_KEY =
         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFncHFodHV5bnhobWdhd2FranhlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcyOTQyNTEsImV4cCI6MjA4Mjg3MDI1MX0.WNljQIKDbeZCDlXe8fpBdZs58XRFfujGt7lBGfq_pVg';
       const LOGIN_PIN = 'bdxi2026';
 
+      const APARTMENTS = {
+        BJD001: '봉담자이프라이드시티',
+        YDB002: '용인동백센트럴',
+        SYT003: '수원영통자이',
+        PGD004: '평택고덕국제신도시',
+        ETC999: '기타 단지',
+      };
+
       const app = {
         sb: null,
+        currentAptId: null,
         charts: {},
-        employeeList: [],
-        locationList: [],
 
         init: function () {
-          try {
-            if (window.supabase) {
-              this.sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-              console.log('✅ Supabase Ready');
-            }
-          } catch (e) {
-            console.error(e);
-          }
-
-          this.updateClock();
-          setInterval(() => this.updateClock(), 1000);
-
-          // Dropdown close
-          document.addEventListener('click', (e) => {
-            if (!e.target.closest('.dropdown-container')) {
-              document.querySelectorAll('.dropdown-list').forEach((el) => el.classList.add('hidden'));
-            }
-          });
-
-          // Input Search Setup
-          this.setupSearch('filter-employee-input', 'filter-employee-dropdown');
-          this.setupSearch('hist-employee-input', 'hist-employee-dropdown');
+          this.sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+          this.checkLogin();
         },
 
-        setupSearch: function (inputId, listId) {
-          const input = document.getElementById(inputId);
-          const list = document.getElementById(listId);
-          if (!input || !list) return;
-
-          const handler = () => {
-            const term = input.value.toLowerCase();
-            const filtered = this.employeeList.filter((e) => e.name.toLowerCase().includes(term));
-
-            list.innerHTML = '';
-            filtered.forEach((emp) => {
-              const div = document.createElement('div');
-              div.className = 'dropdown-item px-3 py-2 cursor-pointer text-sm';
-              div.textContent = emp.name;
-              div.onclick = () => {
-                input.value = emp.name;
-                list.classList.add('hidden');
-              };
-              list.appendChild(div);
-            });
-
-            if (filtered.length > 0) list.classList.remove('hidden');
-            else list.classList.add('hidden');
-          };
-
-          input.addEventListener('input', handler);
-          input.addEventListener('focus', handler);
-        },
-
-        updateClock: function () {
-          const now = new Date();
-          const time = now.toLocaleTimeString('ko-KR', { hour12: false });
-          const el = document.getElementById('live-time');
-          if (el) el.textContent = time;
-        },
-
+        // --- AUTH ---
         login: function () {
           const pin = document.getElementById('inp-pin').value;
+          const aptId = document.getElementById('login-apt-select').value;
+
           if (pin === LOGIN_PIN) {
-            sessionStorage.setItem('kindwon_login', 'true');
+            this.currentAptId = aptId;
+            sessionStorage.setItem('kindwon_auth', 'true');
+            sessionStorage.setItem('kindwon_apt_id', aptId);
             this.showDashboard();
           } else {
             document.getElementById('msg-error').classList.remove('hidden');
           }
         },
 
-        logout: function () {
-          if (confirm('로그아웃 하시겠습니까?')) {
-            sessionStorage.removeItem('kindwon_login');
-            location.reload();
-          }
-        },
-
         checkLogin: function () {
-          if (sessionStorage.getItem('kindwon_login') === 'true') {
+          const auth = sessionStorage.getItem('kindwon_auth');
+          const aptId = sessionStorage.getItem('kindwon_apt_id');
+
+          if (auth === 'true' && aptId) {
+            this.currentAptId = aptId;
             this.showDashboard();
           } else {
             document.getElementById('view-login').classList.remove('hidden');
@@ -650,349 +693,569 @@
         showDashboard: function () {
           document.getElementById('view-login').classList.add('hidden');
           document.getElementById('view-dashboard').classList.remove('hidden');
+          document.getElementById('apt-name-display').textContent = APARTMENTS[this.currentAptId];
+          document.getElementById('current-apt-badge').classList.remove('hidden');
           this.switchTab('gallery');
         },
 
+        logout: function () {
+          if (confirm('로그아웃 하시겠습니까?')) {
+            sessionStorage.clear();
+            location.reload();
+          }
+        },
+
+        // --- TABS ---
         switchTab: function (tab) {
-          document.querySelectorAll('.tab-content').forEach((el) => el.classList.add('hidden'));
-          document.getElementById(`tab-${tab}`).classList.remove('hidden');
+          document.querySelectorAll('.tab-content').forEach((e) => e.classList.add('hidden'));
+          document.getElementById('tab-' + tab).classList.remove('hidden');
 
-          document.querySelectorAll('.nav-tab').forEach((el) => {
-            el.classList.remove('tab-active');
-            el.classList.add('tab-inactive');
+          document.querySelectorAll('.nav-tab').forEach((e) => {
+            e.classList.remove('tab-active');
+            e.classList.add('tab-inactive');
           });
+          event.currentTarget.classList.remove('tab-inactive');
+          event.currentTarget.classList.add('tab-active');
 
-          const btn = document.querySelector(`button[onclick="app.switchTab('${tab}')"]`);
-          if (btn) {
-            btn.classList.remove('tab-inactive');
-            btn.classList.add('tab-active');
-          }
-
-          if (tab === 'gallery') {
-            this.loadGallery();
-            this.loadMeta();
-          } else if (tab === 'history') {
-            this.loadHistory();
-            this.loadMeta();
-          } else if (tab === 'stats') {
-            this.loadStats();
+          if (tab === 'gallery') this.loadGallery();
+          if (tab === 'history') this.loadHistory();
+          if (tab === 'stats') this.loadStats();
+          if (tab === 'data') {
+            this.loadEmployees();
+            this.loadLocations();
           }
         },
 
-        loadMeta: async function () {
-          if (this.employeeList.length > 0) return;
-          try {
-            const { data } = await this.sb.from('employees').select('name').eq('status', 'active');
-            if (data) this.employeeList = data;
-
-            const locRes = await this.sb.from('locations').select('name').eq('status', 'active');
-            if (locRes.data) {
-              const select = document.getElementById('filter-location');
-              select.innerHTML = '<option value="전체">전체 위치</option>';
-              locRes.data.forEach((l) => {
-                const opt = document.createElement('option');
-                opt.value = l.name;
-                opt.textContent = l.name;
-                select.appendChild(opt);
-              });
-            }
-          } catch (e) {}
+        // --- UTILS ---
+        toKST: function (isoStr) {
+          const d = new Date(isoStr);
+          return new Date(d.getTime() + 9 * 60 * 60 * 1000);
         },
 
-        // Gallery
+        // --- GALLERY ---
         loadGallery: async function () {
           const grid = document.getElementById('gallery-grid');
           grid.innerHTML = '<div class="col-span-full text-center py-10"><div class="loader"></div></div>';
 
-          try {
-            let q = this.sb.from('cleaning_tasks').select('*').order('created_at', { ascending: false });
+          let q = this.sb
+            .from('cleaning_tasks')
+            .select('*')
+            .eq('apartment_id', this.currentAptId)
+            .order('created_at', { ascending: false });
 
-            const date = document.getElementById('filter-date').value;
-            const emp = document.getElementById('filter-employee-input').value;
-            const loc = document.getElementById('filter-location').value;
+          const date = document.getElementById('filter-date').value;
+          const emp = document.getElementById('filter-employee-input').value;
 
-            if (date) {
-              q = q.gte('created_at', `${date}T00:00:00+09:00`).lte('created_at', `${date}T23:59:59+09:00`);
-            }
-            if (emp) q = q.ilike('employee_name', `%${emp}%`);
-            if (loc !== '전체') q = q.eq('location', loc);
-
-            const { data } = await q.limit(50);
-
-            grid.innerHTML = '';
-            if (data && data.length > 0) {
-              document.getElementById('gallery-count').textContent = `(${data.length}건)`;
-              data.forEach((item) => {
-                if (item.photo_url) {
-                  const div = document.createElement('div');
-                  div.className = 'gallery-item bg-white rounded-lg shadow hover:shadow-lg transition-shadow';
-                  div.innerHTML = `
-                    <img src="${item.photo_url}" class="w-full h-48 object-cover rounded-t-lg"
-                        onclick="app.openModal('${item.photo_url}', '${item.employee_name}', '${item.created_at}')">
-                    <div class="p-3">
-                        <div class="font-medium text-gray-800">${item.employee_name}</div>
-                        <div class="text-sm text-gray-500">
-                            ${new Date(item.created_at).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                        </div>
-                    </div>
-                `;
-                  grid.appendChild(div);
-                }
-              });
-            } else {
-              grid.innerHTML = '<div class="col-span-full text-center py-20 text-gray-400">데이터가 없습니다.</div>';
-              document.getElementById('gallery-count').textContent = '(0건)';
-            }
-          } catch (e) {
-            console.error(e);
-            grid.innerHTML = '<div class="col-span-full text-center text-red-500">오류 발생</div>';
+          // Filter by Date (UTC comparison)
+          if (date) {
+            const start = new Date(date);
+            const end = new Date(date);
+            end.setDate(end.getDate() + 1);
+            q = q.gte('created_at', start.toISOString()).lt('created_at', end.toISOString());
           }
-        },
+          if (emp) q = q.ilike('employee_name', `%${emp}%`);
 
-        applyGalleryFilters: function () {
-          this.loadGallery();
-        },
-        resetGalleryFilters: function () {
-          document.getElementById('filter-date').value = '';
-          document.getElementById('filter-employee-input').value = '';
-          document.getElementById('filter-location').value = '전체';
-          this.loadGallery();
-        },
+          const { data, error } = await q.limit(50);
 
+          grid.innerHTML = '';
+          if (error || !data) {
+            grid.innerHTML = '<div class="col-span-full text-center text-red-500">로드 실패</div>';
+            return;
+          }
+
+          document.getElementById('gallery-count').textContent = `(${data.length}건)`;
+          data.forEach((item) => {
+            if (item.photo_url) {
+              const kstDate = this.toKST(item.created_at);
+              const div = document.createElement('div');
+              div.className = 'bg-white rounded-lg shadow overflow-hidden';
+              div.innerHTML = `
+                   <img src="${item.photo_url}" class="w-full h-48 object-cover cursor-pointer hover:opacity-90" onclick="app.openModal('${item.photo_url}', '${item.employee_name}', '${kstDate.toLocaleString()}')">
+                   <div class="p-3">
+                      <div class="font-bold text-gray-800 text-sm">${item.employee_name}</div>
+                      <div class="text-xs text-gray-500">${kstDate.toLocaleString('ko-KR')}</div>
+                      <div class="text-xs text-gray-400 truncate">${item.location || ''}</div>
+                   </div>
+                `;
+              grid.appendChild(div);
+            }
+          });
+        },
         openModal: function (url, name, time) {
-          document.getElementById('modal-image').src = url;
-          document.getElementById('modal-employee-name').textContent = name;
-          document.getElementById('modal-time').textContent = new Date(time).toLocaleString('ko-KR');
+          document.getElementById('modal-img').src = url;
+          document.getElementById('modal-emp').textContent = name;
+          document.getElementById('modal-time').textContent = time;
           document.getElementById('image-modal').classList.remove('hidden');
         },
         closeModal: function () {
           document.getElementById('image-modal').classList.add('hidden');
         },
+        resetGalleryFilters: function () {
+          document.getElementById('filter-date').value = '';
+          document.getElementById('filter-employee-input').value = '';
+          this.loadGallery();
+        },
 
-        // History
+        // --- HISTORY ---
         loadHistory: async function () {
-          const list = document.getElementById('history-list');
-          list.innerHTML = '<tr><td colspan="4" class="text-center py-4"><div class="loader"></div></td></tr>';
+          const tbody = document.getElementById('history-list');
+          tbody.innerHTML = '<tr><td colspan="4" class="text-center py-10"><div class="loader"></div></td></tr>';
 
-          try {
-            let q = this.sb.from('attendance_records').select('*').order('scan_time', { ascending: false });
+          let q = this.sb
+            .from('attendance_records')
+            .select('*')
+            .eq('apartment_id', this.currentAptId)
+            .order('scan_time', { ascending: false });
 
-            const start = document.getElementById('hist-start').value;
-            const end = document.getElementById('hist-end').value;
-            const emp = document.getElementById('hist-employee-input').value;
-            const type = document.getElementById('hist-type').value;
+          const start = document.getElementById('hist-start').value;
+          const end = document.getElementById('hist-end').value;
+          const emp = document.getElementById('hist-employee-input').value;
+          const type = document.getElementById('hist-type').value;
 
-            if (start) q = q.gte('scan_time', `${start}T00:00:00+09:00`);
-            if (end) q = q.lte('scan_time', `${end}T23:59:59+09:00`);
-            if (emp) q = q.ilike('employee_name', `%${emp}%`);
-            if (type) q = q.eq('attendance_type', type);
-
-            const { data } = await q.limit(100);
-
-            list.innerHTML = '';
-            if (data && data.length > 0) {
-              data.forEach((row) => {
-                const tr = document.createElement('tr');
-                let color = 'bg-gray-100 text-gray-800';
-                if (row.attendance_type === '출근') color = 'bg-blue-100 text-blue-800';
-                if (row.attendance_type === '퇴근') color = 'bg-green-100 text-green-800';
-
-                tr.innerHTML = `
-                <td class="px-6 py-4 text-sm text-gray-900">${new Date(row.scan_time).toLocaleString('ko-KR')}</td>
-                <td class="px-6 py-4 text-sm text-gray-500">${row.employee_name}</td>
-                <td class="px-6 py-4 text-sm text-gray-500">${row.location || '-'}</td>
-                <td class="px-6 py-4"><span class="px-2 py-1 text-xs rounded-full ${color}">${row.attendance_type}</span></td>
-            `;
-                list.appendChild(tr);
-              });
-            } else {
-              list.innerHTML =
-                '<tr><td colspan="4" class="text-center py-10 text-gray-400">데이터가 없습니다.</td></tr>';
-            }
-          } catch (e) {
-            console.error(e);
+          if (start) q = q.gte('scan_time', new Date(start).toISOString());
+          if (end) {
+            const e = new Date(end);
+            e.setDate(e.getDate() + 1);
+            q = q.lt('scan_time', e.toISOString());
           }
-        },
+          if (emp) q = q.ilike('employee_name', `%${emp}%`);
+          if (type) q = q.eq('attendance_type', type);
 
-        applyHistoryFilters: function () {
-          this.loadHistory();
-        },
+          const { data, error } = await q.limit(100);
+          tbody.innerHTML = '';
 
-        // Stats
-        loadStats: async function () {
-          const period = document.getElementById('stats-period').value;
-          const now = new Date();
-          let start, end;
-
-          if (period === 'today') {
-            start = end = now.toISOString().split('T')[0];
-          } else if (period === 'week') {
-            const d = new Date();
-            d.setDate(d.getDate() - 7);
-            start = d.toISOString().split('T')[0];
-            end = now.toISOString().split('T')[0];
-          } else if (period === 'month') {
-            start = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
-            end = now.toISOString().split('T')[0];
+          if (data) {
+            data.forEach((item) => {
+              const kst = this.toKST(item.scan_time);
+              const tr = document.createElement('tr');
+              tr.innerHTML = `
+                    <td class="px-4 py-3">${kst.toLocaleString('ko-KR')}</td>
+                    <td class="px-4 py-3 font-medium">${item.employee_name}</td>
+                    <td class="px-4 py-3"><span class="px-2 py-1 rounded-full text-xs ${item.attendance_type === '출근' ? 'bg-blue-100 text-blue-700' : item.attendance_type === '퇴근' ? 'bg-green-100 text-green-700' : 'bg-gray-100'}">${item.attendance_type}</span></td>
+                    <td class="px-4 py-3 text-gray-500">${item.location || '-'}</td>
+                 `;
+              tbody.appendChild(tr);
+            });
           } else {
-            start = document.getElementById('custom-start').value;
-            end = document.getElementById('custom-end').value;
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-gray-400">데이터가 없습니다</td></tr>';
+          }
+        },
+
+        // --- STATS ---
+        changePeriod: function () {
+          const p = document.getElementById('stats-period').value;
+          document.getElementById('custom-range').classList.toggle('hidden', p !== 'custom');
+          if (p !== 'custom') this.loadStats();
+        },
+
+        loadStats: async function () {
+          const p = document.getElementById('stats-period').value;
+          let start, end;
+          const now = new Date();
+
+          if (p === 'today') {
+            start = new Date(now.setHours(0, 0, 0, 0));
+            end = new Date(now.setHours(23, 59, 59, 999));
+          } else if (p === 'week') {
+            end = new Date();
+            start = new Date();
+            start.setDate(end.getDate() - 7);
+          } else if (p === 'month') {
+            start = new Date(now.getFullYear(), now.getMonth(), 1);
+            end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+          } else {
+            if (!document.getElementById('custom-start').value) return;
+            start = new Date(document.getElementById('custom-start').value);
+            end = new Date(document.getElementById('custom-end').value);
+            end.setHours(23, 59, 59);
           }
 
-          if (!start) return;
+          // Fetch Data
+          const { data: emps } = await this.sb
+            .from('employees')
+            .select('name')
+            .eq('apartment_id', this.currentAptId)
+            .eq('status', 'active');
+          const { data: atts } = await this.sb
+            .from('attendance_records')
+            .select('*')
+            .eq('apartment_id', this.currentAptId)
+            .gte('scan_time', start.toISOString())
+            .lte('scan_time', end.toISOString());
+          const { data: cleans } = await this.sb
+            .from('cleaning_tasks')
+            .select('*')
+            .eq('apartment_id', this.currentAptId)
+            .gte('created_at', start.toISOString())
+            .lte('created_at', end.toISOString());
 
-          try {
-            const [empRes, attRes, cleanRes] = await Promise.all([
-              this.sb.from('employees').select('id, name').eq('status', 'active'),
-              this.sb
-                .from('attendance_records')
-                .select('*')
-                .gte('scan_time', `${start}T00:00:00`)
-                .lte('scan_time', `${end}T23:59:59`),
-              this.sb
-                .from('cleaning_tasks')
-                .select('*')
-                .gte('created_at', `${start}T00:00:00`)
-                .lte('created_at', `${end}T23:59:59`),
-            ]);
+          // KPI
+          const total = emps ? emps.length : 0;
+          const presentSet = new Set(
+            atts ? atts.filter((a) => a.attendance_type === '출근').map((a) => a.employee_name) : [],
+          );
+          const present = presentSet.size;
+          document.getElementById('stat-total').textContent = total;
+          document.getElementById('stat-present').textContent = present;
+          document.getElementById('stat-absent').textContent = total - present;
 
-            const emps = empRes.data || [];
-            const atts = attRes.data || [];
-            const cleans = cleanRes.data || [];
-
-            // KPIs
-            const total = emps.length;
-            const presentSet = new Set(atts.filter((a) => a.attendance_type === '출근').map((a) => a.employee_name));
-            const present = presentSet.size;
-
-            // Calc Hours
-            let totalHours = 0,
-              days = 0;
-            const workMap = {};
+          // Calculate Work Hours
+          const workMap = {}; // { empName: { date: { start, end, break } } }
+          if (atts)
             atts.forEach((a) => {
-              const k = `${a.employee_name}-${a.scan_time.split('T')[0]}`;
-              if (!workMap[k]) workMap[k] = {};
-              workMap[k][a.attendance_type] = new Date(a.scan_time);
+              const kst = this.toKST(a.scan_time);
+              const dateKey = kst.toISOString().split('T')[0];
+              if (!workMap[a.employee_name]) workMap[a.employee_name] = {};
+              if (!workMap[a.employee_name][dateKey]) workMap[a.employee_name][dateKey] = { events: [] };
+              workMap[a.employee_name][dateKey].events.push({ type: a.attendance_type, time: kst });
             });
 
-            Object.values(workMap).forEach((d) => {
-              if (d['출근'] && d['퇴근']) {
-                let h = (d['퇴근'] - d['출근']) / 3600000;
-                if (d['휴게 시작'] && d['휴게 종료']) h -= (d['휴게 종료'] - d['휴게 시작']) / 3600000;
-                if (h > 0) {
-                  totalHours += h;
-                  days++;
+          const tableBody = document.getElementById('work-hours-table');
+          tableBody.innerHTML = '';
+          this.workHoursData = [];
+
+          for (const emp of emps || []) {
+            let totalHours = 0;
+            let workDays = 0;
+            const records = workMap[emp.name] || {};
+
+            Object.values(records).forEach((day) => {
+              day.events.sort((a, b) => a.time - b.time);
+              const start = day.events.find((e) => e.type === '출근');
+              const end = day.events.find((e) => e.type === '퇴근');
+              if (start && end) {
+                let duration = (end.time - start.time) / (1000 * 60 * 60);
+                // Simple break logic: subtract 1h if > 4h
+                if (duration > 4) duration -= 1;
+                if (duration > 0) {
+                  totalHours += duration;
+                  workDays++;
                 }
               }
             });
 
-            document.getElementById('stat-total').textContent = total;
-            document.getElementById('stat-absent').textContent = total - present;
-            document.getElementById('stat-present').textContent = present;
-            document.getElementById('stat-cleaning').textContent = cleans.length;
-            document.getElementById('stat-hours').textContent = days > 0 ? (totalHours / days).toFixed(1) : '0.0';
+            const dailyAvg = workDays > 0 ? totalHours / workDays : 0;
+            const periodDays = (end - start) / (1000 * 60 * 60 * 24);
+            const weeks = Math.max(1, periodDays / 7);
+            const weeklyAvg = workDays / weeks;
 
-            // Charts
-            this.renderCharts(atts, cleans);
-          } catch (e) {
-            console.error(e);
+            this.workHoursData.push({
+              name: emp.name,
+              daily: dailyAvg,
+              weekly: weeklyAvg,
+              total: totalHours,
+              days: workDays,
+            });
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                 <td class="py-2 font-medium">${emp.name}</td>
+                 <td class="py-2">${dailyAvg.toFixed(1)}h</td>
+                 <td class="py-2">${weeklyAvg.toFixed(1)}일</td>
+                 <td class="py-2 text-blue-600 font-bold">${totalHours.toFixed(1)}h</td>
+                 <td class="py-2">${workDays}일</td>
+                 <td class="py-2"><span class="px-2 py-0.5 rounded text-xs ${workDays > 0 ? 'bg-green-100 text-green-700' : 'bg-gray-100'}">${workDays > 0 ? '정상' : '미출근'}</span></td>
+              `;
+            tableBody.appendChild(tr);
           }
+
+          // Cleaning Stats
+          const locCounts = {};
+          const empCounts = {};
+          if (cleans)
+            cleans.forEach((c) => {
+              locCounts[c.location] = (locCounts[c.location] || 0) + 1;
+              empCounts[c.employee_name] = (empCounts[c.employee_name] || 0) + 1;
+            });
+
+          this.renderStatsList(locCounts, 'location');
+          this.renderStatsList(empCounts, 'employee');
+          this.renderCharts(atts || [], cleans || []);
         },
 
-        changePeriod: function () {
-          const val = document.getElementById('stats-period').value;
-          const cust = document.getElementById('custom-range');
-          if (val === 'custom') cust.classList.remove('hidden');
-          else {
-            cust.classList.add('hidden');
-            this.loadStats();
+        renderStatsList: function (counts, prefix) {
+          const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+          const top3 = sorted.slice(0, 3);
+          const div = document.getElementById(prefix + '-top3');
+          div.innerHTML = '';
+          top3.forEach((item, i) => {
+            div.innerHTML += `<div class="flex justify-between items-center bg-gray-50 p-2 rounded text-sm"><span>${i === 0 ? '🥇' : i === 1 ? '🥈' : '🥉'} ${item[0]}</span><span class="font-bold text-brand">${item[1]}건</span></div>`;
+          });
+          if (sorted.length > 0) {
+            document.getElementById(prefix + '-best-name').textContent = sorted[0][0];
+            document.getElementById(prefix + '-best-count').textContent = sorted[0][1] + '건';
+            document.getElementById(prefix + '-worst-name').textContent = sorted[sorted.length - 1][0];
+            document.getElementById(prefix + '-worst-count').textContent = sorted[sorted.length - 1][1] + '건';
           }
         },
 
         renderCharts: function (atts, cleans) {
-          // Destroy old
-          Object.values(this.charts).forEach((c) => c && c.destroy());
-
-          // Daily
-          const dailyData = {};
+          // Basic chart rendering
+          const daily = {};
           atts
             .filter((a) => a.attendance_type === '출근')
             .forEach((a) => {
               const d = a.scan_time.split('T')[0];
-              dailyData[d] = (dailyData[d] || 0) + 1;
+              daily[d] = (daily[d] || 0) + 1;
             });
-          this.charts.daily = new Chart(document.getElementById('daily-chart'), {
+          new Chart(document.getElementById('daily-chart'), {
             type: 'line',
             data: {
-              labels: Object.keys(dailyData),
-              datasets: [{ label: '출근', data: Object.values(dailyData), borderColor: '#3b82f6', tension: 0.4 }],
+              labels: Object.keys(daily),
+              datasets: [{ label: '출근', data: Object.values(daily), borderColor: '#3b82f6' }],
             },
             options: { maintainAspectRatio: false },
           });
 
-          // Location
-          const locData = {};
-          cleans.forEach((c) => (locData[c.location || '미정'] = (locData[c.location] || 0) + 1));
-          this.charts.loc = new Chart(document.getElementById('location-chart'), {
+          const locs = {};
+          cleans.forEach((c) => (locs[c.location] = (locs[c.location] || 0) + 1));
+          new Chart(document.getElementById('location-chart'), {
             type: 'doughnut',
             data: {
-              labels: Object.keys(locData),
-              datasets: [
-                { data: Object.values(locData), backgroundColor: ['#ef4444', '#f97316', '#eab308', '#22c55e'] },
-              ],
+              labels: Object.keys(locs),
+              datasets: [{ data: Object.values(locs), backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'] }],
             },
             options: { maintainAspectRatio: false },
           });
 
-          // Employee
-          const empData = {};
-          cleans.forEach((c) => (empData[c.employee_name] = (empData[c.employee_name] || 0) + 1));
-          const sortedEmp = Object.entries(empData)
-            .sort((a, b) => b[1] - a[1])
-            .slice(0, 10);
-          this.charts.emp = new Chart(document.getElementById('employee-chart'), {
+          const emps = {};
+          cleans.forEach((c) => (emps[c.employee_name] = (emps[c.employee_name] || 0) + 1));
+          new Chart(document.getElementById('employee-chart'), {
             type: 'bar',
             data: {
-              labels: sortedEmp.map((i) => i[0]),
-              datasets: [{ label: '작업수', data: sortedEmp.map((i) => i[1]), backgroundColor: '#8b5cf6' }],
-            },
-            options: { maintainAspectRatio: false, indexAxis: 'y' },
-          });
-
-          // Type
-          const typeData = {};
-          atts.forEach((a) => (typeData[a.attendance_type] = (typeData[a.attendance_type] || 0) + 1));
-          this.charts.type = new Chart(document.getElementById('type-chart'), {
-            type: 'pie',
-            data: {
-              labels: Object.keys(typeData),
-              datasets: [
-                { data: Object.values(typeData), backgroundColor: ['#22c55e', '#ef4444', '#f59e0b', '#8b5cf6'] },
-              ],
+              labels: Object.keys(emps),
+              datasets: [{ label: '청소', data: Object.values(emps), backgroundColor: '#8b5cf6' }],
             },
             options: { maintainAspectRatio: false },
           });
+
+          const types = {};
+          atts.forEach((a) => (types[a.attendance_type] = (types[a.attendance_type] || 0) + 1));
+          new Chart(document.getElementById('type-chart'), {
+            type: 'pie',
+            data: {
+              labels: Object.keys(types),
+              datasets: [{ data: Object.values(types), backgroundColor: ['#3b82f6', '#6b7280', '#f59e0b', '#8b5cf6'] }],
+            },
+            options: { maintainAspectRatio: false },
+          });
+        },
+
+        downloadWorkHours: function () {
+          const ws = XLSX.utils.json_to_sheet(this.workHoursData);
+          const wb = XLSX.utils.book_new();
+          XLSX.utils.book_append_sheet(wb, ws, 'WorkHours');
+          XLSX.writeFile(wb, 'WorkHours.xlsx');
+        },
+
+        // --- DATA MANAGEMENT ---
+        toggleEmployeeForm: function () {
+          document.getElementById('employee-form').classList.toggle('hidden');
+        },
+        toggleLocationForm: function () {
+          document.getElementById('location-form').classList.toggle('hidden');
+        },
+
+        loadEmployees: async function () {
+          const { data } = await this.sb.from('employees').select('*').eq('apartment_id', this.currentAptId);
+          const tbody = document.getElementById('employee-list');
+          tbody.innerHTML = '';
+          if (data)
+            data.forEach((e) => {
+              tbody.innerHTML += `<tr><td class="p-2">${e.name}</td><td class="p-2">${e.phone || '-'}</td><td class="p-2">${e.position || '-'}</td><td class="p-2 text-center"><button onclick="app.deleteItem('employees','${e.id}')" class="text-red-500"><i class="fas fa-trash"></i></button></td></tr>`;
+            });
+        },
+        saveEmployee: async function () {
+          const name = document.getElementById('emp-name').value;
+          if (!name) return alert('이름 필수');
+          await this.sb.from('employees').insert([
+            {
+              name: name,
+              phone: document.getElementById('emp-phone').value,
+              position: document.getElementById('emp-position').value,
+              status: 'active',
+              apartment_id: this.currentAptId,
+            },
+          ]);
+          this.loadEmployees();
+          document.getElementById('employee-form').classList.add('hidden');
+        },
+
+        loadLocations: async function () {
+          const { data } = await this.sb.from('locations').select('*').eq('apartment_id', this.currentAptId);
+          const tbody = document.getElementById('location-list');
+          tbody.innerHTML = '';
+          if (data)
+            data.forEach((l) => {
+              const tr = document.createElement('tr');
+              tr.innerHTML = `
+                <td class="p-2">${l.name}</td>
+                <td class="p-2">${l.floor || '-'}</td>
+                <td class="p-2">${l.description || '-'}</td>
+                <td class="p-2 text-center">
+                  <button class="text-blue-600 hover:text-blue-800 mr-2" title="QR 생성">
+                    <i class="fas fa-qrcode"></i>
+                  </button>
+                  <button class="text-red-500 hover:text-red-700" title="삭제">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </td>
+              `;
+              
+              // 이벤트 리스너 직접 연결
+              const qrBtn = tr.querySelectorAll('button')[0];
+              qrBtn.addEventListener('click', () => this.generateLocationQR(l.id, l.name));
+              
+              const delBtn = tr.querySelectorAll('button')[1];
+              delBtn.addEventListener('click', () => this.deleteItem('locations', l.id));
+              
+              tbody.appendChild(tr);
+            });
+        },
+        saveLocation: async function () {
+          const name = document.getElementById('loc-name').value;
+          if (!name) return alert('구역명 필수');
+          await this.sb.from('locations').insert([
+            {
+              name: name,
+              floor: document.getElementById('loc-floor').value,
+              description: document.getElementById('loc-desc').value,
+              status: 'active',
+              code: 'LOC-' + Date.now(),
+              apartment_id: this.currentAptId,
+            },
+          ]);
+          this.loadLocations();
+          document.getElementById('location-form').classList.add('hidden');
+        },
+        deleteItem: async function (table, id) {
+          if (confirm('삭제하시겠습니까?')) {
+            await this.sb.from(table).delete().eq('id', id);
+            if (table === 'employees') this.loadEmployees();
+            else this.loadLocations();
+          }
+        },
+
+        // QR 코드 생성
+        generateLocationQR: function(locationId, locationName) {
+          try {
+            // 간단한 URL 방식으로 변경 (더 짧은 데이터)
+            const qrData = `https://kindwon.app/scan?loc=${locationId}&apt=${this.currentAptId}`;
+
+            // QR 코드 생성 (qrcode-generator 라이브러리)
+            const qr = qrcode(0, 'M'); // Type 0 (자동 크기), Error correction M
+            qr.addData(qrData);
+            qr.make();
+
+            // Canvas 생성
+            const canvas = document.createElement('canvas');
+            const size = 500;
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+
+            // 배경 (흰색)
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, size, size);
+
+            // QR 모듈 그리기
+            const moduleCount = qr.getModuleCount();
+            const cellSize = size / moduleCount;
+
+            for (let row = 0; row < moduleCount; row++) {
+              for (let col = 0; col < moduleCount; col++) {
+                if (qr.isDark(row, col)) {
+                  ctx.fillStyle = '#000000';
+                  ctx.fillRect(col * cellSize, row * cellSize, cellSize, cellSize);
+                }
+              }
+            }
+
+            // 하단에 텍스트 추가
+            ctx.fillStyle = '#000000';
+            ctx.font = 'bold 20px "Noto Sans KR"';
+            ctx.textAlign = 'center';
+            ctx.fillText(locationName, size / 2, size - 20);
+
+            // 다운로드
+            const dataURL = canvas.toDataURL('image/png');
+            const a = document.createElement('a');
+            a.href = dataURL;
+            a.download = `QR_${locationName}_${APARTMENTS[this.currentAptId]}.png`;
+            a.click();
+
+            alert(`✅ "${locationName}" QR 코드가 다운로드되었습니다!\n\n💡 이 QR 코드를 프린트해서 해당 구역에 부착하세요.\n\n📱 QR 코드 스캔 시 해당 구역으로 자동 연결됩니다.`);
+
+          } catch (error) {
+            console.error('QR 생성 실패:', error);
+            alert('❌ QR 코드 생성 중 오류가 발생했습니다.\n\n상세: ' + error.message);
+          }
+        },
+
+        // --- CSV & EXPORT ---
+        downloadTemplate: function (type) {
+          let headers = [];
+          if (type === 'employees') headers = ['name', 'phone', 'position', 'status'];
+          if (type === 'locations') headers = ['name', 'floor', 'description', 'status'];
+          if (type === 'cleaning_tasks') headers = ['employee_name', 'location', 'notes', 'created_at'];
+          if (type === 'attendance_records') headers = ['employee_name', 'attendance_type', 'location', 'scan_time'];
+
+          const csv = headers.join(',') + '\n' + (type === 'employees' ? '홍길동,010-0000-0000,미화원,active' : '');
+          const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' });
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+          a.download = type + '_template.csv';
+          a.click();
+        },
+
+        handleCSVUpload: function (e, table) {
+          const file = e.target.files[0];
+          if (!file) return;
+          const reader = new FileReader();
+          reader.onload = async (evt) => {
+            const text = evt.target.result;
+            const rows = text
+              .split('\n')
+              .slice(1)
+              .filter((r) => r.trim());
+            const keys = text
+              .split('\n')[0]
+              .split(',')
+              .map((k) => k.trim());
+
+            const data = rows.map((r, i) => {
+              const vals = r.split(',');
+              const obj = { apartment_id: this.currentAptId };
+              keys.forEach((k, idx) => (obj[k] = vals[idx]?.trim()));
+              if (table === 'locations') obj.code = 'LOC-' + Date.now() + '-' + i;
+              return obj;
+            });
+
+            const { error } = await this.sb.from(table).insert(data);
+            if (error) alert('Error: ' + error.message);
+            else {
+              alert('업로드 완료');
+              if (table === 'employees') this.loadEmployees();
+              if (table === 'locations') this.loadLocations();
+            }
+          };
+          reader.readAsText(file);
         },
 
         downloadData: async function () {
-          try {
-            const { data: emps } = await this.sb.from('employees').select('*');
-            const { data: atts } = await this.sb.from('attendance_records').select('*');
+          const tables = ['employees', 'locations', 'cleaning_tasks', 'attendance_records'];
+          const wb = XLSX.utils.book_new();
 
-            const wb = XLSX.utils.book_new();
-            if (emps) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(emps), '직원');
-            if (atts) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(atts), '근태');
-            XLSX.writeFile(wb, 'KINDWON_Data.xlsx');
-          } catch (e) {
-            alert('다운로드 실패');
+          for (const t of tables) {
+            const { data } = await this.sb.from(t).select('*').eq('apartment_id', this.currentAptId);
+            if (data) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(data), t);
           }
+          XLSX.writeFile(wb, `Backup_${this.currentAptId}.xlsx`);
         },
       };
 
-      document.addEventListener('DOMContentLoaded', () => {
-        app.init();
-        app.checkLogin();
-      });
+      document.addEventListener('DOMContentLoaded', () => app.init());
     </script>
-  </body>
+  <script defer src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" integrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon='{"rayId":"9c363299fbbc8b66","serverTiming":{"name":{"cfExtPri":true,"cfEdge":true,"cfOrigin":true,"cfL4":true,"cfSpeedBrain":true,"cfCacheStatus":true}},"version":"2025.9.1","token":"4edd5f8ec12a48cfa682ab8261b80a79"}' crossorigin="anonymous"></script>
+</body>
 </html>
