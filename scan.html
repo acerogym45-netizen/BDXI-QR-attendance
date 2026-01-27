@@ -359,24 +359,18 @@
         loadLocation: async function () {
           const { data, error } = await this.sb
             .from('locations')
-            .select('name, apartment_id')
+            .select('name')
             .eq('id', this.state.locId)
             .single();
 
           if (error) throw new Error('구역 정보를 불러올 수 없습니다.');
           this.state.locationName = data.name;
-
-          // Verify Apartment Match
-          if (data.apartment_id !== this.state.aptId) {
-            console.warn('Apartment mismatch', data.apartment_id, this.state.aptId);
-          }
         },
 
         loadEmployees: async function () {
           const { data, error } = await this.sb
             .from('employees')
             .select('*')
-            .eq('apartment_id', this.state.aptId)
             .eq('status', 'active')
             .order('name');
 
@@ -473,7 +467,6 @@
               attendance_type: type,
               location: this.state.locationName,
               scan_time: new Date().toISOString(),
-              apartment_id: this.state.aptId,
             };
 
             const { error } = await this.sb.from('attendance_records').insert([payload]);
@@ -547,7 +540,6 @@
               photo_url: publicUrl,
               notes: notes,
               created_at: new Date().toISOString(),
-              apartment_id: this.state.aptId,
             };
 
             const { error: dbError } = await this.sb.from('cleaning_tasks').insert([payload]);
