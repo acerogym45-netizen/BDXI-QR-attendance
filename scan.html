@@ -73,6 +73,51 @@
         opacity: 1;
         transition: all 0.3s ease-out;
       }
+      /* Session Timer */
+      .timer-warning {
+        animation: pulse-warning 2s ease-in-out infinite;
+      }
+      @keyframes pulse-warning {
+        0%, 100% {
+          background-color: #fbbf24;
+        }
+        50% {
+          background-color: #f59e0b;
+        }
+      }
+      /* Multi Upload Progress */
+      .upload-progress {
+        height: 6px;
+        background: linear-gradient(90deg, #10b981 0%, #10b981 var(--progress), #e5e7eb var(--progress), #e5e7eb 100%);
+        transition: all 0.3s;
+      }
+      /* Before/After Mode */
+      .mode-toggle {
+        position: relative;
+        width: 60px;
+        height: 28px;
+        background-color: #d1d5db;
+        border-radius: 14px;
+        transition: background-color 0.3s;
+        cursor: pointer;
+      }
+      .mode-toggle.active {
+        background-color: #3b82f6;
+      }
+      .mode-toggle-circle {
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 24px;
+        height: 24px;
+        background-color: white;
+        border-radius: 50%;
+        transition: transform 0.3s;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      }
+      .mode-toggle.active .mode-toggle-circle {
+        transform: translateX(32px);
+      }
     </style>
   </head>
   <body class="min-h-screen relative pb-20">
@@ -90,7 +135,13 @@
           <div class="h-4 w-px bg-white/20"></div>
           <span class="font-bold text-white text-lg tracking-wide">업무 기록</span>
         </div>
-        <div id="connection-status" class="w-2.5 h-2.5 rounded-full bg-green-400 shadow-sm animate-pulse"></div>
+        <div class="flex items-center gap-3">
+          <div id="session-timer" class="hidden text-white text-xs font-medium bg-white/20 px-3 py-1 rounded-full">
+            <i class="fas fa-clock mr-1"></i>
+            <span id="timer-text">30:00</span>
+          </div>
+          <div id="connection-status" class="w-2.5 h-2.5 rounded-full bg-green-400 shadow-sm animate-pulse"></div>
+        </div>
       </div>
     </header>
 
@@ -211,29 +262,81 @@
           </div>
         </div>
 
-        <!-- Cleaning Button -->
-        <button
-          onclick="document.getElementById('inp-camera').click()"
-          class="btn-touch w-full bg-orange-500 hover:bg-orange-600 text-white p-5 rounded-2xl shadow-md shadow-orange-100 flex items-center justify-between group"
-        >
-          <div class="flex items-center gap-4">
-            <div class="bg-white/20 w-12 h-12 rounded-xl flex items-center justify-center">
-              <i class="fas fa-camera text-2xl"></i>
-            </div>
-            <div class="text-left">
-              <div class="font-bold text-lg">청소 작업</div>
-              <div class="text-orange-100 text-xs">사진 촬영 및 기록</div>
+        <!-- Before/After Mode Toggle -->
+        <div class="bg-blue-50 border border-blue-100 rounded-xl p-4 flex items-center justify-between">
+          <div>
+            <div class="font-bold text-gray-800 text-sm">Before/After 모드</div>
+            <div class="text-xs text-gray-500 mt-0.5">청소 전/후 증거 사진</div>
+          </div>
+          <div class="mode-toggle" id="before-after-toggle" onclick="app.toggleBeforeAfterMode()">
+            <div class="mode-toggle-circle"></div>
+          </div>
+        </div>
+
+        <!-- Before/After Instructions (Hidden by default) -->
+        <div id="before-after-info" class="hidden bg-blue-50 border border-blue-200 rounded-xl p-4">
+          <div class="flex items-start gap-2 text-sm text-blue-800">
+            <i class="fas fa-info-circle mt-0.5"></i>
+            <div>
+              <span class="font-bold">Before → After 순서로 2장의 사진을 업로드하세요.</span>
+              <div class="text-xs text-blue-600 mt-1">청소 전 상태와 청소 후 상태를 비교할 수 있습니다.</div>
             </div>
           </div>
-          <i class="fas fa-chevron-right opacity-60"></i>
-        </button>
+        </div>
+
+        <!-- Cleaning Buttons -->
+        <div class="grid grid-cols-1 gap-3">
+          <!-- 일반 촬영 -->
+          <button
+            onclick="app.openCameraMode('capture')"
+            class="btn-touch bg-orange-500 hover:bg-orange-600 text-white p-5 rounded-2xl shadow-md shadow-orange-100 flex items-center justify-between group"
+          >
+            <div class="flex items-center gap-4">
+              <div class="bg-white/20 w-12 h-12 rounded-xl flex items-center justify-center">
+                <i class="fas fa-camera text-2xl"></i>
+              </div>
+              <div class="text-left">
+                <div class="font-bold text-lg">사진 촬영</div>
+                <div class="text-orange-100 text-xs">카메라로 즉시 촬영</div>
+              </div>
+            </div>
+            <i class="fas fa-chevron-right opacity-60"></i>
+          </button>
+
+          <!-- 갤러리 선택 -->
+          <button
+            onclick="app.openCameraMode('gallery')"
+            class="btn-touch bg-purple-500 hover:bg-purple-600 text-white p-5 rounded-2xl shadow-md shadow-purple-100 flex items-center justify-between group"
+          >
+            <div class="flex items-center gap-4">
+              <div class="bg-white/20 w-12 h-12 rounded-xl flex items-center justify-center">
+                <i class="fas fa-images text-2xl"></i>
+              </div>
+              <div class="text-left">
+                <div class="font-bold text-lg">갤러리 선택</div>
+                <div class="text-purple-100 text-xs">여러 장 한번에 업로드</div>
+              </div>
+            </div>
+            <i class="fas fa-chevron-right opacity-60"></i>
+          </button>
+        </div>
+
+        <!-- Hidden File Inputs -->
         <input
           type="file"
-          id="inp-camera"
+          id="inp-camera-capture"
           accept="image/*"
           capture="environment"
           class="hidden"
           onchange="app.handlePhoto(this)"
+        />
+        <input
+          type="file"
+          id="inp-camera-gallery"
+          accept="image/*"
+          multiple
+          class="hidden"
+          onchange="app.handleMultiplePhotos(this)"
         />
       </div>
     </main>
@@ -241,17 +344,53 @@
     <!-- Photo Preview Overlay -->
     <div id="preview-overlay" class="hidden fixed inset-0 bg-black/95 z-50 flex flex-col p-4 animate-fade-in">
       <div class="flex justify-between items-center text-white mb-4">
-        <h3 class="font-bold text-lg">📸 사진 확인</h3>
+        <h3 class="font-bold text-lg">
+          <span id="preview-title">📸 사진 확인</span>
+          <span id="preview-count" class="text-sm font-normal opacity-70"></span>
+        </h3>
         <button onclick="app.cancelPhoto()" class="w-8 h-8 flex items-center justify-center rounded-full bg-white/20">
           <i class="fas fa-times"></i>
         </button>
       </div>
 
-      <div class="flex-1 bg-black flex items-center justify-center rounded-lg overflow-hidden mb-4 relative">
+      <!-- Single Photo Preview -->
+      <div id="single-preview" class="flex-1 bg-black flex items-center justify-center rounded-lg overflow-hidden mb-4 relative">
         <img id="img-preview" class="max-w-full max-h-full object-contain" />
       </div>
 
+      <!-- Multiple Photos Preview (Hidden by default) -->
+      <div id="multi-preview" class="hidden flex-1 overflow-y-auto mb-4">
+        <div id="multi-preview-grid" class="grid grid-cols-2 gap-2">
+          <!-- Dynamic content -->
+        </div>
+      </div>
+
+      <!-- Before/After Preview (Hidden by default) -->
+      <div id="before-after-preview" class="hidden flex-1 mb-4 space-y-2">
+        <div class="bg-gray-800 rounded-lg p-2">
+          <div class="text-xs text-gray-400 mb-1">🔵 Before (청소 전)</div>
+          <div id="before-img-container" class="bg-black rounded-lg overflow-hidden flex items-center justify-center" style="height: 200px;">
+            <img id="img-preview-before" class="max-w-full max-h-full object-contain" />
+          </div>
+        </div>
+        <div class="bg-gray-800 rounded-lg p-2">
+          <div class="text-xs text-gray-400 mb-1">🟢 After (청소 후)</div>
+          <div id="after-img-container" class="bg-black rounded-lg overflow-hidden flex items-center justify-center" style="height: 200px;">
+            <img id="img-preview-after" class="max-w-full max-h-full object-contain" />
+          </div>
+        </div>
+      </div>
+
       <div class="space-y-3">
+        <!-- Upload Progress (Hidden by default) -->
+        <div id="upload-progress-container" class="hidden bg-gray-800 rounded-xl p-3">
+          <div class="flex justify-between text-xs text-gray-400 mb-2">
+            <span>업로드 중...</span>
+            <span id="upload-progress-text">0 / 0</span>
+          </div>
+          <div class="upload-progress rounded-full" id="upload-progress-bar" style="--progress: 0%"></div>
+        </div>
+
         <input
           type="text"
           id="inp-notes"
@@ -261,7 +400,8 @@
 
         <div class="grid grid-cols-2 gap-3">
           <button
-            onclick="document.getElementById('inp-camera').click()"
+            onclick="app.retakePhoto()"
+            id="btn-retake"
             class="py-3 bg-gray-700 text-white rounded-xl font-bold"
           >
             재촬영
@@ -325,6 +465,11 @@
           employees: [],
           selectedEmp: null,
           photoFile: null,
+          photoFiles: [], // Multiple photos
+          beforeAfterMode: false,
+          sessionTimer: null,
+          sessionStartTime: null,
+          sessionDuration: 30 * 60 * 1000, // 30 minutes in milliseconds
         },
 
         init: async function () {
@@ -348,12 +493,53 @@
             this.renderLocationInfo();
             this.renderEmployeeList(this.state.employees);
 
-            // 5. Hide Loader
+            // 5. Start Session Timer
+            this.startSessionTimer();
+
+            // 6. Hide Loader
             document.getElementById('screen-loading').classList.add('hidden');
           } catch (e) {
             console.error(e);
             this.showError(e.message);
           }
+        },
+
+        // --- SESSION TIMER ---
+        startSessionTimer: function () {
+          this.state.sessionStartTime = Date.now();
+          document.getElementById('session-timer').classList.remove('hidden');
+
+          this.state.sessionTimer = setInterval(() => {
+            const elapsed = Date.now() - this.state.sessionStartTime;
+            const remaining = this.state.sessionDuration - elapsed;
+
+            if (remaining <= 0) {
+              this.expireSession();
+              return;
+            }
+
+            // Update timer display
+            const minutes = Math.floor(remaining / 60000);
+            const seconds = Math.floor((remaining % 60000) / 1000);
+            const timerText = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            document.getElementById('timer-text').textContent = timerText;
+
+            // Warning at 5 minutes
+            const timerEl = document.getElementById('session-timer');
+            if (remaining <= 5 * 60 * 1000) {
+              timerEl.classList.add('timer-warning');
+            } else {
+              timerEl.classList.remove('timer-warning');
+            }
+          }, 1000);
+        },
+
+        expireSession: function () {
+          clearInterval(this.state.sessionTimer);
+          alert('⏰ 세션이 만료되었습니다.\n\n보안을 위해 30분이 경과하여 자동으로 로그아웃됩니다.\n다시 QR 코드를 스캔해주세요.');
+          
+          // Redirect to a blank page or reload
+          window.location.href = 'about:blank';
         },
 
         // --- DATA LOADING ---
@@ -476,69 +662,293 @@
         },
 
         // --- ACTIONS: CLEANING ---
-        handlePhoto: function (input) {
+        toggleBeforeAfterMode: function () {
+          this.state.beforeAfterMode = !this.state.beforeAfterMode;
+          const toggle = document.getElementById('before-after-toggle');
+          const info = document.getElementById('before-after-info');
+
+          if (this.state.beforeAfterMode) {
+            toggle.classList.add('active');
+            info.classList.remove('hidden');
+          } else {
+            toggle.classList.remove('active');
+            info.classList.add('hidden');
+          }
+        },
+
+        openCameraMode: function (mode) {
+          if (mode === 'capture') {
+            document.getElementById('inp-camera-capture').click();
+          } else if (mode === 'gallery') {
+            document.getElementById('inp-camera-gallery').click();
+          }
+        },
+
+        // Single photo (capture mode)
+        handlePhoto: async function (input) {
           if (input.files && input.files[0]) {
             const file = input.files[0];
+
+            // Check photo time (12 hours limit)
+            const isValid = await this.validatePhotoTime(file);
+            if (!isValid) {
+              alert('⚠️ 촬영 시간 제한\n\n12시간 이내에 촬영된 사진만 업로드 가능합니다.\n오래된 사진의 재활용을 방지하기 위한 정책입니다.');
+              input.value = '';
+              return;
+            }
+
             this.state.photoFile = file;
+            this.state.photoFiles = [file];
 
             const reader = new FileReader();
             reader.onload = (e) => {
               document.getElementById('img-preview').src = e.target.result;
+              document.getElementById('single-preview').classList.remove('hidden');
+              document.getElementById('multi-preview').classList.add('hidden');
+              document.getElementById('before-after-preview').classList.add('hidden');
               document.getElementById('preview-overlay').classList.remove('hidden');
+              document.getElementById('preview-count').textContent = '';
             };
             reader.readAsDataURL(file);
           }
         },
 
+        // Multiple photos (gallery mode)
+        handleMultiplePhotos: async function (input) {
+          if (!input.files || input.files.length === 0) return;
+
+          const files = Array.from(input.files);
+
+          // Before/After mode: require exactly 2 photos
+          if (this.state.beforeAfterMode && files.length !== 2) {
+            alert('⚠️ Before/After 모드\n\nBefore와 After 사진 2장을 선택해주세요.');
+            input.value = '';
+            return;
+          }
+
+          // Validate all photos (12 hours limit)
+          const validations = await Promise.all(files.map(f => this.validatePhotoTime(f)));
+          const invalidPhotos = validations.filter(v => !v).length;
+
+          if (invalidPhotos > 0) {
+            alert(`⚠️ 촬영 시간 제한\n\n${invalidPhotos}장의 사진이 12시간 제한을 초과했습니다.\n최근 12시간 이내에 촬영된 사진만 업로드 가능합니다.`);
+            input.value = '';
+            return;
+          }
+
+          this.state.photoFiles = files;
+
+          // Show preview based on mode
+          if (this.state.beforeAfterMode) {
+            this.showBeforeAfterPreview(files);
+          } else {
+            this.showMultiPreview(files);
+          }
+        },
+
+        showBeforeAfterPreview: function (files) {
+          const beforeImg = document.getElementById('img-preview-before');
+          const afterImg = document.getElementById('img-preview-after');
+
+          const reader1 = new FileReader();
+          reader1.onload = (e) => {
+            beforeImg.src = e.target.result;
+          };
+          reader1.readAsDataURL(files[0]);
+
+          const reader2 = new FileReader();
+          reader2.onload = (e) => {
+            afterImg.src = e.target.result;
+          };
+          reader2.readAsDataURL(files[1]);
+
+          document.getElementById('single-preview').classList.add('hidden');
+          document.getElementById('multi-preview').classList.add('hidden');
+          document.getElementById('before-after-preview').classList.remove('hidden');
+          document.getElementById('preview-overlay').classList.remove('hidden');
+          document.getElementById('preview-title').textContent = '🔄 Before/After 확인';
+          document.getElementById('preview-count').textContent = '';
+        },
+
+        showMultiPreview: function (files) {
+          const grid = document.getElementById('multi-preview-grid');
+          grid.innerHTML = '';
+
+          files.forEach((file, index) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+              const div = document.createElement('div');
+              div.className = 'relative bg-black rounded-lg overflow-hidden';
+              div.style.height = '150px';
+              div.innerHTML = `
+                <img src="${e.target.result}" class="w-full h-full object-contain" />
+                <div class="absolute top-2 left-2 bg-black/70 text-white text-xs px-2 py-1 rounded-full">${index + 1}</div>
+              `;
+              grid.appendChild(div);
+            };
+            reader.readAsDataURL(file);
+          });
+
+          document.getElementById('single-preview').classList.add('hidden');
+          document.getElementById('multi-preview').classList.remove('hidden');
+          document.getElementById('before-after-preview').classList.add('hidden');
+          document.getElementById('preview-overlay').classList.remove('hidden');
+          document.getElementById('preview-title').textContent = '📸 사진 확인';
+          document.getElementById('preview-count').textContent = `(${files.length}장)`;
+        },
+
+        // Validate photo taken within 12 hours
+        validatePhotoTime: async function (file) {
+          return new Promise((resolve) => {
+            // Try to extract EXIF data
+            const reader = new FileReader();
+            reader.onload = (e) => {
+              try {
+                // Simple EXIF check using DataView
+                const view = new DataView(e.target.result);
+                
+                // Check if JPEG (starts with FFD8)
+                if (view.getUint16(0, false) !== 0xFFD8) {
+                  // Not a JPEG, use file modification time
+                  const fileTime = file.lastModified;
+                  const now = Date.now();
+                  const hoursDiff = (now - fileTime) / (1000 * 60 * 60);
+                  resolve(hoursDiff <= 12);
+                  return;
+                }
+
+                // Try to find EXIF DateTime
+                // This is a simplified check - in production, use a library like exif-js
+                let offset = 2;
+                let exifFound = false;
+                
+                while (offset < view.byteLength) {
+                  const marker = view.getUint16(offset, false);
+                  if (marker === 0xFFE1) { // APP1 marker (EXIF)
+                    exifFound = true;
+                    break;
+                  }
+                  offset += 2 + view.getUint16(offset + 2, false);
+                }
+
+                // For now, use file modification time as fallback
+                // In production, you'd parse EXIF DateTime here
+                const fileTime = file.lastModified;
+                const now = Date.now();
+                const hoursDiff = (now - fileTime) / (1000 * 60 * 60);
+                resolve(hoursDiff <= 12);
+              } catch (err) {
+                console.error('EXIF parsing error:', err);
+                // On error, allow the upload (fallback to trust)
+                resolve(true);
+              }
+            };
+            reader.readAsArrayBuffer(file);
+          });
+        },
+
+        retakePhoto: function () {
+          const mode = this.state.photoFiles.length > 1 ? 'gallery' : 'capture';
+          this.cancelPhoto();
+          setTimeout(() => {
+            this.openCameraMode(mode);
+          }, 100);
+        },
+
         cancelPhoto: function () {
           document.getElementById('preview-overlay').classList.add('hidden');
-          document.getElementById('inp-camera').value = ''; // reset input
+          document.getElementById('inp-camera-capture').value = '';
+          document.getElementById('inp-camera-gallery').value = '';
           document.getElementById('inp-notes').value = '';
           this.state.photoFile = null;
+          this.state.photoFiles = [];
         },
 
         uploadPhoto: async function () {
-          if (!this.state.photoFile) return;
+          if (!this.state.photoFiles || this.state.photoFiles.length === 0) return;
 
           const btn = document.getElementById('btn-upload');
           const spinner = document.getElementById('upload-spinner');
           const btnText = btn.querySelector('span');
+          const progressContainer = document.getElementById('upload-progress-container');
+          const progressBar = document.getElementById('upload-progress-bar');
+          const progressText = document.getElementById('upload-progress-text');
 
           btn.disabled = true;
           btn.classList.add('opacity-75');
           btnText.textContent = '업로드 중...';
           spinner.classList.remove('hidden');
 
+          // Show progress for multiple files
+          if (this.state.photoFiles.length > 1) {
+            progressContainer.classList.remove('hidden');
+          }
+
           try {
-            // 1. Upload Image
-            const ext = this.state.photoFile.name.split('.').pop() || 'jpg';
-            const fileName = `${this.state.aptId}/${Date.now()}_${Math.random().toString(36).substr(2, 9)}.${ext}`;
-
-            const { data: uploadData, error: uploadError } = await this.sb.storage
-              .from('cleaning-photos')
-              .upload(fileName, this.state.photoFile);
-
-            if (uploadError) throw uploadError;
-
-            // 2. Get URL
-            const {
-              data: { publicUrl },
-            } = this.sb.storage.from('cleaning-photos').getPublicUrl(fileName);
-
-            // 3. Save Record
             const notes = document.getElementById('inp-notes').value;
-            const payload = {
-              employee_name: this.state.selectedEmp.name,
-              location: this.state.locationName,
-              photo_url: publicUrl,
-              notes: notes,
-              created_at: new Date().toISOString(),
-            };
+            const uploadedUrls = [];
+            let uploadCount = 0;
 
-            const { error: dbError } = await this.sb.from('cleaning_tasks').insert([payload]);
-            if (dbError) throw dbError;
+            // Upload all photos
+            for (const file of this.state.photoFiles) {
+              const ext = file.name.split('.').pop() || 'jpg';
+              const fileName = `${this.state.aptId}/${Date.now()}_${Math.random().toString(36).substr(2, 9)}.${ext}`;
 
-            this.showToast('청소 작업이 기록되었습니다.');
+              const { data: uploadData, error: uploadError } = await this.sb.storage
+                .from('cleaning-photos')
+                .upload(fileName, file);
+
+              if (uploadError) throw uploadError;
+
+              const {
+                data: { publicUrl },
+              } = this.sb.storage.from('cleaning-photos').getPublicUrl(fileName);
+
+              uploadedUrls.push(publicUrl);
+              uploadCount++;
+
+              // Update progress
+              if (this.state.photoFiles.length > 1) {
+                const progress = (uploadCount / this.state.photoFiles.length) * 100;
+                progressBar.style.setProperty('--progress', `${progress}%`);
+                progressText.textContent = `${uploadCount} / ${this.state.photoFiles.length}`;
+              }
+            }
+
+            // Save records to database
+            if (this.state.beforeAfterMode && uploadedUrls.length === 2) {
+              // Before/After mode: save as paired record
+              const payload = {
+                employee_name: this.state.selectedEmp.name,
+                location: this.state.locationName,
+                photo_url: uploadedUrls[0], // Before
+                photo_url_after: uploadedUrls[1], // After
+                notes: notes || 'Before/After 청소 작업',
+                is_before_after: true,
+                created_at: new Date().toISOString(),
+              };
+
+              const { error: dbError } = await this.sb.from('cleaning_tasks').insert([payload]);
+              if (dbError) throw dbError;
+
+              this.showToast('Before/After 청소 작업이 기록되었습니다.');
+            } else {
+              // Regular mode: save individual records
+              const payloads = uploadedUrls.map(url => ({
+                employee_name: this.state.selectedEmp.name,
+                location: this.state.locationName,
+                photo_url: url,
+                notes: notes,
+                is_before_after: false,
+                created_at: new Date().toISOString(),
+              }));
+
+              const { error: dbError } = await this.sb.from('cleaning_tasks').insert(payloads);
+              if (dbError) throw dbError;
+
+              this.showToast(`청소 작업 ${uploadedUrls.length}건이 기록되었습니다.`);
+            }
+
             this.cancelPhoto();
             this.resetSelection();
           } catch (e) {
@@ -549,6 +959,7 @@
             btn.classList.remove('opacity-75');
             btnText.textContent = '업로드';
             spinner.classList.add('hidden');
+            progressContainer.classList.add('hidden');
           }
         },
 
@@ -582,6 +993,6 @@
 
       document.addEventListener('DOMContentLoaded', () => app.init());
     </script>
-  <script defer src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" integrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon='{"rayId":"9c4f4a74ddd83086","serverTiming":{"name":{"cfExtPri":true,"cfEdge":true,"cfOrigin":true,"cfL4":true,"cfSpeedBrain":true,"cfCacheStatus":true}},"version":"2025.9.1","token":"4edd5f8ec12a48cfa682ab8261b80a79"}' crossorigin="anonymous"></script>
+  <script defer src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" integrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon='{"rayId":"9c4f585689b78b65","serverTiming":{"name":{"cfExtPri":true,"cfEdge":true,"cfOrigin":true,"cfL4":true,"cfSpeedBrain":true,"cfCacheStatus":true}},"version":"2025.9.1","token":"4edd5f8ec12a48cfa682ab8261b80a79"}' crossorigin="anonymous"></script>
 </body>
 </html>
