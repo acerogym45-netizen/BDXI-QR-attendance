@@ -541,9 +541,10 @@
           <button
             onclick="app.retakePhoto()"
             id="btn-retake"
-            class="py-3 bg-gray-700 text-white rounded-xl font-bold"
+            class="py-3 bg-gray-700 text-white rounded-xl font-bold flex items-center justify-center gap-2"
           >
-            재촬영
+            <i class="fas fa-redo"></i>
+            <span>재촬영</span>
           </button>
           <button
             onclick="app.uploadPhoto()"
@@ -605,6 +606,7 @@
           selectedEmp: null,
           photoFile: null,
           photoFiles: [], // Multiple photos
+          isGalleryMode: false, // Track if in gallery mode
           beforeAfterMode: false,
           beforePhoto: null,
           afterPhoto: null,
@@ -995,8 +997,10 @@
 
         openCameraMode: function (mode) {
           if (mode === 'capture') {
+            this.state.isGalleryMode = false;
             document.getElementById('inp-camera-capture').click();
           } else if (mode === 'gallery') {
+            this.state.isGalleryMode = true;
             document.getElementById('inp-camera-gallery').click();
           }
         },
@@ -1016,6 +1020,7 @@
 
             this.state.photoFile = file;
             this.state.photoFiles = [file];
+            this.state.isGalleryMode = false;
 
             const reader = new FileReader();
             reader.onload = (e) => {
@@ -1025,13 +1030,16 @@
               document.getElementById('before-after-preview').classList.add('hidden');
               document.getElementById('preview-overlay').classList.remove('hidden');
               document.getElementById('preview-count').textContent = '';
+              
+              // Update button text for single photo mode
+              document.getElementById('btn-retake').innerHTML = '<i class="fas fa-redo mr-1"></i>재촬영';
             };
             reader.readAsDataURL(file);
           }
         },
 
         // Multiple photos (gallery mode)
-        handleMultiplePhotos: async function (input) {
+        handleMultiplePhotos: async function (input, isAdding = false) {
           if (!input.files || input.files.length === 0) return;
 
           const files = Array.from(input.files);
@@ -1053,13 +1061,18 @@
             return;
           }
 
-          this.state.photoFiles = files;
+          // If adding to existing photos, merge arrays
+          if (isAdding && this.state.photoFiles.length > 0) {
+            this.state.photoFiles = [...this.state.photoFiles, ...files];
+          } else {
+            this.state.photoFiles = files;
+          }
 
           // Show preview based on mode
           if (this.state.beforeAfterMode) {
-            this.showBeforeAfterPreview(files);
+            this.showBeforeAfterPreview(this.state.photoFiles);
           } else {
-            this.showMultiPreview(files);
+            this.showMultiPreview(this.state.photoFiles);
           }
         },
 
@@ -1112,6 +1125,9 @@
           document.getElementById('preview-overlay').classList.remove('hidden');
           document.getElementById('preview-title').textContent = '📸 사진 확인';
           document.getElementById('preview-count').textContent = `(${files.length}장)`;
+          
+          // Update button text for gallery mode
+          document.getElementById('btn-retake').innerHTML = '<i class="fas fa-plus mr-1"></i>추가 촬영';
         },
 
         // Validate photo taken within 12 hours
@@ -1165,11 +1181,30 @@
         },
 
         retakePhoto: function () {
-          const mode = this.state.photoFiles.length > 1 ? 'gallery' : 'capture';
-          this.cancelPhoto();
-          setTimeout(() => {
-            this.openCameraMode(mode);
-          }, 100);
+          if (this.state.isGalleryMode || this.state.photoFiles.length > 1) {
+            // Gallery mode: Add more photos
+            this.addMorePhotos();
+          } else {
+            // Single capture mode: Replace photo
+            this.cancelPhoto();
+            setTimeout(() => {
+              this.openCameraMode('capture');
+            }, 100);
+          }
+        },
+
+        addMorePhotos: function () {
+          // Don't close preview overlay, just open gallery to add more
+          const input = document.getElementById('inp-camera-gallery');
+          const oldHandler = input.onchange;
+          
+          // Temporarily override handler to add photos
+          input.onchange = (e) => {
+            this.handleMultiplePhotos(input, true); // isAdding = true
+            input.onchange = oldHandler; // Restore original handler
+          };
+          
+          input.click();
         },
 
         cancelPhoto: function () {
@@ -1310,6 +1345,6 @@
 
       document.addEventListener('DOMContentLoaded', () => app.init());
     </script>
-  <script defer src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" integrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon='{"rayId":"9c4f6504a821bcf1","serverTiming":{"name":{"cfExtPri":true,"cfEdge":true,"cfOrigin":true,"cfL4":true,"cfSpeedBrain":true,"cfCacheStatus":true}},"version":"2025.9.1","token":"4edd5f8ec12a48cfa682ab8261b80a79"}' crossorigin="anonymous"></script>
+  <script defer src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" integrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon='{"rayId":"9c4f72009fb53109","serverTiming":{"name":{"cfExtPri":true,"cfEdge":true,"cfOrigin":true,"cfL4":true,"cfSpeedBrain":true,"cfCacheStatus":true}},"version":"2025.9.1","token":"4edd5f8ec12a48cfa682ab8261b80a79"}' crossorigin="anonymous"></script>
 </body>
 </html>
