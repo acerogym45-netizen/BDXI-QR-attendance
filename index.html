@@ -462,6 +462,7 @@
                 <thead class="bg-gray-50">
                   <tr>
                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">직원명</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">직책</th>
                     <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">일별 (오늘)</th>
                     <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">주별 (7일)</th>
                     <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">월별 (이번달)</th>
@@ -472,7 +473,7 @@
                 </tbody>
                 <tfoot class="bg-gray-50 font-bold">
                   <tr>
-                    <td class="px-4 py-3 text-sm text-gray-800">합계</td>
+                    <td class="px-4 py-3 text-sm text-gray-800" colspan="2">합계</td>
                     <td class="px-4 py-3 text-right text-sm text-gray-800"><span id="total-daily">0.0</span>h</td>
                     <td class="px-4 py-3 text-right text-sm text-gray-800"><span id="total-weekly">0.0</span>h</td>
                     <td class="px-4 py-3 text-right text-sm text-gray-800"><span id="total-monthly">0.0</span>h</td>
@@ -1156,7 +1157,7 @@
 
           try {
             // Use UTC ISO strings for robust filtering
-            const { data: emps } = await this.sb.from('employees').select('id, name').eq('status', 'active');
+            const { data: emps } = await this.sb.from('employees').select('id, name, position').eq('status', 'active');
             const { data: atts } = await this.sb
               .from('attendance_records')
               .select('*')
@@ -1179,23 +1180,13 @@
             );
             const present = presentSet.size;
 
-            // Calc Hours by Period
-            let totalHours = 0;
+            // Calc Hours by Period - 개선된 로직
             const workMap = {};
             safeAtts.forEach((a) => {
-              const k = `${a.employee_name}-${a.scan_time.split('T')[0]}`;
-              if (!workMap[k]) workMap[k] = {};
+              const dateStr = a.scan_time.split('T')[0]; // YYYY-MM-DD
+              const k = `${a.employee_name}|${dateStr}`; // 구분자를 |로 변경
+              if (!workMap[k]) workMap[k] = { date: dateStr, employee: a.employee_name };
               workMap[k][a.attendance_type] = new Date(a.scan_time);
-            });
-
-            Object.values(workMap).forEach((d) => {
-              if (d['출근'] && d['퇴근']) {
-                let h = (d['퇴근'] - d['출근']) / 3600000;
-                if (d['휴게 시작'] && d['휴게 종료']) h -= (d['휴게 종료'] - d['휴게 시작']) / 3600000;
-                if (h > 0) {
-                  totalHours += h;
-                }
-              }
             });
 
             // Calculate hours by employee and period
@@ -1205,37 +1196,51 @@
             const weekAgoStr = weekAgo.toISOString().split('T')[0];
             const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
 
-            // Build employee hours map
+            // Build employee hours map with position
             const employeeHours = {};
             safeEmps.forEach(emp => {
-              employeeHours[emp.name] = { daily: 0, weekly: 0, monthly: 0 };
+              employeeHours[emp.name] = { 
+                position: emp.position || '직원', 
+                daily: 0, 
+                weekly: 0, 
+                monthly: 0 
+              };
             });
 
+            // Calculate hours for each work record
             Object.entries(workMap).forEach(([k, d]) => {
-              const [empName, ...dateParts] = k.split('-');
-              const date = dateParts.join('-');
+              const empName = d.employee;
+              const date = d.date;
               
               if (d['출근'] && d['퇴근']) {
-                let h = (d['퇴근'] - d['출근']) / 3600000;
-                if (d['휴게 시작'] && d['휴게 종료']) h -= (d['휴게 종료'] - d['휴게 시작']) / 3600000;
-                if (h > 0) {
+                // 근무시간 계산 (밀리초 → 시간)
+                let workHours = (d['퇴근'] - d['출근']) / 3600000;
+                
+                // 휴게시간 차감
+                if (d['휴게 시작'] && d['휴게 종료']) {
+                  const breakHours = (d['휴게 종료'] - d['휴게 시작']) / 3600000;
+                  workHours -= breakHours;
+                }
+                
+                // 음수 시간 방지 및 24시간 초과 방지
+                if (workHours > 0 && workHours <= 24) {
                   if (!employeeHours[empName]) {
-                    employeeHours[empName] = { daily: 0, weekly: 0, monthly: 0 };
+                    employeeHours[empName] = { position: '직원', daily: 0, weekly: 0, monthly: 0 };
                   }
                   
                   // Daily (today only)
                   if (date === today) {
-                    employeeHours[empName].daily += h;
+                    employeeHours[empName].daily += workHours;
                   }
                   
                   // Weekly (last 7 days)
                   if (date >= weekAgoStr && date <= today) {
-                    employeeHours[empName].weekly += h;
+                    employeeHours[empName].weekly += workHours;
                   }
                   
                   // Monthly (this month)
                   if (date >= monthStart && date <= today) {
-                    employeeHours[empName].monthly += h;
+                    employeeHours[empName].monthly += workHours;
                   }
                 }
               }
@@ -1253,20 +1258,24 @@
             
             let totalDaily = 0, totalWeekly = 0, totalMonthly = 0;
             
-            Object.entries(employeeHours).sort((a, b) => a[0].localeCompare(b[0])).forEach(([name, hours]) => {
-              const tr = document.createElement('tr');
-              tr.innerHTML = `
-                <td class="px-4 py-3 text-sm font-medium text-gray-800">${name}</td>
-                <td class="px-4 py-3 text-right text-sm text-gray-600">${hours.daily.toFixed(1)}h</td>
-                <td class="px-4 py-3 text-right text-sm text-gray-600">${hours.weekly.toFixed(1)}h</td>
-                <td class="px-4 py-3 text-right text-sm text-gray-600">${hours.monthly.toFixed(1)}h</td>
-              `;
-              tbody.appendChild(tr);
-              
-              totalDaily += hours.daily;
-              totalWeekly += hours.weekly;
-              totalMonthly += hours.monthly;
-            });
+            // 직원명으로 정렬하여 표시
+            Object.entries(employeeHours)
+              .sort((a, b) => a[0].localeCompare(b[0], 'ko-KR'))
+              .forEach(([name, data]) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                  <td class="px-4 py-3 text-sm font-medium text-gray-800">${name}</td>
+                  <td class="px-4 py-3 text-sm text-gray-600">${data.position}</td>
+                  <td class="px-4 py-3 text-right text-sm text-gray-600">${data.daily.toFixed(1)}h</td>
+                  <td class="px-4 py-3 text-right text-sm text-gray-600">${data.weekly.toFixed(1)}h</td>
+                  <td class="px-4 py-3 text-right text-sm text-gray-600">${data.monthly.toFixed(1)}h</td>
+                `;
+                tbody.appendChild(tr);
+                
+                totalDaily += data.daily;
+                totalWeekly += data.weekly;
+                totalMonthly += data.monthly;
+              });
             
             // Update totals
             document.getElementById('total-daily').textContent = totalDaily.toFixed(1);
@@ -1455,15 +1464,17 @@
             const cells = row.querySelectorAll('td');
             data.push({
               '직원명': cells[0].textContent,
-              '일별 (오늘)': cells[1].textContent,
-              '주별 (7일)': cells[2].textContent,
-              '월별 (이번달)': cells[3].textContent
+              '직책': cells[1].textContent,
+              '일별 (오늘)': cells[2].textContent,
+              '주별 (7일)': cells[3].textContent,
+              '월별 (이번달)': cells[4].textContent
             });
           });
           
           // Add totals row
           data.push({
             '직원명': '합계',
+            '직책': '',
             '일별 (오늘)': document.getElementById('total-daily').textContent + 'h',
             '주별 (7일)': document.getElementById('total-weekly').textContent + 'h',
             '월별 (이번달)': document.getElementById('total-monthly').textContent + 'h'
@@ -1714,5 +1725,5 @@
       });
     </script>
   
-<script defer src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" integrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon='{"rayId":"9c4e6c9b2cb6eaa2","serverTiming":{"name":{"cfExtPri":true,"cfEdge":true,"cfOrigin":true,"cfL4":true,"cfSpeedBrain":true,"cfCacheStatus":true}},"version":"2025.9.1","token":"4edd5f8ec12a48cfa682ab8261b80a79"}' crossorigin="anonymous"></script>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" integrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon='{"rayId":"9c4e74010a21eaa2","serverTiming":{"name":{"cfExtPri":true,"cfEdge":true,"cfOrigin":true,"cfL4":true,"cfSpeedBrain":true,"cfCacheStatus":true}},"version":"2025.9.1","token":"4edd5f8ec12a48cfa682ab8261b80a79"}' crossorigin="anonymous"></script>
 </body></html>
