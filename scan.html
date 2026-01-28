@@ -22,11 +22,11 @@
     <style>
       body {
         font-family: 'Noto Sans KR', sans-serif;
-        background-color: #f3f4f6;
+        background-color: #f8f9fa;
         -webkit-tap-highlight-color: transparent;
       }
       .bg-gradient-brand {
-        background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+        background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
       }
       .text-brand {
         color: #1b5e3e;
@@ -34,14 +34,17 @@
       .bg-brand {
         background-color: #1b5e3e;
       }
-      .btn-touch {
-        transition:
-          transform 0.1s,
-          opacity 0.1s;
+      .btn-professional {
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
       }
-      .btn-touch:active {
-        transform: scale(0.98);
-        opacity: 0.9;
+      .btn-professional:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      }
+      .btn-professional:active {
+        transform: translateY(0);
+        box-shadow: 0 1px 2px rgba(0,0,0,0.1);
       }
       .spinner {
         border: 3px solid rgba(255, 255, 255, 0.3);
@@ -131,7 +134,7 @@
     <header class="bg-gradient-brand shadow-lg sticky top-0 z-30">
       <div class="px-6 py-5 flex items-center justify-between">
         <div class="flex items-center gap-3">
-          <img src="./logo.png" alt="KINDWON" class="h-8 bg-white rounded px-1" style="display: block !important; flex-shrink: 0; min-width: 32px;" />
+          <img src="/logo.png" alt="KINDWON" class="h-8 bg-white rounded px-1" style="display: block !important; flex-shrink: 0; min-width: 32px;" onerror="this.style.display='none';" />
           <div class="h-4 w-px bg-white/20"></div>
           <span class="font-bold text-white text-lg tracking-wide">업무 기록</span>
         </div>
@@ -226,31 +229,39 @@
         <div class="grid grid-cols-2 gap-3">
           <button
             onclick="app.recordAttendance('출근')"
-            class="btn-touch bg-blue-500 hover:bg-blue-600 text-white p-4 rounded-xl shadow-sm shadow-blue-100 flex flex-col items-center gap-2"
+            class="btn-professional bg-white border-2 border-gray-200 text-gray-800 p-5 rounded-xl flex flex-col items-center gap-2 group"
           >
-            <i class="fas fa-sign-in-alt text-2xl mb-1 opacity-90"></i>
-            <span class="font-bold">출근</span>
+            <div class="w-12 h-12 rounded-full bg-green-50 flex items-center justify-center mb-1 group-hover:bg-green-100 transition-colors">
+              <i class="fas fa-sign-in-alt text-xl text-green-600"></i>
+            </div>
+            <span class="font-bold text-sm">출근</span>
           </button>
           <button
             onclick="app.recordAttendance('퇴근')"
-            class="btn-touch bg-green-500 hover:bg-green-600 text-white p-4 rounded-xl shadow-sm shadow-green-100 flex flex-col items-center gap-2"
+            class="btn-professional bg-white border-2 border-gray-200 text-gray-800 p-5 rounded-xl flex flex-col items-center gap-2 group"
           >
-            <i class="fas fa-sign-out-alt text-2xl mb-1 opacity-90"></i>
-            <span class="font-bold">퇴근</span>
+            <div class="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center mb-1 group-hover:bg-blue-100 transition-colors">
+              <i class="fas fa-sign-out-alt text-xl text-blue-600"></i>
+            </div>
+            <span class="font-bold text-sm">퇴근</span>
           </button>
           <button
             onclick="app.recordAttendance('휴게 시작')"
-            class="btn-touch bg-yellow-500 hover:bg-yellow-600 text-white p-4 rounded-xl shadow-sm shadow-yellow-100 flex flex-col items-center gap-2"
+            class="btn-professional bg-white border-2 border-gray-200 text-gray-800 p-5 rounded-xl flex flex-col items-center gap-2 group"
           >
-            <i class="fas fa-mug-hot text-2xl mb-1 opacity-90"></i>
-            <span class="font-bold">휴게 시작</span>
+            <div class="w-12 h-12 rounded-full bg-orange-50 flex items-center justify-center mb-1 group-hover:bg-orange-100 transition-colors">
+              <i class="fas fa-mug-hot text-xl text-orange-600"></i>
+            </div>
+            <span class="font-bold text-sm">휴게 시작</span>
           </button>
           <button
             onclick="app.recordAttendance('휴게 종료')"
-            class="btn-touch bg-purple-500 hover:bg-purple-600 text-white p-4 rounded-xl shadow-sm shadow-purple-100 flex flex-col items-center gap-2"
+            class="btn-professional bg-white border-2 border-gray-200 text-gray-800 p-5 rounded-xl flex flex-col items-center gap-2 group"
           >
-            <i class="fas fa-history text-2xl mb-1 opacity-90"></i>
-            <span class="font-bold">휴게 종료</span>
+            <div class="w-12 h-12 rounded-full bg-purple-50 flex items-center justify-center mb-1 group-hover:bg-purple-100 transition-colors">
+              <i class="fas fa-history text-xl text-purple-600"></i>
+            </div>
+            <span class="font-bold text-sm">휴게 종료</span>
           </button>
         </div>
 
@@ -263,61 +274,158 @@
         </div>
 
         <!-- Before/After Mode Toggle -->
-        <div class="bg-blue-50 border border-blue-100 rounded-xl p-4 flex items-center justify-between">
-          <div>
-            <div class="font-bold text-gray-800 text-sm">Before/After 모드</div>
-            <div class="text-xs text-gray-500 mt-0.5">청소 전/후 증거 사진</div>
+        <div class="bg-white border-2 border-gray-200 rounded-xl p-4 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center">
+              <i class="fas fa-exchange-alt text-gray-600"></i>
+            </div>
+            <div>
+              <div class="font-bold text-gray-800 text-sm">Before/After 모드</div>
+              <div class="text-xs text-gray-500 mt-0.5">청소 전/후 비교 사진</div>
+            </div>
           </div>
           <div class="mode-toggle" id="before-after-toggle" onclick="app.toggleBeforeAfterMode()">
             <div class="mode-toggle-circle"></div>
           </div>
         </div>
 
-        <!-- Before/After Instructions (Hidden by default) -->
-        <div id="before-after-info" class="hidden bg-blue-50 border border-blue-200 rounded-xl p-4">
-          <div class="flex items-start gap-2 text-sm text-blue-800">
-            <i class="fas fa-info-circle mt-0.5"></i>
-            <div>
-              <span class="font-bold">Before → After 순서로 2장의 사진을 업로드하세요.</span>
-              <div class="text-xs text-blue-600 mt-1">청소 전 상태와 청소 후 상태를 비교할 수 있습니다.</div>
+        <!-- Before/After Split Upload UI (Hidden by default) -->
+        <div id="before-after-split-ui" class="hidden bg-white rounded-2xl p-4 border border-blue-200 shadow-sm">
+          <div class="grid grid-cols-2 gap-3">
+            <!-- Before Section -->
+            <div class="border-2 border-blue-300 rounded-xl p-3 bg-blue-50">
+              <div class="text-center mb-2">
+                <div class="text-sm font-bold text-blue-700">🔵 Before</div>
+                <div class="text-xs text-blue-600">청소 전</div>
+              </div>
+              
+              <!-- Before Photo Preview -->
+              <div id="before-photo-preview" class="hidden bg-black rounded-lg overflow-hidden mb-2" style="height: 180px;">
+                <img id="before-photo-img" class="w-full h-full object-contain" />
+              </div>
+              
+              <!-- Before Photo Placeholder -->
+              <div id="before-photo-placeholder" class="bg-blue-100 border-2 border-dashed border-blue-300 rounded-lg flex items-center justify-center mb-2" style="height: 180px;">
+                <div class="text-center text-blue-400">
+                  <i class="fas fa-image text-3xl mb-2"></i>
+                  <div class="text-xs">사진을 추가하세요</div>
+                </div>
+              </div>
+              
+              <!-- Before Action Buttons -->
+              <div class="space-y-2">
+                <button
+                  onclick="app.openBeforeAfterCamera('before', 'capture')"
+                  class="w-full btn-touch bg-blue-500 text-white py-2 rounded-lg text-sm font-bold flex items-center justify-center gap-2"
+                >
+                  <i class="fas fa-camera"></i>
+                  <span>촬영</span>
+                </button>
+                <button
+                  onclick="app.openBeforeAfterCamera('before', 'gallery')"
+                  class="w-full btn-touch bg-blue-400 text-white py-2 rounded-lg text-sm font-bold flex items-center justify-center gap-2"
+                >
+                  <i class="fas fa-images"></i>
+                  <span>갤러리</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- After Section -->
+            <div class="border-2 border-green-300 rounded-xl p-3 bg-green-50">
+              <div class="text-center mb-2">
+                <div class="text-sm font-bold text-green-700">🟢 After</div>
+                <div class="text-xs text-green-600">청소 후</div>
+              </div>
+              
+              <!-- After Photo Preview -->
+              <div id="after-photo-preview" class="hidden bg-black rounded-lg overflow-hidden mb-2" style="height: 180px;">
+                <img id="after-photo-img" class="w-full h-full object-contain" />
+              </div>
+              
+              <!-- After Photo Placeholder -->
+              <div id="after-photo-placeholder" class="bg-green-100 border-2 border-dashed border-green-300 rounded-lg flex items-center justify-center mb-2" style="height: 180px;">
+                <div class="text-center text-green-400">
+                  <i class="fas fa-image text-3xl mb-2"></i>
+                  <div class="text-xs">사진을 추가하세요</div>
+                </div>
+              </div>
+              
+              <!-- After Action Buttons -->
+              <div class="space-y-2">
+                <button
+                  onclick="app.openBeforeAfterCamera('after', 'capture')"
+                  class="w-full btn-touch bg-green-500 text-white py-2 rounded-lg text-sm font-bold flex items-center justify-center gap-2"
+                >
+                  <i class="fas fa-camera"></i>
+                  <span>촬영</span>
+                </button>
+                <button
+                  onclick="app.openBeforeAfterCamera('after', 'gallery')"
+                  class="w-full btn-touch bg-green-400 text-white py-2 rounded-lg text-sm font-bold flex items-center justify-center gap-2"
+                >
+                  <i class="fas fa-images"></i>
+                  <span>갤러리</span>
+                </button>
+              </div>
             </div>
           </div>
+
+          <!-- Notes Input -->
+          <input
+            type="text"
+            id="inp-notes-before-after"
+            placeholder="특이사항 입력 (선택)"
+            class="w-full mt-3 bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-blue-500"
+          />
+
+          <!-- Upload Button -->
+          <button
+            id="btn-upload-before-after"
+            onclick="app.uploadBeforeAfter()"
+            disabled
+            class="w-full mt-3 py-4 bg-gray-300 text-white rounded-xl font-bold text-base flex items-center justify-center gap-2 disabled:opacity-50 transition-all"
+          >
+            <i class="fas fa-cloud-upload-alt"></i>
+            <span>2장 모두 업로드</span>
+            <div id="spinner-before-after" class="spinner hidden w-4 h-4 ml-2"></div>
+          </button>
         </div>
 
-        <!-- Cleaning Buttons -->
-        <div class="grid grid-cols-1 gap-3">
+        <!-- Regular Cleaning Buttons (Hidden when Before/After mode active) -->
+        <div id="regular-cleaning-buttons" class="grid grid-cols-1 gap-3">
           <!-- 일반 촬영 -->
           <button
             onclick="app.openCameraMode('capture')"
-            class="btn-touch bg-orange-500 hover:bg-orange-600 text-white p-5 rounded-2xl shadow-md shadow-orange-100 flex items-center justify-between group"
+            class="btn-professional bg-white border-2 border-gray-200 text-gray-800 p-5 rounded-xl flex items-center justify-between group"
           >
             <div class="flex items-center gap-4">
-              <div class="bg-white/20 w-12 h-12 rounded-xl flex items-center justify-center">
-                <i class="fas fa-camera text-2xl"></i>
+              <div class="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center group-hover:bg-green-50 transition-colors">
+                <i class="fas fa-camera text-xl text-gray-600 group-hover:text-green-600 transition-colors"></i>
               </div>
               <div class="text-left">
-                <div class="font-bold text-lg">사진 촬영</div>
-                <div class="text-orange-100 text-xs">카메라로 즉시 촬영</div>
+                <div class="font-bold text-base">사진 촬영</div>
+                <div class="text-gray-500 text-xs mt-0.5">카메라로 즉시 촬영</div>
               </div>
             </div>
-            <i class="fas fa-chevron-right opacity-60"></i>
+            <i class="fas fa-chevron-right text-gray-400"></i>
           </button>
 
           <!-- 갤러리 선택 -->
           <button
             onclick="app.openCameraMode('gallery')"
-            class="btn-touch bg-purple-500 hover:bg-purple-600 text-white p-5 rounded-2xl shadow-md shadow-purple-100 flex items-center justify-between group"
+            class="btn-professional bg-white border-2 border-gray-200 text-gray-800 p-5 rounded-xl flex items-center justify-between group"
           >
             <div class="flex items-center gap-4">
-              <div class="bg-white/20 w-12 h-12 rounded-xl flex items-center justify-center">
-                <i class="fas fa-images text-2xl"></i>
+              <div class="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center group-hover:bg-green-50 transition-colors">
+                <i class="fas fa-images text-xl text-gray-600 group-hover:text-green-600 transition-colors"></i>
               </div>
               <div class="text-left">
-                <div class="font-bold text-lg">갤러리 선택</div>
-                <div class="text-purple-100 text-xs">여러 장 한번에 업로드</div>
+                <div class="font-bold text-base">갤러리 선택</div>
+                <div class="text-gray-500 text-xs mt-0.5">여러 장 한번에 업로드</div>
               </div>
             </div>
-            <i class="fas fa-chevron-right opacity-60"></i>
+            <i class="fas fa-chevron-right text-gray-400"></i>
           </button>
         </div>
 
@@ -337,6 +445,37 @@
           multiple
           class="hidden"
           onchange="app.handleMultiplePhotos(this)"
+        />
+        <!-- Before/After File Inputs -->
+        <input
+          type="file"
+          id="inp-before-capture"
+          accept="image/*"
+          capture="environment"
+          class="hidden"
+          onchange="app.handleBeforeAfterPhoto('before', this)"
+        />
+        <input
+          type="file"
+          id="inp-before-gallery"
+          accept="image/*"
+          class="hidden"
+          onchange="app.handleBeforeAfterPhoto('before', this)"
+        />
+        <input
+          type="file"
+          id="inp-after-capture"
+          accept="image/*"
+          capture="environment"
+          class="hidden"
+          onchange="app.handleBeforeAfterPhoto('after', this)"
+        />
+        <input
+          type="file"
+          id="inp-after-gallery"
+          accept="image/*"
+          class="hidden"
+          onchange="app.handleBeforeAfterPhoto('after', this)"
         />
       </div>
     </main>
@@ -467,6 +606,8 @@
           photoFile: null,
           photoFiles: [], // Multiple photos
           beforeAfterMode: false,
+          beforePhoto: null,
+          afterPhoto: null,
           sessionTimer: null,
           sessionStartTime: null,
           sessionDuration: 30 * 60 * 1000, // 30 minutes in milliseconds
@@ -665,14 +806,190 @@
         toggleBeforeAfterMode: function () {
           this.state.beforeAfterMode = !this.state.beforeAfterMode;
           const toggle = document.getElementById('before-after-toggle');
-          const info = document.getElementById('before-after-info');
+          const splitUI = document.getElementById('before-after-split-ui');
+          const regularButtons = document.getElementById('regular-cleaning-buttons');
 
           if (this.state.beforeAfterMode) {
             toggle.classList.add('active');
-            info.classList.remove('hidden');
+            splitUI.classList.remove('hidden');
+            regularButtons.classList.add('hidden');
+            // Reset before/after photos
+            this.state.beforePhoto = null;
+            this.state.afterPhoto = null;
+            this.updateBeforeAfterUI();
           } else {
             toggle.classList.remove('active');
-            info.classList.add('hidden');
+            splitUI.classList.add('hidden');
+            regularButtons.classList.remove('hidden');
+          }
+        },
+
+        openBeforeAfterCamera: function (type, mode) {
+          if (type === 'before') {
+            if (mode === 'capture') {
+              document.getElementById('inp-before-capture').click();
+            } else {
+              document.getElementById('inp-before-gallery').click();
+            }
+          } else if (type === 'after') {
+            if (mode === 'capture') {
+              document.getElementById('inp-after-capture').click();
+            } else {
+              document.getElementById('inp-after-gallery').click();
+            }
+          }
+        },
+
+        handleBeforeAfterPhoto: async function (type, input) {
+          if (!input.files || !input.files[0]) return;
+
+          const file = input.files[0];
+
+          // Check photo time (12 hours limit)
+          const isValid = await this.validatePhotoTime(file);
+          if (!isValid) {
+            alert('⚠️ 촬영 시간 제한\n\n12시간 이내에 촬영된 사진만 업로드 가능합니다.\n오래된 사진의 재활용을 방지하기 위한 정책입니다.');
+            input.value = '';
+            return;
+          }
+
+          // Store photo
+          if (type === 'before') {
+            this.state.beforePhoto = file;
+          } else {
+            this.state.afterPhoto = file;
+          }
+
+          // Update UI
+          this.updateBeforeAfterUI();
+          input.value = '';
+        },
+
+        updateBeforeAfterUI: function () {
+          const beforePreview = document.getElementById('before-photo-preview');
+          const beforePlaceholder = document.getElementById('before-photo-placeholder');
+          const beforeImg = document.getElementById('before-photo-img');
+
+          const afterPreview = document.getElementById('after-photo-preview');
+          const afterPlaceholder = document.getElementById('after-photo-placeholder');
+          const afterImg = document.getElementById('after-photo-img');
+
+          const uploadBtn = document.getElementById('btn-upload-before-after');
+
+          // Update Before
+          if (this.state.beforePhoto) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+              beforeImg.src = e.target.result;
+              beforePreview.classList.remove('hidden');
+              beforePlaceholder.classList.add('hidden');
+            };
+            reader.readAsDataURL(this.state.beforePhoto);
+          } else {
+            beforePreview.classList.add('hidden');
+            beforePlaceholder.classList.remove('hidden');
+          }
+
+          // Update After
+          if (this.state.afterPhoto) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+              afterImg.src = e.target.result;
+              afterPreview.classList.remove('hidden');
+              afterPlaceholder.classList.add('hidden');
+            };
+            reader.readAsDataURL(this.state.afterPhoto);
+          } else {
+            afterPreview.classList.add('hidden');
+            afterPlaceholder.classList.remove('hidden');
+          }
+
+          // Enable upload button only when both photos are ready
+          if (this.state.beforePhoto && this.state.afterPhoto) {
+            uploadBtn.disabled = false;
+            uploadBtn.classList.remove('bg-gray-300');
+            uploadBtn.classList.add('bg-brand', 'hover:bg-green-700');
+          } else {
+            uploadBtn.disabled = true;
+            uploadBtn.classList.remove('bg-brand', 'hover:bg-green-700');
+            uploadBtn.classList.add('bg-gray-300');
+          }
+        },
+
+        uploadBeforeAfter: async function () {
+          if (!this.state.beforePhoto || !this.state.afterPhoto) {
+            alert('⚠️ Before와 After 사진을 모두 선택해주세요.');
+            return;
+          }
+
+          const btn = document.getElementById('btn-upload-before-after');
+          const spinner = document.getElementById('spinner-before-after');
+          const btnText = btn.querySelector('span');
+
+          btn.disabled = true;
+          btnText.textContent = '업로드 중...';
+          spinner.classList.remove('hidden');
+
+          try {
+            const notes = document.getElementById('inp-notes-before-after').value;
+
+            // Upload Before photo
+            const beforeExt = this.state.beforePhoto.name.split('.').pop() || 'jpg';
+            const beforeFileName = `${this.state.aptId}/${Date.now()}_before_${Math.random().toString(36).substr(2, 9)}.${beforeExt}`;
+
+            const { data: beforeUpload, error: beforeError } = await this.sb.storage
+              .from('cleaning-photos')
+              .upload(beforeFileName, this.state.beforePhoto);
+
+            if (beforeError) throw beforeError;
+
+            const { data: { publicUrl: beforeUrl } } = this.sb.storage
+              .from('cleaning-photos')
+              .getPublicUrl(beforeFileName);
+
+            // Upload After photo
+            const afterExt = this.state.afterPhoto.name.split('.').pop() || 'jpg';
+            const afterFileName = `${this.state.aptId}/${Date.now()}_after_${Math.random().toString(36).substr(2, 9)}.${afterExt}`;
+
+            const { data: afterUpload, error: afterError } = await this.sb.storage
+              .from('cleaning-photos')
+              .upload(afterFileName, this.state.afterPhoto);
+
+            if (afterError) throw afterError;
+
+            const { data: { publicUrl: afterUrl } } = this.sb.storage
+              .from('cleaning-photos')
+              .getPublicUrl(afterFileName);
+
+            // Save to database
+            const payload = {
+              employee_name: this.state.selectedEmp.name,
+              location: this.state.locationName,
+              photo_url: beforeUrl,
+              photo_url_after: afterUrl,
+              notes: notes || 'Before/After 청소 작업',
+              is_before_after: true,
+              created_at: new Date().toISOString(),
+            };
+
+            const { error: dbError } = await this.sb.from('cleaning_tasks').insert([payload]);
+            if (dbError) throw dbError;
+
+            this.showToast('✅ Before/After 청소 작업이 기록되었습니다.');
+
+            // Reset UI
+            this.state.beforePhoto = null;
+            this.state.afterPhoto = null;
+            document.getElementById('inp-notes-before-after').value = '';
+            this.updateBeforeAfterUI();
+            this.resetSelection();
+          } catch (e) {
+            console.error(e);
+            alert('❌ 업로드 실패: ' + e.message);
+          } finally {
+            btn.disabled = false;
+            btnText.textContent = '2장 모두 업로드';
+            spinner.classList.add('hidden');
           }
         },
 
@@ -993,6 +1310,6 @@
 
       document.addEventListener('DOMContentLoaded', () => app.init());
     </script>
-  <script defer src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" integrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon='{"rayId":"9c4f585689b78b65","serverTiming":{"name":{"cfExtPri":true,"cfEdge":true,"cfOrigin":true,"cfL4":true,"cfSpeedBrain":true,"cfCacheStatus":true}},"version":"2025.9.1","token":"4edd5f8ec12a48cfa682ab8261b80a79"}' crossorigin="anonymous"></script>
+  <script defer src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" integrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon='{"rayId":"9c4f6504a821bcf1","serverTiming":{"name":{"cfExtPri":true,"cfEdge":true,"cfOrigin":true,"cfL4":true,"cfSpeedBrain":true,"cfCacheStatus":true}},"version":"2025.9.1","token":"4edd5f8ec12a48cfa682ab8261b80a79"}' crossorigin="anonymous"></script>
 </body>
 </html>
