@@ -2257,7 +2257,11 @@
             return;
           }
           
+          // 모달을 body 최상단으로 이동 (z-index 문제 해결)
+          document.body.appendChild(modal);
+          
           modal.classList.remove('hidden');
+          
           document.getElementById('edit-employee-id').value = emp.id;
           document.getElementById('edit-employee-name').value = emp.name || '';
           document.getElementById('edit-employee-phone').value = emp.phone || '';
@@ -2265,6 +2269,7 @@
           document.getElementById('edit-employee-contract-start').value = emp.contract_start || '';
           document.getElementById('edit-employee-contract-end').value = emp.contract_end || '';
           document.getElementById('edit-employee-notes').value = emp.notes || '';
+          
           console.log('✅ 모달 열림 완료');
         },
         
