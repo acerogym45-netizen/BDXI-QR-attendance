@@ -2205,15 +2205,28 @@
               list.appendChild(tr);
               
               // 이벤트 리스너 추가
-              tr.querySelector('.edit-emp-btn').addEventListener('click', () => {
-                this.showEditEmployeeModal(emp);
-              });
-              tr.querySelector('.toggle-emp-btn').addEventListener('click', () => {
-                this.toggleEmployeeStatus(emp.id, emp.status);
-              });
-              tr.querySelector('.delete-emp-btn').addEventListener('click', () => {
-                this.deleteEmployee(emp.id);
-              });
+              const editBtn = tr.querySelector('.edit-emp-btn');
+              const toggleBtn = tr.querySelector('.toggle-emp-btn');
+              const deleteBtn = tr.querySelector('.delete-emp-btn');
+              
+              if (editBtn) {
+                editBtn.addEventListener('click', () => {
+                  console.log('수정 버튼 클릭됨:', emp);
+                  this.showEditEmployeeModal(emp);
+                });
+              }
+              
+              if (toggleBtn) {
+                toggleBtn.addEventListener('click', () => {
+                  this.toggleEmployeeStatus(emp.id, emp.status);
+                });
+              }
+              
+              if (deleteBtn) {
+                deleteBtn.addEventListener('click', () => {
+                  this.deleteEmployee(emp.id);
+                });
+              }
             });
           } catch (error) {
             console.error('직원 로드 실패:', error);
@@ -2236,7 +2249,15 @@
         },
         
         showEditEmployeeModal: function (emp) {
-          document.getElementById('edit-employee-modal').classList.remove('hidden');
+          console.log('🔧 showEditEmployeeModal 호출됨:', emp);
+          const modal = document.getElementById('edit-employee-modal');
+          if (!modal) {
+            console.error('❌ edit-employee-modal을 찾을 수 없습니다!');
+            alert('수정 모달을 찾을 수 없습니다. 페이지를 새로고침해주세요.');
+            return;
+          }
+          
+          modal.classList.remove('hidden');
           document.getElementById('edit-employee-id').value = emp.id;
           document.getElementById('edit-employee-name').value = emp.name || '';
           document.getElementById('edit-employee-phone').value = emp.phone || '';
@@ -2244,6 +2265,7 @@
           document.getElementById('edit-employee-contract-start').value = emp.contract_start || '';
           document.getElementById('edit-employee-contract-end').value = emp.contract_end || '';
           document.getElementById('edit-employee-notes').value = emp.notes || '';
+          console.log('✅ 모달 열림 완료');
         },
         
         closeEditEmployeeModal: function () {
