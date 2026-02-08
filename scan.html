@@ -1331,6 +1331,8 @@
                   employee_name: this.state.selectedEmp.name,
                   location: this.state.locationName,
                   photo_url: uploadedUrls[0], // Before
+                  photo_urls: [uploadedUrls[0]], // ✅ Add to array
+                  photo_count: 1,
                   notes: notes || 'Before/After 청소 작업',
                   group_id: groupId,
                   before_after: 'before',
@@ -1342,6 +1344,8 @@
                   employee_name: this.state.selectedEmp.name,
                   location: this.state.locationName,
                   photo_url: uploadedUrls[1], // After
+                  photo_urls: [uploadedUrls[1]], // ✅ Add to array
+                  photo_count: 1,
                   notes: notes || 'Before/After 청소 작업',
                   group_id: groupId,
                   before_after: 'after',
