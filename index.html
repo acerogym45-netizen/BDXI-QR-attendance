@@ -1096,6 +1096,12 @@
           
           console.log('🖼️ All photos for card:', allPhotos.length, allPhotos);
           
+          // 사진이 없으면 카드를 생성하지 않음
+          if (allPhotos.length === 0) {
+            console.warn('⚠️ No photos found for card, skipping...');
+            return card;
+          }
+          
           let photosHtml = '';
           
           if (isBeforeAfterPair) {
@@ -1107,13 +1113,15 @@
               const badgeClass = item.before_after === 'before' ? 'badge-before' : 'badge-after';
               const badgeText = item.before_after === 'before' ? 'Before' : 'After';
               
+              console.log(`📷 Before/After photo ${idx}:`, photoUrl);
+              
               photosHtml += `
                 <div class="photo-item" onclick='app.openModal(${JSON.stringify(allPhotos.map(p => p.url))}, "${firstItem.employee_name || '직원명 없음'}", "${firstItem.created_at}", "${item.before_after}", "${firstItem.group_id || ''}",  ${idx})'>
                   <span class="${badgeClass}">${badgeText}</span>
                   ${photoUrl ? 
-                    `<img src="${photoUrl}" alt="${item.before_after}" loading="lazy">` :
-                    `<div class="w-full h-full bg-gray-200 flex items-center justify-center">
-                      <span class="text-gray-400">사진 없음</span>
+                    `<img src="${photoUrl}" alt="${item.before_after}" loading="lazy" style="width:100%;height:100%;object-fit:cover;">` :
+                    `<div style="width:100%;height:100%;background:#f3f4f6;display:flex;align-items:center;justify-content:center;">
+                      <span style="color:#9ca3af;">사진 없음</span>
                     </div>`
                   }
                 </div>
@@ -1132,12 +1140,14 @@
             // Show max 6 photos
             const displayPhotos = allPhotos.slice(0, 6);
             displayPhotos.forEach((photo, idx) => {
+              console.log(`📷 Multi photo ${idx}:`, photo.url);
+              
               photosHtml += `
                 <div class="photo-item" onclick='app.openModal(${JSON.stringify(allPhotos.map(p => p.url))}, "${firstItem.employee_name || '직원명 없음'}", "${firstItem.created_at}", "${photo.beforeAfter}", "${firstItem.group_id || ''}", ${idx})'>
                   ${photo.url ? 
-                    `<img src="${photo.url}" alt="photo ${idx + 1}" loading="lazy">` :
-                    `<div class="w-full h-full bg-gray-200 flex items-center justify-center">
-                      <span class="text-gray-400">사진 없음</span>
+                    `<img src="${photo.url}" alt="photo ${idx + 1}" loading="lazy" style="width:100%;height:100%;object-fit:cover;">` :
+                    `<div style="width:100%;height:100%;background:#f3f4f6;display:flex;align-items:center;justify-content:center;">
+                      <span style="color:#9ca3af;">사진 없음</span>
                     </div>`
                   }
                 </div>
@@ -1157,17 +1167,21 @@
               const badgeHtml = photo.beforeAfter === 'before' ? '<span class="badge-before">Before</span>' :
                                photo.beforeAfter === 'after' ? '<span class="badge-after">After</span>' : '';
               
+              console.log('📷 Single photo:', photo.url);
+              
               photosHtml = `
                 <div class="photo-item" style="aspect-ratio: 16/9;" onclick='app.openModal(${JSON.stringify([photo.url])}, "${firstItem.employee_name || '직원명 없음'}", "${firstItem.created_at}", "${photo.beforeAfter}", "${firstItem.group_id || ''}", 0)'>
                   ${badgeHtml}
                   ${photo.url ? 
-                    `<img src="${photo.url}" alt="single photo" loading="lazy">` :
-                    `<div class="w-full h-full bg-gray-200 flex items-center justify-center">
-                      <span class="text-gray-400">사진 없음</span>
+                    `<img src="${photo.url}" alt="single photo" loading="lazy" style="width:100%;height:100%;object-fit:cover;">` :
+                    `<div style="width:100%;height:100%;background:#f3f4f6;display:flex;align-items:center;justify-content:center;">
+                      <span style="color:#9ca3af;">사진 없음</span>
                     </div>`
                   }
                 </div>
               `;
+            } else {
+              console.error('❌ No photo found in allPhotos array');
             }
           }
           
