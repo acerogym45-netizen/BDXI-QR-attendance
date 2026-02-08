@@ -645,6 +645,40 @@
 
         <!-- TAB 4: Data -->
         <div id="tab-data" class="tab-content space-y-6 hidden">
+          <!-- 계약 만료 임박 섹션 -->
+          <div id="contract-expiring-section" class="hidden bg-gradient-to-r from-orange-50 to-red-50 border-2 border-orange-300 rounded-xl p-6 shadow-lg">
+            <div class="flex items-start justify-between mb-4">
+              <div class="flex items-center gap-3">
+                <div class="flex-shrink-0 w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
+                  <i class="fas fa-exclamation-triangle text-orange-600 text-xl"></i>
+                </div>
+                <div>
+                  <h3 class="text-lg font-bold text-gray-800">
+                    <i class="fas fa-bell mr-2"></i>계약 만료 임박 직원
+                  </h3>
+                  <p class="text-sm text-gray-600">
+                    계약 기간이 <span id="alert-days-display" class="font-semibold text-orange-600">30일</span> 이내로 남은 직원 목록입니다.
+                  </p>
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <select id="alert-days-setting" class="px-3 py-2 text-sm border border-orange-300 rounded-lg bg-white focus:ring-2 focus:ring-orange-500" onchange="app.updateAlertDays(this.value)">
+                  <option value="7">7일 전</option>
+                  <option value="14">14일 전</option>
+                  <option value="30" selected>30일 전</option>
+                  <option value="60">60일 전</option>
+                  <option value="90">90일 전</option>
+                </select>
+                <button onclick="document.getElementById('contract-expiring-section').classList.add('hidden')" class="text-gray-400 hover:text-gray-600">
+                  <i class="fas fa-times text-xl"></i>
+                </button>
+              </div>
+            </div>
+            <div id="contract-expiring-list" class="space-y-3">
+              <!-- JS로 동적 생성 -->
+            </div>
+          </div>
+
           <!-- 직원 관리 -->
           <div class="bg-white p-6 rounded-xl shadow-sm border">
             <div class="flex justify-between items-center mb-4">
@@ -799,6 +833,55 @@
           </button>
         </div>
       </div>
+    <div id="edit-employee-modal" class="fixed inset-0 z-50 hidden modal-backdrop bg-black/80 flex items-center justify-center p-4" onclick="if (event.target === this) app.closeEditEmployeeModal();">
+      <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl" onclick="event.stopPropagation()">
+        <div class="flex justify-between items-center p-6 border-b">
+          <h3 class="text-xl font-bold text-gray-800">
+            <i class="fas fa-edit mr-2 text-green-600"></i>직원 정보 수정
+          </h3>
+          <button onclick="app.closeEditEmployeeModal()" class="text-gray-400 hover:text-gray-600 text-2xl">×</button>
+        </div>
+        <div class="p-6 space-y-4">
+          <input type="hidden" id="edit-employee-id">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">직원명</label>
+            <input type="text" id="edit-employee-name" placeholder="이름을 입력하세요" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">연락처</label>
+            <input type="text" id="edit-employee-phone" placeholder="010-1234-5678" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">상태</label>
+            <select id="edit-employee-status" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+              <option value="active">활성</option>
+              <option value="inactive">비활성</option>
+            </select>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">계약 시작일</label>
+              <input type="date" id="edit-employee-contract-start" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">계약 종료일</label>
+              <input type="date" id="edit-employee-contract-end" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">비고</label>
+            <textarea id="edit-employee-notes" placeholder="기타 메모사항" rows="3" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"></textarea>
+          </div>
+          <div class="flex gap-3">
+            <button onclick="app.closeEditEmployeeModal()" class="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium">
+              <i class="fas fa-times mr-2"></i>취소
+            </button>
+            <button onclick="app.updateEmployee()" class="flex-1 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium">
+              <i class="fas fa-save mr-2"></i>저장
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Location Modal -->
@@ -849,6 +932,14 @@
 
           setInterval(() => this.updateClock(), 1000);
           this.updateClock();
+          
+          // 알림 설정 불러오기
+          const savedAlertDays = localStorage.getItem('contract_alert_days') || '30';
+          const alertSelect = document.getElementById('alert-days-setting');
+          if (alertSelect) {
+            alertSelect.value = savedAlertDays;
+          }
+          document.getElementById('alert-days-display').textContent = savedAlertDays + '일';
 
           setTimeout(() => {
             this.setupEmployeeSearch('filter-employee-input', 'filter-employee-dropdown');
@@ -1038,6 +1129,7 @@
             this.loadEmployees();
             this.loadLocations();
             this.loadQRCodes();
+            this.checkContractExpirationsInDataTab(); // 계약 만료 섹션 표시
           }
         },
 
@@ -2096,6 +2188,9 @@
                 <td class="px-4 py-3"><span class="px-2 py-1 text-xs rounded-full ${statusColor}">${statusText}</span></td>
                 <td class="px-4 py-3 text-sm text-gray-500">${new Date(emp.created_at).toLocaleDateString('ko-KR')}</td>
                 <td class="px-4 py-3 text-sm">
+                  <button class="edit-emp-btn text-green-600 hover:text-green-800 mr-2" data-id="${emp.id}" title="수정">
+                    <i class="fas fa-edit"></i>
+                  </button>
                   <button class="toggle-emp-btn text-blue-600 hover:text-blue-800 mr-2" data-id="${emp.id}" data-status="${emp.status}" title="상태 변경">
                     <i class="fas fa-toggle-${toggleIcon}"></i>
                   </button>
@@ -2107,6 +2202,9 @@
               list.appendChild(tr);
               
               // 이벤트 리스너 추가
+              tr.querySelector('.edit-emp-btn').addEventListener('click', () => {
+                this.showEditEmployeeModal(emp);
+              });
               tr.querySelector('.toggle-emp-btn').addEventListener('click', () => {
                 this.toggleEmployeeStatus(emp.id, emp.status);
               });
@@ -2132,6 +2230,61 @@
         
         closeEmployeeModal: function () {
           document.getElementById('employee-modal').classList.add('hidden');
+        },
+        
+        showEditEmployeeModal: function (emp) {
+          document.getElementById('edit-employee-modal').classList.remove('hidden');
+          document.getElementById('edit-employee-id').value = emp.id;
+          document.getElementById('edit-employee-name').value = emp.name || '';
+          document.getElementById('edit-employee-phone').value = emp.phone || '';
+          document.getElementById('edit-employee-status').value = emp.status || 'active';
+          document.getElementById('edit-employee-contract-start').value = emp.contract_start || '';
+          document.getElementById('edit-employee-contract-end').value = emp.contract_end || '';
+          document.getElementById('edit-employee-notes').value = emp.notes || '';
+        },
+        
+        closeEditEmployeeModal: function () {
+          document.getElementById('edit-employee-modal').classList.add('hidden');
+        },
+        
+        updateEmployee: async function () {
+          const id = document.getElementById('edit-employee-id').value;
+          const name = document.getElementById('edit-employee-name').value.trim();
+          const phone = document.getElementById('edit-employee-phone').value.trim();
+          const status = document.getElementById('edit-employee-status').value;
+          const contractStart = document.getElementById('edit-employee-contract-start').value;
+          const contractEnd = document.getElementById('edit-employee-contract-end').value;
+          const notes = document.getElementById('edit-employee-notes').value.trim();
+          
+          if (!name) {
+            alert('직원명을 입력하세요.');
+            return;
+          }
+          
+          try {
+            const updateData = { 
+              name, 
+              phone, 
+              status,
+              contract_start: contractStart || null,
+              contract_end: contractEnd || null,
+              notes: notes || null
+            };
+            
+            const { error } = await this.sb.from('employees').update(updateData).eq('id', id);
+            
+            if (error) throw error;
+            
+            alert('직원 정보가 수정되었습니다.');
+            this.closeEditEmployeeModal();
+            this.loadEmployees();
+            this.checkContractExpirationsInDataTab(); // 계약 만료 섹션 업데이트
+            this.employeeList = []; // Reset cache
+            this.loadMeta(); // Refresh employee list
+          } catch (error) {
+            console.error('직원 수정 실패:', error);
+            alert('직원 수정 실패: ' + error.message);
+          }
         },
         
         addEmployee: async function () {
@@ -2272,6 +2425,104 @@
           } catch (error) {
             console.error('계약 만료 체크 실패:', error);
           }
+        },
+        
+        // 데이터 탭용 계약 만료 체크
+        checkContractExpirationsInDataTab: async function () {
+          try {
+            const alertDays = parseInt(localStorage.getItem('contract_alert_days') || '30');
+            
+            let query = this.sb
+              .from('employees')
+              .select('id, name, contract_start, contract_end, phone')
+              .eq('status', 'active')
+              .not('contract_end', 'is', null);
+            
+            // 🏢 아파트 필터 적용
+            if (this.currentApartment && this.currentApartment.id) {
+              query = query.eq('apartment_id', this.currentApartment.id);
+            }
+            
+            const { data, error } = await query;
+            
+            if (error) throw error;
+            
+            if (!data || data.length === 0) {
+              document.getElementById('contract-expiring-section').classList.add('hidden');
+              return;
+            }
+            
+            const today = new Date();
+            const alertDate = new Date(today.getTime() + alertDays * 24 * 60 * 60 * 1000);
+            
+            // 계약 만료 임박 직원 필터링
+            const expiringEmployees = data.filter(emp => {
+              const contractEnd = new Date(emp.contract_end);
+              return contractEnd >= today && contractEnd <= alertDate;
+            }).sort((a, b) => new Date(a.contract_end) - new Date(b.contract_end));
+            
+            if (expiringEmployees.length > 0) {
+              const section = document.getElementById('contract-expiring-section');
+              const list = document.getElementById('contract-expiring-list');
+              
+              list.innerHTML = '';
+              expiringEmployees.forEach(emp => {
+                const contractEnd = new Date(emp.contract_end);
+                const contractStart = emp.contract_start ? new Date(emp.contract_start) : null;
+                const daysUntil = Math.ceil((contractEnd - today) / (1000 * 60 * 60 * 24));
+                
+                const item = document.createElement('div');
+                item.className = 'bg-white border border-orange-200 p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow';
+                item.innerHTML = `
+                  <div class="flex items-start justify-between">
+                    <div class="flex-1">
+                      <div class="flex items-center gap-2 mb-2">
+                        <span class="text-lg font-bold text-gray-800">${emp.name}</span>
+                        <span class="px-3 py-1 text-xs font-bold rounded-full ${
+                          daysUntil <= 7 ? 'bg-red-100 text-red-700' : 
+                          daysUntil <= 14 ? 'bg-orange-100 text-orange-700' : 
+                          'bg-yellow-100 text-yellow-700'
+                        }">
+                          ${daysUntil}일 남음
+                        </span>
+                      </div>
+                      <div class="space-y-1 text-sm text-gray-600">
+                        <div class="flex items-center gap-2">
+                          <i class="fas fa-phone w-4"></i>
+                          <span>${emp.phone || '-'}</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                          <i class="fas fa-calendar-alt w-4"></i>
+                          <span>
+                            ${contractStart ? contractStart.toLocaleDateString('ko-KR') : '-'} ~ 
+                            <span class="font-semibold text-orange-600">${contractEnd.toLocaleDateString('ko-KR')}</span>
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <button onclick="app.showEditEmployeeModal({id: '${emp.id}', name: '${emp.name}', phone: '${emp.phone || ''}', status: 'active', contract_start: '${emp.contract_start || ''}', contract_end: '${emp.contract_end}', notes: ''})" 
+                            class="px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors">
+                      <i class="fas fa-edit mr-1"></i>수정
+                    </button>
+                  </div>
+                `;
+                list.appendChild(item);
+              });
+              
+              section.classList.remove('hidden');
+            } else {
+              document.getElementById('contract-expiring-section').classList.add('hidden');
+            }
+          } catch (error) {
+            console.error('계약 만료 체크 실패:', error);
+          }
+        },
+        
+        // 알림 기간 업데이트
+        updateAlertDays: function (days) {
+          localStorage.setItem('contract_alert_days', days);
+          document.getElementById('alert-days-display').textContent = days + '일';
+          this.checkContractExpirationsInDataTab();
         },
         
         // Location Management
