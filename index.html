@@ -1533,6 +1533,11 @@
           try {
             let q = this.sb.from('attendance_records').select('*').order('scan_time', { ascending: false });
 
+            // 🏢 아파트 필터 (필수)
+            if (this.currentApartment && this.currentApartment.id) {
+              q = q.eq('apartment_id', this.currentApartment.id);
+            }
+
             const start = document.getElementById('hist-start').value;
             const end = document.getElementById('hist-end').value;
             const emp = document.getElementById('hist-employee-input').value;
@@ -1610,18 +1615,29 @@
           if (!start) return;
 
           try {
-            // Use UTC ISO strings for robust filtering
-            const { data: emps } = await this.sb.from('employees').select('id, name, position').eq('status', 'active');
-            const { data: atts } = await this.sb
+            // 🏢 아파트 필터를 위한 쿼리 수정
+            let empQuery = this.sb.from('employees').select('id, name, position').eq('status', 'active');
+            let attsQuery = this.sb
               .from('attendance_records')
               .select('*')
               .gte('scan_time', `${start}T00:00:00Z`)
               .lte('scan_time', `${end}T23:59:59Z`);
-            const { data: cleans } = await this.sb
+            let cleansQuery = this.sb
               .from('cleaning_tasks')
               .select('*')
               .gte('created_at', `${start}T00:00:00Z`)
               .lte('created_at', `${end}T23:59:59Z`);
+
+            // 아파트 필터 적용
+            if (this.currentApartment && this.currentApartment.id) {
+              empQuery = empQuery.eq('apartment_id', this.currentApartment.id);
+              attsQuery = attsQuery.eq('apartment_id', this.currentApartment.id);
+              cleansQuery = cleansQuery.eq('apartment_id', this.currentApartment.id);
+            }
+
+            const { data: emps } = await empQuery;
+            const { data: atts } = await attsQuery;
+            const { data: cleans } = await cleansQuery;
 
             const safeEmps = emps || [];
             const safeAtts = atts || [];
@@ -1880,7 +1896,14 @@
           container.innerHTML = '<div class="col-span-full text-center"><i class="fas fa-spinner fa-spin text-2xl text-gray-400"></i></div>';
           
           try {
-            const { data, error } = await this.sb.from('locations').select('*').eq('status', 'active');
+            let query = this.sb.from('locations').select('*').eq('status', 'active');
+            
+            // 🏢 아파트 필터 적용
+            if (this.currentApartment && this.currentApartment.id) {
+              query = query.eq('apartment_id', this.currentApartment.id);
+            }
+            
+            const { data, error } = await query;
             if (error) throw error;
             
             container.innerHTML = '';
@@ -1977,7 +2000,14 @@
           list.innerHTML = '<tr><td colspan="5" class="text-center py-4"><div class="loader"></div></td></tr>';
           
           try {
-            const { data, error } = await this.sb.from('employees').select('*').order('created_at', { ascending: false });
+            let query = this.sb.from('employees').select('*').order('created_at', { ascending: false });
+            
+            // 🏢 아파트 필터 적용
+            if (this.currentApartment && this.currentApartment.id) {
+              query = query.eq('apartment_id', this.currentApartment.id);
+            }
+            
+            const { data, error } = await query;
             
             if (error) throw error;
             
@@ -2046,7 +2076,15 @@
           }
           
           try {
-            const { error } = await this.sb.from('employees').insert([{ name, phone, status }]);
+            // 🏢 현재 아파트 ID 포함
+            const employeeData = { 
+              name, 
+              phone, 
+              status,
+              apartment_id: this.currentApartment ? this.currentApartment.id : null
+            };
+            
+            const { error } = await this.sb.from('employees').insert([employeeData]);
             
             if (error) throw error;
             
@@ -2103,7 +2141,14 @@
           list.innerHTML = '<tr><td colspan="4" class="text-center py-4"><div class="loader"></div></td></tr>';
           
           try {
-            const { data, error } = await this.sb.from('locations').select('*').order('created_at', { ascending: false });
+            let query = this.sb.from('locations').select('*').order('created_at', { ascending: false });
+            
+            // 🏢 아파트 필터 적용
+            if (this.currentApartment && this.currentApartment.id) {
+              query = query.eq('apartment_id', this.currentApartment.id);
+            }
+            
+            const { data, error } = await query;
             
             if (error) throw error;
             
@@ -2169,7 +2214,14 @@
           }
           
           try {
-            const { error } = await this.sb.from('locations').insert([{ name, status }]);
+            // 🏢 현재 아파트 ID 포함
+            const locationData = { 
+              name, 
+              status,
+              apartment_id: this.currentApartment ? this.currentApartment.id : null
+            };
+            
+            const { error } = await this.sb.from('locations').insert([locationData]);
             
             if (error) throw error;
             
