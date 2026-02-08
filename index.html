@@ -939,7 +939,10 @@
           if (alertSelect) {
             alertSelect.value = savedAlertDays;
           }
-          document.getElementById('alert-days-display').textContent = savedAlertDays + '일';
+          const alertDisplay = document.getElementById('alert-days-display');
+          if (alertDisplay) {
+            alertDisplay.textContent = savedAlertDays + '일';
+          }
 
           setTimeout(() => {
             this.setupEmployeeSearch('filter-employee-input', 'filter-employee-dropdown');
@@ -2434,7 +2437,7 @@
             
             let query = this.sb
               .from('employees')
-              .select('id, name, contract_start, contract_end, phone')
+              .select('*')
               .eq('status', 'active')
               .not('contract_end', 'is', null);
             
@@ -2500,13 +2503,17 @@
                         </div>
                       </div>
                     </div>
-                    <button onclick="app.showEditEmployeeModal({id: '${emp.id}', name: '${emp.name}', phone: '${emp.phone || ''}', status: 'active', contract_start: '${emp.contract_start || ''}', contract_end: '${emp.contract_end}', notes: ''})" 
-                            class="px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors">
+                    <button class="edit-expiring-emp-btn px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors">
                       <i class="fas fa-edit mr-1"></i>수정
                     </button>
                   </div>
                 `;
                 list.appendChild(item);
+                
+                // 수정 버튼에 이벤트 리스너 추가
+                item.querySelector('.edit-expiring-emp-btn').addEventListener('click', () => {
+                  this.showEditEmployeeModal(emp);
+                });
               });
               
               section.classList.remove('hidden');
@@ -2521,7 +2528,10 @@
         // 알림 기간 업데이트
         updateAlertDays: function (days) {
           localStorage.setItem('contract_alert_days', days);
-          document.getElementById('alert-days-display').textContent = days + '일';
+          const alertDisplay = document.getElementById('alert-days-display');
+          if (alertDisplay) {
+            alertDisplay.textContent = days + '일';
+          }
           this.checkContractExpirationsInDataTab();
         },
         
