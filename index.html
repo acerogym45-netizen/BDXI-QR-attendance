@@ -307,6 +307,32 @@
 
       <!-- Main Content -->
       <main class="flex-1 max-w-7xl w-full mx-auto px-4 py-6">
+        <!-- 계약 만료 알림 배너 -->
+        <div id="contract-alert-banner" class="hidden mb-6 bg-gradient-to-r from-orange-50 to-red-50 border-2 border-orange-300 rounded-xl p-4 shadow-lg">
+          <div class="flex items-start gap-3">
+            <div class="flex-shrink-0">
+              <i class="fas fa-exclamation-triangle text-orange-600 text-2xl"></i>
+            </div>
+            <div class="flex-1">
+              <h4 class="text-lg font-bold text-gray-800 mb-2">
+                <i class="fas fa-bell mr-2"></i>계약 만료 예정 직원 알림
+              </h4>
+              <p class="text-sm text-gray-600 mb-3">
+                계약 기간이 30일 이내로 남은 직원이 있습니다. 재계약을 확인해주세요.
+              </p>
+              <div id="contract-alert-list" class="space-y-2">
+                <!-- JS로 동적 생성 -->
+              </div>
+              <button onclick="app.switchTab('data')" class="mt-3 px-4 py-2 bg-orange-600 text-white text-sm rounded-lg hover:bg-orange-700 transition-colors">
+                <i class="fas fa-users mr-2"></i>직원 관리로 이동
+              </button>
+            </div>
+            <button onclick="document.getElementById('contract-alert-banner').classList.add('hidden')" class="text-gray-400 hover:text-gray-600">
+              <i class="fas fa-times text-xl"></i>
+            </button>
+          </div>
+        </div>
+
         <!-- TAB 1: Gallery -->
         <div id="tab-gallery" class="tab-content space-y-6">
           <!-- Search Bar -->
@@ -636,6 +662,7 @@
                   <tr>
                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">이름</th>
                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">연락처</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">계약기간</th>
                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">상태</th>
                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">등록일</th>
                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">관리</th>
@@ -752,6 +779,20 @@
               <option value="active">활성</option>
               <option value="inactive">비활성</option>
             </select>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">계약 시작일</label>
+              <input type="date" id="new-employee-contract-start" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">계약 종료일</label>
+              <input type="date" id="new-employee-contract-end" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">비고</label>
+            <textarea id="new-employee-notes" placeholder="기타 메모사항" rows="3" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"></textarea>
           </div>
           <button onclick="app.addEmployee()" class="w-full px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium">
             <i class="fas fa-plus mr-2"></i>추가
@@ -952,6 +993,9 @@
           if (apartmentNameEl && this.currentApartment) {
             apartmentNameEl.textContent = this.currentApartment.name;
           }
+          
+          // 계약 만료 알림 체크
+          this.checkContractExpirations();
           
           this.switchTab('gallery');
         },
@@ -1997,7 +2041,7 @@
         // Employee Management
         loadEmployees: async function () {
           const list = document.getElementById('employee-list');
-          list.innerHTML = '<tr><td colspan="5" class="text-center py-4"><div class="loader"></div></td></tr>';
+          list.innerHTML = '<tr><td colspan="6" class="text-center py-4"><div class="loader"></div></td></tr>';
           
           try {
             let query = this.sb.from('employees').select('*').order('created_at', { ascending: false });
@@ -2014,7 +2058,7 @@
             list.innerHTML = '';
             
             if (!data || data.length === 0) {
-              list.innerHTML = '<tr><td colspan="5" class="text-center py-10 text-gray-400">등록된 직원이 없습니다.</td></tr>';
+              list.innerHTML = '<tr><td colspan="6" class="text-center py-10 text-gray-400">등록된 직원이 없습니다.</td></tr>';
               return;
             }
             
@@ -2024,9 +2068,31 @@
               const statusText = emp.status === 'active' ? '활성' : '비활성';
               const toggleIcon = emp.status === 'active' ? 'on' : 'off';
               
+              // 계약 기간 표시
+              let contractDisplay = '-';
+              let contractClass = '';
+              if (emp.contract_start && emp.contract_end) {
+                const start = new Date(emp.contract_start);
+                const end = new Date(emp.contract_end);
+                const today = new Date();
+                const daysUntilExpiry = Math.floor((end - today) / (1000 * 60 * 60 * 24));
+                
+                contractDisplay = `${start.toLocaleDateString('ko-KR')} ~ ${end.toLocaleDateString('ko-KR')}`;
+                
+                // 계약 만료 30일 전부터 경고 표시
+                if (daysUntilExpiry <= 30 && daysUntilExpiry >= 0) {
+                  contractClass = 'text-orange-600 font-semibold';
+                  contractDisplay += ` <span class="text-xs">(${daysUntilExpiry}일 남음)</span>`;
+                } else if (daysUntilExpiry < 0) {
+                  contractClass = 'text-red-600 font-semibold';
+                  contractDisplay += ` <span class="text-xs">(만료)</span>`;
+                }
+              }
+              
               tr.innerHTML = `
                 <td class="px-4 py-3 text-sm font-medium">${emp.name}</td>
                 <td class="px-4 py-3 text-sm">${emp.phone || '-'}</td>
+                <td class="px-4 py-3 text-sm ${contractClass}">${contractDisplay}</td>
                 <td class="px-4 py-3"><span class="px-2 py-1 text-xs rounded-full ${statusColor}">${statusText}</span></td>
                 <td class="px-4 py-3 text-sm text-gray-500">${new Date(emp.created_at).toLocaleDateString('ko-KR')}</td>
                 <td class="px-4 py-3 text-sm">
@@ -2050,7 +2116,7 @@
             });
           } catch (error) {
             console.error('직원 로드 실패:', error);
-            list.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-red-500">직원 로드 실패</td></tr>';
+            list.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-red-500">직원 로드 실패</td></tr>';
           }
         },
         
@@ -2059,6 +2125,9 @@
           document.getElementById('new-employee-name').value = '';
           document.getElementById('new-employee-phone').value = '';
           document.getElementById('new-employee-status').value = 'active';
+          document.getElementById('new-employee-contract-start').value = '';
+          document.getElementById('new-employee-contract-end').value = '';
+          document.getElementById('new-employee-notes').value = '';
         },
         
         closeEmployeeModal: function () {
@@ -2069,6 +2138,9 @@
           const name = document.getElementById('new-employee-name').value.trim();
           const phone = document.getElementById('new-employee-phone').value.trim();
           const status = document.getElementById('new-employee-status').value;
+          const contractStart = document.getElementById('new-employee-contract-start').value;
+          const contractEnd = document.getElementById('new-employee-contract-end').value;
+          const notes = document.getElementById('new-employee-notes').value.trim();
           
           if (!name) {
             alert('직원명을 입력하세요.');
@@ -2076,12 +2148,15 @@
           }
           
           try {
-            // 🏢 현재 아파트 ID 포함
+            // 🏢 현재 아파트 ID 포함 + 계약 정보
             const employeeData = { 
               name, 
               phone, 
               status,
-              apartment_id: this.currentApartment ? this.currentApartment.id : null
+              apartment_id: this.currentApartment ? this.currentApartment.id : null,
+              contract_start: contractStart || null,
+              contract_end: contractEnd || null,
+              notes: notes || null
             };
             
             const { error } = await this.sb.from('employees').insert([employeeData]);
@@ -2132,6 +2207,70 @@
           } catch (error) {
             console.error('직원 삭제 실패:', error);
             alert('직원 삭제 실패: ' + error.message);
+          }
+        },
+        
+        // 계약 만료 알림 체크
+        checkContractExpirations: async function () {
+          try {
+            let query = this.sb
+              .from('employees')
+              .select('id, name, contract_start, contract_end')
+              .eq('status', 'active')
+              .not('contract_end', 'is', null);
+            
+            // 🏢 아파트 필터 적용
+            if (this.currentApartment && this.currentApartment.id) {
+              query = query.eq('apartment_id', this.currentApartment.id);
+            }
+            
+            const { data, error } = await query;
+            
+            if (error) throw error;
+            
+            if (!data || data.length === 0) return;
+            
+            const today = new Date();
+            const thirtyDaysFromNow = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
+            
+            // 계약 만료 30일 이내 직원 필터링
+            const expiringEmployees = data.filter(emp => {
+              const contractEnd = new Date(emp.contract_end);
+              return contractEnd >= today && contractEnd <= thirtyDaysFromNow;
+            }).sort((a, b) => new Date(a.contract_end) - new Date(b.contract_end));
+            
+            if (expiringEmployees.length > 0) {
+              // 알림 배너 표시
+              const banner = document.getElementById('contract-alert-banner');
+              const alertList = document.getElementById('contract-alert-list');
+              
+              alertList.innerHTML = '';
+              expiringEmployees.forEach(emp => {
+                const contractEnd = new Date(emp.contract_end);
+                const daysUntil = Math.ceil((contractEnd - today) / (1000 * 60 * 60 * 24));
+                
+                const alertItem = document.createElement('div');
+                alertItem.className = 'bg-white border-l-4 border-orange-500 p-3 rounded shadow-sm';
+                alertItem.innerHTML = `
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <span class="font-semibold text-gray-800">${emp.name}</span>
+                      <span class="text-sm text-gray-600 ml-2">계약 종료일: ${contractEnd.toLocaleDateString('ko-KR')}</span>
+                    </div>
+                    <span class="px-3 py-1 text-xs font-bold rounded-full ${
+                      daysUntil <= 7 ? 'bg-red-100 text-red-700' : 'bg-orange-100 text-orange-700'
+                    }">
+                      ${daysUntil}일 남음
+                    </span>
+                  </div>
+                `;
+                alertList.appendChild(alertItem);
+              });
+              
+              banner.classList.remove('hidden');
+            }
+          } catch (error) {
+            console.error('계약 만료 체크 실패:', error);
           }
         },
         
