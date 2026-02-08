@@ -131,30 +131,95 @@
 
       /* Before/After Badge */
       .badge-before {
-        background-color: #ef4444;
+        background-color: #3b82f6;
         color: white;
-        padding: 2px 8px;
-        border-radius: 4px;
-        font-size: 10px;
+        padding: 4px 12px;
+        border-radius: 6px;
+        font-size: 11px;
         font-weight: bold;
+        position: absolute;
+        top: 8px;
+        left: 8px;
+        z-index: 10;
       }
       .badge-after {
         background-color: #22c55e;
         color: white;
-        padding: 2px 8px;
-        border-radius: 4px;
-        font-size: 10px;
+        padding: 4px 12px;
+        border-radius: 6px;
+        font-size: 11px;
         font-weight: bold;
+        position: absolute;
+        top: 8px;
+        left: 8px;
+        z-index: 10;
       }
 
       /* Photo Group Badge */
       .group-badge {
-        background-color: #8b5cf6;
+        background-color: rgba(0, 0, 0, 0.7);
         color: white;
-        padding: 2px 8px;
-        border-radius: 4px;
-        font-size: 10px;
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 12px;
         font-weight: bold;
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        z-index: 10;
+      }
+
+      /* Gallery Group Card */
+      .gallery-group-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        overflow: hidden;
+        transition: box-shadow 0.3s ease;
+      }
+      .gallery-group-card:hover {
+        box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+      }
+
+      /* Before After Container */
+      .before-after-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0;
+      }
+      .photo-item {
+        position: relative;
+        aspect-ratio: 4/3;
+        overflow: hidden;
+        cursor: pointer;
+      }
+      .photo-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.3s ease;
+      }
+      .photo-item:hover img {
+        transform: scale(1.05);
+      }
+
+      /* Multiple Photos Grid */
+      .multi-photos-grid {
+        display: grid;
+        gap: 2px;
+      }
+      .multi-photos-grid.count-2 {
+        grid-template-columns: 1fr 1fr;
+      }
+      .multi-photos-grid.count-3 {
+        grid-template-columns: 1fr 1fr 1fr;
+      }
+      .multi-photos-grid.count-4 {
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: 1fr 1fr;
+      }
+      .multi-photos-grid.count-more {
+        grid-template-columns: repeat(3, 1fr);
       }
 
       /* Image Gallery Modal */
@@ -339,8 +404,8 @@
             </button>
           </div>
 
-          <div id="gallery-grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-            <!-- Items injected by JS -->
+          <div id="gallery-grid" class="space-y-6">
+            <!-- Items injected by JS - Now showing grouped cards with before/after side by side -->
           </div>
         </div>
 
@@ -998,99 +1063,240 @@
             if (filteredData && filteredData.length > 0) {
               document.getElementById('gallery-count').textContent = `(${filteredData.length}건)`;
               
-              filteredData.forEach((item) => {
-                const div = document.createElement('div');
-                div.className = 'gallery-item bg-white rounded-lg shadow hover:shadow-lg transition-shadow';
-                
-                // photo_url 또는 photo_urls 컬럼 사용
-                let photoUrlValue = item.photo_url;
-                let photoUrlsArray = [];
-                
-                if (!photoUrlValue && item.photo_urls) {
-                  if (Array.isArray(item.photo_urls)) {
-                    photoUrlsArray = item.photo_urls;
-                    photoUrlValue = item.photo_urls[0];
-                  } else if (typeof item.photo_urls === 'string') {
-                    try {
-                      const parsed = JSON.parse(item.photo_urls);
-                      if (Array.isArray(parsed)) {
-                        photoUrlsArray = parsed;
-                        photoUrlValue = parsed[0];
-                      } else {
-                        photoUrlValue = item.photo_urls;
-                      }
-                    } catch {
-                      photoUrlValue = item.photo_urls;
-                    }
-                  }
-                } else if (photoUrlValue) {
-                  photoUrlsArray = [photoUrlValue];
-                }
-                
-                const hasPhoto = !!photoUrlValue;
-                const isGroup = photoUrlsArray.length > 1;
-                const beforeAfter = item.before_after || 'none'; // 'before', 'after', 'none'
-                const groupId = item.group_id || null;
-                
-                // Before/After badge
-                let badgeHtml = '';
-                if (beforeAfter === 'before') {
-                  badgeHtml = '<span class="badge-before">BEFORE</span>';
-                } else if (beforeAfter === 'after') {
-                  badgeHtml = '<span class="badge-after">AFTER</span>';
-                }
-                
-                // Group badge
-                let groupBadgeHtml = '';
-                if (isGroup) {
-                  groupBadgeHtml = `<span class="group-badge">${photoUrlsArray.length}장</span>`;
-                }
-                
-                div.innerHTML = `
-                  <div class="relative">
-                    ${hasPhoto ? 
-                      `<img 
-                         data-src="${photoUrlValue}" 
-                         class="lazy-image w-full h-48 object-cover rounded-t-lg cursor-pointer bg-gray-200" 
-                         onclick='app.openModal(${JSON.stringify(photoUrlsArray)}, "${item.employee_name || '직원명 없음'}", "${item.created_at}", "${beforeAfter}", "${groupId || ''}")'
-                         onerror="this.style.display='none'; this.parentElement.innerHTML='<div class=\\'w-full h-48 bg-gray-100 rounded-t-lg flex items-center justify-center\\'><div class=\\'text-center\\'><svg class=\\'mx-auto h-12 w-12 text-gray-400\\' fill=\\'none\\' viewBox=\\'0 0 24 24\\' stroke=\\'currentColor\\'><path stroke-linecap=\\'round\\' stroke-linejoin=\\'round\\' stroke-width=\\'2\\' d=\\'M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z\\'></path></svg><p class=\\'mt-2 text-sm text-gray-500\\'>사진 로드 실패</p></div></div>'">` 
-                      : 
-                      `<div class="w-full h-48 bg-gray-100 rounded-t-lg flex items-center justify-center">
-                         <div class="text-center">
-                           <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                           </svg>
-                           <p class="mt-2 text-sm text-gray-500">사진 없음</p>
-                         </div>
-                       </div>`
-                    }
-                    <div class="absolute top-2 left-2 flex gap-1">
-                      ${badgeHtml}
-                      ${groupBadgeHtml}
-                    </div>
-                    ${!hasPhoto ? '<div class="absolute top-2 right-2 bg-yellow-500 text-white text-xs px-2 py-1 rounded">사진 없음</div>' : ''}
-                  </div>
-                  <div class="p-3">
-                      <div class="font-medium text-gray-800">${item.employee_name || '직원명 없음'}</div>
-                      <div class="text-sm text-gray-500">
-                          ${new Date(item.created_at).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                      </div>
-                      ${item.location ? `<div class="text-xs text-gray-400 mt-1">${item.location}</div>` : ''}
-                  </div>
-              `;
-                grid.appendChild(div);
+              // Group by group_id or create individual groups
+              const groupedData = this.groupPhotosByGroupId(filteredData);
+              
+              groupedData.forEach((group) => {
+                const groupCard = this.createGalleryGroupCard(group);
+                grid.appendChild(groupCard);
               });
               
               // Lazy Loading 초기화
               this.initLazyLoading();
             } else {
-              grid.innerHTML = '<div class="col-span-full text-center py-20 text-gray-400">데이터가 없습니다.</div>';
+              grid.innerHTML = '<div class="text-center py-20 text-gray-400">데이터가 없습니다.</div>';
               document.getElementById('gallery-count').textContent = '(0건)';
             }
           } catch (e) {
             console.error(e);
-            grid.innerHTML = '<div class="col-span-full text-center text-red-500">오류 발생</div>';
+            grid.innerHTML = '<div class="text-center text-red-500">오류 발생</div>';
           }
+        },
+
+        // Group photos by group_id or before/after pairs
+        groupPhotosByGroupId: function(data) {
+          const groups = [];
+          const grouped = new Set();
+          
+          data.forEach((item, index) => {
+            if (grouped.has(index)) return;
+            
+            const groupId = item.group_id;
+            
+            if (groupId) {
+              // Find all items with same group_id
+              const groupItems = data.filter((d, i) => {
+                if (grouped.has(i)) return false;
+                return d.group_id === groupId;
+              });
+              
+              groupItems.forEach((gi) => {
+                const idx = data.indexOf(gi);
+                if (idx !== -1) grouped.add(idx);
+              });
+              
+              groups.push(groupItems);
+            } else {
+              // Check if it's part of a before/after pair
+              const beforeAfter = item.before_after;
+              if (beforeAfter === 'before' || beforeAfter === 'after') {
+                const pairType = beforeAfter === 'before' ? 'after' : 'before';
+                const pairItem = data.find((d, i) => {
+                  if (grouped.has(i) || i === index) return false;
+                  return d.before_after === pairType && 
+                         d.employee_name === item.employee_name &&
+                         d.location === item.location &&
+                         Math.abs(new Date(d.created_at) - new Date(item.created_at)) < 3600000; // Within 1 hour
+                });
+                
+                if (pairItem) {
+                  const pairIdx = data.indexOf(pairItem);
+                  grouped.add(index);
+                  grouped.add(pairIdx);
+                  
+                  // Sort: before first, after second
+                  const sortedPair = beforeAfter === 'before' ? [item, pairItem] : [pairItem, item];
+                  groups.push(sortedPair);
+                } else {
+                  grouped.add(index);
+                  groups.push([item]);
+                }
+              } else {
+                grouped.add(index);
+                groups.push([item]);
+              }
+            }
+          });
+          
+          return groups;
+        },
+
+        // Create gallery group card
+        createGalleryGroupCard: function(groupItems) {
+          const card = document.createElement('div');
+          card.className = 'gallery-group-card';
+          
+          const firstItem = groupItems[0];
+          const hasMultiple = groupItems.length > 1;
+          
+          // Check if it's a before/after pair
+          const isBeforeAfterPair = groupItems.length === 2 && 
+                                     groupItems[0].before_after === 'before' && 
+                                     groupItems[1].before_after === 'after';
+          
+          // Get all photo URLs from all items
+          const allPhotos = [];
+          groupItems.forEach(item => {
+            let photoUrls = [];
+            if (item.photo_urls) {
+              if (Array.isArray(item.photo_urls)) {
+                photoUrls = item.photo_urls;
+              } else if (typeof item.photo_urls === 'string') {
+                try {
+                  const parsed = JSON.parse(item.photo_urls);
+                  photoUrls = Array.isArray(parsed) ? parsed : [item.photo_urls];
+                } catch {
+                  photoUrls = [item.photo_urls];
+                }
+              }
+            } else if (item.photo_url) {
+              photoUrls = [item.photo_url];
+            }
+            
+            photoUrls.forEach(url => {
+              allPhotos.push({
+                url: url,
+                beforeAfter: item.before_after || 'none',
+                item: item
+              });
+            });
+          });
+          
+          let photosHtml = '';
+          
+          if (isBeforeAfterPair) {
+            // Before/After side by side layout
+            photosHtml = '<div class="before-after-container">';
+            
+            groupItems.forEach((item, idx) => {
+              const photoUrl = this.getFirstPhotoUrl(item);
+              const badgeClass = item.before_after === 'before' ? 'badge-before' : 'badge-after';
+              const badgeText = item.before_after === 'before' ? 'Before' : 'After';
+              
+              photosHtml += `
+                <div class="photo-item" onclick='app.openModal(${JSON.stringify(allPhotos.map(p => p.url))}, "${firstItem.employee_name || '직원명 없음'}", "${firstItem.created_at}", "${item.before_after}", "${firstItem.group_id || ''}",  ${idx})'>
+                  <span class="${badgeClass}">${badgeText}</span>
+                  ${photoUrl ? 
+                    `<img data-src="${photoUrl}" class="lazy-image" alt="${item.before_after}">` :
+                    `<div class="w-full h-full bg-gray-200 flex items-center justify-center">
+                      <span class="text-gray-400">사진 없음</span>
+                    </div>`
+                  }
+                </div>
+              `;
+            });
+            
+            photosHtml += '</div>';
+          } else if (allPhotos.length > 1) {
+            // Multiple photos grid layout
+            const gridClass = allPhotos.length === 2 ? 'count-2' : 
+                             allPhotos.length === 3 ? 'count-3' : 
+                             allPhotos.length === 4 ? 'count-4' : 'count-more';
+            
+            photosHtml = `<div class="multi-photos-grid ${gridClass}">`;
+            
+            // Show max 6 photos
+            const displayPhotos = allPhotos.slice(0, 6);
+            displayPhotos.forEach((photo, idx) => {
+              photosHtml += `
+                <div class="photo-item" onclick='app.openModal(${JSON.stringify(allPhotos.map(p => p.url))}, "${firstItem.employee_name || '직원명 없음'}", "${firstItem.created_at}", "${photo.beforeAfter}", "${firstItem.group_id || ''}", ${idx})'>
+                  ${photo.url ? 
+                    `<img data-src="${photo.url}" class="lazy-image" alt="photo ${idx + 1}">` :
+                    `<div class="w-full h-full bg-gray-200 flex items-center justify-center">
+                      <span class="text-gray-400">사진 없음</span>
+                    </div>`
+                  }
+                </div>
+              `;
+            });
+            
+            photosHtml += '</div>';
+            
+            // Add photo count badge
+            if (allPhotos.length > 0) {
+              photosHtml = `<div class="relative">${photosHtml}<span class="group-badge"><i class="fas fa-images mr-1"></i>${allPhotos.length}장</span></div>`;
+            }
+          } else {
+            // Single photo
+            const photo = allPhotos[0];
+            if (photo) {
+              const badgeHtml = photo.beforeAfter === 'before' ? '<span class="badge-before">Before</span>' :
+                               photo.beforeAfter === 'after' ? '<span class="badge-after">After</span>' : '';
+              
+              photosHtml = `
+                <div class="photo-item" style="aspect-ratio: 16/9;" onclick='app.openModal(${JSON.stringify([photo.url])}, "${firstItem.employee_name || '직원명 없음'}", "${firstItem.created_at}", "${photo.beforeAfter}", "${firstItem.group_id || ''}", 0)'>
+                  ${badgeHtml}
+                  ${photo.url ? 
+                    `<img data-src="${photo.url}" class="lazy-image" alt="single photo">` :
+                    `<div class="w-full h-full bg-gray-200 flex items-center justify-center">
+                      <span class="text-gray-400">사진 없음</span>
+                    </div>`
+                  }
+                </div>
+              `;
+            }
+          }
+          
+          card.innerHTML = `
+            ${photosHtml}
+            <div class="p-4">
+              <div class="flex justify-between items-start">
+                <div>
+                  <div class="font-bold text-gray-800">${firstItem.employee_name || '직원명 없음'}</div>
+                  <div class="text-sm text-gray-500 mt-1">
+                    ${new Date(firstItem.created_at).toLocaleString('ko-KR', { 
+                      month: 'numeric', 
+                      day: 'numeric', 
+                      hour: '2-digit', 
+                      minute: '2-digit' 
+                    })}
+                  </div>
+                  ${firstItem.location ? `<div class="text-xs text-gray-400 mt-1"><i class="fas fa-map-marker-alt mr-1"></i>${firstItem.location}</div>` : ''}
+                </div>
+              </div>
+            </div>
+          `;
+          
+          return card;
+        },
+
+        getFirstPhotoUrl: function(item) {
+          if (item.photo_url) return item.photo_url;
+          
+          if (item.photo_urls) {
+            if (Array.isArray(item.photo_urls)) {
+              return item.photo_urls[0];
+            } else if (typeof item.photo_urls === 'string') {
+              try {
+                const parsed = JSON.parse(item.photo_urls);
+                return Array.isArray(parsed) ? parsed[0] : item.photo_urls;
+              } catch {
+                return item.photo_urls;
+              }
+            }
+          }
+          
+          return null;
         },
 
         // Lazy Loading 초기화
@@ -1211,10 +1417,10 @@
           this.setupEmployeeSearch('filter-employee-input', 'filter-employee-dropdown');
         },
 
-        openModal: function (photos, name, time, beforeAfter, groupId) {
+        openModal: function (photos, name, time, beforeAfter, groupId, startIndex = 0) {
           // photos can be a single URL string or an array of URLs
           const photosArray = Array.isArray(photos) ? photos : [photos];
-          const mainPhoto = photosArray[0];
+          const mainPhoto = photosArray[startIndex] || photosArray[0];
           
           document.getElementById('modal-image').src = mainPhoto;
           document.getElementById('modal-employee-name').textContent = name;
@@ -1225,13 +1431,13 @@
           tagsContainer.innerHTML = '';
           
           if (beforeAfter === 'before') {
-            tagsContainer.innerHTML += '<span class="badge-before">BEFORE</span>';
+            tagsContainer.innerHTML += '<span class="badge-before" style="position:relative;top:0;left:0;">Before</span>';
           } else if (beforeAfter === 'after') {
-            tagsContainer.innerHTML += '<span class="badge-after">AFTER</span>';
+            tagsContainer.innerHTML += '<span class="badge-after" style="position:relative;top:0;left:0;">After</span>';
           }
           
           if (photosArray.length > 1) {
-            tagsContainer.innerHTML += `<span class="group-badge">${photosArray.length}장의 사진</span>`;
+            tagsContainer.innerHTML += `<span class="group-badge" style="position:relative;top:0;left:0;"><i class="fas fa-images mr-1"></i>${photosArray.length}장</span>`;
           }
           
           // Show image group gallery if multiple photos
@@ -1246,7 +1452,7 @@
               imgDiv.className = 'image-gallery-item';
               imgDiv.innerHTML = `
                 <div class="relative">
-                  <img src="${photoUrl}" class="w-full h-32 object-cover rounded border-2 ${index === 0 ? 'border-blue-500' : 'border-gray-200'}" 
+                  <img src="${photoUrl}" class="w-full h-32 object-cover rounded border-2 ${index === startIndex ? 'border-blue-500' : 'border-gray-200'}" 
                        onclick="app.switchModalImage('${photoUrl}', ${index})">
                   <div class="absolute bottom-1 right-1 bg-black/60 text-white text-xs px-2 py-0.5 rounded">
                     ${index + 1}/${photosArray.length}
