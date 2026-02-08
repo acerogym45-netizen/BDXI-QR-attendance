@@ -1010,6 +1010,7 @@
                 photo_url: beforeUrl,
                 notes: notes || 'Before/After 청소 작업',
                 group_id: groupId,
+                before_after: 'before',
                 upload_type: 'before_after',
                 photo_order: 0,
                 created_at: new Date().toISOString(),
@@ -1020,6 +1021,7 @@
                 photo_url: afterUrl,
                 notes: notes || 'Before/After 청소 작업',
                 group_id: groupId,
+                before_after: 'after',
                 upload_type: 'before_after',
                 photo_order: 1,
                 created_at: new Date().toISOString(),
@@ -1331,6 +1333,7 @@
                   photo_url: uploadedUrls[0], // Before
                   notes: notes || 'Before/After 청소 작업',
                   group_id: groupId,
+                  before_after: 'before',
                   upload_type: 'before_after',
                   photo_order: 0,
                   created_at: new Date().toISOString(),
@@ -1341,6 +1344,7 @@
                   photo_url: uploadedUrls[1], // After
                   notes: notes || 'Before/After 청소 작업',
                   group_id: groupId,
+                  before_after: 'after',
                   upload_type: 'before_after',
                   photo_order: 1,
                   created_at: new Date().toISOString(),
@@ -1352,21 +1356,22 @@
 
               this.showToast('Before/After 청소 작업이 기록되었습니다.');
             } else {
-              // ✅ Regular mode: save individual records (Modified for Grouping)
-              const groupId = String(Date.now()); // Generate Group ID for multiple photos
+              // ✅ Regular mode: save as single record with photo_urls array
+              const groupId = uploadedUrls.length > 1 ? String(Date.now()) : null;
 
-              const payloads = uploadedUrls.map((url, index) => ({
+              const payload = {
                 employee_name: this.state.selectedEmp.name,
                 location: this.state.locationName,
-                photo_url: url,
+                photo_url: uploadedUrls[0], // First photo as main
+                photo_urls: uploadedUrls, // All photos as array
                 notes: notes,
-                group_id: uploadedUrls.length > 1 ? groupId : null,  // Only group if multiple photos
+                group_id: groupId,
                 upload_type: uploadedUrls.length > 1 ? 'multiple' : 'single',
-                photo_order: index,
+                photo_count: uploadedUrls.length,
                 created_at: new Date().toISOString(),
-              }));
+              };
 
-              const { error: dbError } = await this.sb.from('cleaning_tasks').insert(payloads);
+              const { error: dbError } = await this.sb.from('cleaning_tasks').insert([payload]);
               if (dbError) throw dbError;
 
               this.showToast(`청소 작업 ${uploadedUrls.length}건이 기록되었습니다.`);
