@@ -143,6 +143,8 @@
         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         overflow: hidden;
         transition: box-shadow 0.3s ease;
+        max-width: 800px; /* 최대 너비 제한 */
+        margin: 0 auto; /* 중앙 정렬 */
       }
       .gallery-group-card:hover {
         box-shadow: 0 4px 16px rgba(0,0,0,0.15);
@@ -156,7 +158,8 @@
       }
       .photo-item {
         position: relative;
-        aspect-ratio: 4/3;
+        aspect-ratio: 16/9; /* 4/3에서 16/9로 변경 - 더 낮은 비율 */
+        max-height: 350px; /* 최대 높이 제한 */
         overflow: hidden;
         cursor: pointer;
       }
@@ -174,6 +177,10 @@
       .multi-photos-grid {
         display: grid;
         gap: 2px;
+      }
+      .multi-photos-grid .photo-item {
+        aspect-ratio: 1/1; /* 정사각형 */
+        max-height: 250px; /* 다중 사진은 더 작게 */
       }
       .multi-photos-grid.count-2 {
         grid-template-columns: 1fr 1fr;
@@ -1187,7 +1194,7 @@
               console.log('📷 Single photo:', photo.url);
               
               photosHtml = `
-                <div class="photo-item" style="aspect-ratio: 16/9;" onclick='app.openModal(${JSON.stringify([photo.url])}, "${firstItem.employee_name || '직원명 없음'}", "${firstItem.created_at}", "${photo.beforeAfter}", "${firstItem.group_id || ''}", 0)'>
+                <div class="photo-item" style="aspect-ratio: 16/9; max-height: 350px;" onclick='app.openModal(${JSON.stringify([photo.url])}, "${firstItem.employee_name || '직원명 없음'}", "${firstItem.created_at}", "${photo.beforeAfter}", "${firstItem.group_id || ''}", 0)'>
                   ${badgeHtml}
                   ${photo.url ? 
                     `<img src="${photo.url}" alt="single photo" loading="lazy" style="width:100%;height:100%;object-fit:cover;">` :
