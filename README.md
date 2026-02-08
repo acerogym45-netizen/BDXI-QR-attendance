@@ -231,6 +231,62 @@ QR 코드 스캔을 통한 직원 출석 관리 시스템입니다. 직원이 �
 
 ### 🧹 청소 관리 시스템 (NEW!)
 
+#### 🔥 중요: 데이터베이스 스키마 업데이트 필수
+
+**Before/After 및 다중 사진 기능을 사용하려면 먼저 데이터베이스를 업데이트해야 합니다!**
+
+1. **Supabase 대시보드 접속**:
+   - Supabase 프로젝트 → SQL Editor 메뉴
+   
+2. **New Query 생성 후 실행**:
+   
+   📄 [`add-before-after-column.sql`](./add-before-after-column.sql) 파일 내용을 복사하여 실행하거나, 아래 SQL을 직접 실행:
+
+   ```sql
+   -- Before/After 컬럼 추가 (before, after, null)
+   ALTER TABLE cleaning_tasks 
+   ADD COLUMN IF NOT EXISTS before_after TEXT;
+
+   -- 다중 사진 URL 배열 (JSONB)
+   ALTER TABLE cleaning_tasks 
+   ADD COLUMN IF NOT EXISTS photo_urls JSONB DEFAULT '[]'::jsonb;
+
+   -- 사진 개수
+   ALTER TABLE cleaning_tasks 
+   ADD COLUMN IF NOT EXISTS photo_count INTEGER DEFAULT 1;
+
+   -- 사진 순서 (0=before, 1=after)
+   ALTER TABLE cleaning_tasks 
+   ADD COLUMN IF NOT EXISTS photo_order INTEGER DEFAULT 0;
+
+   -- 업로드 타입 (single, multi, before_after)
+   ALTER TABLE cleaning_tasks 
+   ADD COLUMN IF NOT EXISTS upload_type TEXT DEFAULT 'single';
+
+   -- 인덱스 생성
+   CREATE INDEX IF NOT EXISTS idx_cleaning_tasks_before_after 
+   ON cleaning_tasks(before_after);
+
+   CREATE INDEX IF NOT EXISTS idx_cleaning_tasks_group_id 
+   ON cleaning_tasks(group_id);
+
+   CREATE INDEX IF NOT EXISTS idx_cleaning_tasks_upload_type 
+   ON cleaning_tasks(upload_type);
+   ```
+
+3. **확인**:
+   ```sql
+   SELECT column_name, data_type, is_nullable, column_default
+   FROM information_schema.columns
+   WHERE table_name = 'cleaning_tasks' 
+   AND column_name IN ('before_after', 'photo_count', 'photo_urls', 'group_id', 'photo_order', 'upload_type')
+   ORDER BY column_name;
+   ```
+   
+   6개의 컬럼이 보여야 합니다! ✅
+
+---
+
 #### 초기 설정 (Supabase)
 
 1. **Storage 버킷 생성**:
