@@ -58,39 +58,6 @@
         }
       }
       
-      /* Skeleton Loading */
-      .skeleton {
-        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-        background-size: 200% 100%;
-        animation: loading 1.5s infinite;
-        border-radius: 0.5rem;
-      }
-      @keyframes loading {
-        0% {
-          background-position: 200% 0;
-        }
-        100% {
-          background-position: -200% 0;
-        }
-      }
-      .skeleton-text {
-        height: 1rem;
-        margin: 0.5rem 0;
-      }
-      .skeleton-img {
-        height: 12rem;
-        width: 100%;
-      }
-      
-      /* Lazy Loading */
-      .lazy-image {
-        opacity: 0;
-        transition: opacity 0.3s ease-in-out;
-      }
-      .lazy-image.fade-in {
-        opacity: 1;
-      }
-      
       /* Smooth transitions */
       * {
         transition:
@@ -959,30 +926,17 @@
           } catch (e) {}
         },
 
-        // 스켈레톤 로딩 UI 생성
-        showSkeletonLoading: function(containerId, count = 8) {
+        // 로딩 표시
+        showLoading: function(containerId) {
           const container = document.getElementById(containerId);
-          container.innerHTML = '';
-          
-          for (let i = 0; i < count; i++) {
-            const div = document.createElement('div');
-            div.className = 'bg-white rounded-lg shadow overflow-hidden';
-            div.innerHTML = `
-              <div class="skeleton skeleton-img"></div>
-              <div class="p-3">
-                <div class="skeleton skeleton-text w-3/4"></div>
-                <div class="skeleton skeleton-text w-1/2"></div>
-              </div>
-            `;
-            container.appendChild(div);
-          }
+          container.innerHTML = '<div class="text-center py-20"><div class="loader"></div><p class="mt-4 text-gray-500">데이터를 불러오는 중...</p></div>';
         },
 
         loadGallery: async function () {
           const grid = document.getElementById('gallery-grid');
           
-          // 스켈레톤 로딩 표시
-          this.showSkeletonLoading('gallery-grid', 8);
+          // 로딩 표시
+          this.showLoading('gallery-grid');
 
           try {
             let q = this.sb.from('cleaning_tasks').select('*').order('created_at', { ascending: false });
@@ -1017,6 +971,9 @@
 
             grid.innerHTML = '';
             if (data && data.length > 0) {
+              console.log('📊 Gallery data loaded:', data.length, 'items');
+              console.log('📸 First item sample:', data[0]);
+              
               document.getElementById('gallery-count').textContent = `(${data.length}건)`;
               
               // Group by group_id or create individual groups
@@ -1100,6 +1057,8 @@
           card.className = 'gallery-group-card';
           
           const firstItem = groupItems[0];
+          console.log('🎴 Creating card for:', firstItem.employee_name, 'photos:', firstItem);
+          
           const hasMultiple = groupItems.length > 1;
           
           // Check if it's a before/after pair
@@ -1134,6 +1093,8 @@
               });
             });
           });
+          
+          console.log('🖼️ All photos for card:', allPhotos.length, allPhotos);
           
           let photosHtml = '';
           
