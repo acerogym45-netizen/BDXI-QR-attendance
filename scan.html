@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ko" data-theme="light">
   <head>
@@ -604,20 +605,22 @@
           employees: [],
           selectedEmp: null,
           photoFile: null,
-          photoFiles: [],
-          isGalleryMode: false,
+          photoFiles: [], // Multiple photos
+          isGalleryMode: false, // Track if in gallery mode
           beforeAfterMode: false,
           beforePhoto: null,
           afterPhoto: null,
           sessionTimer: null,
           sessionStartTime: null,
-          sessionDuration: 30 * 60 * 1000,
+          sessionDuration: 30 * 60 * 1000, // 30 minutes in milliseconds
         },
 
         init: async function () {
           try {
+            // 1. Init Supabase
             this.sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+            // 2. Parse URL
             const params = new URLSearchParams(window.location.search);
             this.state.locId = params.get('loc');
             this.state.aptId = params.get('apt');
@@ -626,13 +629,17 @@
               throw new Error('유효하지 않은 QR 코드입니다.');
             }
 
+            // 3. Load Data
             await Promise.all([this.loadLocation(), this.loadEmployees()]);
 
+            // 4. Render
             this.renderLocationInfo();
             this.renderEmployeeList(this.state.employees);
 
+            // 5. Start Session Timer
             this.startSessionTimer();
 
+            // 6. Hide Loader
             document.getElementById('screen-loading').classList.add('hidden');
           } catch (e) {
             console.error(e);
@@ -640,6 +647,7 @@
           }
         },
 
+        // --- SESSION TIMER ---
         getSessionKey: function () {
           return `kindwon_session_${this.state.locId}_${this.state.aptId}`;
         },
@@ -647,25 +655,31 @@
         startSessionTimer: function () {
           const sessionKey = this.getSessionKey();
           
+          // Check if session already exists in localStorage
           let sessionStartTime = localStorage.getItem(sessionKey);
           
           if (sessionStartTime) {
+            // Use existing session time
             this.state.sessionStartTime = parseInt(sessionStartTime, 10);
             
+            // Check if session has already expired
             const elapsed = Date.now() - this.state.sessionStartTime;
             if (elapsed >= this.state.sessionDuration) {
               this.expireSession();
               return;
             }
           } else {
+            // Create new session
             this.state.sessionStartTime = Date.now();
             localStorage.setItem(sessionKey, this.state.sessionStartTime.toString());
           }
           
           document.getElementById('session-timer').classList.remove('hidden');
 
+          // Update timer immediately on load
           this.updateTimerDisplay();
 
+          // Then update every second
           this.state.sessionTimer = setInterval(() => {
             this.updateTimerDisplay();
           }, 1000);
@@ -680,11 +694,13 @@
             return;
           }
 
+          // Update timer display
           const minutes = Math.floor(remaining / 60000);
           const seconds = Math.floor((remaining % 60000) / 1000);
           const timerText = `${minutes}:${seconds.toString().padStart(2, '0')}`;
           document.getElementById('timer-text').textContent = timerText;
 
+          // Warning at 5 minutes
           const timerEl = document.getElementById('session-timer');
           if (remaining <= 5 * 60 * 1000) {
             timerEl.classList.add('timer-warning');
@@ -696,14 +712,17 @@
         expireSession: function () {
           clearInterval(this.state.sessionTimer);
           
+          // Remove session from localStorage
           const sessionKey = this.getSessionKey();
           localStorage.removeItem(sessionKey);
           
           alert('⏰ 세션이 만료되었습니다.\n\n보안을 위해 QR 스캔 후 30분이 경과하여 자동으로 로그아웃됩니다.\n다시 QR 코드를 스캔해주세요.');
           
+          // Redirect to a blank page or reload
           window.location.href = 'about:blank';
         },
 
+        // --- DATA LOADING ---
         loadLocation: async function () {
           const { data, error } = await this.sb.from('locations').select('name').eq('id', this.state.locId).single();
 
@@ -718,6 +737,7 @@
           this.state.employees = data || [];
         },
 
+        // --- RENDERING ---
         renderLocationInfo: function () {
           document.getElementById('display-location').textContent = this.state.locationName;
           const aptName = APARTMENTS[this.state.aptId] || this.state.aptId;
@@ -761,9 +781,11 @@
           this.renderEmployeeList(filtered);
         },
 
+        // --- INTERACTION ---
         selectEmployee: function (emp) {
           this.state.selectedEmp = emp;
 
+          // UI Updates
           document.getElementById('employee-search-container').classList.add('hidden');
           document.getElementById('employee-selected').classList.remove('hidden');
 
@@ -773,6 +795,7 @@
           document.getElementById('btn-reset-emp').classList.remove('hidden');
           document.getElementById('section-work').classList.remove('hidden');
 
+          // Scroll to work section
           setTimeout(() => {
             document.getElementById('section-work').scrollIntoView({ behavior: 'smooth' });
           }, 100);
@@ -789,6 +812,7 @@
           this.renderEmployeeList(this.state.employees);
         },
 
+        // --- ACTIONS: ATTENDANCE ---
         recordAttendance: async function (type) {
           if (!this.state.selectedEmp) return;
 
@@ -817,6 +841,7 @@
           }
         },
 
+        // --- ACTIONS: CLEANING ---
         toggleBeforeAfterMode: function () {
           this.state.beforeAfterMode = !this.state.beforeAfterMode;
           const toggle = document.getElementById('before-after-toggle');
@@ -827,6 +852,7 @@
             toggle.classList.add('active');
             splitUI.classList.remove('hidden');
             regularButtons.classList.add('hidden');
+            // Reset before/after photos
             this.state.beforePhoto = null;
             this.state.afterPhoto = null;
             this.updateBeforeAfterUI();
@@ -858,6 +884,7 @@
 
           const file = input.files[0];
 
+          // Check photo time (12 hours limit)
           const isValid = await this.validatePhotoTime(file);
           if (!isValid) {
             alert('⚠️ 촬영 시간 제한\n\n12시간 이내에 촬영된 사진만 업로드 가능합니다.\n오래된 사진의 재활용을 방지하기 위한 정책입니다.');
@@ -865,12 +892,14 @@
             return;
           }
 
+          // Store photo
           if (type === 'before') {
             this.state.beforePhoto = file;
           } else {
             this.state.afterPhoto = file;
           }
 
+          // Update UI
           this.updateBeforeAfterUI();
           input.value = '';
         },
@@ -886,6 +915,7 @@
 
           const uploadBtn = document.getElementById('btn-upload-before-after');
 
+          // Update Before
           if (this.state.beforePhoto) {
             const reader = new FileReader();
             reader.onload = (e) => {
@@ -899,6 +929,7 @@
             beforePlaceholder.classList.remove('hidden');
           }
 
+          // Update After
           if (this.state.afterPhoto) {
             const reader = new FileReader();
             reader.onload = (e) => {
@@ -912,6 +943,7 @@
             afterPlaceholder.classList.remove('hidden');
           }
 
+          // Enable upload button only when both photos are ready
           if (this.state.beforePhoto && this.state.afterPhoto) {
             uploadBtn.disabled = false;
             uploadBtn.classList.remove('bg-gray-300');
@@ -923,7 +955,6 @@
           }
         },
 
-        // ✅ 수정됨: uploadBeforeAfter with grouping
         uploadBeforeAfter: async function () {
           if (!this.state.beforePhoto || !this.state.afterPhoto) {
             alert('⚠️ Before와 After 사진을 모두 선택해주세요.');
@@ -969,36 +1000,38 @@
               .from('cleaning-photos')
               .getPublicUrl(afterFileName);
 
-            // ✅ Save to database with grouping
-            const groupId = Date.now().toString();
+            // Save to database
+            const groupId = String(Date.now()); // Generate Group ID
 
-            const payloadBefore = {
-              employee_name: this.state.selectedEmp.name,
-              location: this.state.locationName,
-              photo_url: beforeUrl,
-              notes: notes || 'Before/After 청소 작업',
-              created_at: new Date().toISOString(),
-              group_id: groupId,
-              upload_type: 'before_after',
-              photo_order: 0,
-            };
+            const payloads = [
+              {
+                employee_name: this.state.selectedEmp.name,
+                location: this.state.locationName,
+                photo_url: beforeUrl,
+                notes: notes || 'Before/After 청소 작업',
+                group_id: groupId,
+                upload_type: 'before_after',
+                photo_order: 0,
+                created_at: new Date().toISOString(),
+              },
+              {
+                employee_name: this.state.selectedEmp.name,
+                location: this.state.locationName,
+                photo_url: afterUrl,
+                notes: notes || 'Before/After 청소 작업',
+                group_id: groupId,
+                upload_type: 'before_after',
+                photo_order: 1,
+                created_at: new Date().toISOString(),
+              }
+            ];
 
-            const payloadAfter = {
-              employee_name: this.state.selectedEmp.name,
-              location: this.state.locationName,
-              photo_url: afterUrl,
-              notes: notes || 'Before/After 청소 작업',
-              created_at: new Date().toISOString(),
-              group_id: groupId,
-              upload_type: 'before_after',
-              photo_order: 1,
-            };
-
-            const { error: dbError } = await this.sb.from('cleaning_tasks').insert([payloadBefore, payloadAfter]);
+            const { error: dbError } = await this.sb.from('cleaning_tasks').insert(payloads);
             if (dbError) throw dbError;
 
             this.showToast('✅ Before/After 청소 작업이 기록되었습니다.');
 
+            // Reset UI
             this.state.beforePhoto = null;
             this.state.afterPhoto = null;
             document.getElementById('inp-notes-before-after').value = '';
@@ -1024,10 +1057,12 @@
           }
         },
 
+        // Single photo (capture mode)
         handlePhoto: async function (input) {
           if (input.files && input.files[0]) {
             const file = input.files[0];
 
+            // Check photo time (12 hours limit)
             const isValid = await this.validatePhotoTime(file);
             if (!isValid) {
               alert('⚠️ 촬영 시간 제한\n\n12시간 이내에 촬영된 사진만 업로드 가능합니다.\n오래된 사진의 재활용을 방지하기 위한 정책입니다.');
@@ -1048,23 +1083,27 @@
               document.getElementById('preview-overlay').classList.remove('hidden');
               document.getElementById('preview-count').textContent = '';
               
+              // Update button text for single photo mode
               document.getElementById('btn-retake').innerHTML = '<i class="fas fa-redo mr-1"></i>재촬영';
             };
             reader.readAsDataURL(file);
           }
         },
 
+        // Multiple photos (gallery mode)
         handleMultiplePhotos: async function (input, isAdding = false) {
           if (!input.files || input.files.length === 0) return;
 
           const files = Array.from(input.files);
 
+          // Before/After mode: require exactly 2 photos
           if (this.state.beforeAfterMode && files.length !== 2) {
             alert('⚠️ Before/After 모드\n\nBefore와 After 사진 2장을 선택해주세요.');
             input.value = '';
             return;
           }
 
+          // Validate all photos (12 hours limit)
           const validations = await Promise.all(files.map(f => this.validatePhotoTime(f)));
           const invalidPhotos = validations.filter(v => !v).length;
 
@@ -1074,12 +1113,14 @@
             return;
           }
 
+          // If adding to existing photos, merge arrays
           if (isAdding && this.state.photoFiles.length > 0) {
             this.state.photoFiles = [...this.state.photoFiles, ...files];
           } else {
             this.state.photoFiles = files;
           }
 
+          // Show preview based on mode
           if (this.state.beforeAfterMode) {
             this.showBeforeAfterPreview(this.state.photoFiles);
           } else {
@@ -1137,17 +1178,23 @@
           document.getElementById('preview-title').textContent = '📸 사진 확인';
           document.getElementById('preview-count').textContent = `(${files.length}장)`;
           
+          // Update button text for gallery mode
           document.getElementById('btn-retake').innerHTML = '<i class="fas fa-plus mr-1"></i>추가 촬영';
         },
 
+        // Validate photo taken within 12 hours
         validatePhotoTime: async function (file) {
           return new Promise((resolve) => {
+            // Try to extract EXIF data
             const reader = new FileReader();
             reader.onload = (e) => {
               try {
+                // Simple EXIF check using DataView
                 const view = new DataView(e.target.result);
                 
+                // Check if JPEG (starts with FFD8)
                 if (view.getUint16(0, false) !== 0xFFD8) {
+                  // Not a JPEG, use file modification time
                   const fileTime = file.lastModified;
                   const now = Date.now();
                   const hoursDiff = (now - fileTime) / (1000 * 60 * 60);
@@ -1155,24 +1202,29 @@
                   return;
                 }
 
+                // Try to find EXIF DateTime
+                // This is a simplified check - in production, use a library like exif-js
                 let offset = 2;
                 let exifFound = false;
                 
                 while (offset < view.byteLength) {
                   const marker = view.getUint16(offset, false);
-                  if (marker === 0xFFE1) {
+                  if (marker === 0xFFE1) { // APP1 marker (EXIF)
                     exifFound = true;
                     break;
                   }
                   offset += 2 + view.getUint16(offset + 2, false);
                 }
 
+                // For now, use file modification time as fallback
+                // In production, you'd parse EXIF DateTime here
                 const fileTime = file.lastModified;
                 const now = Date.now();
                 const hoursDiff = (now - fileTime) / (1000 * 60 * 60);
                 resolve(hoursDiff <= 12);
               } catch (err) {
                 console.error('EXIF parsing error:', err);
+                // On error, allow the upload (fallback to trust)
                 resolve(true);
               }
             };
@@ -1182,8 +1234,10 @@
 
         retakePhoto: function () {
           if (this.state.isGalleryMode || this.state.photoFiles.length > 1) {
+            // Gallery mode: Add more photos
             this.addMorePhotos();
           } else {
+            // Single capture mode: Replace photo
             this.cancelPhoto();
             setTimeout(() => {
               this.openCameraMode('capture');
@@ -1192,12 +1246,14 @@
         },
 
         addMorePhotos: function () {
+          // Don't close preview overlay, just open gallery to add more
           const input = document.getElementById('inp-camera-gallery');
           const oldHandler = input.onchange;
           
+          // Temporarily override handler to add photos
           input.onchange = (e) => {
-            this.handleMultiplePhotos(input, true);
-            input.onchange = oldHandler;
+            this.handleMultiplePhotos(input, true); // isAdding = true
+            input.onchange = oldHandler; // Restore original handler
           };
           
           input.click();
@@ -1212,7 +1268,6 @@
           this.state.photoFiles = [];
         },
 
-        // ✅ 수정됨: uploadPhoto with grouping
         uploadPhoto: async function () {
           if (!this.state.photoFiles || this.state.photoFiles.length === 0) return;
 
@@ -1228,6 +1283,7 @@
           btnText.textContent = '업로드 중...';
           spinner.classList.remove('hidden');
 
+          // Show progress for multiple files
           if (this.state.photoFiles.length > 1) {
             progressContainer.classList.remove('hidden');
           }
@@ -1237,6 +1293,7 @@
             const uploadedUrls = [];
             let uploadCount = 0;
 
+            // Upload all photos
             for (const file of this.state.photoFiles) {
               const ext = file.name.split('.').pop() || 'jpg';
               const fileName = `${this.state.aptId}/${Date.now()}_${Math.random().toString(36).substr(2, 9)}.${ext}`;
@@ -1254,6 +1311,7 @@
               uploadedUrls.push(publicUrl);
               uploadCount++;
 
+              // Update progress
               if (this.state.photoFiles.length > 1) {
                 const progress = (uploadCount / this.state.photoFiles.length) * 100;
                 progressBar.style.setProperty('--progress', `${progress}%`);
@@ -1261,49 +1319,51 @@
               }
             }
 
-            // ✅ Save records to database with grouping
-            const groupId = Date.now().toString();
-
+            // Save records to database
             if (this.state.beforeAfterMode && uploadedUrls.length === 2) {
-              const payloadBefore = {
-                employee_name: this.state.selectedEmp.name,
-                location: this.state.locationName,
-                photo_url: uploadedUrls[0],
-                notes: notes || 'Before/After 청소 작업',
-                created_at: new Date().toISOString(),
-                group_id: groupId,
-                upload_type: 'before_after',
-                photo_order: 0,
-              };
+              // Before/After mode: save as paired record
+              const groupId = String(Date.now()); // Generate Group ID
 
-              const payloadAfter = {
-                employee_name: this.state.selectedEmp.name,
-                location: this.state.locationName,
-                photo_url: uploadedUrls[1],
-                notes: notes || 'Before/After 청소 작업',
-                created_at: new Date().toISOString(),
-                group_id: groupId,
-                upload_type: 'before_after',
-                photo_order: 1,
-              };
+              const payloads = [
+                {
+                  employee_name: this.state.selectedEmp.name,
+                  location: this.state.locationName,
+                  photo_url: uploadedUrls[0], // Before
+                  notes: notes || 'Before/After 청소 작업',
+                  group_id: groupId,
+                  upload_type: 'before_after',
+                  photo_order: 0,
+                  created_at: new Date().toISOString(),
+                },
+                {
+                  employee_name: this.state.selectedEmp.name,
+                  location: this.state.locationName,
+                  photo_url: uploadedUrls[1], // After
+                  notes: notes || 'Before/After 청소 작업',
+                  group_id: groupId,
+                  upload_type: 'before_after',
+                  photo_order: 1,
+                  created_at: new Date().toISOString(),
+                }
+              ];
 
-              const { error: dbError } = await this.sb.from('cleaning_tasks').insert([payloadBefore, payloadAfter]);
+              const { error: dbError } = await this.sb.from('cleaning_tasks').insert(payloads);
               if (dbError) throw dbError;
 
               this.showToast('Before/After 청소 작업이 기록되었습니다.');
             } else {
-              // ✅ Regular mode with grouping
-              const uploadType = uploadedUrls.length > 1 ? 'multiple' : 'single';
-              
+              // ✅ Regular mode: save individual records (Modified for Grouping)
+              const groupId = String(Date.now()); // Generate Group ID for multiple photos
+
               const payloads = uploadedUrls.map((url, index) => ({
                 employee_name: this.state.selectedEmp.name,
                 location: this.state.locationName,
                 photo_url: url,
                 notes: notes,
-                created_at: new Date().toISOString(),
-                group_id: uploadedUrls.length > 1 ? groupId : null,
-                upload_type: uploadType,
+                group_id: uploadedUrls.length > 1 ? groupId : null,  // Only group if multiple photos
+                upload_type: uploadedUrls.length > 1 ? 'multiple' : 'single',
                 photo_order: index,
+                created_at: new Date().toISOString(),
               }));
 
               const { error: dbError } = await this.sb.from('cleaning_tasks').insert(payloads);
@@ -1326,6 +1386,7 @@
           }
         },
 
+        // --- UTILS ---
         showToast: function (msg, type = 'success') {
           const el = document.getElementById('toast');
           const icon = document.getElementById('toast-icon');
@@ -1355,5 +1416,15 @@
 
       document.addEventListener('DOMContentLoaded', () => app.init());
     </script>
-  </body>
+  <script defer src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" integrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon='{"rayId":"9c4f78d68e083182","serverTiming":{"name":{"cfExtPri":true,"cfEdge":true,"cfOrigin":true,"cfL4":true,"cfSpeedBrain":true,"cfCacheStatus":true}},"version":"2025.9.1","token":"4edd5f8ec12a48cfa682ab8261b80a79"}' crossorigin="anonymous"></script>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" integrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon='{"rayId":"9ca7915b5afb16dd","serverTiming":{"name":{"cfExtPri":true,"cfEdge":true,"cfOrigin":true,"cfL4":true,"cfSpeedBrain":true,"cfCacheStatus":true}},"version":"2025.9.1","token":"4edd5f8ec12a48cfa682ab8261b80a79"}' crossorigin="anonymous"></script>
+</body>
 </html>
+
+</partial_content>
+
+<instructions>
+
+Document is too large (12989 tokens). Only showing first 10000 tokens. For complete analysis, use the <tool>summarize_large_document</tool> tool with a specific question. This tool can analyze PDFs, academic papers, reports, and web content to provide targeted answers.
+
+</instructions>
