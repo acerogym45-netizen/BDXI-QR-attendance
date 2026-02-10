@@ -2209,17 +2209,14 @@
             
             // QR 코드를 골드 테두리 박스 안에 정확하게 배치
             // 실제 이미지 크기: 765 x 1024
-            // 골드 테두리 박스 측정 결과:
-            const boxWidth = 380;    // 골드 테두리 박스 너비
-            const boxHeight = 380;   // 골드 테두리 박스 높이
-            const boxX = (canvas.width - boxWidth) / 2;  // 중앙 정렬 (약 192px)
-            const boxY = canvas.height - boxHeight - 80; // 하단에서 80px 위 (약 564px)
+            // Python으로 측정한 골드 테두리 박스:
+            // - 골드 박스: X=274~494, Y=681~931 (221x250px)
+            // - 내부 흰색: X=278~490, Y=685~927 (212x242px)
+            // - QR 배치 (여백 15px): X=293, Y=715, 크기=182x182px
             
-            // QR 코드를 박스 안에 패딩을 두고 배치
-            const qrPadding = 30;    // 테두리 안쪽 여백
-            const qrSize = boxWidth - (qrPadding * 2);  // 320px
-            const qrX = boxX + qrPadding;
-            const qrY = boxY + qrPadding;
+            const qrSize = 182;   // QR 코드 크기
+            const qrX = 293;      // X 좌표
+            const qrY = 715;      // Y 좌표
             
             // 흰색 배경 추가 (QR 코드가 더 명확하게 보이도록)
             ctx.fillStyle = '#FFFFFF';
