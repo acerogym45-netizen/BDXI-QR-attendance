@@ -679,6 +679,22 @@
             </div>
           </div>
 
+          <!-- 아파트 관리 -->
+          <div class="bg-white p-6 rounded-xl shadow-sm border">
+            <div class="flex justify-between items-center mb-4">
+              <h3 class="font-bold text-gray-800">
+                <i class="fas fa-building mr-2 text-indigo-600"></i>아파트 관리
+              </h3>
+              <button onclick="app.showEditApartmentModal()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                <i class="fas fa-edit mr-2"></i>아파트 정보 수정
+              </button>
+            </div>
+            <p class="text-sm text-gray-600 mb-4">현재 선택된 아파트 정보를 확인하고 수정할 수 있습니다.</p>
+            <div id="apartment-info" class="space-y-3">
+              <!-- JS로 동적 생성 -->
+            </div>
+          </div>
+
           <!-- 직원 관리 -->
           <div class="bg-white p-6 rounded-xl shadow-sm border">
             <div class="flex justify-between items-center mb-4">
@@ -884,6 +900,48 @@
       </div>
     </div>
 
+    <!-- Apartment Edit Modal -->
+    <div id="apartment-modal" class="fixed inset-0 z-50 hidden modal-backdrop bg-black/80 flex items-center justify-center p-4" onclick="if (event.target === this) app.closeApartmentModal();">
+      <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl" onclick="event.stopPropagation()">
+        <div class="flex justify-between items-center p-6 border-b">
+          <h3 class="text-xl font-bold text-gray-800">
+            <i class="fas fa-building mr-2 text-indigo-600"></i>아파트 정보 수정
+          </h3>
+          <button onclick="app.closeApartmentModal()" class="text-gray-400 hover:text-gray-600 text-2xl">×</button>
+        </div>
+        <div class="p-6 space-y-4">
+          <input type="hidden" id="edit-apartment-id">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">아파트명</label>
+            <input type="text" id="edit-apartment-name" placeholder="예: 봉담자이프라이드시티" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">주소</label>
+            <input type="text" id="edit-apartment-address" placeholder="예: 경기도 화성시 봉담읍" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">아파트 코드</label>
+            <input type="text" id="edit-apartment-code" placeholder="예: APT004" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">상태</label>
+            <select id="edit-apartment-status" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+              <option value="true">활성</option>
+              <option value="false">비활성</option>
+            </select>
+          </div>
+          <div class="flex gap-3">
+            <button onclick="app.closeApartmentModal()" class="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium">
+              <i class="fas fa-times mr-2"></i>취소
+            </button>
+            <button onclick="app.updateApartment()" class="flex-1 px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium">
+              <i class="fas fa-save mr-2"></i>저장
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Location Modal -->
     <div id="location-modal" class="fixed inset-0 z-50 hidden modal-backdrop bg-black/80 flex items-center justify-center p-4" onclick="if (event.target === this) app.closeLocationModal();">
       <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl" onclick="event.stopPropagation()">
@@ -916,6 +974,50 @@
           <button onclick="app.addLocation()" class="w-full px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium">
             <i class="fas fa-plus mr-2"></i>추가
           </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Location Edit Modal -->
+    <div id="location-edit-modal" class="fixed inset-0 z-50 hidden modal-backdrop bg-black/80 flex items-center justify-center p-4" onclick="if (event.target === this) app.closeEditLocationModal();">
+      <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl" onclick="event.stopPropagation()">
+        <div class="flex justify-between items-center p-6 border-b">
+          <h3 class="text-xl font-bold text-gray-800">
+            <i class="fas fa-edit mr-2 text-green-600"></i>구역 정보 수정
+          </h3>
+          <button onclick="app.closeEditLocationModal()" class="text-gray-400 hover:text-gray-600 text-2xl">×</button>
+        </div>
+        <div class="p-6 space-y-4">
+          <input type="hidden" id="edit-location-id">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">구역명</label>
+            <input type="text" id="edit-location-name" placeholder="예: 101동 1층" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">상태</label>
+            <select id="edit-location-status" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+              <option value="active">활성</option>
+              <option value="inactive">비활성</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">QR 배경 이미지</label>
+            <select id="edit-location-background" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+              <option value="fitness">헬스장 (FITNESS CENTER)</option>
+              <option value="golf">골프장 (GOLF COURSE)</option>
+              <option value="information">인포데스크 (INFORMATION)</option>
+              <option value="pool">수영장 (SWIMMING POOL)</option>
+              <option value="sauna">남자 사우나 (MEN'S SAUNA)</option>
+            </select>
+          </div>
+          <div class="flex gap-3">
+            <button onclick="app.closeEditLocationModal()" class="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium">
+              <i class="fas fa-times mr-2"></i>취소
+            </button>
+            <button onclick="app.updateLocation()" class="flex-1 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium">
+              <i class="fas fa-save mr-2"></i>저장
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -1139,6 +1241,7 @@
             const now = new Date();
             document.getElementById('last-update-time').textContent = now.toLocaleString('ko-KR');
           } else if (tab === 'data') {
+            this.loadApartmentInfo(); // 아파트 정보 로드
             this.loadEmployees();
             this.loadLocations();
             this.loadQRCodes();
@@ -2649,6 +2752,9 @@
                 <td class="px-4 py-3"><span class="px-2 py-1 text-xs rounded-full ${statusColor}">${statusText}</span></td>
                 <td class="px-4 py-3 text-sm text-gray-500">${new Date(loc.created_at).toLocaleDateString('ko-KR')}</td>
                 <td class="px-4 py-3 text-sm">
+                  <button class="edit-loc-btn text-green-600 hover:text-green-800 mr-2" title="수정">
+                    <i class="fas fa-edit"></i>
+                  </button>
                   <button class="toggle-loc-btn text-blue-600 hover:text-blue-800 mr-2" data-id="${loc.id}" data-status="${loc.status}" title="상태 변경">
                     <i class="fas fa-toggle-${toggleIcon}"></i>
                   </button>
@@ -2660,6 +2766,9 @@
               list.appendChild(tr);
               
               // 이벤트 리스너 추가
+              tr.querySelector('.edit-loc-btn').addEventListener('click', () => {
+                this.showEditLocationModal(loc);
+              });
               tr.querySelector('.toggle-loc-btn').addEventListener('click', () => {
                 this.toggleLocationStatus(loc.id, loc.status);
               });
@@ -2734,6 +2843,59 @@
           }
         },
         
+        showEditLocationModal: function (loc) {
+          const modal = document.getElementById('location-edit-modal');
+          if (!modal) return;
+          
+          // 모달을 body 최상단으로 이동
+          document.body.appendChild(modal);
+          modal.classList.remove('hidden');
+          
+          document.getElementById('edit-location-id').value = loc.id;
+          document.getElementById('edit-location-name').value = loc.name || '';
+          document.getElementById('edit-location-status').value = loc.status || 'active';
+          document.getElementById('edit-location-background').value = loc.qr_background || 'fitness';
+        },
+        
+        closeEditLocationModal: function () {
+          document.getElementById('location-edit-modal').classList.add('hidden');
+        },
+        
+        updateLocation: async function () {
+          const id = document.getElementById('edit-location-id').value;
+          const name = document.getElementById('edit-location-name').value.trim();
+          const status = document.getElementById('edit-location-status').value;
+          const background = document.getElementById('edit-location-background').value;
+          
+          if (!name) {
+            alert('구역명을 입력하세요.');
+            return;
+          }
+          
+          try {
+            const updateData = {
+              name,
+              status,
+              qr_background: background
+            };
+            
+            const { error } = await this.sb
+              .from('locations')
+              .update(updateData)
+              .eq('id', id);
+            
+            if (error) throw error;
+            
+            alert('구역 정보가 수정되었습니다.');
+            this.closeEditLocationModal();
+            this.loadLocations();
+            this.loadQRCodes();
+          } catch (error) {
+            console.error('구역 수정 실패:', error);
+            alert('구역 수정 실패: ' + error.message);
+          }
+        },
+        
         deleteLocation: async function (id) {
           if (!confirm('구역을 삭제하시겠습니까?')) return;
           
@@ -2748,6 +2910,165 @@
           } catch (error) {
             console.error('구역 삭제 실패:', error);
             alert('구역 삭제 실패: ' + error.message);
+          }
+        },
+        
+        // Apartment Management
+        loadApartmentInfo: async function () {
+          const container = document.getElementById('apartment-info');
+          if (!this.currentApartment || !this.currentApartment.id) {
+            container.innerHTML = '<div class="text-gray-500"><i class="fas fa-info-circle mr-2"></i>아파트 정보가 없습니다.</div>';
+            return;
+          }
+          
+          try {
+            const { data, error } = await this.sb
+              .from('apartments')
+              .select('*')
+              .eq('id', this.currentApartment.id)
+              .single();
+            
+            if (error) throw error;
+            
+            if (!data) {
+              container.innerHTML = '<div class="text-gray-500"><i class="fas fa-info-circle mr-2"></i>아파트 정보를 찾을 수 없습니다.</div>';
+              return;
+            }
+            
+            container.innerHTML = `
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="flex items-center gap-3">
+                  <div class="flex-shrink-0 w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-building text-indigo-600"></i>
+                  </div>
+                  <div>
+                    <p class="text-xs text-gray-500">아파트명</p>
+                    <p class="font-semibold text-gray-800">${data.name}</p>
+                  </div>
+                </div>
+                <div class="flex items-center gap-3">
+                  <div class="flex-shrink-0 w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-map-marker-alt text-indigo-600"></i>
+                  </div>
+                  <div>
+                    <p class="text-xs text-gray-500">주소</p>
+                    <p class="font-semibold text-gray-800">${data.address || '-'}</p>
+                  </div>
+                </div>
+                <div class="flex items-center gap-3">
+                  <div class="flex-shrink-0 w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-code text-indigo-600"></i>
+                  </div>
+                  <div>
+                    <p class="text-xs text-gray-500">아파트 코드</p>
+                    <p class="font-semibold text-gray-800">${data.code}</p>
+                  </div>
+                </div>
+                <div class="flex items-center gap-3">
+                  <div class="flex-shrink-0 w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-toggle-${data.is_active ? 'on' : 'off'} text-indigo-600"></i>
+                  </div>
+                  <div>
+                    <p class="text-xs text-gray-500">상태</p>
+                    <p class="font-semibold text-gray-800">${data.is_active ? '활성' : '비활성'}</p>
+                  </div>
+                </div>
+              </div>
+            `;
+          } catch (error) {
+            console.error('아파트 정보 로드 실패:', error);
+            container.innerHTML = '<div class="text-red-500"><i class="fas fa-exclamation-circle mr-2"></i>정보 로드 실패</div>';
+          }
+        },
+        
+        showEditApartmentModal: async function () {
+          if (!this.currentApartment || !this.currentApartment.id) {
+            alert('아파트 정보가 없습니다.');
+            return;
+          }
+          
+          try {
+            const { data, error } = await this.sb
+              .from('apartments')
+              .select('*')
+              .eq('id', this.currentApartment.id)
+              .single();
+            
+            if (error) throw error;
+            
+            const modal = document.getElementById('apartment-modal');
+            if (!modal) return;
+            
+            // 모달을 body 최상단으로 이동
+            document.body.appendChild(modal);
+            modal.classList.remove('hidden');
+            
+            document.getElementById('edit-apartment-id').value = data.id;
+            document.getElementById('edit-apartment-name').value = data.name || '';
+            document.getElementById('edit-apartment-address').value = data.address || '';
+            document.getElementById('edit-apartment-code').value = data.code || '';
+            document.getElementById('edit-apartment-status').value = data.is_active ? 'true' : 'false';
+          } catch (error) {
+            console.error('아파트 정보 로드 실패:', error);
+            alert('아파트 정보를 불러올 수 없습니다.');
+          }
+        },
+        
+        closeApartmentModal: function () {
+          document.getElementById('apartment-modal').classList.add('hidden');
+        },
+        
+        updateApartment: async function () {
+          const id = document.getElementById('edit-apartment-id').value;
+          const name = document.getElementById('edit-apartment-name').value.trim();
+          const address = document.getElementById('edit-apartment-address').value.trim();
+          const code = document.getElementById('edit-apartment-code').value.trim();
+          const isActive = document.getElementById('edit-apartment-status').value === 'true';
+          
+          if (!name) {
+            alert('아파트명을 입력하세요.');
+            return;
+          }
+          
+          if (!code) {
+            alert('아파트 코드를 입력하세요.');
+            return;
+          }
+          
+          try {
+            const updateData = {
+              name,
+              address,
+              code,
+              is_active: isActive
+            };
+            
+            const { error } = await this.sb
+              .from('apartments')
+              .update(updateData)
+              .eq('id', id);
+            
+            if (error) throw error;
+            
+            alert('아파트 정보가 수정되었습니다.');
+            this.closeApartmentModal();
+            
+            // 현재 아파트 정보 업데이트
+            this.currentApartment.name = name;
+            sessionStorage.setItem('kindwon_apartment_name', name);
+            
+            // 헤더 업데이트
+            const apartmentBadge = document.getElementById('current-apartment-name');
+            if (apartmentBadge) {
+              apartmentBadge.textContent = name;
+            }
+            
+            // 아파트 목록 새로고침
+            await this.loadApartments();
+            this.loadApartmentInfo();
+          } catch (error) {
+            console.error('아파트 수정 실패:', error);
+            alert('아파트 수정 실패: ' + error.message);
           }
         }
       };
