@@ -952,23 +952,14 @@
         <div class="p-6 space-y-4">
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">구역명</label>
-            <input type="text" id="new-location-name" placeholder="예: 101동 1층" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500">
+            <input type="text" id="new-location-name" placeholder="예: 헬스장, 골프장, 수영장, 인포데스크, 사우나" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500">
+            <p class="text-xs text-gray-500 mt-1">💡 구역명에 따라 자동으로 배경이 선택됩니다</p>
           </div>
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">상태</label>
             <select id="new-location-status" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500">
               <option value="active">활성</option>
               <option value="inactive">비활성</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">QR 배경 이미지</label>
-            <select id="new-location-background" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500">
-              <option value="fitness">헬스장 (FITNESS CENTER)</option>
-              <option value="golf">골프장 (GOLF COURSE)</option>
-              <option value="information">인포데스크 (INFORMATION)</option>
-              <option value="pool">수영장 (SWIMMING POOL)</option>
-              <option value="sauna">남자 사우나 (MEN'S SAUNA)</option>
             </select>
           </div>
           <button onclick="app.addLocation()" class="w-full px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium">
@@ -991,23 +982,14 @@
           <input type="hidden" id="edit-location-id">
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">구역명</label>
-            <input type="text" id="edit-location-name" placeholder="예: 101동 1층" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+            <input type="text" id="edit-location-name" placeholder="예: 헬스장, 골프장, 수영장" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+            <p class="text-xs text-gray-500 mt-1">💡 구역명에 따라 자동으로 배경이 선택됩니다</p>
           </div>
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">상태</label>
             <select id="edit-location-status" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
               <option value="active">활성</option>
               <option value="inactive">비활성</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">QR 배경 이미지</label>
-            <select id="edit-location-background" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
-              <option value="fitness">헬스장 (FITNESS CENTER)</option>
-              <option value="golf">골프장 (GOLF COURSE)</option>
-              <option value="information">인포데스크 (INFORMATION)</option>
-              <option value="pool">수영장 (SWIMMING POOL)</option>
-              <option value="sauna">남자 사우나 (MEN'S SAUNA)</option>
             </select>
           </div>
           <div class="flex gap-3">
@@ -2225,10 +2207,18 @@
             // 배경 이미지 그리기
             ctx.drawImage(bgImage, 0, 0);
             
-            // QR 코드를 하단 중앙에 배치
-            const qrSize = 400; // QR 코드 크기
-            const qrX = (canvas.width - qrSize) / 2; // 중앙 정렬
-            const qrY = canvas.height - qrSize - 50; // 하단에서 50px 위
+            // QR 코드를 골드 테두리 박스 안에 정확하게 배치
+            // 이미지 분석 기반 좌표 (1080x1920 기준)
+            const boxWidth = 510;    // 골드 테두리 박스 너비
+            const boxHeight = 510;   // 골드 테두리 박스 높이
+            const boxX = (canvas.width - boxWidth) / 2;  // 중앙 정렬
+            const boxY = canvas.height - boxHeight - 100; // 하단에서 100px 위
+            
+            // QR 코드를 박스 안에 패딩을 두고 배치
+            const qrPadding = 40;    // 테두리 안쪽 여백
+            const qrSize = boxWidth - (qrPadding * 2);
+            const qrX = boxX + qrPadding;
+            const qrY = boxY + qrPadding;
             
             ctx.drawImage(qrCanvas, qrX, qrY, qrSize, qrSize);
             
@@ -2786,29 +2776,50 @@
           document.getElementById('location-modal').classList.remove('hidden');
           document.getElementById('new-location-name').value = '';
           document.getElementById('new-location-status').value = 'active';
-          document.getElementById('new-location-background').value = 'fitness';
         },
         
         closeLocationModal: function () {
           document.getElementById('location-modal').classList.add('hidden');
         },
         
+        // 구역명으로 배경 자동 선택
+        detectBackgroundFromName: function(name) {
+          const nameLower = name.toLowerCase().replace(/\s/g, '');
+          
+          if (nameLower.includes('헬스') || nameLower.includes('fitness') || nameLower.includes('gym') || nameLower.includes('운동')) {
+            return 'fitness';
+          } else if (nameLower.includes('골프') || nameLower.includes('golf')) {
+            return 'golf';
+          } else if (nameLower.includes('수영') || nameLower.includes('pool') || nameLower.includes('swimming')) {
+            return 'pool';
+          } else if (nameLower.includes('사우나') || nameLower.includes('sauna') || nameLower.includes('찜질')) {
+            return 'sauna';
+          } else if (nameLower.includes('인포') || nameLower.includes('info') || nameLower.includes('안내') || nameLower.includes('데스크')) {
+            return 'information';
+          } else {
+            // 기본값: fitness
+            return 'fitness';
+          }
+        },
+        
         addLocation: async function () {
           const name = document.getElementById('new-location-name').value.trim();
           const status = document.getElementById('new-location-status').value;
-          const background = document.getElementById('new-location-background').value;
           
           if (!name) {
             alert('구역명을 입력하세요.');
             return;
           }
           
+          // 자동으로 배경 선택
+          const background = this.detectBackgroundFromName(name);
+          
           try {
             // 🏢 현재 아파트 ID 포함 + 배경 이미지 정보 저장
             const locationData = { 
               name, 
               status,
-              qr_background: background, // 배경 이미지 선택 저장
+              qr_background: background, // 자동 선택된 배경
               apartment_id: this.currentApartment ? this.currentApartment.id : null
             };
             
@@ -2816,7 +2827,7 @@
             
             if (error) throw error;
             
-            alert('구역이 추가되었습니다.');
+            alert(`구역이 추가되었습니다.\n배경: ${background === 'fitness' ? '헬스장' : background === 'golf' ? '골프장' : background === 'pool' ? '수영장' : background === 'sauna' ? '사우나' : '인포데스크'}`);
             this.closeLocationModal();
             this.loadLocations();
             this.loadQRCodes(); // QR 코드도 새로고침
@@ -2854,7 +2865,6 @@
           document.getElementById('edit-location-id').value = loc.id;
           document.getElementById('edit-location-name').value = loc.name || '';
           document.getElementById('edit-location-status').value = loc.status || 'active';
-          document.getElementById('edit-location-background').value = loc.qr_background || 'fitness';
         },
         
         closeEditLocationModal: function () {
@@ -2865,12 +2875,14 @@
           const id = document.getElementById('edit-location-id').value;
           const name = document.getElementById('edit-location-name').value.trim();
           const status = document.getElementById('edit-location-status').value;
-          const background = document.getElementById('edit-location-background').value;
           
           if (!name) {
             alert('구역명을 입력하세요.');
             return;
           }
+          
+          // 자동으로 배경 선택
+          const background = this.detectBackgroundFromName(name);
           
           try {
             const updateData = {
@@ -2886,7 +2898,7 @@
             
             if (error) throw error;
             
-            alert('구역 정보가 수정되었습니다.');
+            alert(`구역 정보가 수정되었습니다.\n배경: ${background === 'fitness' ? '헬스장' : background === 'golf' ? '골프장' : background === 'pool' ? '수영장' : background === 'sauna' ? '사우나' : '인포데스크'}`);
             this.closeEditLocationModal();
             this.loadLocations();
             this.loadQRCodes();
