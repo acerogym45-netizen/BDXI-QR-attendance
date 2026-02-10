@@ -903,6 +903,16 @@
               <option value="inactive">비활성</option>
             </select>
           </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">QR 배경 이미지</label>
+            <select id="new-location-background" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500">
+              <option value="fitness">헬스장 (FITNESS CENTER)</option>
+              <option value="golf">골프장 (GOLF COURSE)</option>
+              <option value="information">인포데스크 (INFORMATION)</option>
+              <option value="pool">수영장 (SWIMMING POOL)</option>
+              <option value="sauna">남자 사우나 (MEN'S SAUNA)</option>
+            </select>
+          </div>
           <button onclick="app.addLocation()" class="w-full px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium">
             <i class="fas fa-plus mr-2"></i>추가
           </button>
@@ -2055,11 +2065,15 @@
             data.forEach(loc => {
               const card = document.createElement('div');
               card.className = 'bg-white border rounded-lg p-4 flex flex-col items-center space-y-3';
+              const bgType = loc.qr_background || 'fitness'; // 기본값: fitness
               card.innerHTML = `
                 <p class="font-bold text-gray-800">${loc.name}</p>
+                <div class="text-xs text-gray-500 mb-2">
+                  <i class="fas fa-image mr-1"></i>${bgType === 'fitness' ? '헬스장' : bgType === 'golf' ? '골프장' : bgType === 'information' ? '인포데스크' : bgType === 'pool' ? '수영장' : '사우나'}
+                </div>
                 <div id="qr-${loc.id}" class="bg-white p-2 border rounded"></div>
-                <button onclick="app.downloadQRCode('qr-${loc.id}', '${loc.name}')" class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                  <i class="fas fa-download mr-2"></i>Download
+                <button onclick="app.downloadQRCode('qr-${loc.id}', '${loc.name}', '${bgType}')" class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                  <i class="fas fa-download mr-2"></i>배경 포함 다운로드
                 </button>
               `;
               container.appendChild(card);
@@ -2081,17 +2095,55 @@
           }
         },
         
-        downloadQRCode: function (qrId, locationName) {
+        downloadQRCode: async function (qrId, locationName, background = 'fitness') {
           const qrCanvas = document.getElementById(qrId).querySelector('canvas');
           if (!qrCanvas) {
             alert('QR 코드를 찾을 수 없습니다.');
             return;
           }
           
-          const link = document.createElement('a');
-          link.download = `QR_${locationName}.png`;
-          link.href = qrCanvas.toDataURL();
-          link.click();
+          try {
+            // 배경 이미지 로드
+            const bgImage = new Image();
+            bgImage.crossOrigin = 'anonymous';
+            bgImage.src = `./assets/backgrounds/${background}.png`;
+            
+            await new Promise((resolve, reject) => {
+              bgImage.onload = resolve;
+              bgImage.onerror = () => reject(new Error('배경 이미지 로드 실패'));
+            });
+            
+            // 새 캔버스 생성
+            const canvas = document.createElement('canvas');
+            canvas.width = bgImage.width;
+            canvas.height = bgImage.height;
+            const ctx = canvas.getContext('2d');
+            
+            // 배경 이미지 그리기
+            ctx.drawImage(bgImage, 0, 0);
+            
+            // QR 코드를 하단 중앙에 배치
+            const qrSize = 400; // QR 코드 크기
+            const qrX = (canvas.width - qrSize) / 2; // 중앙 정렬
+            const qrY = canvas.height - qrSize - 50; // 하단에서 50px 위
+            
+            ctx.drawImage(qrCanvas, qrX, qrY, qrSize, qrSize);
+            
+            // 다운로드
+            const link = document.createElement('a');
+            link.download = `QR_${locationName}_${background}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+            
+            console.log('✅ QR 코드 다운로드 완료:', locationName, background);
+          } catch (error) {
+            console.error('QR 합성 실패:', error);
+            // 실패 시 원본 QR만 다운로드
+            const link = document.createElement('a');
+            link.download = `QR_${locationName}.png`;
+            link.href = qrCanvas.toDataURL();
+            link.click();
+          }
         },
         
         // Export Hours to Excel
@@ -2625,6 +2677,7 @@
           document.getElementById('location-modal').classList.remove('hidden');
           document.getElementById('new-location-name').value = '';
           document.getElementById('new-location-status').value = 'active';
+          document.getElementById('new-location-background').value = 'fitness';
         },
         
         closeLocationModal: function () {
@@ -2634,6 +2687,7 @@
         addLocation: async function () {
           const name = document.getElementById('new-location-name').value.trim();
           const status = document.getElementById('new-location-status').value;
+          const background = document.getElementById('new-location-background').value;
           
           if (!name) {
             alert('구역명을 입력하세요.');
@@ -2641,10 +2695,11 @@
           }
           
           try {
-            // 🏢 현재 아파트 ID 포함
+            // 🏢 현재 아파트 ID 포함 + 배경 이미지 정보 저장
             const locationData = { 
               name, 
               status,
+              qr_background: background, // 배경 이미지 선택 저장
               apartment_id: this.currentApartment ? this.currentApartment.id : null
             };
             
