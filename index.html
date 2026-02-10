@@ -2208,17 +2208,22 @@
             ctx.drawImage(bgImage, 0, 0);
             
             // QR 코드를 골드 테두리 박스 안에 정확하게 배치
-            // 이미지 분석 기반 좌표 (1080x1920 기준)
-            const boxWidth = 510;    // 골드 테두리 박스 너비
-            const boxHeight = 510;   // 골드 테두리 박스 높이
-            const boxX = (canvas.width - boxWidth) / 2;  // 중앙 정렬
-            const boxY = canvas.height - boxHeight - 100; // 하단에서 100px 위
+            // 실제 이미지 크기: 765 x 1024
+            // 골드 테두리 박스 측정 결과:
+            const boxWidth = 380;    // 골드 테두리 박스 너비
+            const boxHeight = 380;   // 골드 테두리 박스 높이
+            const boxX = (canvas.width - boxWidth) / 2;  // 중앙 정렬 (약 192px)
+            const boxY = canvas.height - boxHeight - 80; // 하단에서 80px 위 (약 564px)
             
             // QR 코드를 박스 안에 패딩을 두고 배치
-            const qrPadding = 40;    // 테두리 안쪽 여백
-            const qrSize = boxWidth - (qrPadding * 2);
+            const qrPadding = 30;    // 테두리 안쪽 여백
+            const qrSize = boxWidth - (qrPadding * 2);  // 320px
             const qrX = boxX + qrPadding;
             const qrY = boxY + qrPadding;
+            
+            // 흰색 배경 추가 (QR 코드가 더 명확하게 보이도록)
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(qrX - 5, qrY - 5, qrSize + 10, qrSize + 10);
             
             ctx.drawImage(qrCanvas, qrX, qrY, qrSize, qrSize);
             
@@ -2228,7 +2233,7 @@
             link.href = canvas.toDataURL('image/png');
             link.click();
             
-            console.log('✅ QR 코드 다운로드 완료:', locationName, background);
+            console.log('✅ QR 코드 다운로드 완료:', locationName, background, `위치: (${qrX}, ${qrY}), 크기: ${qrSize}px`);
           } catch (error) {
             console.error('QR 합성 실패:', error);
             // 실패 시 원본 QR만 다운로드
