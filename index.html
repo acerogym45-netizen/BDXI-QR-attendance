@@ -2157,11 +2157,21 @@
               // 🚨 강제 디버그: 화면에 구역명과 감지 결과 표시
               const debugInfo = `구역: ${loc.name} | 감지: ${bgType}`;
               
-              const displayName = bgType === 'fitness' ? '헬스장' : 
-                                  bgType === 'golf' ? '골프장' : 
-                                  bgType === 'information' ? '인포데스크' : 
-                                  bgType === 'pool' ? '수영장' : 
-                                  bgType === 'sauna' ? '사우나' : '기타';
+              // zoneConfig를 사용한 자동 매핑
+              const zoneLabels = {
+                'fitness': '헬스장',
+                'golf': '골프장',
+                'information': '인포데스크',
+                'pool': '수영장',
+                'sauna': '사우나',
+                'cafe': '카페테리아',
+                'office': '사무실',
+                'guesthouse': '게스트하우스',
+                'library': '도서관',
+                'director': '학장실',
+                'etc': '기타'
+              };
+              const displayName = zoneLabels[bgType] || '기타';
               
               console.log('🔍 구역 로드:', loc.name, '→ 감지된 타입:', bgType, '→ 표시명:', displayName);
               
@@ -2223,7 +2233,13 @@
             'golf': { korean: '골프장', english: 'GOLF COURSE' },
             'information': { korean: '인포데스크', english: 'INFORMATION' },
             'pool': { korean: '수영장', english: 'POOL' },
-            'sauna': { korean: '사우나', english: 'SAUNA' }
+            'sauna': { korean: '사우나', english: 'SAUNA' },
+            'cafe': { korean: '카페테리아', english: 'CAFETERIA' },
+            'office': { korean: '사무실', english: 'OFFICE' },
+            'guesthouse': { korean: '게스트하우스', english: 'GUEST HOUSE' },
+            'library': { korean: '도서관', english: 'LIBRARY' },
+            'director': { korean: '학장실', english: 'DIRECTOR OFFICE' },
+            'etc': { korean: '기타', english: 'ETC' }
             // 새 구역 추가 시 여기에 추가하면 자동 대응
           };
           
@@ -2870,17 +2886,47 @@
             console.log('  ✅ 사우나 감지');
             return 'sauna';
           } 
-          // 헬스장 (fitness)
+          // 헬스장
           else if (nameLower.includes('헬스') || nameLower.includes('fitness') || 
                    nameLower.includes('gym') || nameLower.includes('운동') ||
                    nameLower.includes('체육')) {
             console.log('  ✅ 헬스장 감지');
             return 'fitness';
-          } 
-          // 기타 (기본값: fitness)
+          }
+          // 카페테리아
+          else if (nameLower.includes('카페') || nameLower.includes('cafe') || 
+                   nameLower.includes('커피') || nameLower.includes('cafeteria')) {
+            console.log('  ✅ 카페테리아 감지');
+            return 'cafe';
+          }
+          // 사무실
+          else if (nameLower.includes('사무') || nameLower.includes('office') || 
+                   nameLower.includes('행정')) {
+            console.log('  ✅ 사무실 감지');
+            return 'office';
+          }
+          // 게스트하우스
+          else if (nameLower.includes('게스트') || nameLower.includes('guest') || 
+                   nameLower.includes('하우스') || nameLower.includes('house')) {
+            console.log('  ✅ 게스트하우스 감지');
+            return 'guesthouse';
+          }
+          // 도서관
+          else if (nameLower.includes('도서') || nameLower.includes('library') || 
+                   nameLower.includes('독서')) {
+            console.log('  ✅ 도서관 감지');
+            return 'library';
+          }
+          // 학장실
+          else if (nameLower.includes('학장') || nameLower.includes('원장') || 
+                   nameLower.includes('관장')) {
+            console.log('  ✅ 학장실 감지');
+            return 'director';
+          }
+          // 기타 (기본값)
           else {
-            console.log('  ⚠️ 매칭 실패, 기본값(fitness) 사용');
-            return 'fitness';
+            console.log('  ⚠️ 매칭 실패, 기타로 분류');
+            return 'etc';
           }
         },
         
