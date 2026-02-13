@@ -2204,17 +2204,28 @@
             return;
           }
           
-          console.log('🔍 다운로드 시작:', locationName, '→ 배경:', background);
+          // 구역 타입별 텍스트 설정 (n개 확장 가능)
+          const zoneConfig = {
+            'fitness': { korean: '헬스장', english: 'FITNESS CENTER' },
+            'golf': { korean: '골프장', english: 'GOLF COURSE' },
+            'information': { korean: '인포데스크', english: 'INFORMATION' },
+            'pool': { korean: '수영장', english: 'POOL' },
+            'sauna': { korean: '사우나', english: 'SAUNA' }
+            // 새 구역 추가 시 여기에 추가하면 자동 대응
+          };
+          
+          const config = zoneConfig[background] || { korean: locationName, english: '' };
+          console.log('🔍 QR 생성:', locationName, '→ 배경타입:', background, '→ 설정:', config);
           
           try {
-            // 구역별 배경 이미지 로드 (아이콘이 이미 포함된 원본 사용)
+            // 단일 템플릿 이미지 로드
             const bgImage = new Image();
             bgImage.crossOrigin = 'anonymous';
-            bgImage.src = `./assets/backgrounds/${background}.png`;
+            bgImage.src = './assets/backgrounds/template.png';
             
             await new Promise((resolve, reject) => {
               bgImage.onload = resolve;
-              bgImage.onerror = () => reject(new Error('배경 이미지 로드 실패'));
+              bgImage.onerror = () => reject(new Error('템플릿 이미지 로드 실패'));
             });
             
             // 새 캔버스 생성
@@ -2223,20 +2234,32 @@
             canvas.height = bgImage.height; // 1024
             const ctx = canvas.getContext('2d');
             
-            // 배경 이미지 그리기 (금색 아이콘 포함)
+            // 템플릿 배경 그리기
             ctx.drawImage(bgImage, 0, 0);
             
-            // QR 코드를 골드 테두리 박스 안에 정확하게 배치
-            // Python으로 측정한 골드 테두리 박스:
-            // - 골드 박스: X=274~494, Y=681~931 (221x250px)
-            // - 내부 흰색: X=278~490, Y=685~927 (212x242px)
-            // - QR 배치 (여백 15px): X=293, Y=715, 크기=182x182px
+            // 🎨 금색 설정
+            const goldColor = '#D4AF37';
+            const centerX = canvas.width / 2;
             
+            // 텍스트 렌더링
+            ctx.fillStyle = goldColor;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            // 한글 텍스트 (큰 글씨)
+            ctx.font = 'bold 60px "Noto Sans KR", sans-serif';
+            ctx.fillText(config.korean, centerX, 430);
+            
+            // 영문 텍스트 (작은 글씨)
+            ctx.font = 'bold 32px Arial, sans-serif';
+            ctx.fillText(config.english, centerX, 500);
+            
+            // QR 코드 삽입 (골드 박스 안)
             const qrSize = 182;
             const qrX = 293;
             const qrY = 715;
             
-            // 흰색 배경 추가 (QR 코드가 더 명확하게 보이도록)
+            // 흰색 배경
             ctx.fillStyle = '#FFFFFF';
             ctx.fillRect(qrX - 5, qrY - 5, qrSize + 10, qrSize + 10);
             
@@ -2245,11 +2268,11 @@
             
             // 다운로드
             const link = document.createElement('a');
-            link.download = `QR_${locationName}_${background}.png`;
+            link.download = `QR_${locationName}.png`;
             link.href = canvas.toDataURL('image/png');
             link.click();
             
-            console.log('✅ QR 코드 다운로드 완료:', locationName, '배경:', background, `위치: (${qrX}, ${qrY}), 크기: ${qrSize}px`);
+            console.log('✅ QR 다운로드 완료:', locationName, config.korean, config.english);
           } catch (error) {
             console.error('QR 합성 실패:', error);
             // 실패 시 원본 QR만 다운로드
