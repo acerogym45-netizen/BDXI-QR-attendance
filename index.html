@@ -2150,13 +2150,16 @@
             data.forEach(loc => {
               const card = document.createElement('div');
               card.className = 'bg-white border rounded-lg p-4 flex flex-col items-center space-y-3';
-              // 🔧 배경 자동 감지: DB 값이 없으면 구역명으로 감지
-              const bgType = loc.qr_background || this.detectBackgroundFromName(loc.name);
+              // 🔧 항상 구역명으로 배경 타입 감지 (DB 값 무시)
+              const bgType = this.detectBackgroundFromName(loc.name);
               
               const displayName = bgType === 'fitness' ? '헬스장' : 
                                   bgType === 'golf' ? '골프장' : 
                                   bgType === 'information' ? '인포데스크' : 
-                                  bgType === 'pool' ? '수영장' : '사우나';
+                                  bgType === 'pool' ? '수영장' : 
+                                  bgType === 'sauna' ? '사우나' : '기타';
+              
+              console.log('🔍 구역 로드:', loc.name, '→ 감지된 타입:', bgType, '→ 표시명:', displayName);
               
               card.innerHTML = `
                 <p class="font-bold text-gray-800">${loc.name}</p>
@@ -2830,18 +2833,43 @@
         detectBackgroundFromName: function(name) {
           const nameLower = name.toLowerCase().replace(/\s/g, '');
           
-          if (nameLower.includes('헬스') || nameLower.includes('fitness') || nameLower.includes('gym') || nameLower.includes('운동')) {
-            return 'fitness';
-          } else if (nameLower.includes('골프') || nameLower.includes('golf')) {
+          console.log('🔎 배경 감지 시작:', name, '→ 정규화:', nameLower);
+          
+          // 골프장
+          if (nameLower.includes('골프') || nameLower.includes('golf')) {
+            console.log('  ✅ 골프장 감지');
             return 'golf';
-          } else if (nameLower.includes('수영') || nameLower.includes('pool') || nameLower.includes('swimming')) {
-            return 'pool';
-          } else if (nameLower.includes('사우나') || nameLower.includes('sauna') || nameLower.includes('찜질')) {
-            return 'sauna';
-          } else if (nameLower.includes('인포') || nameLower.includes('info') || nameLower.includes('안내') || nameLower.includes('데스크')) {
+          } 
+          // 인포데스크
+          else if (nameLower.includes('인포') || nameLower.includes('info') || 
+                   nameLower.includes('안내') || nameLower.includes('데스크') || 
+                   nameLower.includes('desk') || nameLower.includes('information')) {
+            console.log('  ✅ 인포데스크 감지');
             return 'information';
-          } else {
-            // 기본값: fitness
+          } 
+          // 수영장
+          else if (nameLower.includes('수영') || nameLower.includes('pool') || 
+                   nameLower.includes('swimming') || nameLower.includes('워터')) {
+            console.log('  ✅ 수영장 감지');
+            return 'pool';
+          } 
+          // 사우나
+          else if (nameLower.includes('사우나') || nameLower.includes('sauna') || 
+                   nameLower.includes('찜질') || nameLower.includes('남자') || 
+                   nameLower.includes('여자') || nameLower.includes('탕')) {
+            console.log('  ✅ 사우나 감지');
+            return 'sauna';
+          } 
+          // 헬스장 (fitness)
+          else if (nameLower.includes('헬스') || nameLower.includes('fitness') || 
+                   nameLower.includes('gym') || nameLower.includes('운동') ||
+                   nameLower.includes('체육')) {
+            console.log('  ✅ 헬스장 감지');
+            return 'fitness';
+          } 
+          // 기타 (기본값: fitness)
+          else {
+            console.log('  ⚠️ 매칭 실패, 기본값(fitness) 사용');
             return 'fitness';
           }
         },
