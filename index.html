@@ -2188,22 +2188,42 @@
             return;
           }
           
-          // 배경 타입별 텍스트 매핑
-          const textMapping = {
-            'fitness': { korean: '헬스장', english: 'FITNESS CENTER' },
-            'golf': { korean: '골프장', english: 'GOLF COURSE' },
-            'information': { korean: '인포데스크', english: 'INFORMATION' },
-            'pool': { korean: '수영장', english: 'POOL' },
-            'sauna': { korean: '사우나', english: 'SAUNA' }
+          // 구역 타입별 이모지, 텍스트 매핑
+          const zoneConfig = {
+            'fitness': { 
+              emoji: '🏋️', 
+              korean: '헬스장', 
+              english: 'FITNESS CENTER' 
+            },
+            'golf': { 
+              emoji: '⛳', 
+              korean: '골프장', 
+              english: 'GOLF COURSE' 
+            },
+            'information': { 
+              emoji: 'ℹ️', 
+              korean: '인포데스크', 
+              english: 'INFORMATION' 
+            },
+            'pool': { 
+              emoji: '🏊', 
+              korean: '수영장', 
+              english: 'POOL' 
+            },
+            'sauna': { 
+              emoji: '🧖', 
+              korean: '사우나', 
+              english: 'SAUNA' 
+            }
           };
           
-          const textLabels = textMapping[background] || textMapping['fitness'];
+          const config = zoneConfig[background] || zoneConfig['fitness'];
           
           try {
-            // 배경 이미지 로드
+            // 빈 템플릿 배경 이미지 로드
             const bgImage = new Image();
             bgImage.crossOrigin = 'anonymous';
-            bgImage.src = `./assets/backgrounds/${background}.png`;
+            bgImage.src = './assets/backgrounds/template_blank.png';
             
             await new Promise((resolve, reject) => {
               bgImage.onload = resolve;
@@ -2212,39 +2232,41 @@
             
             // 새 캔버스 생성
             const canvas = document.createElement('canvas');
-            canvas.width = bgImage.width;
-            canvas.height = bgImage.height;
+            canvas.width = bgImage.width;  // 765
+            canvas.height = bgImage.height; // 1024
             const ctx = canvas.getContext('2d');
             
             // 배경 이미지 그리기
             ctx.drawImage(bgImage, 0, 0);
             
-            // 📝 구역명 텍스트 추가 (배경 이미지 위에 덮어쓰기)
-            // 텍스트 위치: 상단 중앙 (이미지 크기 765x1024 기준)
+            // 🎨 금색 설정
+            const goldColor = '#D4AF37'; // 금색
             const centerX = canvas.width / 2;
-            const textY = 200; // 상단에서 200px 아래
             
-            // 한글 텍스트 (크게, 굵게)
-            ctx.fillStyle = '#1a1a1a'; // 진한 회색/검정
-            ctx.font = 'bold 48px "Noto Sans KR", sans-serif';
+            // 1️⃣ 유니코드 이모지 아이콘 (중앙 상단)
+            ctx.font = '120px Arial'; // 이모지 크기
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText(textLabels.korean, centerX, textY);
+            ctx.fillText(config.emoji, centerX, 280);
             
-            // 영문 텍스트 (약간 작게)
-            ctx.font = 'bold 28px Arial, sans-serif';
-            ctx.fillText(textLabels.english, centerX, textY + 55);
+            // 2️⃣ 한글 텍스트 (금색, 굵게)
+            ctx.fillStyle = goldColor;
+            ctx.font = 'bold 52px "Noto Sans KR", sans-serif';
+            ctx.fillText(config.korean, centerX, 420);
             
-            // QR 코드를 골드 테두리 박스 안에 정확하게 배치
-            // 실제 이미지 크기: 765 x 1024
+            // 3️⃣ 영문 텍스트 (금색)
+            ctx.font = 'bold 32px Arial, sans-serif';
+            ctx.fillText(config.english, centerX, 480);
+            
+            // 4️⃣ QR 코드를 골드 테두리 박스 안에 정확하게 배치
             // Python으로 측정한 골드 테두리 박스:
             // - 골드 박스: X=274~494, Y=681~931 (221x250px)
             // - 내부 흰색: X=278~490, Y=685~927 (212x242px)
             // - QR 배치 (여백 15px): X=293, Y=715, 크기=182x182px
             
-            const qrSize = 182;   // QR 코드 크기
-            const qrX = 293;      // X 좌표
-            const qrY = 715;      // Y 좌표
+            const qrSize = 182;
+            const qrX = 293;
+            const qrY = 715;
             
             // 흰색 배경 추가 (QR 코드가 더 명확하게 보이도록)
             ctx.fillStyle = '#FFFFFF';
@@ -2258,7 +2280,7 @@
             link.href = canvas.toDataURL('image/png');
             link.click();
             
-            console.log('✅ QR 코드 다운로드 완료:', locationName, background, textLabels.korean, textLabels.english, `위치: (${qrX}, ${qrY}), 크기: ${qrSize}px`);
+            console.log('✅ QR 코드 다운로드 완료:', locationName, background, config.emoji, config.korean, config.english);
           } catch (error) {
             console.error('QR 합성 실패:', error);
             // 실패 시 원본 QR만 다운로드
