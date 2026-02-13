@@ -2188,6 +2188,17 @@
             return;
           }
           
+          // 배경 타입별 텍스트 매핑
+          const textMapping = {
+            'fitness': { korean: '헬스장', english: 'FITNESS CENTER' },
+            'golf': { korean: '골프장', english: 'GOLF COURSE' },
+            'information': { korean: '인포데스크', english: 'INFORMATION' },
+            'pool': { korean: '수영장', english: 'POOL' },
+            'sauna': { korean: '사우나', english: 'SAUNA' }
+          };
+          
+          const textLabels = textMapping[background] || textMapping['fitness'];
+          
           try {
             // 배경 이미지 로드
             const bgImage = new Image();
@@ -2207,6 +2218,22 @@
             
             // 배경 이미지 그리기
             ctx.drawImage(bgImage, 0, 0);
+            
+            // 📝 구역명 텍스트 추가 (배경 이미지 위에 덮어쓰기)
+            // 텍스트 위치: 상단 중앙 (이미지 크기 765x1024 기준)
+            const centerX = canvas.width / 2;
+            const textY = 200; // 상단에서 200px 아래
+            
+            // 한글 텍스트 (크게, 굵게)
+            ctx.fillStyle = '#1a1a1a'; // 진한 회색/검정
+            ctx.font = 'bold 48px "Noto Sans KR", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(textLabels.korean, centerX, textY);
+            
+            // 영문 텍스트 (약간 작게)
+            ctx.font = 'bold 28px Arial, sans-serif';
+            ctx.fillText(textLabels.english, centerX, textY + 55);
             
             // QR 코드를 골드 테두리 박스 안에 정확하게 배치
             // 실제 이미지 크기: 765 x 1024
@@ -2231,7 +2258,7 @@
             link.href = canvas.toDataURL('image/png');
             link.click();
             
-            console.log('✅ QR 코드 다운로드 완료:', locationName, background, `위치: (${qrX}, ${qrY}), 크기: ${qrSize}px`);
+            console.log('✅ QR 코드 다운로드 완료:', locationName, background, textLabels.korean, textLabels.english, `위치: (${qrX}, ${qrY}), 크기: ${qrSize}px`);
           } catch (error) {
             console.error('QR 합성 실패:', error);
             // 실패 시 원본 QR만 다운로드
