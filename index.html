@@ -2196,33 +2196,15 @@
             return;
           }
           
-          // 구역 타입별 텍스트 설정 (n개 확장 가능)
-          const zoneConfig = {
-            'fitness': { korean: '헬스장', english: 'FITNESS CENTER' },
-            'golf': { korean: '골프장', english: 'GOLF COURSE' },
-            'information': { korean: '인포데스크', english: 'INFORMATION' },
-            'pool': { korean: '수영장', english: 'POOL' },
-            'sauna': { korean: '사우나', english: 'SAUNA' },
-            'cafe': { korean: '카페테리아', english: 'CAFETERIA' },
-            'office': { korean: '사무실', english: 'OFFICE' },
-            'guesthouse': { korean: '게스트하우스', english: 'GUEST HOUSE' },
-            'library': { korean: '도서관', english: 'LIBRARY' },
-            'director': { korean: '학장실', english: 'DIRECTOR OFFICE' },
-            'etc': { korean: '기타', english: 'ETC' }
-            // 새 구역 추가 시 여기에 추가하면 자동 대응
-          };
-          
-          const config = zoneConfig[background] || { korean: locationName, english: '' };
-          
           try {
-            // 단일 템플릿 이미지 로드
+            // 배경 타입에 맞는 이미지 로드
             const bgImage = new Image();
             bgImage.crossOrigin = 'anonymous';
-            bgImage.src = './assets/backgrounds/template.png';
+            bgImage.src = `./assets/backgrounds/${background}.png`;
             
             await new Promise((resolve, reject) => {
               bgImage.onload = resolve;
-              bgImage.onerror = () => reject(new Error('템플릿 이미지 로드 실패'));
+              bgImage.onerror = () => reject(new Error('배경 이미지 로드 실패'));
             });
             
             // 새 캔버스 생성
@@ -2231,32 +2213,15 @@
             canvas.height = bgImage.height; // 1024
             const ctx = canvas.getContext('2d');
             
-            // 템플릿 배경 그리기
+            // 배경 이미지 그리기
             ctx.drawImage(bgImage, 0, 0);
             
-            // 🎨 금색 설정
-            const goldColor = '#D4AF37';
-            const centerX = canvas.width / 2;
-            
-            // 텍스트 렌더링
-            ctx.fillStyle = goldColor;
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            
-            // 한글 텍스트 (큰 글씨)
-            ctx.font = 'bold 60px "Noto Sans KR", sans-serif';
-            ctx.fillText(config.korean, centerX, 430);
-            
-            // 영문 텍스트 (작은 글씨)
-            ctx.font = 'bold 32px Arial, sans-serif';
-            ctx.fillText(config.english, centerX, 500);
-            
-            // QR 코드 삽입 (골드 박스 안)
+            // QR 코드 삽입 (골드 박스 안 좌표)
             const qrSize = 182;
             const qrX = 293;
             const qrY = 715;
             
-            // 흰색 배경
+            // 흰색 배경 (여백)
             ctx.fillStyle = '#FFFFFF';
             ctx.fillRect(qrX - 5, qrY - 5, qrSize + 10, qrSize + 10);
             
@@ -2265,7 +2230,7 @@
             
             // 다운로드
             const link = document.createElement('a');
-            link.download = `QR_${locationName}.png`;
+            link.download = `QR_${locationName}_${background}.png`;
             link.href = canvas.toDataURL('image/png');
             link.click();
           } catch (error) {
