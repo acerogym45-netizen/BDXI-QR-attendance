@@ -2150,7 +2150,8 @@
             data.forEach(loc => {
               const card = document.createElement('div');
               card.className = 'bg-white border rounded-lg p-4 flex flex-col items-center space-y-3';
-              const bgType = loc.qr_background || 'fitness'; // 기본값: fitness
+              // 🔧 배경 자동 감지: DB 값이 없으면 구역명으로 감지
+              const bgType = loc.qr_background || this.detectBackgroundFromName(loc.name);
               card.innerHTML = `
                 <p class="font-bold text-gray-800">${loc.name}</p>
                 <div class="text-xs text-gray-500 mb-2">
