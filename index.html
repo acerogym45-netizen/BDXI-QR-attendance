@@ -2152,17 +2152,33 @@
               card.className = 'bg-white border rounded-lg p-4 flex flex-col items-center space-y-3';
               // 🔧 배경 자동 감지: DB 값이 없으면 구역명으로 감지
               const bgType = loc.qr_background || this.detectBackgroundFromName(loc.name);
+              
+              const displayName = bgType === 'fitness' ? '헬스장' : 
+                                  bgType === 'golf' ? '골프장' : 
+                                  bgType === 'information' ? '인포데스크' : 
+                                  bgType === 'pool' ? '수영장' : '사우나';
+              
               card.innerHTML = `
                 <p class="font-bold text-gray-800">${loc.name}</p>
                 <div class="text-xs text-gray-500 mb-2">
-                  <i class="fas fa-image mr-1"></i>${bgType === 'fitness' ? '헬스장' : bgType === 'golf' ? '골프장' : bgType === 'information' ? '인포데스크' : bgType === 'pool' ? '수영장' : '사우나'}
+                  <i class="fas fa-image mr-1"></i>${displayName}
                 </div>
                 <div id="qr-${loc.id}" class="bg-white p-2 border rounded"></div>
-                <button onclick="app.downloadQRCode('qr-${loc.id}', '${loc.name}', '${bgType}')" class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                <button data-location-id="${loc.id}" data-location-name="${loc.name}" data-bg-type="${bgType}" class="qr-download-btn w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
                   <i class="fas fa-download mr-2"></i>배경 포함 다운로드
                 </button>
               `;
               container.appendChild(card);
+              
+              // 다운로드 버튼에 이벤트 리스너 추가
+              const btn = card.querySelector('.qr-download-btn');
+              btn.addEventListener('click', () => {
+                const qrId = btn.getAttribute('data-location-id');
+                const locName = btn.getAttribute('data-location-name');
+                const bg = btn.getAttribute('data-bg-type');
+                console.log('🖱️ 버튼 클릭:', locName, '→ 배경:', bg);
+                this.downloadQRCode(`qr-${qrId}`, locName, bg);
+              });
               
               // Generate QR code
               const qrUrl = `https://bdxi-qr-attendance.vercel.app/scan?loc=${loc.id}&apt=${loc.apartment_code || 'BJD001'}`;
@@ -2188,36 +2204,37 @@
             return;
           }
           
-          // 구역 타입별 이모지, 텍스트 매핑
+          // 구역 타입별 Font Awesome 아이콘, 텍스트 매핑
           const zoneConfig = {
             'fitness': { 
-              emoji: '🏋️', 
+              faIcon: '\uf44b',  // fa-dumbbell
               korean: '헬스장', 
               english: 'FITNESS CENTER' 
             },
             'golf': { 
-              emoji: '⛳', 
+              faIcon: '\uf450',  // fa-golf-ball
               korean: '골프장', 
               english: 'GOLF COURSE' 
             },
             'information': { 
-              emoji: 'ℹ️', 
+              faIcon: '\uf05a',  // fa-info-circle
               korean: '인포데스크', 
               english: 'INFORMATION' 
             },
             'pool': { 
-              emoji: '🏊', 
+              faIcon: '\uf5c4',  // fa-swimmer
               korean: '수영장', 
               english: 'POOL' 
             },
             'sauna': { 
-              emoji: '🧖', 
+              faIcon: '\uf2dc',  // fa-hot-tub
               korean: '사우나', 
               english: 'SAUNA' 
             }
           };
           
           const config = zoneConfig[background] || zoneConfig['fitness'];
+          console.log('🔍 다운로드 QR 배경:', background, '→ 설정:', config);
           
           try {
             // 빈 템플릿 배경 이미지 로드
@@ -2243,11 +2260,12 @@
             const goldColor = '#D4AF37'; // 금색
             const centerX = canvas.width / 2;
             
-            // 1️⃣ 유니코드 이모지 아이콘 (중앙 상단)
-            ctx.font = '120px Arial'; // 이모지 크기
+            // 1️⃣ Font Awesome 아이콘 (중앙 상단)
+            ctx.fillStyle = goldColor;
+            ctx.font = '120px "Font Awesome 6 Free"'; // Font Awesome 아이콘
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText(config.emoji, centerX, 280);
+            ctx.fillText(config.faIcon, centerX, 300);
             
             // 2️⃣ 한글 텍스트 (금색, 굵게)
             ctx.fillStyle = goldColor;
@@ -2280,7 +2298,7 @@
             link.href = canvas.toDataURL('image/png');
             link.click();
             
-            console.log('✅ QR 코드 다운로드 완료:', locationName, background, config.emoji, config.korean, config.english);
+            console.log('✅ QR 코드 다운로드 완료:', locationName, '배경타입:', background, '아이콘:', config.faIcon, '한글:', config.korean, '영문:', config.english);
           } catch (error) {
             console.error('QR 합성 실패:', error);
             // 실패 시 원본 QR만 다운로드
