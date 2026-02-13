@@ -2204,30 +2204,30 @@
             return;
           }
           
-          // 구역 타입별 Font Awesome 아이콘, 텍스트 매핑
+          // 구역 타입별 유니코드 아이콘 문자, 텍스트 매핑
           const zoneConfig = {
             'fitness': { 
-              faIcon: '\uf44b',  // fa-dumbbell
+              icon: '🏋',  // 덤벨 들고 있는 사람
               korean: '헬스장', 
               english: 'FITNESS CENTER' 
             },
             'golf': { 
-              faIcon: '\uf450',  // fa-golf-ball
+              icon: '⛳',  // 골프 깃발
               korean: '골프장', 
               english: 'GOLF COURSE' 
             },
             'information': { 
-              faIcon: '\uf05a',  // fa-info-circle
+              icon: 'ℹ',  // 정보 아이콘
               korean: '인포데스크', 
               english: 'INFORMATION' 
             },
             'pool': { 
-              faIcon: '\uf5c4',  // fa-swimmer
+              icon: '🏊',  // 수영하는 사람
               korean: '수영장', 
               english: 'POOL' 
             },
             'sauna': { 
-              faIcon: '\uf2dc',  // fa-hot-tub
+              icon: '♨',  // 온천 기호 (더 단순하고 명확함)
               korean: '사우나', 
               english: 'SAUNA' 
             }
@@ -2260,12 +2260,12 @@
             const goldColor = '#D4AF37'; // 금색
             const centerX = canvas.width / 2;
             
-            // 1️⃣ Font Awesome 아이콘 (중앙 상단)
+            // 1️⃣ 유니코드 아이콘 (중앙 상단, 금색)
             ctx.fillStyle = goldColor;
-            ctx.font = '120px "Font Awesome 6 Free"'; // Font Awesome 아이콘
+            ctx.font = '140px Arial, sans-serif'; // 아이콘 크기 증가
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText(config.faIcon, centerX, 300);
+            ctx.fillText(config.icon, centerX, 300);
             
             // 2️⃣ 한글 텍스트 (금색, 굵게)
             ctx.fillStyle = goldColor;
@@ -2298,7 +2298,7 @@
             link.href = canvas.toDataURL('image/png');
             link.click();
             
-            console.log('✅ QR 코드 다운로드 완료:', locationName, '배경타입:', background, '아이콘:', config.faIcon, '한글:', config.korean, '영문:', config.english);
+            console.log('✅ QR 코드 다운로드 완료:', locationName, '배경타입:', background, '아이콘:', config.icon, '한글:', config.korean, '영문:', config.english);
           } catch (error) {
             console.error('QR 합성 실패:', error);
             // 실패 시 원본 QR만 다운로드
