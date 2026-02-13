@@ -2150,8 +2150,12 @@
             data.forEach(loc => {
               const card = document.createElement('div');
               card.className = 'bg-white border rounded-lg p-4 flex flex-col items-center space-y-3';
+              
               // 🔧 항상 구역명으로 배경 타입 감지 (DB 값 무시)
               const bgType = this.detectBackgroundFromName(loc.name);
+              
+              // 🚨 강제 디버그: 화면에 구역명과 감지 결과 표시
+              const debugInfo = `구역: ${loc.name} | 감지: ${bgType}`;
               
               const displayName = bgType === 'fitness' ? '헬스장' : 
                                   bgType === 'golf' ? '골프장' : 
@@ -2165,6 +2169,9 @@
                 <p class="font-bold text-gray-800">${loc.name}</p>
                 <div class="text-xs text-gray-500 mb-2">
                   <i class="fas fa-image mr-1"></i>${displayName}
+                </div>
+                <div class="text-xs bg-yellow-100 p-1 rounded mb-2" style="font-family: monospace;">
+                  🐛 감지타입: ${bgType}
                 </div>
                 <div id="qr-${loc.id}" class="bg-white p-2 border rounded"></div>
                 <button data-location-id="${loc.id}" data-location-name="${loc.name}" data-bg-type="${bgType}" class="qr-download-btn w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
