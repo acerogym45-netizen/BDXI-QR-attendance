@@ -2151,41 +2151,11 @@
               const card = document.createElement('div');
               card.className = 'bg-white border rounded-lg p-4 flex flex-col items-center space-y-3';
               
-              // 🔧 항상 구역명으로 배경 타입 감지 (DB 값 무시)
+              // 항상 구역명으로 배경 타입 감지 (DB 값 무시)
               const bgType = this.detectBackgroundFromName(loc.name);
-              
-              // 🚨 강제 디버그: 화면에 구역명과 감지 결과 표시
-              const debugInfo = `구역: ${loc.name} | 감지: ${bgType}`;
-              
-              // zoneConfig를 사용한 자동 매핑
-              const zoneLabels = {
-                'fitness': '헬스장',
-                'golf': '골프장',
-                'information': '인포데스크',
-                'pool': '수영장',
-                'sauna': '사우나',
-                'cafe': '카페테리아',
-                'office': '사무실',
-                'guesthouse': '게스트하우스',
-                'library': '도서관',
-                'director': '학장실',
-                'etc': '기타'
-              };
-              const displayName = zoneLabels[bgType] || '기타';
-              
-              console.log('🔍 구역 로드:', loc.name, '→ 감지된 타입:', bgType, '→ 표시명:', displayName);
               
               card.innerHTML = `
                 <p class="font-bold text-gray-800">${loc.name}</p>
-                <div class="text-xs text-red-600 mb-2" style="font-weight: bold;">
-                  <i class="fas fa-image mr-1"></i>표시명: ${displayName}
-                </div>
-                <div class="text-xs bg-yellow-100 p-1 rounded mb-2" style="font-family: monospace;">
-                  🐛 감지타입: ${bgType}
-                </div>
-                <div class="text-xs bg-blue-100 p-1 rounded mb-2" style="font-family: monospace;">
-                  📊 bgType값: "${bgType}" | displayName값: "${displayName}"
-                </div>
                 <div id="qr-${loc.id}" class="bg-white p-2 border rounded"></div>
                 <button data-location-id="${loc.id}" data-location-name="${loc.name}" data-bg-type="${bgType}" class="qr-download-btn w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
                   <i class="fas fa-download mr-2"></i>배경 포함 다운로드
@@ -2199,7 +2169,6 @@
                 const qrId = btn.getAttribute('data-location-id');
                 const locName = btn.getAttribute('data-location-name');
                 const bg = btn.getAttribute('data-bg-type');
-                console.log('🖱️ 버튼 클릭:', locName, '→ 배경:', bg);
                 this.downloadQRCode(`qr-${qrId}`, locName, bg);
               });
               
@@ -2244,7 +2213,6 @@
           };
           
           const config = zoneConfig[background] || { korean: locationName, english: '' };
-          console.log('🔍 QR 생성:', locationName, '→ 배경타입:', background, '→ 설정:', config);
           
           try {
             // 단일 템플릿 이미지 로드
@@ -2300,8 +2268,6 @@
             link.download = `QR_${locationName}.png`;
             link.href = canvas.toDataURL('image/png');
             link.click();
-            
-            console.log('✅ QR 다운로드 완료:', locationName, config.korean, config.english);
           } catch (error) {
             console.error('QR 합성 실패:', error);
             // 실패 시 원본 QR만 다운로드
@@ -2859,73 +2825,60 @@
         detectBackgroundFromName: function(name) {
           const nameLower = name.toLowerCase().replace(/\s/g, '');
           
-          console.log('🔎 배경 감지 시작:', name, '→ 정규화:', nameLower);
-          
           // 골프장
           if (nameLower.includes('골프') || nameLower.includes('golf')) {
-            console.log('  ✅ 골프장 감지');
             return 'golf';
           } 
           // 인포데스크
           else if (nameLower.includes('인포') || nameLower.includes('info') || 
                    nameLower.includes('안내') || nameLower.includes('데스크') || 
                    nameLower.includes('desk') || nameLower.includes('information')) {
-            console.log('  ✅ 인포데스크 감지');
             return 'information';
           } 
           // 수영장
           else if (nameLower.includes('수영') || nameLower.includes('pool') || 
                    nameLower.includes('swimming') || nameLower.includes('워터')) {
-            console.log('  ✅ 수영장 감지');
             return 'pool';
           } 
           // 사우나
           else if (nameLower.includes('사우나') || nameLower.includes('sauna') || 
                    nameLower.includes('찜질') || nameLower.includes('남자') || 
                    nameLower.includes('여자') || nameLower.includes('탕')) {
-            console.log('  ✅ 사우나 감지');
             return 'sauna';
           } 
           // 헬스장
           else if (nameLower.includes('헬스') || nameLower.includes('fitness') || 
                    nameLower.includes('gym') || nameLower.includes('운동') ||
                    nameLower.includes('체육')) {
-            console.log('  ✅ 헬스장 감지');
             return 'fitness';
           }
           // 카페테리아
           else if (nameLower.includes('카페') || nameLower.includes('cafe') || 
                    nameLower.includes('커피') || nameLower.includes('cafeteria')) {
-            console.log('  ✅ 카페테리아 감지');
             return 'cafe';
           }
           // 사무실
           else if (nameLower.includes('사무') || nameLower.includes('office') || 
                    nameLower.includes('행정')) {
-            console.log('  ✅ 사무실 감지');
             return 'office';
           }
           // 게스트하우스
           else if (nameLower.includes('게스트') || nameLower.includes('guest') || 
                    nameLower.includes('하우스') || nameLower.includes('house')) {
-            console.log('  ✅ 게스트하우스 감지');
             return 'guesthouse';
           }
           // 도서관
           else if (nameLower.includes('도서') || nameLower.includes('library') || 
                    nameLower.includes('독서')) {
-            console.log('  ✅ 도서관 감지');
             return 'library';
           }
           // 학장실
           else if (nameLower.includes('학장') || nameLower.includes('원장') || 
                    nameLower.includes('관장')) {
-            console.log('  ✅ 학장실 감지');
             return 'director';
           }
           // 기타 (기본값)
           else {
-            console.log('  ⚠️ 매칭 실패, 기타로 분류');
             return 'etc';
           }
         },
