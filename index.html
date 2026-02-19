@@ -2197,10 +2197,16 @@
           }
           
           try {
+            // 사용 가능한 배경 이미지 목록
+            const availableBackgrounds = ['fitness', 'golf', 'information', 'pool', 'sauna'];
+            
+            // 배경 타입이 존재하지 않으면 fitness로 폴백
+            const bgType = availableBackgrounds.includes(background) ? background : 'fitness';
+            
             // 배경 타입에 맞는 이미지 로드
             const bgImage = new Image();
             bgImage.crossOrigin = 'anonymous';
-            bgImage.src = `./assets/backgrounds/${background}.png`;
+            bgImage.src = `./assets/backgrounds/${bgType}.png`;
             
             await new Promise((resolve, reject) => {
               bgImage.onload = resolve;
@@ -2230,7 +2236,7 @@
             
             // 다운로드
             const link = document.createElement('a');
-            link.download = `QR_${locationName}_${background}.png`;
+            link.download = `QR_${locationName}_${bgType}.png`;
             link.href = canvas.toDataURL('image/png');
             link.click();
           } catch (error) {
