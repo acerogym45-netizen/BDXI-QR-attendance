@@ -2418,6 +2418,9 @@
         },
         
         showAddEmployeeModal: function () {
+          // 다른 모든 모달 숨기기
+          document.querySelectorAll('[id*="modal"]').forEach(m => m.classList.add('hidden'));
+          
           const modal = document.getElementById('employee-modal');
           modal.classList.remove('hidden');
           
@@ -2435,6 +2438,9 @@
         },
         
         showEditEmployeeModal: function (emp) {
+          // 다른 모든 모달 숨기기
+          document.querySelectorAll('[id*="modal"]').forEach(m => m.classList.add('hidden'));
+          
           const modal = document.getElementById('edit-employee-modal');
           if (!modal) {
             alert('수정 모달을 찾을 수 없습니다. 페이지를 새로고침해주세요.');
@@ -2808,6 +2814,9 @@
         },
         
         showAddLocationModal: function () {
+          // 다른 모든 모달 숨기기
+          document.querySelectorAll('[id*="modal"]').forEach(m => m.classList.add('hidden'));
+          
           const modal = document.getElementById('location-modal');
           modal.classList.remove('hidden');
           document.getElementById('new-location-name').value = '';
@@ -2934,6 +2943,9 @@
         },
         
         showEditLocationModal: function (loc) {
+          // 다른 모든 모달 숨기기
+          document.querySelectorAll('[id*="modal"]').forEach(m => m.classList.add('hidden'));
+          
           const modal = document.getElementById('location-edit-modal');
           if (!modal) return;
           
@@ -3086,6 +3098,9 @@
             
             if (error) throw error;
             
+            // 다른 모든 모달 숨기기
+            document.querySelectorAll('[id*="modal"]').forEach(m => m.classList.add('hidden'));
+            
             const modal = document.getElementById('apartment-modal');
             if (!modal) return;
             
@@ -3190,7 +3205,6 @@
             modal.addEventListener('click', (e) => {
               if (e.target === modal) {
                 modal.classList.add('hidden');
-                modal.classList.remove('flex');
               }
             });
           }
