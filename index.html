@@ -2811,10 +2811,15 @@
         },
         
         showAddLocationModal: function () {
+          console.log('🔍 showAddLocationModal 호출됨');
           const modal = document.getElementById('location-modal');
+          console.log('📦 modal 요소:', modal);
+          console.log('📦 modal 이전 display:', modal.style.display);
           modal.style.display = 'flex';
+          console.log('📦 modal 이후 display:', modal.style.display);
           document.getElementById('new-location-name').value = '';
           document.getElementById('new-location-status').value = 'active';
+          console.log('✅ 모달 열기 완료');
         },
         
         closeLocationModal: function () {
