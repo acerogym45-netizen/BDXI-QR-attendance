@@ -2425,7 +2425,11 @@
           });
           
           const modal = document.getElementById('employee-modal');
-          if (modal) modal.style.display = 'flex';
+          if (modal) {
+            modal.style.display = 'flex';
+            modal.style.alignItems = 'center';
+            modal.style.justifyContent = 'center';
+          }
           
           document.getElementById('new-employee-name').value = '';
           document.getElementById('new-employee-phone').value = '';
@@ -2454,6 +2458,8 @@
           }
           
           modal.style.display = 'flex';
+          modal.style.alignItems = 'center';
+          modal.style.justifyContent = 'center';
           
           document.getElementById('edit-employee-id').value = emp.id;
           document.getElementById('edit-employee-name').value = emp.name || '';
@@ -2966,6 +2972,8 @@
           if (!modal) return;
           
           modal.style.display = 'flex';
+          modal.style.alignItems = 'center';
+          modal.style.justifyContent = 'center';
           
           document.getElementById('edit-location-id').value = loc.id;
           document.getElementById('edit-location-name').value = loc.name || '';
@@ -3124,6 +3132,8 @@
             if (!modal) return;
             
             modal.style.display = 'flex';
+            modal.style.alignItems = 'center';
+            modal.style.justifyContent = 'center';
             
             modal.classList.remove('hidden');
             
