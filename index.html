@@ -2419,10 +2419,13 @@
         
         showAddEmployeeModal: function () {
           // 다른 모든 모달 숨기기
-          document.querySelectorAll('[id*="modal"]').forEach(m => m.classList.add('hidden'));
+          ['location-modal', 'location-edit-modal', 'edit-employee-modal', 'apartment-modal', 'image-modal'].forEach(id => {
+            const m = document.getElementById(id);
+            if (m) m.classList.add('hidden');
+          });
           
           const modal = document.getElementById('employee-modal');
-          modal.classList.remove('hidden');
+          if (modal) modal.classList.remove('hidden');
           
           document.getElementById('new-employee-name').value = '';
           document.getElementById('new-employee-phone').value = '';
@@ -2439,7 +2442,10 @@
         
         showEditEmployeeModal: function (emp) {
           // 다른 모든 모달 숨기기
-          document.querySelectorAll('[id*="modal"]').forEach(m => m.classList.add('hidden'));
+          ['location-modal', 'location-edit-modal', 'employee-modal', 'apartment-modal', 'image-modal'].forEach(id => {
+            const m = document.getElementById(id);
+            if (m) m.classList.add('hidden');
+          });
           
           const modal = document.getElementById('edit-employee-modal');
           if (!modal) {
@@ -2815,10 +2821,13 @@
         
         showAddLocationModal: function () {
           // 다른 모든 모달 숨기기
-          document.querySelectorAll('[id*="modal"]').forEach(m => m.classList.add('hidden'));
+          ['employee-modal', 'edit-employee-modal', 'location-edit-modal', 'apartment-modal', 'image-modal'].forEach(id => {
+            const m = document.getElementById(id);
+            if (m) m.classList.add('hidden');
+          });
           
           const modal = document.getElementById('location-modal');
-          modal.classList.remove('hidden');
+          if (modal) modal.classList.remove('hidden');
           document.getElementById('new-location-name').value = '';
           document.getElementById('new-location-status').value = 'active';
         },
@@ -2944,7 +2953,10 @@
         
         showEditLocationModal: function (loc) {
           // 다른 모든 모달 숨기기
-          document.querySelectorAll('[id*="modal"]').forEach(m => m.classList.add('hidden'));
+          ['location-modal', 'employee-modal', 'edit-employee-modal', 'apartment-modal', 'image-modal'].forEach(id => {
+            const m = document.getElementById(id);
+            if (m) m.classList.add('hidden');
+          });
           
           const modal = document.getElementById('location-edit-modal');
           if (!modal) return;
@@ -3099,7 +3111,10 @@
             if (error) throw error;
             
             // 다른 모든 모달 숨기기
-            document.querySelectorAll('[id*="modal"]').forEach(m => m.classList.add('hidden'));
+            ['location-modal', 'location-edit-modal', 'employee-modal', 'edit-employee-modal', 'image-modal'].forEach(id => {
+              const m = document.getElementById(id);
+              if (m) m.classList.add('hidden');
+            });
             
             const modal = document.getElementById('apartment-modal');
             if (!modal) return;
