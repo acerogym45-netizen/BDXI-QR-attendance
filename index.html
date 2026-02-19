@@ -2783,7 +2783,12 @@
         },
         
         showAddLocationModal: function () {
-          document.getElementById('location-modal').classList.remove('hidden');
+          console.log('🔍 showAddLocationModal 호출됨');
+          const modal = document.getElementById('location-modal');
+          console.log('모달 요소:', modal);
+          console.log('모달 클래스 (제거 전):', modal.className);
+          modal.classList.remove('hidden');
+          console.log('모달 클래스 (제거 후):', modal.className);
           document.getElementById('new-location-name').value = '';
           document.getElementById('new-location-status').value = 'active';
         },
