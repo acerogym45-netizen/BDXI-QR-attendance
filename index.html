@@ -2815,8 +2815,16 @@
           const modal = document.getElementById('location-modal');
           console.log('📦 modal 요소:', modal);
           console.log('📦 modal 이전 display:', modal.style.display);
+          
+          // 강제로 표시 + z-index 최상위
           modal.style.display = 'flex';
+          modal.style.zIndex = '9999';
+          modal.style.position = 'fixed';
+          modal.style.inset = '0';
+          
           console.log('📦 modal 이후 display:', modal.style.display);
+          console.log('📦 modal 이후 zIndex:', modal.style.zIndex);
+          
           document.getElementById('new-location-name').value = '';
           document.getElementById('new-location-status').value = 'active';
           console.log('✅ 모달 열기 완료');
