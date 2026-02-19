@@ -1014,9 +1014,7 @@
 
     <!-- JavaScript -->
     <script>
-      // 즉시 실행 테스트
-      alert('JavaScript 로드됨!');
-      console.log('🔵 Script 시작 - 최상단');
+      console.log('🔵 Script 시작');
       
       const SUPABASE_URL = 'https://qgpqhtuynxhmgawakjxe.supabase.co';
       const SUPABASE_ANON_KEY =
@@ -1033,7 +1031,19 @@
         currentApartment: null, // 현재 선택된 아파트
 
         init: async function () {
-          this.sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+          try {
+            console.log('🔧 Supabase 초기화 시작');
+            // Supabase 라이브러리 로드 확인
+            if (typeof supabase === 'undefined') {
+              console.error('❌ Supabase 라이브러리가 로드되지 않았습니다.');
+              return;
+            }
+            this.sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            console.log('✅ Supabase 클라이언트 생성 완료');
+          } catch (error) {
+            console.error('❌ Supabase 초기화 실패:', error);
+            return;
+          }
           await this.loadApartments(); // 아파트 목록 로드
           this.checkLogin();
 
@@ -3152,22 +3162,21 @@
       };
       
       console.log('🟡 app 객체 정의 완료');
-      console.log('app:', app);
-      console.log('app.showAddLocationModal:', app.showAddLocationModal);
+      console.log('app.showAddLocationModal 타입:', typeof app.showAddLocationModal);
+      
+      // 전역에 app 즉시 노출
+      window.app = app;
+      console.log('✅ window.app 노출 완료');
 
       // Initialize
       document.addEventListener('DOMContentLoaded', () => {
-        app.init();
-        
-        // 디버깅: app 객체와 함수 확인
-        console.log('✅ DOMContentLoaded - app 초기화됨');
-        console.log('app 객체:', app);
-        console.log('showAddLocationModal 함수:', typeof app.showAddLocationModal);
-        
-        // 전역에 app 노출 (디버깅용)
-        window.app = app;
-        console.log('window.app에 노출됨 - 콘솔에서 app.showAddLocationModal() 테스트 가능');
+        console.log('🚀 DOMContentLoaded 이벤트 발생');
+        app.init().catch(err => {
+          console.error('❌ app.init() 실패:', err);
+        });
       });
+      
+      console.log('✅ 스크립트 로드 완료');
     </script>
 </body>
 </html>
