@@ -2158,7 +2158,7 @@
                 <p class="font-bold text-gray-800">${loc.name}</p>
                 <div id="qr-${loc.id}" class="bg-white p-2 border rounded"></div>
                 <button data-location-id="${loc.id}" data-location-name="${loc.name}" data-bg-type="${bgType}" class="qr-download-btn w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                  <i class="fas fa-download mr-2"></i>배경 포함 다운로드
+                  <i class="fas fa-download mr-2"></i>QR 코드 다운로드
                 </button>
               `;
               container.appendChild(card);
@@ -2196,57 +2196,11 @@
             return;
           }
           
-          try {
-            // 사용 가능한 배경 이미지 목록
-            const availableBackgrounds = ['fitness', 'golf', 'information', 'pool', 'sauna'];
-            
-            // 배경 타입이 존재하지 않으면 fitness로 폴백
-            const bgType = availableBackgrounds.includes(background) ? background : 'fitness';
-            
-            // 배경 타입에 맞는 이미지 로드
-            const bgImage = new Image();
-            bgImage.crossOrigin = 'anonymous';
-            bgImage.src = `./assets/backgrounds/${bgType}.png`;
-            
-            await new Promise((resolve, reject) => {
-              bgImage.onload = resolve;
-              bgImage.onerror = () => reject(new Error('배경 이미지 로드 실패'));
-            });
-            
-            // 새 캔버스 생성
-            const canvas = document.createElement('canvas');
-            canvas.width = bgImage.width;  // 765
-            canvas.height = bgImage.height; // 1024
-            const ctx = canvas.getContext('2d');
-            
-            // 배경 이미지 그리기
-            ctx.drawImage(bgImage, 0, 0);
-            
-            // QR 코드 삽입 (골드 박스 안 좌표)
-            const qrSize = 182;
-            const qrX = 293;
-            const qrY = 715;
-            
-            // 흰색 배경 (여백)
-            ctx.fillStyle = '#FFFFFF';
-            ctx.fillRect(qrX - 5, qrY - 5, qrSize + 10, qrSize + 10);
-            
-            // QR 코드 그리기
-            ctx.drawImage(qrCanvas, qrX, qrY, qrSize, qrSize);
-            
-            // 다운로드
-            const link = document.createElement('a');
-            link.download = `QR_${locationName}_${bgType}.png`;
-            link.href = canvas.toDataURL('image/png');
-            link.click();
-          } catch (error) {
-            console.error('QR 합성 실패:', error);
-            // 실패 시 원본 QR만 다운로드
-            const link = document.createElement('a');
-            link.download = `QR_${locationName}.png`;
-            link.href = qrCanvas.toDataURL();
-            link.click();
-          }
+          // QR 코드만 다운로드
+          const link = document.createElement('a');
+          link.download = `QR_${locationName}.png`;
+          link.href = qrCanvas.toDataURL();
+          link.click();
         },
         
         // Export Hours to Excel
