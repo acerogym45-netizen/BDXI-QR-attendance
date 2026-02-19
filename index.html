@@ -818,7 +818,7 @@
     </div>
 
     <!-- Employee Modal -->
-    <div id="employee-modal" class="fixed inset-0 z-50 hidden bg-black bg-opacity-80 items-center justify-center p-4">
+    <div id="employee-modal" class="fixed inset-0 z-50 hidden flex bg-black bg-opacity-80 items-center justify-center p-4">
       <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl" onclick="event.stopPropagation()">
         <div class="flex justify-between items-center p-6 border-b">
           <h3 class="text-xl font-bold text-gray-800">직원 추가</h3>
@@ -859,7 +859,7 @@
           </button>
         </div>
       </div>
-    <div id="edit-employee-modal" class="fixed inset-0 z-50 hidden bg-black bg-opacity-80 items-center justify-center p-4">
+    <div id="edit-employee-modal" class="fixed inset-0 z-50 hidden flex bg-black bg-opacity-80 items-center justify-center p-4">
       <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl" onclick="event.stopPropagation()">
         <div class="flex justify-between items-center p-6 border-b">
           <h3 class="text-xl font-bold text-gray-800">
@@ -911,7 +911,7 @@
     </div>
 
     <!-- Apartment Edit Modal -->
-    <div id="apartment-modal" class="fixed inset-0 z-50 hidden bg-black bg-opacity-80 items-center justify-center p-4">
+    <div id="apartment-modal" class="fixed inset-0 z-50 hidden flex bg-black bg-opacity-80 items-center justify-center p-4">
       <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl" onclick="event.stopPropagation()">
         <div class="flex justify-between items-center p-6 border-b">
           <h3 class="text-xl font-bold text-gray-800">
@@ -953,7 +953,7 @@
     </div>
 
     <!-- Location Modal -->
-    <div id="location-modal" class="fixed inset-0 z-50 hidden bg-black bg-opacity-80 items-center justify-center p-4">
+    <div id="location-modal" class="fixed inset-0 z-50 hidden flex bg-black bg-opacity-80 items-center justify-center p-4">
       <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl" onclick="event.stopPropagation()">
         <div class="flex justify-between items-center p-6 border-b">
           <h3 class="text-xl font-bold text-gray-800">구역 추가</h3>
@@ -980,7 +980,7 @@
     </div>
 
     <!-- Location Edit Modal -->
-    <div id="location-edit-modal" class="fixed inset-0 z-50 hidden bg-black bg-opacity-80 items-center justify-center p-4">
+    <div id="location-edit-modal" class="fixed inset-0 z-50 hidden flex bg-black bg-opacity-80 items-center justify-center p-4">
       <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl" onclick="event.stopPropagation()">
         <div class="flex justify-between items-center p-6 border-b">
           <h3 class="text-xl font-bold text-gray-800">
@@ -2420,7 +2420,6 @@
         showAddEmployeeModal: function () {
           const modal = document.getElementById('employee-modal');
           modal.classList.remove('hidden');
-          modal.classList.add('flex');
           
           document.getElementById('new-employee-name').value = '';
           document.getElementById('new-employee-phone').value = '';
@@ -2433,7 +2432,6 @@
         closeEmployeeModal: function () {
           const modal = document.getElementById('employee-modal');
           modal.classList.add('hidden');
-          modal.classList.remove('flex');
         },
         
         showEditEmployeeModal: function (emp) {
@@ -2444,7 +2442,6 @@
           }
           
           modal.classList.remove('hidden');
-          modal.classList.add('flex');
           
           document.getElementById('edit-employee-id').value = emp.id;
           document.getElementById('edit-employee-name').value = emp.name || '';
@@ -2458,7 +2455,6 @@
         closeEditEmployeeModal: function () {
           const modal = document.getElementById('edit-employee-modal');
           modal.classList.add('hidden');
-          modal.classList.remove('flex');
         },
         
         updateEmployee: async function () {
@@ -2814,7 +2810,6 @@
         showAddLocationModal: function () {
           const modal = document.getElementById('location-modal');
           modal.classList.remove('hidden');
-          modal.classList.add('flex');
           document.getElementById('new-location-name').value = '';
           document.getElementById('new-location-status').value = 'active';
         },
@@ -2822,7 +2817,6 @@
         closeLocationModal: function () {
           const modal = document.getElementById('location-modal');
           modal.classList.add('hidden');
-          modal.classList.remove('flex');
         },
         
         // 구역명으로 배경 자동 선택
@@ -2944,7 +2938,6 @@
           if (!modal) return;
           
           modal.classList.remove('hidden');
-          modal.classList.add('flex');
           
           document.getElementById('edit-location-id').value = loc.id;
           document.getElementById('edit-location-name').value = loc.name || '';
@@ -2954,7 +2947,6 @@
         closeEditLocationModal: function () {
           const modal = document.getElementById('location-edit-modal');
           modal.classList.add('hidden');
-          modal.classList.remove('flex');
         },
         
         updateLocation: async function () {
@@ -3098,7 +3090,6 @@
             if (!modal) return;
             
             modal.classList.remove('hidden');
-            modal.classList.add('flex');
             
             document.getElementById('edit-apartment-id').value = data.id;
             document.getElementById('edit-apartment-name').value = data.name || '';
@@ -3114,7 +3105,6 @@
         closeApartmentModal: function () {
           const modal = document.getElementById('apartment-modal');
           modal.classList.add('hidden');
-          modal.classList.remove('flex');
         },
         
         updateApartment: async function () {
