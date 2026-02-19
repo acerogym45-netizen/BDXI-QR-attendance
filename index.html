@@ -2216,12 +2216,22 @@
             // 배경 이미지 그리기
             ctx.drawImage(bgImage, 0, 0);
             
+            // 구역명 텍스트 삽입 (금색 가로줄 하단 ~ QR 박스 상단 사이)
+            const textX = 382;  // 중앙 X 좌표
+            const textY = 408;  // 중앙 Y 좌표
+            
+            ctx.fillStyle = '#2C5F2D';  // 어두운 녹색 (KINDWON 로고 색상)
+            ctx.font = 'bold 80px "Noto Sans KR", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(locationName, textX, textY);
+            
             // QR 코드 삽입 좌표 (측정된 값)
             const qrSize = 353;
             const qrX = 206;
             const qrY = 582;
             
-            // QR 코드 그리기 (흰색 배경 없이 직접 삽입)
+            // QR 코드 그리기
             ctx.drawImage(qrCanvas, qrX, qrY, qrSize, qrSize);
             
             // 다운로드
