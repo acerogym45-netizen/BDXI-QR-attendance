@@ -911,7 +911,7 @@
     </div>
 
     <!-- Apartment Edit Modal -->
-    <div id="apartment-modal" class="fixed inset-0 z-50 hidden modal-backdrop bg-black/80 flex items-center justify-center p-4" onclick="if (event.target === this) app.closeApartmentModal();">
+    <div id="apartment-modal" class="fixed inset-0 z-50 hidden bg-black bg-opacity-80 items-center justify-center p-4" onclick="if (event.target === this) app.closeApartmentModal();">
       <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl" onclick="event.stopPropagation()">
         <div class="flex justify-between items-center p-6 border-b">
           <h3 class="text-xl font-bold text-gray-800">
@@ -980,7 +980,7 @@
     </div>
 
     <!-- Location Edit Modal -->
-    <div id="location-edit-modal" class="fixed inset-0 z-50 modal-backdrop bg-black/80 flex items-center justify-center p-4" style="display: none;" onclick="if (event.target === this) app.closeEditLocationModal();">
+    <div id="location-edit-modal" class="fixed inset-0 z-50 hidden bg-black bg-opacity-80 items-center justify-center p-4" onclick="if (event.target === this) app.closeEditLocationModal();">
       <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl" onclick="event.stopPropagation()">
         <div class="flex justify-between items-center p-6 border-b">
           <h3 class="text-xl font-bold text-gray-800">
@@ -3097,9 +3097,8 @@
             const modal = document.getElementById('apartment-modal');
             if (!modal) return;
             
-            // 모달을 body 최상단으로 이동
-            document.body.appendChild(modal);
             modal.classList.remove('hidden');
+            modal.classList.add('flex');
             
             document.getElementById('edit-apartment-id').value = data.id;
             document.getElementById('edit-apartment-name').value = data.name || '';
@@ -3113,7 +3112,9 @@
         },
         
         closeApartmentModal: function () {
-          document.getElementById('apartment-modal').classList.add('hidden');
+          const modal = document.getElementById('apartment-modal');
+          modal.classList.add('hidden');
+          modal.classList.remove('flex');
         },
         
         updateApartment: async function () {
