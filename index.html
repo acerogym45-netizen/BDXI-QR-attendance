@@ -2418,7 +2418,12 @@
         },
         
         showAddEmployeeModal: function () {
-          document.getElementById('employee-modal').classList.remove('hidden');
+          const modal = document.getElementById('employee-modal');
+          modal.style.display = 'flex';
+          modal.style.opacity = '1';
+          modal.style.visibility = 'visible';
+          modal.classList.remove('hidden');
+          
           document.getElementById('new-employee-name').value = '';
           document.getElementById('new-employee-phone').value = '';
           document.getElementById('new-employee-status').value = 'active';
@@ -2428,21 +2433,23 @@
         },
         
         closeEmployeeModal: function () {
-          document.getElementById('employee-modal').classList.add('hidden');
+          const modal = document.getElementById('employee-modal');
+          modal.style.display = 'none';
+          modal.style.opacity = '0';
+          modal.classList.add('hidden');
         },
         
         showEditEmployeeModal: function (emp) {
-          console.log('🔧 showEditEmployeeModal 호출됨:', emp);
           const modal = document.getElementById('edit-employee-modal');
           if (!modal) {
-            console.error('❌ edit-employee-modal을 찾을 수 없습니다!');
             alert('수정 모달을 찾을 수 없습니다. 페이지를 새로고침해주세요.');
             return;
           }
           
-          // 모달을 body 최상단으로 이동 (z-index 문제 해결)
-          document.body.appendChild(modal);
-          
+          // 모달 표시
+          modal.style.display = 'flex';
+          modal.style.opacity = '1';
+          modal.style.visibility = 'visible';
           modal.classList.remove('hidden');
           
           document.getElementById('edit-employee-id').value = emp.id;
@@ -2452,12 +2459,13 @@
           document.getElementById('edit-employee-contract-start').value = emp.contract_start || '';
           document.getElementById('edit-employee-contract-end').value = emp.contract_end || '';
           document.getElementById('edit-employee-notes').value = emp.notes || '';
-          
-          console.log('✅ 모달 열림 완료');
         },
         
         closeEditEmployeeModal: function () {
-          document.getElementById('edit-employee-modal').classList.add('hidden');
+          const modal = document.getElementById('edit-employee-modal');
+          modal.style.display = 'none';
+          modal.style.opacity = '0';
+          modal.classList.add('hidden');
         },
         
         updateEmployee: async function () {
@@ -2811,27 +2819,24 @@
         },
         
         showAddLocationModal: function () {
-          console.log('🔍 showAddLocationModal 호출됨');
           const modal = document.getElementById('location-modal');
-          console.log('📦 modal 요소:', modal);
-          console.log('📦 modal 이전 display:', modal.style.display);
           
-          // 강제로 표시 + z-index 최상위
+          // 모달 표시
           modal.style.display = 'flex';
+          modal.style.opacity = '1';        // ⭐ 투명도 해제
+          modal.style.visibility = 'visible';
           modal.style.zIndex = '9999';
           modal.style.position = 'fixed';
           modal.style.inset = '0';
           
-          console.log('📦 modal 이후 display:', modal.style.display);
-          console.log('📦 modal 이후 zIndex:', modal.style.zIndex);
-          
           document.getElementById('new-location-name').value = '';
           document.getElementById('new-location-status').value = 'active';
-          console.log('✅ 모달 열기 완료');
         },
         
         closeLocationModal: function () {
-          document.getElementById('location-modal').style.display = 'none';
+          const modal = document.getElementById('location-modal');
+          modal.style.display = 'none';
+          modal.style.opacity = '0';
         },
         
         // 구역명으로 배경 자동 선택
@@ -2952,9 +2957,13 @@
           const modal = document.getElementById('location-edit-modal');
           if (!modal) return;
           
-          // 모달을 body 최상단으로 이동
-          document.body.appendChild(modal);
+          // 모달 표시
           modal.style.display = 'flex';
+          modal.style.opacity = '1';
+          modal.style.visibility = 'visible';
+          modal.style.zIndex = '9999';
+          modal.style.position = 'fixed';
+          modal.style.inset = '0';
           
           document.getElementById('edit-location-id').value = loc.id;
           document.getElementById('edit-location-name').value = loc.name || '';
@@ -2962,7 +2971,9 @@
         },
         
         closeEditLocationModal: function () {
-          document.getElementById('location-edit-modal').style.display = 'none';
+          const modal = document.getElementById('location-edit-modal');
+          modal.style.display = 'none';
+          modal.style.opacity = '0';
         },
         
         updateLocation: async function () {
