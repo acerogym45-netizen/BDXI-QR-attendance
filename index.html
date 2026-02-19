@@ -2421,11 +2421,11 @@
           // 다른 모든 모달 숨기기
           ['location-modal', 'location-edit-modal', 'edit-employee-modal', 'apartment-modal', 'image-modal'].forEach(id => {
             const m = document.getElementById(id);
-            if (m) m.classList.add('hidden');
+            if (m) m.style.display = 'none';
           });
           
           const modal = document.getElementById('employee-modal');
-          if (modal) modal.classList.remove('hidden');
+          if (modal) modal.style.display = 'flex';
           
           document.getElementById('new-employee-name').value = '';
           document.getElementById('new-employee-phone').value = '';
@@ -2437,14 +2437,14 @@
         
         closeEmployeeModal: function () {
           const modal = document.getElementById('employee-modal');
-          modal.classList.add('hidden');
+          if (modal) modal.style.display = 'none';
         },
         
         showEditEmployeeModal: function (emp) {
           // 다른 모든 모달 숨기기
           ['location-modal', 'location-edit-modal', 'employee-modal', 'apartment-modal', 'image-modal'].forEach(id => {
             const m = document.getElementById(id);
-            if (m) m.classList.add('hidden');
+            if (m) m.style.display = 'none';
           });
           
           const modal = document.getElementById('edit-employee-modal');
@@ -2453,7 +2453,7 @@
             return;
           }
           
-          modal.classList.remove('hidden');
+          modal.style.display = 'flex';
           
           document.getElementById('edit-employee-id').value = emp.id;
           document.getElementById('edit-employee-name').value = emp.name || '';
@@ -2466,7 +2466,7 @@
         
         closeEditEmployeeModal: function () {
           const modal = document.getElementById('edit-employee-modal');
-          modal.classList.add('hidden');
+          if (modal) modal.style.display = 'none';
         },
         
         updateEmployee: async function () {
@@ -2823,18 +2823,18 @@
           // 다른 모든 모달 숨기기
           ['employee-modal', 'edit-employee-modal', 'location-edit-modal', 'apartment-modal', 'image-modal'].forEach(id => {
             const m = document.getElementById(id);
-            if (m) m.classList.add('hidden');
+            if (m) m.style.display = 'none';
           });
           
           const modal = document.getElementById('location-modal');
-          if (modal) modal.classList.remove('hidden');
+          if (modal) modal.style.display = 'flex';
           document.getElementById('new-location-name').value = '';
           document.getElementById('new-location-status').value = 'active';
         },
         
         closeLocationModal: function () {
           const modal = document.getElementById('location-modal');
-          modal.classList.add('hidden');
+          if (modal) modal.style.display = 'none';
         },
         
         // 구역명으로 배경 자동 선택
@@ -2955,13 +2955,13 @@
           // 다른 모든 모달 숨기기
           ['location-modal', 'employee-modal', 'edit-employee-modal', 'apartment-modal', 'image-modal'].forEach(id => {
             const m = document.getElementById(id);
-            if (m) m.classList.add('hidden');
+            if (m) m.style.display = 'none';
           });
           
           const modal = document.getElementById('location-edit-modal');
           if (!modal) return;
           
-          modal.classList.remove('hidden');
+          modal.style.display = 'flex';
           
           document.getElementById('edit-location-id').value = loc.id;
           document.getElementById('edit-location-name').value = loc.name || '';
@@ -2970,7 +2970,7 @@
         
         closeEditLocationModal: function () {
           const modal = document.getElementById('location-edit-modal');
-          modal.classList.add('hidden');
+          if (modal) modal.style.display = 'none';
         },
         
         updateLocation: async function () {
@@ -3113,11 +3113,13 @@
             // 다른 모든 모달 숨기기
             ['location-modal', 'location-edit-modal', 'employee-modal', 'edit-employee-modal', 'image-modal'].forEach(id => {
               const m = document.getElementById(id);
-              if (m) m.classList.add('hidden');
+              if (m) m.style.display = 'none';
             });
             
             const modal = document.getElementById('apartment-modal');
             if (!modal) return;
+            
+            modal.style.display = 'flex';
             
             modal.classList.remove('hidden');
             
@@ -3134,7 +3136,7 @@
         
         closeApartmentModal: function () {
           const modal = document.getElementById('apartment-modal');
-          modal.classList.add('hidden');
+          if (modal) modal.style.display = 'none';
         },
         
         updateApartment: async function () {
@@ -3209,7 +3211,7 @@
           if (modal) {
             modal.addEventListener('click', (e) => {
               if (e.target === modal) {
-                modal.classList.add('hidden');
+                modal.style.display = 'none';
               }
             });
           }
