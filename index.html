@@ -2821,13 +2821,14 @@
         showAddLocationModal: function () {
           const modal = document.getElementById('location-modal');
           
-          // 모달 표시
-          modal.style.display = 'flex';
-          modal.style.opacity = '1';        // ⭐ 투명도 해제
-          modal.style.visibility = 'visible';
-          modal.style.zIndex = '9999';
-          modal.style.position = 'fixed';
-          modal.style.inset = '0';
+          // 강제 인라인 스타일 (important 사용)
+          modal.setAttribute('style', 'display: flex !important; position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; z-index: 999999 !important; background-color: rgba(0, 0, 0, 0.8) !important; align-items: center !important; justify-content: center !important; padding: 16px !important; opacity: 1 !important; visibility: visible !important;');
+          
+          // 내부 div 강제 스타일
+          const innerDiv = modal.querySelector('div');
+          if (innerDiv) {
+            innerDiv.setAttribute('style', 'background: white !important; border-radius: 16px !important; max-width: 448px !important; width: 100% !important; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25) !important;');
+          }
           
           document.getElementById('new-location-name').value = '';
           document.getElementById('new-location-status').value = 'active';
