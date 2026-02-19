@@ -2921,15 +2921,11 @@
             return;
           }
           
-          // 자동으로 배경 선택
-          const background = this.detectBackgroundFromName(name);
-          
           try {
-            // 🏢 현재 아파트 ID 포함 + 배경 이미지 정보 저장
+            // 🏢 현재 아파트 ID 포함
             const locationData = { 
               name, 
               status,
-              qr_background: background, // 자동 선택된 배경
               apartment_id: this.currentApartment ? this.currentApartment.id : null
             };
             
@@ -2937,7 +2933,7 @@
             
             if (error) throw error;
             
-            alert(`구역이 추가되었습니다.\n배경: ${background === 'fitness' ? '헬스장' : background === 'golf' ? '골프장' : background === 'pool' ? '수영장' : background === 'sauna' ? '사우나' : '인포데스크'}`);
+            alert('구역이 추가되었습니다.');
             this.closeLocationModal();
             this.loadLocations();
             this.loadQRCodes(); // QR 코드도 새로고침
@@ -2998,14 +2994,10 @@
             return;
           }
           
-          // 자동으로 배경 선택
-          const background = this.detectBackgroundFromName(name);
-          
           try {
             const updateData = {
               name,
-              status,
-              qr_background: background
+              status
             };
             
             const { error } = await this.sb
