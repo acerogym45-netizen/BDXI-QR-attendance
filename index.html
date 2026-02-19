@@ -3141,6 +3141,15 @@
       // Initialize
       document.addEventListener('DOMContentLoaded', () => {
         app.init();
+        
+        // 디버깅: app 객체와 함수 확인
+        console.log('✅ DOMContentLoaded - app 초기화됨');
+        console.log('app 객체:', app);
+        console.log('showAddLocationModal 함수:', typeof app.showAddLocationModal);
+        
+        // 전역에 app 노출 (디버깅용)
+        window.app = app;
+        console.log('window.app에 노출됨 - 콘솔에서 app.showAddLocationModal() 테스트 가능');
       });
     </script>
   
