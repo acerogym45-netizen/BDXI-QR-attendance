@@ -1007,10 +1007,14 @@
 
     <!-- JavaScript -->
     <script>
+      console.log('🔵 Script 시작 - 최상단');
+      
       const SUPABASE_URL = 'https://qgpqhtuynxhmgawakjxe.supabase.co';
       const SUPABASE_ANON_KEY =
         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFncHFodHV5bnhobWdhd2FranhlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcyOTQyNTEsImV4cCI6MjA4Mjg3MDI1MX0.WNljQIKDbeZCDlXe8fpBdZs58XRFfujGt7lBGfq_pVg';
       const LOGIN_PIN = 'bdxi2026';
+      
+      console.log('🟢 상수 정의 완료');
 
       const app = {
         sb: null,
@@ -3137,6 +3141,10 @@
           }
         }
       };
+      
+      console.log('🟡 app 객체 정의 완료');
+      console.log('app:', app);
+      console.log('app.showAddLocationModal:', app.showAddLocationModal);
 
       // Initialize
       document.addEventListener('DOMContentLoaded', () => {
