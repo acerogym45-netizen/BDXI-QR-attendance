@@ -92,6 +92,15 @@
         backdrop-filter: blur(8px);
         animation: fadeIn 0.2s ease;
       }
+      
+      /* 모달 강제 표시 스타일 */
+      .modal-show {
+        display: flex !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        z-index: 99999 !important;
+      }
+      
       @keyframes fadeIn {
         from {
           opacity: 0;
@@ -911,7 +920,7 @@
     </div>
 
     <!-- Apartment Edit Modal -->
-    <div id="apartment-modal" class="fixed inset-0 z-50 bg-black bg-opacity-80 items-center justify-center p-4" style="display: none;">
+    <div id="apartment-modal" class="fixed inset-0 flex items-center justify-center p-4" style="display: none; z-index: 9999; background-color: rgba(0, 0, 0, 0.8);">
       <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl" onclick="event.stopPropagation()">
         <div class="flex justify-between items-center p-6 border-b">
           <h3 class="text-xl font-bold text-gray-800">
@@ -3108,10 +3117,20 @@
         },
         
         showEditApartmentModal: async function () {
+          console.log('🔍 showEditApartmentModal 호출됨');
+          
           if (!this.currentApartment || !this.currentApartment.id) {
             alert('아파트 정보가 없습니다.');
             return;
           }
+          
+          // 먼저 다른 모든 모달 숨기기
+          ['location-modal', 'location-edit-modal', 'employee-modal', 'edit-employee-modal', 'image-modal'].forEach(id => {
+            const m = document.getElementById(id);
+            if (m) {
+              m.style.display = 'none';
+            }
+          });
           
           try {
             const { data, error } = await this.sb
@@ -3122,29 +3141,30 @@
             
             if (error) throw error;
             
-            // 다른 모든 모달 숨기기
-            ['location-modal', 'location-edit-modal', 'employee-modal', 'edit-employee-modal', 'image-modal'].forEach(id => {
-              const m = document.getElementById(id);
-              if (m) m.style.display = 'none';
-            });
+            if (!data) {
+              alert('아파트 정보를 찾을 수 없습니다.');
+              return;
+            }
             
-            const modal = document.getElementById('apartment-modal');
-            if (!modal) return;
-            
-            modal.style.display = 'flex';
-            modal.style.alignItems = 'center';
-            modal.style.justifyContent = 'center';
-            
-            modal.classList.remove('hidden');
-            
+            // 폼 필드 값 먼저 설정
             document.getElementById('edit-apartment-id').value = data.id;
             document.getElementById('edit-apartment-name').value = data.name || '';
             document.getElementById('edit-apartment-address').value = data.address || '';
             document.getElementById('edit-apartment-code').value = data.code || '';
             document.getElementById('edit-apartment-status').value = data.is_active ? 'true' : 'false';
+            
+            // 마지막에 모달 표시 (직원 모달과 같은 방식)
+            const modal = document.getElementById('apartment-modal');
+            if (modal) {
+              modal.style.display = 'flex';
+              modal.style.alignItems = 'center';
+              modal.style.justifyContent = 'center';
+              console.log('✅ 모달 표시 완료');
+            }
+            
           } catch (error) {
-            console.error('아파트 정보 로드 실패:', error);
-            alert('아파트 정보를 불러올 수 없습니다.');
+            console.error('❌ 아파트 정보 로드 실패:', error);
+            alert('아파트 정보를 불러올 수 없습니다: ' + error.message);
           }
         },
         
@@ -3234,6 +3254,12 @@
         app.init().catch(err => {
           console.error('❌ app.init() 실패:', err);
         });
+        
+        // 🔧 디버깅: 함수 확인
+        console.log('✅ app.showEditApartmentModal:', typeof app.showEditApartmentModal);
+        console.log('✅ app.showAddLocationModal:', typeof app.showAddLocationModal);
+        console.log('✅ apartment-modal:', document.getElementById('apartment-modal') ? '존재' : '없음');
+        console.log('✅ location-modal:', document.getElementById('location-modal') ? '존재' : '없음');
       });
       
       console.log('✅ 스크립트 로드 완료');
