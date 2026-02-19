@@ -741,7 +741,7 @@
               <h3 class="font-bold text-gray-800">
                 <i class="fas fa-map-marker-alt mr-2 text-red-600"></i>구역 관리
               </h3>
-              <button id="add-location-btn" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+              <button id="add-location-btn" onclick="app.showAddLocationModal()" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
                 <i class="fas fa-plus mr-2"></i>구역 추가
               </button>
             </div>
@@ -3187,16 +3187,6 @@
       // Initialize
       document.addEventListener('DOMContentLoaded', () => {
         console.log('🚀 DOMContentLoaded 이벤트 발생');
-        
-        // 구역 추가 버튼 이벤트 연결
-        const addLocationBtn = document.getElementById('add-location-btn');
-        if (addLocationBtn) {
-          addLocationBtn.addEventListener('click', () => {
-            console.log('🔘 구역 추가 버튼 클릭됨');
-            app.showAddLocationModal();
-          });
-          console.log('✅ 구역 추가 버튼 이벤트 연결 완료');
-        }
         
         // 모든 모달의 배경 클릭 이벤트
         ['location-modal', 'location-edit-modal', 'employee-modal', 'edit-employee-modal', 'apartment-modal'].forEach(id => {
