@@ -721,6 +721,7 @@
                 <thead class="bg-gray-50">
                   <tr>
                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">이름</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">직책</th>
                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">연락처</th>
                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">계약기간</th>
                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">상태</th>
@@ -834,6 +835,10 @@
             <input type="text" id="new-employee-phone" placeholder="010-1234-5678" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
           </div>
           <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">직책</label>
+            <input type="text" id="new-employee-position" placeholder="예: 직원, 관리자, 계약직 등" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+          </div>
+          <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">상태</label>
             <select id="new-employee-status" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
               <option value="active">활성</option>
@@ -879,6 +884,10 @@
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">연락처</label>
             <input type="text" id="edit-employee-phone" placeholder="010-1234-5678" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">직책</label>
+            <input type="text" id="edit-employee-position" placeholder="예: 직원, 관리자, 계약직 등" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
           </div>
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">상태</label>
@@ -2322,7 +2331,7 @@
         // Employee Management
         loadEmployees: async function () {
           const list = document.getElementById('employee-list');
-          list.innerHTML = '<tr><td colspan="6" class="text-center py-4"><div class="loader"></div></td></tr>';
+          list.innerHTML = '<tr><td colspan="7" class="text-center py-4"><div class="loader"></div></td></tr>';
           
           try {
             let query = this.sb.from('employees').select('*').order('created_at', { ascending: false });
@@ -2339,7 +2348,7 @@
             list.innerHTML = '';
             
             if (!data || data.length === 0) {
-              list.innerHTML = '<tr><td colspan="6" class="text-center py-10 text-gray-400">등록된 직원이 없습니다.</td></tr>';
+              list.innerHTML = '<tr><td colspan="7" class="text-center py-10 text-gray-400">등록된 직원이 없습니다.</td></tr>';
               return;
             }
             
@@ -2372,6 +2381,7 @@
               
               tr.innerHTML = `
                 <td class="px-4 py-3 text-sm font-medium">${emp.name}</td>
+                <td class="px-4 py-3 text-sm text-gray-600">${emp.position || '-'}</td>
                 <td class="px-4 py-3 text-sm">${emp.phone || '-'}</td>
                 <td class="px-4 py-3 text-sm ${contractClass}">${contractDisplay}</td>
                 <td class="px-4 py-3"><span class="px-2 py-1 text-xs rounded-full ${statusColor}">${statusText}</span></td>
@@ -2436,6 +2446,7 @@
           
           document.getElementById('new-employee-name').value = '';
           document.getElementById('new-employee-phone').value = '';
+          document.getElementById('new-employee-position').value = '';
           document.getElementById('new-employee-status').value = 'active';
           document.getElementById('new-employee-contract-start').value = '';
           document.getElementById('new-employee-contract-end').value = '';
@@ -2467,6 +2478,7 @@
           document.getElementById('edit-employee-id').value = emp.id;
           document.getElementById('edit-employee-name').value = emp.name || '';
           document.getElementById('edit-employee-phone').value = emp.phone || '';
+          document.getElementById('edit-employee-position').value = emp.position || '';
           document.getElementById('edit-employee-status').value = emp.status || 'active';
           document.getElementById('edit-employee-contract-start').value = emp.contract_start || '';
           document.getElementById('edit-employee-contract-end').value = emp.contract_end || '';
@@ -2482,6 +2494,7 @@
           const id = document.getElementById('edit-employee-id').value;
           const name = document.getElementById('edit-employee-name').value.trim();
           const phone = document.getElementById('edit-employee-phone').value.trim();
+          const position = document.getElementById('edit-employee-position').value.trim();
           const status = document.getElementById('edit-employee-status').value;
           const contractStart = document.getElementById('edit-employee-contract-start').value;
           const contractEnd = document.getElementById('edit-employee-contract-end').value;
@@ -2495,7 +2508,8 @@
           try {
             const updateData = { 
               name, 
-              phone, 
+              phone,
+              position: position || null,
               status,
               contract_start: contractStart || null,
               contract_end: contractEnd || null,
@@ -2521,6 +2535,7 @@
         addEmployee: async function () {
           const name = document.getElementById('new-employee-name').value.trim();
           const phone = document.getElementById('new-employee-phone').value.trim();
+          const position = document.getElementById('new-employee-position').value.trim();
           const status = document.getElementById('new-employee-status').value;
           const contractStart = document.getElementById('new-employee-contract-start').value;
           const contractEnd = document.getElementById('new-employee-contract-end').value;
@@ -2535,7 +2550,8 @@
             // 🏢 현재 아파트 ID 포함 + 계약 정보
             const employeeData = { 
               name, 
-              phone, 
+              phone,
+              position: position || null,
               status,
               apartment_id: this.currentApartment ? this.currentApartment.id : null,
               contract_start: contractStart || null,
