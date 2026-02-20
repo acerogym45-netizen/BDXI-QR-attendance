@@ -1366,6 +1366,16 @@
             btn.classList.remove('tab-inactive');
             btn.classList.add('tab-active');
           }
+          
+          // 계약 만료 배너 표시/숨김 제어
+          const contractBanner = document.getElementById('contract-alert-banner');
+          if (tab === 'report') {
+            // 업무 일지 탭에서는 배너 숨김
+            contractBanner.classList.add('hidden');
+          } else {
+            // 다른 탭에서는 원래 상태 유지 (필요시 표시)
+            // 배너는 기본적으로 hidden이고 checkContractExpirationsInDataTab에서 표시됨
+          }
 
           if (tab === 'gallery') {
             this.loadGallery();
