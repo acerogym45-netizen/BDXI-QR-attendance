@@ -27,6 +27,8 @@
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
     <style>
       body {
@@ -310,6 +312,9 @@
             </button>
             <button onclick="app.switchTab('data')" class="nav-tab py-4 px-2 text-sm font-medium transition-all tab-inactive">
               <i class="fas fa-database mr-2"></i>데이터 관리
+            </button>
+            <button onclick="app.switchTab('report')" class="nav-tab py-4 px-2 text-sm font-medium transition-all tab-inactive">
+              <i class="fas fa-file-alt mr-2"></i>업무 일지
             </button>
           </div>
         </div>
@@ -818,6 +823,99 @@
       </div>
     </div>
 
+    <!-- TAB 5: Work Report (업무 일지) -->
+    <div id="tab-report" class="tab-content space-y-6 hidden">
+      <div class="bg-white p-6 rounded-xl shadow-sm border">
+        <h2 class="text-2xl font-bold text-gray-800 mb-6">
+          <i class="fas fa-file-alt mr-3 text-blue-600"></i>업무 일지 작성
+        </h2>
+        
+        <!-- Date Range Selection -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">시작 날짜</label>
+            <input type="date" id="report-start-date" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">종료 날짜</label>
+            <input type="date" id="report-end-date" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+          </div>
+          <div class="flex items-end">
+            <button onclick="app.loadWorkReport()" class="w-full px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
+              <i class="fas fa-search mr-2"></i>조회
+            </button>
+          </div>
+        </div>
+        
+        <!-- Quick Date Selection -->
+        <div class="flex gap-2 mb-6">
+          <button onclick="app.setReportDateRange('today')" class="px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">오늘</button>
+          <button onclick="app.setReportDateRange('week')" class="px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">이번 주</button>
+          <button onclick="app.setReportDateRange('month')" class="px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">이번 달</button>
+        </div>
+        
+        <!-- Report Summary -->
+        <div id="report-summary" class="hidden mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <div class="grid grid-cols-3 gap-4 text-center">
+            <div>
+              <p class="text-sm text-gray-600">조회 기간</p>
+              <p class="text-lg font-bold text-gray-800" id="report-period">-</p>
+            </div>
+            <div>
+              <p class="text-sm text-gray-600">총 업무 건수</p>
+              <p class="text-lg font-bold text-blue-600" id="report-total-tasks">0</p>
+            </div>
+            <div>
+              <p class="text-sm text-gray-600">담당 직원 수</p>
+              <p class="text-lg font-bold text-green-600" id="report-total-employees">0</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Work Items List -->
+      <div id="report-work-items" class="space-y-4">
+        <!-- 업무 항목들이 여기에 동적으로 추가됩니다 -->
+      </div>
+      
+      <!-- Approval Section -->
+      <div id="report-approval" class="hidden bg-white p-6 rounded-xl shadow-sm border">
+        <h3 class="text-xl font-bold text-gray-800 mb-4">
+          <i class="fas fa-check-circle mr-2 text-green-600"></i>검수 확인
+        </h3>
+        <div class="space-y-4">
+          <div class="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
+            <i class="fas fa-square text-gray-400 text-2xl"></i>
+            <div class="flex-1">
+              <p class="font-medium text-gray-800">센터장 확인</p>
+              <p class="text-sm text-gray-500">확인자: ________________</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
+            <i class="fas fa-square text-gray-400 text-2xl"></i>
+            <div class="flex-1">
+              <p class="font-medium text-gray-800">관리팀장 확인</p>
+              <p class="text-sm text-gray-500">확인자: ________________</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
+            <i class="fas fa-square text-gray-400 text-2xl"></i>
+            <div class="flex-1">
+              <p class="font-medium text-gray-800">관리소장 확인</p>
+              <p class="text-sm text-gray-500">확인자: ________________</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- PDF Download Button -->
+      <div id="report-pdf-button" class="hidden text-center">
+        <button onclick="app.generateWorkReportPDF()" class="px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all font-bold text-lg shadow-lg">
+          <i class="fas fa-file-pdf mr-2"></i>PDF 다운로드
+        </button>
+      </div>
+    </div>
+
     <!-- Employee Modal -->
     <div id="employee-modal" class="fixed inset-0 z-50 bg-black bg-opacity-80 items-center justify-center p-4" style="display: none;">
       <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl" onclick="event.stopPropagation()">
@@ -1268,6 +1366,9 @@
             this.loadLocations();
             this.loadQRCodes();
             this.checkContractExpirationsInDataTab(); // 계약 만료 섹션 표시
+          } else if (tab === 'report') {
+            // 업무 일지 탭: 기본 날짜 설정 (이번 주)
+            this.setReportDateRange('week');
           }
         },
 
@@ -3216,6 +3317,365 @@
             console.error('아파트 수정 실패:', error);
             alert('아파트 수정 실패: ' + error.message);
           }
+        },
+        
+        // ==================== 업무 일지 기능 ====================
+        
+        setReportDateRange: function(range) {
+          const today = new Date();
+          const startInput = document.getElementById('report-start-date');
+          const endInput = document.getElementById('report-end-date');
+          
+          if (range === 'today') {
+            const dateStr = today.toISOString().split('T')[0];
+            startInput.value = dateStr;
+            endInput.value = dateStr;
+          } else if (range === 'week') {
+            const weekAgo = new Date(today);
+            weekAgo.setDate(today.getDate() - 6); // 오늘 포함 7일
+            startInput.value = weekAgo.toISOString().split('T')[0];
+            endInput.value = today.toISOString().split('T')[0];
+          } else if (range === 'month') {
+            const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+            startInput.value = monthStart.toISOString().split('T')[0];
+            endInput.value = today.toISOString().split('T')[0];
+          }
+          
+          // 자동으로 조회
+          this.loadWorkReport();
+        },
+        
+        loadWorkReport: async function() {
+          const startDate = document.getElementById('report-start-date').value;
+          const endDate = document.getElementById('report-end-date').value;
+          
+          if (!startDate || !endDate) {
+            alert('시작 날짜와 종료 날짜를 선택해주세요.');
+            return;
+          }
+          
+          try {
+            // 청소 업무 데이터 로드
+            let query = this.sb
+              .from('cleaning_tasks')
+              .select('*, employee:employees(name, position)')
+              .gte('created_at', `${startDate}T00:00:00Z`)
+              .lte('created_at', `${endDate}T23:59:59Z`)
+              .order('created_at', { ascending: true });
+            
+            // 아파트 필터 적용
+            if (this.currentApartment && this.currentApartment.id) {
+              query = query.eq('apartment_id', this.currentApartment.id);
+            }
+            
+            const { data: tasks, error } = await query;
+            
+            if (error) throw error;
+            
+            // 요약 정보 표시
+            const uniqueEmployees = new Set(tasks.map(t => t.employee_name)).size;
+            document.getElementById('report-period').textContent = 
+              `${new Date(startDate).toLocaleDateString('ko-KR')} ~ ${new Date(endDate).toLocaleDateString('ko-KR')}`;
+            document.getElementById('report-total-tasks').textContent = tasks.length;
+            document.getElementById('report-total-employees').textContent = uniqueEmployees;
+            
+            document.getElementById('report-summary').classList.remove('hidden');
+            document.getElementById('report-approval').classList.remove('hidden');
+            document.getElementById('report-pdf-button').classList.remove('hidden');
+            
+            // 업무 항목 표시
+            this.renderWorkReportItems(tasks);
+            
+          } catch (error) {
+            console.error('업무 일지 로드 실패:', error);
+            alert('업무 일지 로드 실패: ' + error.message);
+          }
+        },
+        
+        renderWorkReportItems: function(tasks) {
+          const container = document.getElementById('report-work-items');
+          container.innerHTML = '';
+          
+          if (!tasks || tasks.length === 0) {
+            container.innerHTML = `
+              <div class="bg-white p-8 rounded-xl shadow-sm border text-center text-gray-500">
+                <i class="fas fa-inbox text-4xl mb-3"></i>
+                <p>선택한 기간에 업무 기록이 없습니다.</p>
+              </div>
+            `;
+            return;
+          }
+          
+          tasks.forEach(task => {
+            const taskDate = new Date(task.created_at);
+            const dateStr = taskDate.toLocaleDateString('ko-KR');
+            const timeStr = taskDate.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+            const position = task.employee?.position || '직원';
+            
+            const taskCard = document.createElement('div');
+            taskCard.className = 'bg-white p-6 rounded-xl shadow-sm border';
+            taskCard.innerHTML = `
+              <div class="flex justify-between items-start mb-4">
+                <div>
+                  <h3 class="text-lg font-bold text-gray-800">
+                    <i class="fas fa-broom mr-2 text-green-600"></i>${task.location || '미지정'} 청소
+                  </h3>
+                  <p class="text-sm text-gray-600 mt-1">
+                    <i class="fas fa-calendar mr-1"></i>${dateStr} ${timeStr}
+                    <span class="ml-3"><i class="fas fa-user mr-1"></i>${task.employee_name} (${position})</span>
+                  </p>
+                </div>
+                <span class="px-3 py-1 text-xs rounded-full ${task.status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}">
+                  ${task.status === 'completed' ? '완료' : task.status}
+                </span>
+              </div>
+              
+              ${task.photo_urls && task.photo_urls.length >= 2 ? `
+                <div class="grid grid-cols-2 gap-4">
+                  <div>
+                    <p class="text-xs font-medium text-gray-600 mb-2">
+                      <i class="fas fa-arrow-left mr-1"></i>작업 전 (Before)
+                    </p>
+                    <img src="${task.photo_urls[0]}" class="w-full h-48 object-cover rounded-lg border-2 border-gray-200" alt="작업 전">
+                  </div>
+                  <div>
+                    <p class="text-xs font-medium text-gray-600 mb-2">
+                      <i class="fas fa-arrow-right mr-1"></i>작업 후 (After)
+                    </p>
+                    <img src="${task.photo_urls[1]}" class="w-full h-48 object-cover rounded-lg border-2 border-green-200" alt="작업 후">
+                  </div>
+                </div>
+              ` : task.photo_urls && task.photo_urls.length === 1 ? `
+                <div class="grid grid-cols-1">
+                  <div>
+                    <p class="text-xs font-medium text-gray-600 mb-2">
+                      <i class="fas fa-image mr-1"></i>작업 사진
+                    </p>
+                    <img src="${task.photo_urls[0]}" class="w-full h-48 object-cover rounded-lg border-2 border-gray-200" alt="작업 사진">
+                  </div>
+                </div>
+              ` : `
+                <div class="p-4 bg-gray-50 rounded-lg text-center text-gray-400">
+                  <i class="fas fa-camera-slash text-2xl mb-2"></i>
+                  <p class="text-sm">사진 없음</p>
+                </div>
+              `}
+              
+              ${task.notes ? `
+                <div class="mt-4 p-3 bg-gray-50 rounded-lg">
+                  <p class="text-sm text-gray-700">
+                    <i class="fas fa-sticky-note mr-1 text-yellow-500"></i>
+                    ${task.notes}
+                  </p>
+                </div>
+              ` : ''}
+            `;
+            
+            container.appendChild(taskCard);
+          });
+        },
+        
+        generateWorkReportPDF: async function() {
+          const startDate = document.getElementById('report-start-date').value;
+          const endDate = document.getElementById('report-end-date').value;
+          
+          if (!startDate || !endDate) {
+            alert('날짜를 먼저 선택하고 조회해주세요.');
+            return;
+          }
+          
+          try {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('p', 'mm', 'a4');
+            
+            // 한글 폰트 설정 (기본 폰트 사용)
+            doc.setFont('helvetica');
+            
+            let yPosition = 20;
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const pageHeight = doc.internal.pageSize.getHeight();
+            const margin = 15;
+            const contentWidth = pageWidth - 2 * margin;
+            
+            // 헤더
+            doc.setFontSize(20);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Work Report', pageWidth / 2, yPosition, { align: 'center' });
+            
+            yPosition += 10;
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'normal');
+            const apartmentName = this.currentApartment?.name || 'All Locations';
+            doc.text(apartmentName, pageWidth / 2, yPosition, { align: 'center' });
+            
+            yPosition += 15;
+            
+            // 기간 정보
+            doc.setFontSize(10);
+            doc.text(`Period: ${new Date(startDate).toLocaleDateString('ko-KR')} ~ ${new Date(endDate).toLocaleDateString('ko-KR')}`, margin, yPosition);
+            
+            yPosition += 10;
+            const totalTasks = document.getElementById('report-total-tasks').textContent;
+            const totalEmployees = document.getElementById('report-total-employees').textContent;
+            doc.text(`Total Tasks: ${totalTasks}  |  Total Employees: ${totalEmployees}`, margin, yPosition);
+            
+            yPosition += 15;
+            
+            // 구분선
+            doc.setLineWidth(0.5);
+            doc.line(margin, yPosition, pageWidth - margin, yPosition);
+            yPosition += 10;
+            
+            // 업무 항목들
+            const workItems = document.querySelectorAll('#report-work-items > div');
+            
+            for (let i = 0; i < workItems.length; i++) {
+              const item = workItems[i];
+              
+              // 페이지 넘김 체크
+              if (yPosition > pageHeight - 60) {
+                doc.addPage();
+                yPosition = 20;
+              }
+              
+              // 업무 제목
+              const title = item.querySelector('h3');
+              const dateInfo = item.querySelector('p.text-sm');
+              const status = item.querySelector('span.px-3');
+              
+              if (title && dateInfo) {
+                doc.setFontSize(11);
+                doc.setFont('helvetica', 'bold');
+                const titleText = title.textContent.replace(/\s+/g, ' ').trim();
+                doc.text(`${i + 1}. ${titleText}`, margin, yPosition);
+                
+                yPosition += 6;
+                doc.setFontSize(9);
+                doc.setFont('helvetica', 'normal');
+                const dateText = dateInfo.textContent.replace(/\s+/g, ' ').trim();
+                doc.text(dateText, margin + 5, yPosition);
+                
+                yPosition += 10;
+              }
+              
+              // 이미지 처리 (Before/After)
+              const images = item.querySelectorAll('img');
+              if (images.length >= 2) {
+                try {
+                  // Before 이미지
+                  const beforeImg = await this.loadImageAsDataURL(images[0].src);
+                  const imgWidth = (contentWidth / 2) - 5;
+                  const imgHeight = 50;
+                  
+                  doc.setFontSize(8);
+                  doc.text('Before:', margin, yPosition);
+                  yPosition += 5;
+                  doc.addImage(beforeImg, 'JPEG', margin, yPosition, imgWidth, imgHeight);
+                  
+                  // After 이미지
+                  const afterImg = await this.loadImageAsDataURL(images[1].src);
+                  doc.text('After:', margin + imgWidth + 10, yPosition - 5);
+                  doc.addImage(afterImg, 'JPEG', margin + imgWidth + 10, yPosition, imgWidth, imgHeight);
+                  
+                  yPosition += imgHeight + 10;
+                } catch (error) {
+                  console.error('Image loading error:', error);
+                  doc.setFontSize(8);
+                  doc.text('[Images could not be loaded]', margin, yPosition);
+                  yPosition += 10;
+                }
+              } else if (images.length === 1) {
+                try {
+                  const img = await this.loadImageAsDataURL(images[0].src);
+                  const imgWidth = contentWidth / 2;
+                  const imgHeight = 50;
+                  doc.addImage(img, 'JPEG', margin, yPosition, imgWidth, imgHeight);
+                  yPosition += imgHeight + 10;
+                } catch (error) {
+                  console.error('Image loading error:', error);
+                  yPosition += 10;
+                }
+              }
+              
+              // 비고
+              const notes = item.querySelector('.bg-gray-50 p');
+              if (notes) {
+                doc.setFontSize(9);
+                const notesText = notes.textContent.replace(/\s+/g, ' ').trim();
+                doc.text(`Note: ${notesText}`, margin + 5, yPosition);
+                yPosition += 8;
+              }
+              
+              // 구분선
+              doc.setLineWidth(0.3);
+              doc.setDrawColor(200, 200, 200);
+              doc.line(margin, yPosition, pageWidth - margin, yPosition);
+              yPosition += 10;
+            }
+            
+            // 검수 확인란
+            if (yPosition > pageHeight - 80) {
+              doc.addPage();
+              yPosition = 20;
+            }
+            
+            yPosition += 10;
+            doc.setLineWidth(0.5);
+            doc.setDrawColor(0, 0, 0);
+            doc.line(margin, yPosition, pageWidth - margin, yPosition);
+            yPosition += 10;
+            
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Approval', margin, yPosition);
+            yPosition += 10;
+            
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'normal');
+            
+            // 센터장
+            doc.text('[ ] Center Manager: __________________', margin, yPosition);
+            yPosition += 15;
+            
+            // 관리팀장
+            doc.text('[ ] Team Manager: __________________', margin, yPosition);
+            yPosition += 15;
+            
+            // 관리소장
+            doc.text('[ ] Office Manager: __________________', margin, yPosition);
+            
+            // PDF 저장
+            const filename = `work_report_${startDate}_${endDate}.pdf`;
+            doc.save(filename);
+            
+            alert('PDF가 다운로드되었습니다!');
+            
+          } catch (error) {
+            console.error('PDF 생성 실패:', error);
+            alert('PDF 생성 실패: ' + error.message);
+          }
+        },
+        
+        loadImageAsDataURL: function(url) {
+          return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.crossOrigin = 'Anonymous';
+            img.onload = function() {
+              const canvas = document.createElement('canvas');
+              canvas.width = img.width;
+              canvas.height = img.height;
+              const ctx = canvas.getContext('2d');
+              ctx.drawImage(img, 0, 0);
+              try {
+                const dataURL = canvas.toDataURL('image/jpeg', 0.8);
+                resolve(dataURL);
+              } catch (error) {
+                reject(error);
+              }
+            };
+            img.onerror = reject;
+            img.src = url;
+          });
         }
       };
       
