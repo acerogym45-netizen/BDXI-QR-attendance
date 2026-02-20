@@ -1368,7 +1368,11 @@
             this.checkContractExpirationsInDataTab(); // 계약 만료 섹션 표시
           } else if (tab === 'report') {
             // 업무 일지 탭: 기본 날짜 설정 (이번 주)
-            this.setReportDateRange('week');
+            const today = new Date();
+            const weekAgo = new Date(today);
+            weekAgo.setDate(today.getDate() - 6);
+            document.getElementById('report-start-date').value = weekAgo.toISOString().split('T')[0];
+            document.getElementById('report-end-date').value = today.toISOString().split('T')[0];
           }
         },
 
@@ -3356,21 +3360,41 @@
           
           try {
             // 청소 업무 데이터 로드
-            let query = this.sb
+            let taskQuery = this.sb
               .from('cleaning_tasks')
-              .select('*, employee:employees(name, position)')
+              .select('*')
               .gte('created_at', `${startDate}T00:00:00Z`)
               .lte('created_at', `${endDate}T23:59:59Z`)
               .order('created_at', { ascending: true });
             
             // 아파트 필터 적용
             if (this.currentApartment && this.currentApartment.id) {
-              query = query.eq('apartment_id', this.currentApartment.id);
+              taskQuery = taskQuery.eq('apartment_id', this.currentApartment.id);
             }
             
-            const { data: tasks, error } = await query;
+            const { data: tasks, error: taskError } = await taskQuery;
             
-            if (error) throw error;
+            if (taskError) throw taskError;
+            
+            // 직원 정보 로드
+            let employeeQuery = this.sb.from('employees').select('name, position');
+            if (this.currentApartment && this.currentApartment.id) {
+              employeeQuery = employeeQuery.eq('apartment_id', this.currentApartment.id);
+            }
+            
+            const { data: employees, error: empError } = await employeeQuery;
+            if (empError) throw empError;
+            
+            // 직원 이름으로 직책 매핑
+            const employeeMap = {};
+            (employees || []).forEach(emp => {
+              employeeMap[emp.name] = emp.position || '직원';
+            });
+            
+            // 업무에 직원 정보 추가
+            tasks.forEach(task => {
+              task.employee_position = employeeMap[task.employee_name] || '직원';
+            });
             
             // 요약 정보 표시
             const uniqueEmployees = new Set(tasks.map(t => t.employee_name)).size;
@@ -3410,7 +3434,7 @@
             const taskDate = new Date(task.created_at);
             const dateStr = taskDate.toLocaleDateString('ko-KR');
             const timeStr = taskDate.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
-            const position = task.employee?.position || '직원';
+            const position = task.employee_position || '직원';
             
             const taskCard = document.createElement('div');
             taskCard.className = 'bg-white p-6 rounded-xl shadow-sm border';
