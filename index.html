@@ -328,9 +328,9 @@
       </nav>
 
       <!-- Main Content -->
-      <main class="flex-1 max-w-7xl w-full mx-auto px-4">
+      <main class="flex-1 max-w-7xl w-full mx-auto">
         <!-- 계약 만료 알림 배너 -->
-        <div id="contract-alert-banner" class="hidden bg-gradient-to-r from-orange-50 to-red-50 border-2 border-orange-300 rounded-xl p-4 shadow-lg" style="margin-bottom: 0;">
+        <div id="contract-alert-banner" class="hidden bg-gradient-to-r from-orange-50 to-red-50 border-2 border-orange-300 rounded-xl p-4 shadow-lg mx-4 mt-4" style="margin-bottom: 1rem;">
           <div class="flex items-start gap-3">
             <div class="flex-shrink-0">
               <i class="fas fa-exclamation-triangle text-orange-600 text-2xl"></i>
@@ -356,7 +356,7 @@
         </div>
 
         <!-- TAB 1: Gallery -->
-        <div id="tab-gallery" class="tab-content space-y-6">
+        <div id="tab-gallery" class="tab-content space-y-6 px-4">
           <!-- Search Bar -->
           <div class="bg-white p-4 rounded-xl shadow-sm border">
             <div class="relative">
@@ -432,7 +432,7 @@
         </div>
 
         <!-- TAB 2: History -->
-        <div id="tab-history" class="tab-content space-y-6 hidden">
+        <div id="tab-history" class="tab-content space-y-6 px-4 hidden">
           <!-- Search Bar -->
           <div class="bg-white p-4 rounded-xl shadow-sm border">
             <div class="relative">
@@ -509,7 +509,7 @@
         </div>
 
         <!-- TAB 3: Stats -->
-        <div id="tab-stats" class="tab-content space-y-6 hidden">
+        <div id="tab-stats" class="tab-content space-y-6 px-4 hidden">
           <!-- 실시간 요약 배너 -->
           <div class="bg-gradient-to-r from-green-600 to-green-700 p-6 rounded-xl shadow-lg text-white">
             <div class="flex items-center justify-between">
@@ -666,7 +666,7 @@
         </div>
 
         <!-- TAB 4: Data -->
-        <div id="tab-data" class="tab-content space-y-6 hidden">
+        <div id="tab-data" class="tab-content space-y-6 px-4 hidden">
           <!-- 계약 만료 임박 섹션 -->
           <div id="contract-expiring-section" class="hidden bg-gradient-to-r from-orange-50 to-red-50 border-2 border-orange-300 rounded-xl p-6 shadow-lg">
             <div class="flex items-start justify-between mb-4">
@@ -832,7 +832,7 @@
 
     <!-- TAB 5: Work Report (업무 일지) -->
     <div id="tab-report" class="tab-content hidden">
-      <div class="grid grid-cols-1 xl:grid-cols-2 gap-0 h-full">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-0 h-full">
         <!-- 좌측: 설정 및 요약 -->
         <div class="p-4 space-y-3 bg-gray-50 border-r">
           <div class="bg-white p-4 rounded-xl shadow-sm border">
@@ -1378,16 +1378,12 @@
           
           // 계약 만료 배너 표시/숨김 제어
           const contractBanner = document.getElementById('contract-alert-banner');
-          const mainContent = document.querySelector('main');
           
           if (tab === 'report') {
-            // 업무 일지 탭에서는 배너 숨김
+            // 업무 일지 탭에서만 배너 숨김
             contractBanner.classList.add('hidden');
-            mainContent.style.padding = '0.5rem 0'; // 상하만 최소 패딩
-          } else {
-            // 다른 탭에서는 원래 상태 유지
-            mainContent.style.padding = '0.5rem 1rem'; // 원래대로
           }
+          // 다른 탭에서는 배너가 필요할 때 checkContractExpiration에서 표시
 
           if (tab === 'gallery') {
             this.loadGallery();
