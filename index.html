@@ -83,10 +83,17 @@
         opacity: 1 !important;
         visibility: visible !important;
         height: auto !important;
-        min-height: 200px !important;
+        min-height: 0 !important;
       }
       .tab-content.hidden {
         display: none !important;
+      }
+      
+      /* Work Report Tab - No spacing */
+      #tab-report {
+        margin: 0 !important;
+        padding: 0 !important;
+        min-height: 0 !important;
       }
 
       /* Modal */
@@ -824,10 +831,10 @@
     </div>
 
     <!-- TAB 5: Work Report (업무 일지) -->
-    <div id="tab-report" class="tab-content hidden" style="margin: 0 !important; padding: 0 !important; position: relative; min-height: 0 !important;">
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 h-full" style="margin: 0; padding: 0;">
+    <div id="tab-report" class="tab-content hidden">
+      <div class="grid grid-cols-1 xl:grid-cols-2 gap-0 h-full">
         <!-- 좌측: 설정 및 요약 -->
-        <div class="space-y-3">
+        <div class="p-4 space-y-3 bg-gray-50 border-r">
           <div class="bg-white p-4 rounded-xl shadow-sm border">
             <h2 class="text-lg font-bold text-gray-800 mb-2">
               <i class="fas fa-file-alt mr-2 text-blue-600"></i>업무 일지 작성
@@ -914,18 +921,20 @@
         </div>
         
         <!-- 우측: PDF 미리보기 -->
-        <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
-          <div class="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-3">
-            <h3 class="text-base font-bold">
-              <i class="fas fa-eye mr-2"></i>PDF 미리보기
-            </h3>
-          </div>
-          <div id="report-preview" class="p-4 overflow-y-auto" style="max-height: calc(100vh - 200px);">
+        <div class="p-4 bg-white">
+          <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
+            <div class="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-3">
+              <h3 class="text-base font-bold">
+                <i class="fas fa-eye mr-2"></i>PDF 미리보기
+              </h3>
+            </div>
+            <div id="report-preview" class="p-4 overflow-y-auto" style="max-height: calc(100vh - 200px);">
             <div class="text-center text-gray-400 py-20">
               <i class="fas fa-file-alt text-6xl mb-4"></i>
               <p class="text-lg">날짜를 선택하고 조회하면</p>
               <p class="text-lg">미리보기가 표시됩니다</p>
             </div>
+          </div>
           </div>
         </div>
       </div>
@@ -1372,12 +1381,12 @@
           const mainContent = document.querySelector('main');
           
           if (tab === 'report') {
-            // 업무 일지 탭에서는 배너 숨김 + main padding 제거
+            // 업무 일지 탭에서는 배너 숨김
             contractBanner.classList.add('hidden');
-            mainContent.style.padding = '0';
+            mainContent.style.padding = '0.5rem 0'; // 상하만 최소 패딩
           } else {
             // 다른 탭에서는 원래 상태 유지
-            mainContent.style.padding = '0 1rem'; // px-4 복원
+            mainContent.style.padding = '0.5rem 1rem'; // 원래대로
           }
 
           if (tab === 'gallery') {
