@@ -824,8 +824,8 @@
     </div>
 
     <!-- TAB 5: Work Report (업무 일지) -->
-    <div id="tab-report" class="tab-content hidden" style="margin-top: 0 !important; padding-top: 0 !important;">
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 h-full">
+    <div id="tab-report" class="tab-content hidden" style="margin: 0 !important; padding: 0 !important; position: relative;">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 h-full" style="margin: 0; padding: 0;">
         <!-- 좌측: 설정 및 요약 -->
         <div class="space-y-3">
           <div class="bg-white p-4 rounded-xl shadow-sm border">
@@ -1369,12 +1369,15 @@
           
           // 계약 만료 배너 표시/숨김 제어
           const contractBanner = document.getElementById('contract-alert-banner');
+          const mainContent = document.querySelector('main');
+          
           if (tab === 'report') {
-            // 업무 일지 탭에서는 배너 숨김
+            // 업무 일지 탭에서는 배너 숨김 + main padding 제거
             contractBanner.classList.add('hidden');
+            mainContent.style.padding = '0';
           } else {
-            // 다른 탭에서는 원래 상태 유지 (필요시 표시)
-            // 배너는 기본적으로 hidden이고 checkContractExpirationsInDataTab에서 표시됨
+            // 다른 탭에서는 원래 상태 유지
+            mainContent.style.padding = '0 1rem'; // px-4 복원
           }
 
           if (tab === 'gallery') {
