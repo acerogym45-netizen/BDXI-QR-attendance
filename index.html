@@ -323,7 +323,7 @@
       <!-- Main Content -->
       <main class="flex-1 max-w-7xl w-full mx-auto px-4">
         <!-- 계약 만료 알림 배너 -->
-        <div id="contract-alert-banner" class="hidden mb-6 bg-gradient-to-r from-orange-50 to-red-50 border-2 border-orange-300 rounded-xl p-4 shadow-lg">
+        <div id="contract-alert-banner" class="hidden bg-gradient-to-r from-orange-50 to-red-50 border-2 border-orange-300 rounded-xl p-4 shadow-lg" style="margin-bottom: 0;">
           <div class="flex items-start gap-3">
             <div class="flex-shrink-0">
               <i class="fas fa-exclamation-triangle text-orange-600 text-2xl"></i>
@@ -2801,6 +2801,7 @@
               });
               
               banner.classList.remove('hidden');
+              banner.style.marginBottom = '1.5rem'; // mb-6 equivalent (24px)
             }
           } catch (error) {
             console.error('계약 만료 체크 실패:', error);
