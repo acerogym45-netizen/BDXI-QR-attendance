@@ -3509,175 +3509,202 @@
           }
           
           try {
+            // PDF 생성 중 메시지 표시
+            const loadingMsg = document.createElement('div');
+            loadingMsg.id = 'pdf-loading';
+            loadingMsg.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80';
+            loadingMsg.innerHTML = `
+              <div class="bg-white p-8 rounded-xl shadow-2xl text-center">
+                <div class="loader mb-4"></div>
+                <p class="text-lg font-bold text-gray-800">PDF 생성 중...</p>
+                <p class="text-sm text-gray-600 mt-2">잠시만 기다려주세요</p>
+              </div>
+            `;
+            document.body.appendChild(loadingMsg);
+            
+            // 약간의 딜레이 (UI 업데이트)
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            // PDF용 HTML 생성
+            const pdfContent = this.createPDFHTML(startDate, endDate);
+            
+            // 임시 컨테이너 생성
+            const tempContainer = document.createElement('div');
+            tempContainer.style.position = 'absolute';
+            tempContainer.style.left = '-9999px';
+            tempContainer.style.width = '210mm'; // A4 width
+            tempContainer.style.background = 'white';
+            tempContainer.style.padding = '20mm';
+            tempContainer.innerHTML = pdfContent;
+            document.body.appendChild(tempContainer);
+            
+            // html2canvas로 캡처
+            const canvas = await html2canvas(tempContainer, {
+              scale: 2,
+              useCORS: true,
+              logging: false,
+              backgroundColor: '#ffffff'
+            });
+            
+            // PDF 생성
             const { jsPDF } = window.jspdf;
-            const doc = new jsPDF('p', 'mm', 'a4');
+            const imgWidth = 210; // A4 width in mm
+            const imgHeight = (canvas.height * imgWidth) / canvas.width;
+            const pageHeight = 297; // A4 height in mm
             
-            // 한글 폰트 설정 (기본 폰트 사용)
-            doc.setFont('helvetica');
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            let position = 0;
             
-            let yPosition = 20;
-            const pageWidth = doc.internal.pageSize.getWidth();
-            const pageHeight = doc.internal.pageSize.getHeight();
-            const margin = 15;
-            const contentWidth = pageWidth - 2 * margin;
+            // 첫 페이지
+            const imgData = canvas.toDataURL('image/jpeg', 0.95);
+            pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
             
-            // 헤더
-            doc.setFontSize(20);
-            doc.setFont('helvetica', 'bold');
-            doc.text('Work Report', pageWidth / 2, yPosition, { align: 'center' });
+            // 페이지가 길면 여러 페이지로 분할
+            let heightLeft = imgHeight - pageHeight;
             
-            yPosition += 10;
-            doc.setFontSize(12);
-            doc.setFont('helvetica', 'normal');
-            const apartmentName = this.currentApartment?.name || 'All Locations';
-            doc.text(apartmentName, pageWidth / 2, yPosition, { align: 'center' });
-            
-            yPosition += 15;
-            
-            // 기간 정보
-            doc.setFontSize(10);
-            doc.text(`Period: ${new Date(startDate).toLocaleDateString('ko-KR')} ~ ${new Date(endDate).toLocaleDateString('ko-KR')}`, margin, yPosition);
-            
-            yPosition += 10;
-            const totalTasks = document.getElementById('report-total-tasks').textContent;
-            const totalEmployees = document.getElementById('report-total-employees').textContent;
-            doc.text(`Total Tasks: ${totalTasks}  |  Total Employees: ${totalEmployees}`, margin, yPosition);
-            
-            yPosition += 15;
-            
-            // 구분선
-            doc.setLineWidth(0.5);
-            doc.line(margin, yPosition, pageWidth - margin, yPosition);
-            yPosition += 10;
-            
-            // 업무 항목들
-            const workItems = document.querySelectorAll('#report-work-items > div');
-            
-            for (let i = 0; i < workItems.length; i++) {
-              const item = workItems[i];
-              
-              // 페이지 넘김 체크
-              if (yPosition > pageHeight - 60) {
-                doc.addPage();
-                yPosition = 20;
-              }
-              
-              // 업무 제목
-              const title = item.querySelector('h3');
-              const dateInfo = item.querySelector('p.text-sm');
-              const status = item.querySelector('span.px-3');
-              
-              if (title && dateInfo) {
-                doc.setFontSize(11);
-                doc.setFont('helvetica', 'bold');
-                const titleText = title.textContent.replace(/\s+/g, ' ').trim();
-                doc.text(`${i + 1}. ${titleText}`, margin, yPosition);
-                
-                yPosition += 6;
-                doc.setFontSize(9);
-                doc.setFont('helvetica', 'normal');
-                const dateText = dateInfo.textContent.replace(/\s+/g, ' ').trim();
-                doc.text(dateText, margin + 5, yPosition);
-                
-                yPosition += 10;
-              }
-              
-              // 이미지 처리 (Before/After)
-              const images = item.querySelectorAll('img');
-              if (images.length >= 2) {
-                try {
-                  // Before 이미지
-                  const beforeImg = await this.loadImageAsDataURL(images[0].src);
-                  const imgWidth = (contentWidth / 2) - 5;
-                  const imgHeight = 50;
-                  
-                  doc.setFontSize(8);
-                  doc.text('Before:', margin, yPosition);
-                  yPosition += 5;
-                  doc.addImage(beforeImg, 'JPEG', margin, yPosition, imgWidth, imgHeight);
-                  
-                  // After 이미지
-                  const afterImg = await this.loadImageAsDataURL(images[1].src);
-                  doc.text('After:', margin + imgWidth + 10, yPosition - 5);
-                  doc.addImage(afterImg, 'JPEG', margin + imgWidth + 10, yPosition, imgWidth, imgHeight);
-                  
-                  yPosition += imgHeight + 10;
-                } catch (error) {
-                  console.error('Image loading error:', error);
-                  doc.setFontSize(8);
-                  doc.text('[Images could not be loaded]', margin, yPosition);
-                  yPosition += 10;
-                }
-              } else if (images.length === 1) {
-                try {
-                  const img = await this.loadImageAsDataURL(images[0].src);
-                  const imgWidth = contentWidth / 2;
-                  const imgHeight = 50;
-                  doc.addImage(img, 'JPEG', margin, yPosition, imgWidth, imgHeight);
-                  yPosition += imgHeight + 10;
-                } catch (error) {
-                  console.error('Image loading error:', error);
-                  yPosition += 10;
-                }
-              }
-              
-              // 비고
-              const notes = item.querySelector('.bg-gray-50 p');
-              if (notes) {
-                doc.setFontSize(9);
-                const notesText = notes.textContent.replace(/\s+/g, ' ').trim();
-                doc.text(`Note: ${notesText}`, margin + 5, yPosition);
-                yPosition += 8;
-              }
-              
-              // 구분선
-              doc.setLineWidth(0.3);
-              doc.setDrawColor(200, 200, 200);
-              doc.line(margin, yPosition, pageWidth - margin, yPosition);
-              yPosition += 10;
+            while (heightLeft > 0) {
+              position = heightLeft - imgHeight;
+              pdf.addPage();
+              pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+              heightLeft -= pageHeight;
             }
             
-            // 검수 확인란
-            if (yPosition > pageHeight - 80) {
-              doc.addPage();
-              yPosition = 20;
-            }
+            // 임시 컨테이너 제거
+            document.body.removeChild(tempContainer);
             
-            yPosition += 10;
-            doc.setLineWidth(0.5);
-            doc.setDrawColor(0, 0, 0);
-            doc.line(margin, yPosition, pageWidth - margin, yPosition);
-            yPosition += 10;
-            
-            doc.setFontSize(12);
-            doc.setFont('helvetica', 'bold');
-            doc.text('Approval', margin, yPosition);
-            yPosition += 10;
-            
-            doc.setFontSize(10);
-            doc.setFont('helvetica', 'normal');
-            
-            // 센터장
-            doc.text('[ ] Center Manager: __________________', margin, yPosition);
-            yPosition += 15;
-            
-            // 관리팀장
-            doc.text('[ ] Team Manager: __________________', margin, yPosition);
-            yPosition += 15;
-            
-            // 관리소장
-            doc.text('[ ] Office Manager: __________________', margin, yPosition);
+            // 로딩 메시지 제거
+            document.body.removeChild(loadingMsg);
             
             // PDF 저장
             const filename = `work_report_${startDate}_${endDate}.pdf`;
-            doc.save(filename);
+            pdf.save(filename);
             
             alert('PDF가 다운로드되었습니다!');
             
           } catch (error) {
             console.error('PDF 생성 실패:', error);
+            const loading = document.getElementById('pdf-loading');
+            if (loading) document.body.removeChild(loading);
             alert('PDF 생성 실패: ' + error.message);
           }
+        },
+        
+        createPDFHTML: function(startDate, endDate) {
+          const apartmentName = this.currentApartment?.name || '전체';
+          const totalTasks = document.getElementById('report-total-tasks').textContent;
+          const totalEmployees = document.getElementById('report-total-employees').textContent;
+          const workItems = document.querySelectorAll('#report-work-items > div');
+          
+          let itemsHTML = '';
+          workItems.forEach((item, index) => {
+            const title = item.querySelector('h3')?.textContent.replace(/\s+/g, ' ').trim() || '';
+            const dateInfo = item.querySelector('p.text-sm')?.textContent.replace(/\s+/g, ' ').trim() || '';
+            const status = item.querySelector('span.px-3')?.textContent.trim() || '';
+            const images = item.querySelectorAll('img');
+            const notes = item.querySelector('.bg-gray-50 p')?.textContent.replace(/\s+/g, ' ').trim() || '';
+            
+            let imagesHTML = '';
+            if (images.length >= 2) {
+              imagesHTML = `
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
+                  <div>
+                    <p style="font-size: 11px; color: #666; margin-bottom: 5px;">작업 전 (Before)</p>
+                    <img src="${images[0].src}" style="width: 100%; height: 150px; object-fit: cover; border: 2px solid #ddd; border-radius: 8px;" crossorigin="anonymous">
+                  </div>
+                  <div>
+                    <p style="font-size: 11px; color: #666; margin-bottom: 5px;">작업 후 (After)</p>
+                    <img src="${images[1].src}" style="width: 100%; height: 150px; object-fit: cover; border: 2px solid #10b981; border-radius: 8px;" crossorigin="anonymous">
+                  </div>
+                </div>
+              `;
+            } else if (images.length === 1) {
+              imagesHTML = `
+                <div style="margin-top: 10px;">
+                  <p style="font-size: 11px; color: #666; margin-bottom: 5px;">작업 사진</p>
+                  <img src="${images[0].src}" style="width: 50%; height: 150px; object-fit: cover; border: 2px solid #ddd; border-radius: 8px;" crossorigin="anonymous">
+                </div>
+              `;
+            } else {
+              imagesHTML = `
+                <div style="margin-top: 10px; padding: 20px; background: #f9fafb; border-radius: 8px; text-align: center; color: #9ca3af;">
+                  <p style="font-size: 12px;">사진 없음</p>
+                </div>
+              `;
+            }
+            
+            itemsHTML += `
+              <div style="margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #e5e7eb;">
+                <div style="margin-bottom: 10px;">
+                  <h3 style="font-size: 14px; font-weight: bold; color: #1f2937; margin: 0 0 5px 0;">
+                    ${index + 1}. ${title}
+                  </h3>
+                  <p style="font-size: 12px; color: #6b7280; margin: 0;">
+                    ${dateInfo}
+                  </p>
+                </div>
+                ${imagesHTML}
+                ${notes ? `
+                  <div style="margin-top: 10px; padding: 10px; background: #f9fafb; border-radius: 8px;">
+                    <p style="font-size: 12px; color: #374151; margin: 0;">
+                      비고: ${notes}
+                    </p>
+                  </div>
+                ` : ''}
+              </div>
+            `;
+          });
+          
+          return `
+            <div style="font-family: 'Noto Sans KR', sans-serif; color: #1f2937; max-width: 100%;">
+              <!-- 헤더 -->
+              <div style="text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 3px solid #1f2937;">
+                <h1 style="font-size: 28px; font-weight: bold; margin: 0 0 10px 0;">업무 일지</h1>
+                <p style="font-size: 16px; color: #6b7280; margin: 0;">${apartmentName}</p>
+              </div>
+              
+              <!-- 요약 정보 -->
+              <div style="background: #eff6ff; padding: 15px; border-radius: 8px; margin-bottom: 30px; border: 1px solid #bfdbfe;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; text-align: center;">
+                  <div>
+                    <p style="font-size: 12px; color: #6b7280; margin: 0 0 5px 0;">조회 기간</p>
+                    <p style="font-size: 14px; font-weight: bold; margin: 0;">${new Date(startDate).toLocaleDateString('ko-KR')} ~ ${new Date(endDate).toLocaleDateString('ko-KR')}</p>
+                  </div>
+                  <div>
+                    <p style="font-size: 12px; color: #6b7280; margin: 0 0 5px 0;">총 업무 건수</p>
+                    <p style="font-size: 14px; font-weight: bold; color: #2563eb; margin: 0;">${totalTasks}건</p>
+                  </div>
+                  <div>
+                    <p style="font-size: 12px; color: #6b7280; margin: 0 0 5px 0;">담당 직원 수</p>
+                    <p style="font-size: 14px; font-weight: bold; color: #059669; margin: 0;">${totalEmployees}명</p>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- 업무 항목 -->
+              <div style="margin-bottom: 40px;">
+                ${itemsHTML}
+              </div>
+              
+              <!-- 검수 확인란 -->
+              <div style="margin-top: 40px; padding-top: 30px; border-top: 3px solid #1f2937;">
+                <h2 style="font-size: 18px; font-weight: bold; margin: 0 0 20px 0;">검수 확인</h2>
+                <div style="space-y: 15px;">
+                  <div style="padding: 15px; background: #f9fafb; border-radius: 8px; margin-bottom: 15px;">
+                    <p style="font-size: 14px; font-weight: 500; margin: 0 0 8px 0;">☐ 센터장 확인</p>
+                    <p style="font-size: 12px; color: #6b7280; margin: 0;">확인자: ____________________  날짜: __________</p>
+                  </div>
+                  <div style="padding: 15px; background: #f9fafb; border-radius: 8px; margin-bottom: 15px;">
+                    <p style="font-size: 14px; font-weight: 500; margin: 0 0 8px 0;">☐ 관리팀장 확인</p>
+                    <p style="font-size: 12px; color: #6b7280; margin: 0;">확인자: ____________________  날짜: __________</p>
+                  </div>
+                  <div style="padding: 15px; background: #f9fafb; border-radius: 8px; margin-bottom: 15px;">
+                    <p style="font-size: 14px; font-weight: 500; margin: 0 0 8px 0;">☐ 관리소장 확인</p>
+                    <p style="font-size: 12px; color: #6b7280; margin: 0;">확인자: ____________________  날짜: __________</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          `;
         },
         
         loadImageAsDataURL: function(url) {
