@@ -3773,8 +3773,8 @@
             // 선택된 업무만
             selectedTasks = selectedIndexes.map(i => this.currentReportTasks[i]);
           } else {
-            // 아무것도 선택 안 했으면 최근 3개
-            selectedTasks = this.currentReportTasks.slice(0, 3);
+            // 아무것도 선택 안 했으면 전체 표시
+            selectedTasks = this.currentReportTasks;
           }
           
           const startDate = document.getElementById('report-start-date').value;
