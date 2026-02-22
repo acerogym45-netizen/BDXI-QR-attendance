@@ -4224,29 +4224,42 @@
                     <p style="font-size: 14px; color: #333333; margin: 0; font-weight: 600;">${apartmentName}</p>
                   </div>
                   
-                  <!-- 검수 확인란 (우측 상단, 절대 위치) -->
-                  <div style="position: absolute; top: 0; right: 0; border: 1px solid #333333; border-radius: 4px; padding: 6px 8px; background: #f9f9f9;">
+                  <!-- 검수 확인란 (우측 상단, 절대 위치, 상하 박스 구조) -->
+                  <div style="position: absolute; top: 0; right: 0; border: 1px solid #333333; border-radius: 4px; padding: 6px; background: #f9f9f9;">
                     <p style="font-size: 8px; font-weight: 800; margin: 0 0 4px 0; color: #000000; text-align: center; border-bottom: 1px solid #cccccc; padding-bottom: 3px;">검수 확인</p>
-                    <div style="display: flex; align-items: center; margin-bottom: 3px;">
-                      <span style="font-size: 7px; color: #000000; margin-right: 4px;">☐ 센터장</span>
-                      <span style="font-size: 7px; color: #666666; margin-right: 4px;">서명:</span>
-                      <span style="font-size: 7px; color: #999999; border-bottom: 1px solid #999; padding: 0 8px;">　　　</span>
-                      <span style="font-size: 7px; color: #666666; margin: 0 4px;">날짜:</span>
-                      <span style="font-size: 7px; color: #999999; border-bottom: 1px solid #999; padding: 0 8px;">　　　</span>
-                    </div>
-                    <div style="display: flex; align-items: center; margin-bottom: 3px;">
-                      <span style="font-size: 7px; color: #000000; margin-right: 4px;">☐ 관리팀장</span>
-                      <span style="font-size: 7px; color: #666666; margin-right: 4px;">서명:</span>
-                      <span style="font-size: 7px; color: #999999; border-bottom: 1px solid #999; padding: 0 8px;">　　　</span>
-                      <span style="font-size: 7px; color: #666666; margin: 0 4px;">날짜:</span>
-                      <span style="font-size: 7px; color: #999999; border-bottom: 1px solid #999; padding: 0 8px;">　　　</span>
-                    </div>
-                    <div style="display: flex; align-items: center;">
-                      <span style="font-size: 7px; color: #000000; margin-right: 4px;">☐ 관리소장</span>
-                      <span style="font-size: 7px; color: #666666; margin-right: 4px;">서명:</span>
-                      <span style="font-size: 7px; color: #999999; border-bottom: 1px solid #999; padding: 0 8px;">　　　</span>
-                      <span style="font-size: 7px; color: #666666; margin: 0 4px;">날짜:</span>
-                      <span style="font-size: 7px; color: #999999; border-bottom: 1px solid #999; padding: 0 8px;">　　　</span>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px;">
+                      <!-- 센터장 -->
+                      <div style="border: 1px solid #cccccc; border-radius: 3px; overflow: hidden;">
+                        <div style="background: #f0f0f0; padding: 3px; border-bottom: 1px solid #cccccc; text-align: center;">
+                          <p style="font-size: 7px; font-weight: 800; margin: 0; color: #000000;">☐ 센터장</p>
+                        </div>
+                        <div style="padding: 3px; background: white;">
+                          <p style="font-size: 6px; margin: 0 0 2px 0; color: #666666;">서명: <span style="border-bottom: 1px solid #999; padding: 0 4px;">　　</span></p>
+                          <p style="font-size: 6px; margin: 0; color: #666666;">날짜: <span style="border-bottom: 1px solid #999; padding: 0 4px;">　　</span></p>
+                        </div>
+                      </div>
+                      
+                      <!-- 관리팀장 -->
+                      <div style="border: 1px solid #cccccc; border-radius: 3px; overflow: hidden;">
+                        <div style="background: #f0f0f0; padding: 3px; border-bottom: 1px solid #cccccc; text-align: center;">
+                          <p style="font-size: 7px; font-weight: 800; margin: 0; color: #000000;">☐ 팀장</p>
+                        </div>
+                        <div style="padding: 3px; background: white;">
+                          <p style="font-size: 6px; margin: 0 0 2px 0; color: #666666;">서명: <span style="border-bottom: 1px solid #999; padding: 0 4px;">　　</span></p>
+                          <p style="font-size: 6px; margin: 0; color: #666666;">날짜: <span style="border-bottom: 1px solid #999; padding: 0 4px;">　　</span></p>
+                        </div>
+                      </div>
+                      
+                      <!-- 관리소장 -->
+                      <div style="border: 1px solid #cccccc; border-radius: 3px; overflow: hidden;">
+                        <div style="background: #f0f0f0; padding: 3px; border-bottom: 1px solid #cccccc; text-align: center;">
+                          <p style="font-size: 7px; font-weight: 800; margin: 0; color: #000000;">☐ 소장</p>
+                        </div>
+                        <div style="padding: 3px; background: white;">
+                          <p style="font-size: 6px; margin: 0 0 2px 0; color: #666666;">서명: <span style="border-bottom: 1px solid #999; padding: 0 4px;">　　</span></p>
+                          <p style="font-size: 6px; margin: 0; color: #666666;">날짜: <span style="border-bottom: 1px solid #999; padding: 0 4px;">　　</span></p>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
