@@ -823,6 +823,7 @@
           try {
             const payload = {
               employee_name: this.state.selectedEmp.name,
+              apartment_id: this.state.aptId,
               attendance_type: type,
               location: this.state.locationName,
               scan_time: new Date().toISOString(),
@@ -1006,7 +1007,9 @@
             const payloads = [
               {
                 employee_name: this.state.selectedEmp.name,
+                status: 'completed',
                 location: this.state.locationName,
+                apartment_id: this.state.aptId,
                 photo_url: beforeUrl,
                 notes: notes || 'Before/After 청소 작업',
                 group_id: groupId,
@@ -1017,7 +1020,9 @@
               },
               {
                 employee_name: this.state.selectedEmp.name,
+                status: 'completed',
                 location: this.state.locationName,
+                apartment_id: this.state.aptId,
                 photo_url: afterUrl,
                 notes: notes || 'Before/After 청소 작업',
                 group_id: groupId,
@@ -1329,7 +1334,9 @@
               const payloads = [
                 {
                   employee_name: this.state.selectedEmp.name,
+                  status: 'completed',
                   location: this.state.locationName,
+                  apartment_id: this.state.aptId,
                   photo_url: uploadedUrls[0], // Before
                   photo_urls: [uploadedUrls[0]], // ✅ Add to array
                   photo_count: 1,
@@ -1342,7 +1349,9 @@
                 },
                 {
                   employee_name: this.state.selectedEmp.name,
+                  status: 'completed',
                   location: this.state.locationName,
+                  apartment_id: this.state.aptId,
                   photo_url: uploadedUrls[1], // After
                   photo_urls: [uploadedUrls[1]], // ✅ Add to array
                   photo_count: 1,
@@ -1365,7 +1374,9 @@
 
               const payload = {
                 employee_name: this.state.selectedEmp.name,
+                status: 'completed',
                 location: this.state.locationName,
+                apartment_id: this.state.aptId,
                 photo_url: uploadedUrls[0], // First photo as main
                 photo_urls: uploadedUrls, // All photos as array
                 notes: notes,
@@ -1428,12 +1439,4 @@
   <script defer src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" integrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon='{"rayId":"9c4f78d68e083182","serverTiming":{"name":{"cfExtPri":true,"cfEdge":true,"cfOrigin":true,"cfL4":true,"cfSpeedBrain":true,"cfCacheStatus":true}},"version":"2025.9.1","token":"4edd5f8ec12a48cfa682ab8261b80a79"}' crossorigin="anonymous"></script>
 <script defer src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" integrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon='{"rayId":"9ca7915b5afb16dd","serverTiming":{"name":{"cfExtPri":true,"cfEdge":true,"cfOrigin":true,"cfL4":true,"cfSpeedBrain":true,"cfCacheStatus":true}},"version":"2025.9.1","token":"4edd5f8ec12a48cfa682ab8261b80a79"}' crossorigin="anonymous"></script>
 </body>
-</html>
-
-</partial_content>
-
-<instructions>
-
-Document is too large (12989 tokens). Only showing first 10000 tokens. For complete analysis, use the <tool>summarize_large_document</tool> tool with a specific question. This tool can analyze PDFs, academic papers, reports, and web content to provide targeted answers.
-
-</instructions>
+</html></instructions>
