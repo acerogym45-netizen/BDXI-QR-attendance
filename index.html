@@ -967,49 +967,11 @@
               <i class="fas fa-tools mr-2 text-orange-600"></i>시설물 점검 현황
             </h3>
             
-            <!-- 일일 점검 -->
+            <!-- 구역별 점검 -->
             <div class="mb-3">
-              <p class="text-sm font-medium text-gray-700 mb-2">일일 점검</p>
-              <div class="space-y-2">
-                <label class="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 p-1 rounded">
-                  <input type="checkbox" id="check-elevator" checked class="rounded" onchange="app.updateReportPreviewFromSelection()">
-                  <span>엘리베이터 작동</span>
-                </label>
-                <label class="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 p-1 rounded">
-                  <input type="checkbox" id="check-fire" checked class="rounded" onchange="app.updateReportPreviewFromSelection()">
-                  <span>소방시설 정상</span>
-                </label>
-                <label class="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 p-1 rounded">
-                  <input type="checkbox" id="check-cctv" checked class="rounded" onchange="app.updateReportPreviewFromSelection()">
-                  <span>CCTV 작동</span>
-                </label>
-                <label class="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 p-1 rounded">
-                  <input type="checkbox" id="check-lighting" class="rounded" onchange="app.updateReportPreviewFromSelection()">
-                  <span>공용조명</span>
-                </label>
-                <label class="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 p-1 rounded">
-                  <input type="checkbox" id="check-emergency" checked class="rounded" onchange="app.updateReportPreviewFromSelection()">
-                  <span>비상구 통로</span>
-                </label>
-              </div>
-            </div>
-            
-            <!-- 주간 점검 -->
-            <div class="mb-3">
-              <p class="text-sm font-medium text-gray-700 mb-2">주간 점검</p>
-              <div class="space-y-2">
-                <label class="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 p-1 rounded">
-                  <input type="checkbox" id="check-pump" checked class="rounded" onchange="app.updateReportPreviewFromSelection()">
-                  <span>급수펌프</span>
-                </label>
-                <label class="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 p-1 rounded">
-                  <input type="checkbox" id="check-drain" checked class="rounded" onchange="app.updateReportPreviewFromSelection()">
-                  <span>배수시설</span>
-                </label>
-                <label class="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 p-1 rounded">
-                  <input type="checkbox" id="check-parking" class="rounded" onchange="app.updateReportPreviewFromSelection()">
-                  <span>주차장 조명</span>
-                </label>
+              <p class="text-sm font-medium text-gray-700 mb-2">점검 완료 구역 선택</p>
+              <div id="facility-checks-container" class="space-y-2 max-h-48 overflow-y-auto">
+                <!-- 동적 생성 -->
               </div>
             </div>
             
@@ -3587,6 +3549,18 @@
             document.getElementById('staff-absent').textContent = absentStaff;
             document.getElementById('staff-present').textContent = activeStaff;
             
+            // 구역 정보 로드 (시설물 점검용)
+            let locationQuery = this.sb.from('locations').select('name').order('name', { ascending: true });
+            if (this.currentApartment && this.currentApartment.id) {
+              locationQuery = locationQuery.eq('apartment_id', this.currentApartment.id);
+            }
+            
+            const { data: locations, error: locError } = await locationQuery;
+            if (!locError && locations) {
+              this.currentLocations = locations.map(l => l.name);
+              this.renderFacilityCheckboxes();
+            }
+            
             // 요약 정보 표시
             const uniqueEmployees = new Set(tasks.map(t => t.employee_name)).size;
             document.getElementById('report-period').textContent = 
@@ -3743,21 +3717,44 @@
           this.updateReportPreview(startDate, endDate, selectedTasks);
         },
         
+        renderFacilityCheckboxes: function() {
+          const container = document.getElementById('facility-checks-container');
+          if (!container) return;
+          
+          container.innerHTML = '';
+          
+          if (!this.currentLocations || this.currentLocations.length === 0) {
+            container.innerHTML = '<p class="text-sm text-gray-500">등록된 구역이 없습니다.</p>';
+            return;
+          }
+          
+          this.currentLocations.forEach((location, index) => {
+            const checkbox = document.createElement('label');
+            checkbox.className = 'flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 p-1 rounded';
+            checkbox.innerHTML = `
+              <input type="checkbox" 
+                     id="facility-check-${index}" 
+                     data-location="${location}"
+                     checked 
+                     class="rounded" 
+                     onchange="app.updateReportPreviewFromSelection()">
+              <span>${location}</span>
+            `;
+            container.appendChild(checkbox);
+          });
+        },
+        
         getFacilityCheckStatus: function() {
-          return {
-            daily: [
-              { name: '엘리베이터 작동', checked: document.getElementById('check-elevator')?.checked || false },
-              { name: '소방시설 정상', checked: document.getElementById('check-fire')?.checked || false },
-              { name: 'CCTV 작동', checked: document.getElementById('check-cctv')?.checked || false },
-              { name: '공용조명', checked: document.getElementById('check-lighting')?.checked || false },
-              { name: '비상구 통로', checked: document.getElementById('check-emergency')?.checked || false },
-            ],
-            weekly: [
-              { name: '급수펌프', checked: document.getElementById('check-pump')?.checked || false },
-              { name: '배수시설', checked: document.getElementById('check-drain')?.checked || false },
-              { name: '주차장 조명', checked: document.getElementById('check-parking')?.checked || false },
-            ]
-          };
+          const checkboxes = document.querySelectorAll('#facility-checks-container input[type="checkbox"]');
+          const checked = [];
+          
+          checkboxes.forEach(cb => {
+            if (cb.checked) {
+              checked.push({ name: cb.dataset.location, checked: true });
+            }
+          });
+          
+          return checked;
         },
         
         renderWorkReportItems: function(tasks) {
@@ -3972,44 +3969,44 @@
               imagesHTML = `
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
                   <div>
-                    <p style="font-size: 11px; color: #666; margin-bottom: 5px;">작업 전 (Before)</p>
-                    <img src="${images[0].src}" style="width: 100%; height: 150px; object-fit: cover; border: 2px solid #ddd; border-radius: 8px;" crossorigin="anonymous">
+                    <p style="font-size: 11px; color: #666; margin-bottom: 5px; font-weight: 600;">작업 전 (Before)</p>
+                    <img src="${images[0].src}" style="width: 100%; height: 150px; object-fit: cover; border: 2px solid #999999; border-radius: 8px;" crossorigin="anonymous">
                   </div>
                   <div>
-                    <p style="font-size: 11px; color: #666; margin-bottom: 5px;">작업 후 (After)</p>
-                    <img src="${images[1].src}" style="width: 100%; height: 150px; object-fit: cover; border: 2px solid #10b981; border-radius: 8px;" crossorigin="anonymous">
+                    <p style="font-size: 11px; color: #666; margin-bottom: 5px; font-weight: 600;">작업 후 (After)</p>
+                    <img src="${images[1].src}" style="width: 100%; height: 150px; object-fit: cover; border: 2px solid #333333; border-radius: 8px;" crossorigin="anonymous">
                   </div>
                 </div>
               `;
             } else if (images.length === 1) {
               imagesHTML = `
                 <div style="margin-top: 10px;">
-                  <p style="font-size: 11px; color: #666; margin-bottom: 5px;">작업 사진</p>
-                  <img src="${images[0].src}" style="width: 50%; height: 150px; object-fit: cover; border: 2px solid #ddd; border-radius: 8px;" crossorigin="anonymous">
+                  <p style="font-size: 11px; color: #666; margin-bottom: 5px; font-weight: 600;">작업 사진</p>
+                  <img src="${images[0].src}" style="width: 50%; height: 150px; object-fit: cover; border: 2px solid #666666; border-radius: 8px;" crossorigin="anonymous">
                 </div>
               `;
             } else {
               imagesHTML = `
-                <div style="margin-top: 10px; padding: 20px; background: #f9fafb; border-radius: 8px; text-align: center; color: #9ca3af;">
-                  <p style="font-size: 12px;">사진 없음</p>
+                <div style="margin-top: 10px; padding: 20px; background: #f5f5f5; border-radius: 8px; text-align: center; color: #999999; border: 1px dashed #cccccc;">
+                  <p style="font-size: 12px; font-style: italic;">사진 없음</p>
                 </div>
               `;
             }
             
             itemsHTML += `
-              <div style="margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #e5e7eb;">
+              <div style="margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #cccccc;">
                 <div style="margin-bottom: 10px;">
-                  <h3 style="font-size: 14px; font-weight: bold; color: #1f2937; margin: 0 0 5px 0;">
+                  <h3 style="font-size: 14px; font-weight: 800; color: #000000; margin: 0 0 5px 0;">
                     ${index + 1}. ${title}
                   </h3>
-                  <p style="font-size: 12px; color: #6b7280; margin: 0;">
+                  <p style="font-size: 12px; color: #666666; margin: 0;">
                     ${dateInfo}
                   </p>
                 </div>
                 ${imagesHTML}
                 ${itemNotes ? `
-                  <div style="margin-top: 10px; padding: 10px; background: #f9fafb; border-radius: 8px;">
-                    <p style="font-size: 12px; color: #374151; margin: 0;">
+                  <div style="margin-top: 10px; padding: 10px; background: #f9f9f9; border-radius: 8px; border-left: 3px solid #333333;">
+                    <p style="font-size: 12px; color: #333333; margin: 0; line-height: 1.6;">
                       비고: ${itemNotes}
                     </p>
                   </div>
@@ -4019,77 +4016,77 @@
           });
           
           return `
-            <div style="font-family: 'Noto Sans KR', sans-serif; color: #1f2937; max-width: 100%;">
+            <div style="font-family: 'Noto Sans KR', sans-serif; color: #000000; max-width: 100%;">
               <!-- 헤더 -->
-              <div style="text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 3px solid #1f2937;">
-                <h1 style="font-size: 28px; font-weight: bold; margin: 0 0 10px 0;">업무 일지</h1>
-                <p style="font-size: 16px; color: #6b7280; margin: 0;">${apartmentName}</p>
+              <div style="text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 4px solid #000000;">
+                <h1 style="font-size: 32px; font-weight: 900; margin: 0 0 10px 0; letter-spacing: -1px;">업무 일지</h1>
+                <p style="font-size: 16px; color: #333333; margin: 0; font-weight: 600;">${apartmentName}</p>
               </div>
               
               <!-- 기간 및 인력 현황 -->
-              <div style="background: #eff6ff; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #bfdbfe;">
-                <div style="margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #bfdbfe;">
-                  <p style="font-size: 12px; color: #6b7280; margin: 0 0 5px 0;">조회 기간</p>
-                  <p style="font-size: 14px; font-weight: bold; margin: 0;">${new Date(startDate).toLocaleDateString('ko-KR')} ~ ${new Date(endDate).toLocaleDateString('ko-KR')}</p>
+              <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 2px solid #333333;">
+                <div style="margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #cccccc;">
+                  <p style="font-size: 11px; color: #666666; margin: 0 0 5px 0; font-weight: 600;">조회 기간</p>
+                  <p style="font-size: 14px; font-weight: 800; margin: 0; color: #000000;">${new Date(startDate).toLocaleDateString('ko-KR')} ~ ${new Date(endDate).toLocaleDateString('ko-KR')}</p>
                 </div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; text-align: center;">
-                  <div style="background: white; padding: 10px; border-radius: 6px;">
-                    <p style="font-size: 11px; color: #6b7280; margin: 0 0 5px 0;">총원</p>
-                    <p style="font-size: 20px; font-weight: bold; color: #2563eb; margin: 0;">${staffTotal}명</p>
+                  <div style="background: white; padding: 10px; border-radius: 6px; border: 1px solid #666666;">
+                    <p style="font-size: 10px; color: #666666; margin: 0 0 5px 0; font-weight: 600;">총원</p>
+                    <p style="font-size: 22px; font-weight: 900; color: #000000; margin: 0;">${staffTotal}</p>
                   </div>
-                  <div style="background: white; padding: 10px; border-radius: 6px;">
-                    <p style="font-size: 11px; color: #6b7280; margin: 0 0 5px 0;">휴가/결근</p>
-                    <p style="font-size: 20px; font-weight: bold; color: #dc2626; margin: 0;">${staffAbsent}명</p>
+                  <div style="background: white; padding: 10px; border-radius: 6px; border: 1px solid #666666;">
+                    <p style="font-size: 10px; color: #666666; margin: 0 0 5px 0; font-weight: 600;">휴가/결근</p>
+                    <p style="font-size: 22px; font-weight: 900; color: #000000; margin: 0;">${staffAbsent}</p>
                   </div>
-                  <div style="background: white; padding: 10px; border-radius: 6px;">
-                    <p style="font-size: 11px; color: #6b7280; margin: 0 0 5px 0;">현재원</p>
-                    <p style="font-size: 20px; font-weight: bold; color: #059669; margin: 0;">${staffPresent}명</p>
+                  <div style="background: white; padding: 10px; border-radius: 6px; border: 1px solid #666666;">
+                    <p style="font-size: 10px; color: #666666; margin: 0 0 5px 0; font-weight: 600;">현재원</p>
+                    <p style="font-size: 22px; font-weight: 900; color: #000000; margin: 0;">${staffPresent}</p>
                   </div>
                 </div>
               </div>
               
               <!-- 업무 요약 -->
-              <div style="background: #fef3c7; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #fde68a;">
+              <div style="background: #ffffff; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 2px solid #333333;">
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; text-align: center;">
                   <div>
-                    <p style="font-size: 12px; color: #92400e; margin: 0 0 5px 0;">총 업무 건수</p>
-                    <p style="font-size: 16px; font-weight: bold; color: #92400e; margin: 0;">${totalTasks}건</p>
+                    <p style="font-size: 11px; color: #666666; margin: 0 0 5px 0; font-weight: 600;">총 업무 건수</p>
+                    <p style="font-size: 20px; font-weight: 900; color: #000000; margin: 0;">${totalTasks}건</p>
                   </div>
                   <div>
-                    <p style="font-size: 12px; color: #92400e; margin: 0 0 5px 0;">담당 직원 수</p>
-                    <p style="font-size: 16px; font-weight: bold; color: #92400e; margin: 0;">${totalEmployees}명</p>
+                    <p style="font-size: 11px; color: #666666; margin: 0 0 5px 0; font-weight: 600;">담당 직원 수</p>
+                    <p style="font-size: 20px; font-weight: 900; color: #000000; margin: 0;">${totalEmployees}명</p>
                   </div>
                 </div>
               </div>
               
               <!-- 주민 민원 처리 현황 -->
-              <div style="background: #fef3c7; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #fde68a;">
-                <h3 style="font-size: 16px; font-weight: bold; margin: 0 0 10px 0; color: #92400e;">
-                  📋 주민 민원 처리 현황
+              <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 2px solid #333333;">
+                <h3 style="font-size: 16px; font-weight: 900; margin: 0 0 10px 0; color: #000000;">
+                  주민 민원 처리 현황
                 </h3>
                 <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 15px;">
-                  <div style="text-align: center; background: white; padding: 10px; border-radius: 6px;">
-                    <p style="font-size: 11px; color: #92400e; margin: 0 0 5px 0;">총 접수</p>
-                    <p style="font-size: 18px; font-weight: bold; margin: 0;">${complaintStats.total}건</p>
+                  <div style="text-align: center; background: white; padding: 10px; border-radius: 6px; border: 1px solid #666666;">
+                    <p style="font-size: 10px; color: #666666; margin: 0 0 5px 0; font-weight: 600;">총 접수</p>
+                    <p style="font-size: 18px; font-weight: 900; margin: 0; color: #000000;">${complaintStats.total}건</p>
                   </div>
-                  <div style="text-align: center; background: white; padding: 10px; border-radius: 6px;">
-                    <p style="font-size: 11px; color: #92400e; margin: 0 0 5px 0;">완료</p>
-                    <p style="font-size: 18px; font-weight: bold; color: #059669; margin: 0;">${complaintStats.completed}건</p>
+                  <div style="text-align: center; background: white; padding: 10px; border-radius: 6px; border: 1px solid #666666;">
+                    <p style="font-size: 10px; color: #666666; margin: 0 0 5px 0; font-weight: 600;">완료</p>
+                    <p style="font-size: 18px; font-weight: 900; margin: 0; color: #000000;">${complaintStats.completed}건</p>
                   </div>
-                  <div style="text-align: center; background: white; padding: 10px; border-radius: 6px;">
-                    <p style="font-size: 11px; color: #92400e; margin: 0 0 5px 0;">진행중</p>
-                    <p style="font-size: 18px; font-weight: bold; color: #2563eb; margin: 0;">${complaintStats.inProgress}건</p>
+                  <div style="text-align: center; background: white; padding: 10px; border-radius: 6px; border: 1px solid #666666;">
+                    <p style="font-size: 10px; color: #666666; margin: 0 0 5px 0; font-weight: 600;">진행중</p>
+                    <p style="font-size: 18px; font-weight: 900; margin: 0; color: #000000;">${complaintStats.inProgress}건</p>
                   </div>
-                  <div style="text-align: center; background: white; padding: 10px; border-radius: 6px;">
-                    <p style="font-size: 11px; color: #92400e; margin: 0 0 5px 0;">완료율</p>
-                    <p style="font-size: 18px; font-weight: bold; color: #7c3aed; margin: 0;">${complaintStats.completionRate}%</p>
+                  <div style="text-align: center; background: white; padding: 10px; border-radius: 6px; border: 1px solid #666666;">
+                    <p style="font-size: 10px; color: #666666; margin: 0 0 5px 0; font-weight: 600;">완료율</p>
+                    <p style="font-size: 18px; font-weight: 900; margin: 0; color: #000000;">${complaintStats.completionRate}%</p>
                   </div>
                 </div>
                 ${recentComplaints.length > 0 ? `
-                  <div style="border-top: 1px solid #fde68a; padding-top: 10px;">
-                    <p style="font-size: 12px; font-weight: bold; margin: 0 0 5px 0; color: #92400e;">최근 처리 현황</p>
+                  <div style="border-top: 1px solid #cccccc; padding-top: 10px;">
+                    <p style="font-size: 11px; font-weight: 700; margin: 0 0 5px 0; color: #000000;">최근 처리 현황</p>
                     ${recentComplaints.map((c, i) => `
-                      <p style="font-size: 11px; color: #374151; margin: 3px 0;">
+                      <p style="font-size: 10px; color: #333333; margin: 3px 0;">
                         ${i + 1}. [${c.area}] ${c.content} → ${c.action} (${c.status})
                       </p>
                     `).join('')}
@@ -4098,68 +4095,63 @@
               </div>
               
               <!-- 시설물 점검 현황 -->
-              <div style="background: #dbeafe; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #bfdbfe;">
-                <h3 style="font-size: 16px; font-weight: bold; margin: 0 0 10px 0; color: #1e40af;">
-                  🔧 시설물 점검 현황
+              <div style="background: #ffffff; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 2px solid #333333;">
+                <h3 style="font-size: 16px; font-weight: 900; margin: 0 0 10px 0; color: #000000;">
+                  시설물 점검 현황
                 </h3>
                 
-                <div style="margin-bottom: 10px;">
-                  <p style="font-size: 12px; font-weight: bold; margin: 0 0 5px 0; color: #1e40af;">일일 점검</p>
-                  ${facilityChecks.daily.map(item => `
-                    <p style="font-size: 11px; color: #374151; margin: 2px 0;">
-                      ${item.checked ? '✅' : '⚠️'} ${item.name}${!item.checked ? ' (점검 필요)' : ''}
-                    </p>
-                  `).join('')}
-                </div>
+                ${facilityChecks.length > 0 ? `
+                  <div style="margin-bottom: 10px; background: #f9f9f9; padding: 10px; border-radius: 6px;">
+                    <p style="font-size: 12px; font-weight: 800; margin: 0 0 8px 0; color: #000000;">✓ 점검 완료 항목</p>
+                    ${facilityChecks.map(item => `
+                      <p style="font-size: 11px; color: #333333; margin: 4px 0 4px 10px;">
+                        • ${item.name}
+                      </p>
+                    `).join('')}
+                  </div>
+                ` : '<p style="font-size: 11px; color: #999999; font-style: italic;">점검 완료 항목 없음</p>'}
                 
-                <div style="margin-bottom: 10px;">
-                  <p style="font-size: 12px; font-weight: bold; margin: 0 0 5px 0; color: #1e40af;">주간 점검</p>
-                  ${facilityChecks.weekly.map(item => `
-                    <p style="font-size: 11px; color: #374151; margin: 2px 0;">
-                      ${item.checked ? '✅' : '⚠️'} ${item.name}${!item.checked ? ' (점검 예정)' : ''}
-                    </p>
-                  `).join('')}
-                </div>
-                
-                <div style="border-top: 1px solid #bfdbfe; padding-top: 10px;">
-                  <p style="font-size: 12px; font-weight: bold; margin: 0 0 5px 0; color: #1e40af;">특이사항 및 조치내역</p>
-                  <p style="font-size: 11px; color: #374151; white-space: pre-wrap;">${facilityNotes}</p>
-                </div>
+                ${facilityNotes && facilityNotes !== '특이사항 없음' ? `
+                  <div style="border-top: 1px solid #cccccc; padding-top: 10px; margin-top: 10px;">
+                    <p style="font-size: 12px; font-weight: 800; margin: 0 0 5px 0; color: #000000;">특이사항 및 조치내역</p>
+                    <p style="font-size: 11px; color: #333333; white-space: pre-wrap; line-height: 1.6;">${facilityNotes}</p>
+                  </div>
+                ` : ''}
               </div>
               
               <!-- 진행된 업무 항목 -->
               <div style="margin-bottom: 30px;">
-                <h2 style="font-size: 18px; font-weight: bold; margin: 0 0 15px 0; color: #1f2937;">진행된 업무</h2>
+                <h2 style="font-size: 18px; font-weight: 900; margin: 0 0 15px 0; color: #000000; border-bottom: 3px solid #000000; padding-bottom: 8px;">진행된 업무</h2>
                 ${itemsHTML}
               </div>
               
               <!-- 진행 예정 업무 & 특이사항 -->
-              <div style="margin-bottom: 30px; padding: 20px; background: #f0fdf4; border: 1px solid #86efac; border-radius: 8px;">
+              <div style="margin-bottom: 30px; padding: 20px; background: #f9f9f9; border: 2px solid #333333; border-radius: 8px;">
                 <div style="margin-bottom: 20px;">
-                  <h3 style="font-size: 14px; font-weight: bold; margin: 0 0 10px 0; color: #065f46;">진행 예정 업무</h3>
-                  <p style="font-size: 13px; color: #374151; margin: 0; white-space: pre-wrap;">${futureWork}</p>
+                  <h3 style="font-size: 14px; font-weight: 800; margin: 0 0 10px 0; color: #000000;">진행 예정 업무</h3>
+                  <p style="font-size: 12px; color: #333333; margin: 0; white-space: pre-wrap; line-height: 1.6;">${futureWork}</p>
                 </div>
-                <div style="padding-top: 15px; border-top: 1px solid #86efac;">
-                  <h3 style="font-size: 14px; font-weight: bold; margin: 0 0 10px 0; color: #065f46;">특이사항 / 비고</h3>
-                  <p style="font-size: 13px; color: #374151; margin: 0; white-space: pre-wrap;">${notes}</p>
+                <div style="padding-top: 15px; border-top: 1px solid #cccccc;">
+                  <h3 style="font-size: 14px; font-weight: 800; margin: 0 0 10px 0; color: #000000;">특이사항 / 비고</h3>
+                  <p style="font-size: 12px; color: #333333; margin: 0; white-space: pre-wrap; line-height: 1.6;">${notes}</p>
                 </div>
               </div>
               
               <!-- 검수 확인란 -->
-              <div style="margin-top: 40px; padding-top: 30px; border-top: 3px solid #1f2937;">
-                <h2 style="font-size: 18px; font-weight: bold; margin: 0 0 20px 0;">검수 확인</h2>
+              <div style="margin-top: 40px; padding-top: 30px; border-top: 4px solid #000000;">
+                <h2 style="font-size: 18px; font-weight: 900; margin: 0 0 20px 0; color: #000000;">검수 확인</h2>
                 <div style="space-y: 15px;">
-                  <div style="padding: 15px; background: #f9fafb; border-radius: 8px; margin-bottom: 15px;">
-                    <p style="font-size: 14px; font-weight: 500; margin: 0 0 8px 0;">☐ 센터장 확인</p>
-                    <p style="font-size: 12px; color: #6b7280; margin: 0;">확인자: ____________________  날짜: __________</p>
+                  <div style="padding: 15px; background: #ffffff; border: 2px solid #333333; border-radius: 8px; margin-bottom: 15px;">
+                    <p style="font-size: 14px; font-weight: 700; margin: 0 0 8px 0; color: #000000;">☐ 센터장 확인</p>
+                    <p style="font-size: 11px; color: #666666; margin: 0;">확인자: ____________________  날짜: __________</p>
                   </div>
-                  <div style="padding: 15px; background: #f9fafb; border-radius: 8px; margin-bottom: 15px;">
-                    <p style="font-size: 14px; font-weight: 500; margin: 0 0 8px 0;">☐ 관리팀장 확인</p>
-                    <p style="font-size: 12px; color: #6b7280; margin: 0;">확인자: ____________________  날짜: __________</p>
+                  <div style="padding: 15px; background: #ffffff; border: 2px solid #333333; border-radius: 8px; margin-bottom: 15px;">
+                    <p style="font-size: 14px; font-weight: 700; margin: 0 0 8px 0; color: #000000;">☐ 관리팀장 확인</p>
+                    <p style="font-size: 11px; color: #666666; margin: 0;">확인자: ____________________  날짜: __________</p>
                   </div>
-                  <div style="padding: 15px; background: #f9fafb; border-radius: 8px; margin-bottom: 15px;">
-                    <p style="font-size: 14px; font-weight: 500; margin: 0 0 8px 0;">☐ 관리소장 확인</p>
-                    <p style="font-size: 12px; color: #6b7280; margin: 0;">확인자: ____________________  날짜: __________</p>
+                  <div style="padding: 15px; background: #ffffff; border: 2px solid #333333; border-radius: 8px; margin-bottom: 15px;">
+                    <p style="font-size: 14px; font-weight: 700; margin: 0 0 8px 0; color: #000000;">☐ 관리소장 확인</p>
+                    <p style="font-size: 11px; color: #666666; margin: 0;">확인자: ____________________  날짜: __________</p>
                   </div>
                 </div>
               </div>
