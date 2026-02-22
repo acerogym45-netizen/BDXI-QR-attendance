@@ -882,6 +882,57 @@
             </div>
           </div>
           
+          <!-- Staff Status Section -->
+          <div id="report-staff-status" class="hidden bg-white p-4 rounded-xl shadow-sm border">
+            <h3 class="text-base font-bold text-gray-800 mb-3">
+              <i class="fas fa-users mr-2 text-blue-600"></i>인력 현황
+            </h3>
+            <div class="grid grid-cols-3 gap-2">
+              <div class="text-center p-3 bg-blue-50 rounded-lg">
+                <p class="text-xs text-gray-600 mb-1">총원</p>
+                <p class="text-2xl font-bold text-blue-600" id="staff-total">0</p>
+              </div>
+              <div class="text-center p-3 bg-red-50 rounded-lg">
+                <p class="text-xs text-gray-600 mb-1">휴가/결근</p>
+                <p class="text-2xl font-bold text-red-600" id="staff-absent">0</p>
+              </div>
+              <div class="text-center p-3 bg-green-50 rounded-lg">
+                <p class="text-xs text-gray-600 mb-1">현재원</p>
+                <p class="text-2xl font-bold text-green-600" id="staff-present">0</p>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Work Items List with Checkboxes -->
+          <div id="report-tasks-list" class="hidden bg-white p-4 rounded-xl shadow-sm border">
+            <h3 class="text-base font-bold text-gray-800 mb-3">
+              <i class="fas fa-tasks mr-2 text-purple-600"></i>진행된 업무 선택
+            </h3>
+            <div class="mb-2 text-xs text-gray-500">
+              <i class="fas fa-info-circle mr-1"></i>업무를 선택하세요 (미선택 시 최근 3개 자동 선택)
+            </div>
+            <div id="tasks-checkbox-list" class="space-y-2 max-h-64 overflow-y-auto">
+              <!-- Dynamically generated checkboxes -->
+            </div>
+          </div>
+          
+          <!-- Future Work & Notes Section -->
+          <div id="report-notes-section" class="hidden bg-white p-4 rounded-xl shadow-sm border">
+            <h3 class="text-base font-bold text-gray-800 mb-3">
+              <i class="fas fa-clipboard-list mr-2 text-orange-600"></i>추가 정보
+            </h3>
+            <div class="space-y-3">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">진행 예정 업무</label>
+                <textarea id="report-future-work" rows="3" class="w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="예: 엘리베이터 점검, 화단 정리 등"></textarea>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">특이사항 / 비고</label>
+                <textarea id="report-notes" rows="3" class="w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="예: 2층 복도 조명 교체 필요, 주민 문의 사항 등"></textarea>
+              </div>
+            </div>
+          </div>
+          
           <!-- Approval Section -->
           <div id="report-approval" class="hidden bg-white p-4 rounded-xl shadow-sm border">
             <h3 class="text-base font-bold text-gray-800 mb-3">
@@ -3402,7 +3453,7 @@
               .select('*')
               .gte('created_at', `${startDate}T00:00:00Z`)
               .lte('created_at', `${endDate}T23:59:59Z`)
-              .order('created_at', { ascending: true });
+              .order('created_at', { ascending: false }); // 최신순 정렬
             
             // 아파트 필터 적용
             if (this.currentApartment && this.currentApartment.id) {
@@ -3413,8 +3464,8 @@
             
             if (taskError) throw taskError;
             
-            // 직원 정보 로드
-            let employeeQuery = this.sb.from('employees').select('name, position');
+            // 직원 정보 로드 (전체 직원)
+            let employeeQuery = this.sb.from('employees').select('name, position, status');
             if (this.currentApartment && this.currentApartment.id) {
               employeeQuery = employeeQuery.eq('apartment_id', this.currentApartment.id);
             }
@@ -3433,6 +3484,15 @@
               task.employee_position = employeeMap[task.employee_name] || '직원';
             });
             
+            // 인력 현황 계산
+            const totalStaff = (employees || []).length;
+            const activeStaff = (employees || []).filter(e => e.status === 'active').length;
+            const absentStaff = totalStaff - activeStaff;
+            
+            document.getElementById('staff-total').textContent = totalStaff;
+            document.getElementById('staff-absent').textContent = absentStaff;
+            document.getElementById('staff-present').textContent = activeStaff;
+            
             // 요약 정보 표시
             const uniqueEmployees = new Set(tasks.map(t => t.employee_name)).size;
             document.getElementById('report-period').textContent = 
@@ -3441,11 +3501,17 @@
             document.getElementById('report-total-employees').textContent = uniqueEmployees;
             
             document.getElementById('report-summary').classList.remove('hidden');
+            document.getElementById('report-staff-status').classList.remove('hidden');
+            document.getElementById('report-tasks-list').classList.remove('hidden');
+            document.getElementById('report-notes-section').classList.remove('hidden');
             document.getElementById('report-approval').classList.remove('hidden');
             document.getElementById('report-pdf-button').classList.remove('hidden');
             
-            // 업무 항목 표시
-            this.renderWorkReportItems(tasks);
+            // 업무 체크박스 리스트 생성
+            this.renderTaskCheckboxes(tasks);
+            
+            // 초기 업무 저장 (최근 3개)
+            this.currentReportTasks = tasks;
             
             // PDF 미리보기 업데이트
             this.updateReportPreview(startDate, endDate, tasks);
@@ -3456,8 +3522,62 @@
           }
         },
         
+        renderTaskCheckboxes: function(tasks) {
+          const container = document.getElementById('tasks-checkbox-list');
+          container.innerHTML = '';
+          
+          if (!tasks || tasks.length === 0) {
+            container.innerHTML = '<p class="text-sm text-gray-500 text-center py-4">업무 기록이 없습니다.</p>';
+            return;
+          }
+          
+          tasks.forEach((task, index) => {
+            const taskDate = new Date(task.created_at).toLocaleDateString('ko-KR', {
+              month: 'short',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            });
+            
+            const checkbox = document.createElement('label');
+            checkbox.className = 'flex items-start gap-3 p-2 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors';
+            checkbox.innerHTML = `
+              <input type="checkbox" 
+                     class="mt-1 w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500" 
+                     data-task-index="${index}"
+                     onchange="app.updateReportPreviewFromSelection()">
+              <div class="flex-1 text-sm">
+                <p class="font-medium text-gray-800">${task.location || '위치 미지정'}</p>
+                <p class="text-xs text-gray-500">${taskDate} · ${task.employee_name || '담당자 미지정'}</p>
+              </div>
+            `;
+            container.appendChild(checkbox);
+          });
+        },
+        
+        updateReportPreviewFromSelection: function() {
+          const checkboxes = document.querySelectorAll('#tasks-checkbox-list input[type="checkbox"]:checked');
+          const selectedIndexes = Array.from(checkboxes).map(cb => parseInt(cb.dataset.taskIndex));
+          
+          let selectedTasks;
+          if (selectedIndexes.length > 0) {
+            // 선택된 업무만
+            selectedTasks = selectedIndexes.map(i => this.currentReportTasks[i]);
+          } else {
+            // 아무것도 선택 안 했으면 최근 3개
+            selectedTasks = this.currentReportTasks.slice(0, 3);
+          }
+          
+          const startDate = document.getElementById('report-start-date').value;
+          const endDate = document.getElementById('report-end-date').value;
+          
+          this.updateReportPreview(startDate, endDate, selectedTasks);
+        },
+        
         renderWorkReportItems: function(tasks) {
           const container = document.getElementById('report-work-items');
+          if (!container) return; // 컨테이너가 없으면 리턴
+          
           container.innerHTML = '';
           
           if (!tasks || tasks.length === 0) {
@@ -3633,6 +3753,16 @@
           const apartmentName = this.currentApartment?.name || '전체';
           const totalTasks = document.getElementById('report-total-tasks').textContent;
           const totalEmployees = document.getElementById('report-total-employees').textContent;
+          
+          // 인력 현황
+          const staffTotal = document.getElementById('staff-total').textContent;
+          const staffAbsent = document.getElementById('staff-absent').textContent;
+          const staffPresent = document.getElementById('staff-present').textContent;
+          
+          // 추가 정보
+          const futureWork = document.getElementById('report-future-work').value || '없음';
+          const notes = document.getElementById('report-notes').value || '없음';
+          
           const workItems = document.querySelectorAll('#report-work-items > div');
           
           let itemsHTML = '';
@@ -3641,7 +3771,7 @@
             const dateInfo = item.querySelector('p.text-sm')?.textContent.replace(/\s+/g, ' ').trim() || '';
             const status = item.querySelector('span.px-3')?.textContent.trim() || '';
             const images = item.querySelectorAll('img');
-            const notes = item.querySelector('.bg-gray-50 p')?.textContent.replace(/\s+/g, ' ').trim() || '';
+            const itemNotes = item.querySelector('.bg-gray-50 p')?.textContent.replace(/\s+/g, ' ').trim() || '';
             
             let imagesHTML = '';
             if (images.length >= 2) {
@@ -3683,10 +3813,10 @@
                   </p>
                 </div>
                 ${imagesHTML}
-                ${notes ? `
+                ${itemNotes ? `
                   <div style="margin-top: 10px; padding: 10px; background: #f9fafb; border-radius: 8px;">
                     <p style="font-size: 12px; color: #374151; margin: 0;">
-                      비고: ${notes}
+                      비고: ${itemNotes}
                     </p>
                   </div>
                 ` : ''}
@@ -3702,27 +3832,58 @@
                 <p style="font-size: 16px; color: #6b7280; margin: 0;">${apartmentName}</p>
               </div>
               
-              <!-- 요약 정보 -->
-              <div style="background: #eff6ff; padding: 15px; border-radius: 8px; margin-bottom: 30px; border: 1px solid #bfdbfe;">
+              <!-- 기간 및 인력 현황 -->
+              <div style="background: #eff6ff; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #bfdbfe;">
+                <div style="margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #bfdbfe;">
+                  <p style="font-size: 12px; color: #6b7280; margin: 0 0 5px 0;">조회 기간</p>
+                  <p style="font-size: 14px; font-weight: bold; margin: 0;">${new Date(startDate).toLocaleDateString('ko-KR')} ~ ${new Date(endDate).toLocaleDateString('ko-KR')}</p>
+                </div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; text-align: center;">
-                  <div>
-                    <p style="font-size: 12px; color: #6b7280; margin: 0 0 5px 0;">조회 기간</p>
-                    <p style="font-size: 14px; font-weight: bold; margin: 0;">${new Date(startDate).toLocaleDateString('ko-KR')} ~ ${new Date(endDate).toLocaleDateString('ko-KR')}</p>
+                  <div style="background: white; padding: 10px; border-radius: 6px;">
+                    <p style="font-size: 11px; color: #6b7280; margin: 0 0 5px 0;">총원</p>
+                    <p style="font-size: 20px; font-weight: bold; color: #2563eb; margin: 0;">${staffTotal}명</p>
                   </div>
-                  <div>
-                    <p style="font-size: 12px; color: #6b7280; margin: 0 0 5px 0;">총 업무 건수</p>
-                    <p style="font-size: 14px; font-weight: bold; color: #2563eb; margin: 0;">${totalTasks}건</p>
+                  <div style="background: white; padding: 10px; border-radius: 6px;">
+                    <p style="font-size: 11px; color: #6b7280; margin: 0 0 5px 0;">휴가/결근</p>
+                    <p style="font-size: 20px; font-weight: bold; color: #dc2626; margin: 0;">${staffAbsent}명</p>
                   </div>
-                  <div>
-                    <p style="font-size: 12px; color: #6b7280; margin: 0 0 5px 0;">담당 직원 수</p>
-                    <p style="font-size: 14px; font-weight: bold; color: #059669; margin: 0;">${totalEmployees}명</p>
+                  <div style="background: white; padding: 10px; border-radius: 6px;">
+                    <p style="font-size: 11px; color: #6b7280; margin: 0 0 5px 0;">현재원</p>
+                    <p style="font-size: 20px; font-weight: bold; color: #059669; margin: 0;">${staffPresent}명</p>
                   </div>
                 </div>
               </div>
               
-              <!-- 업무 항목 -->
-              <div style="margin-bottom: 40px;">
+              <!-- 업무 요약 -->
+              <div style="background: #fef3c7; padding: 15px; border-radius: 8px; margin-bottom: 30px; border: 1px solid #fde68a;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; text-align: center;">
+                  <div>
+                    <p style="font-size: 12px; color: #92400e; margin: 0 0 5px 0;">총 업무 건수</p>
+                    <p style="font-size: 16px; font-weight: bold; color: #92400e; margin: 0;">${totalTasks}건</p>
+                  </div>
+                  <div>
+                    <p style="font-size: 12px; color: #92400e; margin: 0 0 5px 0;">담당 직원 수</p>
+                    <p style="font-size: 16px; font-weight: bold; color: #92400e; margin: 0;">${totalEmployees}명</p>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- 진행된 업무 항목 -->
+              <div style="margin-bottom: 30px;">
+                <h2 style="font-size: 18px; font-weight: bold; margin: 0 0 15px 0; color: #1f2937;">진행된 업무</h2>
                 ${itemsHTML}
+              </div>
+              
+              <!-- 진행 예정 업무 & 특이사항 -->
+              <div style="margin-bottom: 30px; padding: 20px; background: #f0fdf4; border: 1px solid #86efac; border-radius: 8px;">
+                <div style="margin-bottom: 20px;">
+                  <h3 style="font-size: 14px; font-weight: bold; margin: 0 0 10px 0; color: #065f46;">진행 예정 업무</h3>
+                  <p style="font-size: 13px; color: #374151; margin: 0; white-space: pre-wrap;">${futureWork}</p>
+                </div>
+                <div style="padding-top: 15px; border-top: 1px solid #86efac;">
+                  <h3 style="font-size: 14px; font-weight: bold; margin: 0 0 10px 0; color: #065f46;">특이사항 / 비고</h3>
+                  <p style="font-size: 13px; color: #374151; margin: 0; white-space: pre-wrap;">${notes}</p>
+                </div>
               </div>
               
               <!-- 검수 확인란 -->
@@ -3749,6 +3910,20 @@
         
         updateReportPreview: function(startDate, endDate, tasks) {
           const previewContainer = document.getElementById('report-preview');
+          
+          // 임시 숨겨진 컨테이너에 업무 항목 렌더링
+          let tempWorkItems = document.getElementById('report-work-items');
+          if (!tempWorkItems) {
+            tempWorkItems = document.createElement('div');
+            tempWorkItems.id = 'report-work-items';
+            tempWorkItems.style.display = 'none';
+            document.body.appendChild(tempWorkItems);
+          }
+          
+          // 업무 항목 렌더링
+          this.renderWorkReportItems(tasks);
+          
+          // PDF HTML 생성
           const pdfHTML = this.createPDFHTML(startDate, endDate);
           
           // 미리보기 컨테이너에 HTML 삽입
