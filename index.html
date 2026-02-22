@@ -4229,8 +4229,42 @@
             <div style="font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif; color: #212121; max-width: 100%; background: #ffffff;">
               <!-- 첫 페이지 -->
               <div style="position: relative; page-break-after: always; padding: 30px 25px;">
-                <!-- 1번 박스: 업무 일지 영역 (중앙 정렬) -->
-                <div style="border: 2px solid #1a5e3f; border-radius: 8px; background: white; padding: 20px 24px; margin-bottom: 12px; box-shadow: 0 2px 4px rgba(26,94,63,0.08); text-align: center;">
+                <!-- 최상단: 검수 확인란 (우측 작게) -->
+                <div style="display: flex; justify-content: flex-end; margin-bottom: 12px;">
+                  <div style="border: 1.5px solid #1a5e3f; border-radius: 6px; background: #f8faf9; box-shadow: 0 1px 3px rgba(26,94,63,0.1); width: 220px;">
+                    <div style="background: #1a5e3f; padding: 5px 8px;">
+                      <p style="font-size: 9px; font-weight: 700; margin: 0; color: #ffffff; letter-spacing: 0.3px; text-align: center;">검수 확인</p>
+                    </div>
+                    <div style="padding: 8px;">
+                      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px;">
+                        <!-- 센터장 -->
+                        <div style="background: white; border: 1px solid #e0e0e0; border-radius: 3px; padding: 5px 3px; text-align: center;">
+                          <p style="font-size: 7px; font-weight: 700; margin: 0 0 3px 0; color: #1a5e3f;">☐ 센터장</p>
+                          <div style="border-bottom: 1px solid #cccccc; margin: 2px 0; min-height: 8px;"></div>
+                          <p style="font-size: 6px; color: #999999; margin: 2px 0 0 0;">서명</p>
+                        </div>
+                        <!-- 팀장 -->
+                        <div style="background: white; border: 1px solid #e0e0e0; border-radius: 3px; padding: 5px 3px; text-align: center;">
+                          <p style="font-size: 7px; font-weight: 700; margin: 0 0 3px 0; color: #1a5e3f;">☐ 팀장</p>
+                          <div style="border-bottom: 1px solid #cccccc; margin: 2px 0; min-height: 8px;"></div>
+                          <p style="font-size: 6px; color: #999999; margin: 2px 0 0 0;">서명</p>
+                        </div>
+                        <!-- 소장 -->
+                        <div style="background: white; border: 1px solid #e0e0e0; border-radius: 3px; padding: 5px 3px; text-align: center;">
+                          <p style="font-size: 7px; font-weight: 700; margin: 0 0 3px 0; color: #1a5e3f;">☐ 소장</p>
+                          <div style="border-bottom: 1px solid #cccccc; margin: 2px 0; min-height: 8px;"></div>
+                          <p style="font-size: 6px; color: #999999; margin: 2px 0 0 0;">서명</p>
+                        </div>
+                      </div>
+                      <div style="margin-top: 6px; padding-top: 6px; border-top: 1px solid #e0e0e0; text-align: center;">
+                        <p style="font-size: 6px; color: #999999; margin: 0;">날짜: ____ / ____ / ____</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- 업무 일지 박스 (중앙 정렬) -->
+                <div style="border: 2px solid #1a5e3f; border-radius: 8px; background: white; padding: 20px 24px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(26,94,63,0.08); text-align: center;">
                   <div style="display: inline-flex; align-items: center; gap: 12px;">
                     <div style="width: 4px; height: 50px; background: linear-gradient(180deg, #1a5e3f 0%, #2d7a4f 100%); border-radius: 2px;"></div>
                     <div>
@@ -4240,38 +4274,6 @@
                         <div style="width: 1px; height: 14px; background: #e0e0e0;"></div>
                         <p style="font-size: 10px; color: #2d7a4f; margin: 0; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase;">ALL FOR SERVICE</p>
                       </div>
-                    </div>
-                  </div>
-                </div>
-                
-                <!-- 2번 박스: 검수 확인란 (작게, 우측 정렬) -->
-                <div style="border: 1.5px solid #1a5e3f; border-radius: 6px; background: #f8faf9; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(26,94,63,0.1); width: 220px; margin-left: auto;">
-                  <div style="background: #1a5e3f; padding: 6px 10px;">
-                    <p style="font-size: 10px; font-weight: 700; margin: 0; color: #ffffff; letter-spacing: 0.3px; text-align: center;">검수 확인</p>
-                  </div>
-                  <div style="padding: 8px;">
-                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;">
-                      <!-- 센터장 -->
-                      <div style="background: white; border: 1px solid #e0e0e0; border-radius: 3px; padding: 5px 3px; text-align: center;">
-                        <p style="font-size: 8px; font-weight: 700; margin: 0 0 4px 0; color: #1a5e3f;">☐ 센터장</p>
-                        <div style="border-bottom: 1px solid #cccccc; margin: 2px 0; min-height: 10px;"></div>
-                        <p style="font-size: 6px; color: #999999; margin: 2px 0 0 0;">서명</p>
-                      </div>
-                      <!-- 팀장 -->
-                      <div style="background: white; border: 1px solid #e0e0e0; border-radius: 3px; padding: 5px 3px; text-align: center;">
-                        <p style="font-size: 8px; font-weight: 700; margin: 0 0 4px 0; color: #1a5e3f;">☐ 팀장</p>
-                        <div style="border-bottom: 1px solid #cccccc; margin: 2px 0; min-height: 10px;"></div>
-                        <p style="font-size: 6px; color: #999999; margin: 2px 0 0 0;">서명</p>
-                      </div>
-                      <!-- 소장 -->
-                      <div style="background: white; border: 1px solid #e0e0e0; border-radius: 3px; padding: 5px 3px; text-align: center;">
-                        <p style="font-size: 8px; font-weight: 700; margin: 0 0 4px 0; color: #1a5e3f;">☐ 소장</p>
-                        <div style="border-bottom: 1px solid #cccccc; margin: 2px 0; min-height: 10px;"></div>
-                        <p style="font-size: 6px; color: #999999; margin: 2px 0 0 0;">서명</p>
-                      </div>
-                    </div>
-                    <div style="margin-top: 6px; padding-top: 6px; border-top: 1px solid #e0e0e0; text-align: center;">
-                      <p style="font-size: 7px; color: #999999; margin: 0;">날짜: ____ / ____ / ____</p>
                     </div>
                   </div>
                 </div>
