@@ -623,13 +623,27 @@
             // 2. Parse URL
             const params = new URLSearchParams(window.location.search);
             this.state.locId = params.get('loc');
-            this.state.aptId = params.get('apt');
+            const aptCode = params.get('apt'); // 코드 (예: BJD001)
 
-            if (!this.state.locId || !this.state.aptId) {
+            if (!this.state.locId || !aptCode) {
               throw new Error('유효하지 않은 QR 코드입니다.');
             }
 
-            // 3. Load Data
+            // 3. Load Apartment ID from code
+            const { data: aptData, error: aptError } = await this.sb
+              .from('apartments')
+              .select('id')
+              .eq('code', aptCode)
+              .single();
+            
+            if (aptError || !aptData) {
+              throw new Error('아파트 정보를 찾을 수 없습니다.');
+            }
+            
+            this.state.aptId = aptData.id; // 실제 UUID
+            this.state.aptCode = aptCode;  // 코드 저장
+
+            // 4. Load Data
             await Promise.all([this.loadLocation(), this.loadEmployees()]);
 
             // 4. Render
@@ -724,14 +738,29 @@
 
         // --- DATA LOADING ---
         loadLocation: async function () {
-          const { data, error } = await this.sb.from('locations').select('name').eq('id', this.state.locId).single();
+          const { data, error } = await this.sb
+            .from('locations')
+            .select('name, apartment_id')
+            .eq('id', this.state.locId)
+            .single();
 
           if (error) throw new Error('구역 정보를 불러올 수 없습니다.');
+          
+          // 구역의 apartment_id와 QR의 apartment_id가 일치하는지 확인
+          if (data.apartment_id && data.apartment_id !== this.state.aptId) {
+            throw new Error('이 구역은 다른 아파트에 속해 있습니다.');
+          }
+          
           this.state.locationName = data.name;
         },
 
         loadEmployees: async function () {
-          const { data, error } = await this.sb.from('employees').select('*').eq('status', 'active').order('name');
+          const { data, error } = await this.sb
+            .from('employees')
+            .select('*')
+            .eq('status', 'active')
+            .eq('apartment_id', this.state.aptId)
+            .order('name');
 
           if (error) throw error;
           this.state.employees = data || [];
@@ -740,7 +769,7 @@
         // --- RENDERING ---
         renderLocationInfo: function () {
           document.getElementById('display-location').textContent = this.state.locationName;
-          const aptName = APARTMENTS[this.state.aptId] || this.state.aptId;
+          const aptName = APARTMENTS[this.state.aptCode] || this.state.aptCode;
           document.getElementById('display-apt').innerHTML = `<i class="fas fa-building mr-1"></i>${aptName}`;
         },
 
