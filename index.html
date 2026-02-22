@@ -3621,7 +3621,8 @@
           const SHEET_ID = this.currentApartment?.google_sheet_id || '1Q2eWuYqc8rueSAzN89eLTW0PdG3kIS2f8UZjh4NK-HM';
           const API_KEY = 'AIzaSyC0GBEpgXSFKHcyKVn9t-Pq9upa04QqmmQ';
           const SHEET_NAME = this.currentApartment?.google_sheet_name || '월간 민원 처리 현황 DB';
-          const RANGE = `${SHEET_NAME}!A:K`;
+          // 시트 이름 URL 인코딩 (공백, 특수문자 처리)
+          const RANGE = `${encodeURIComponent(SHEET_NAME)}!A:K`;
           
           // Sheet ID가 없으면 민원 데이터 없음 처리
           if (!SHEET_ID) {
@@ -3633,6 +3634,7 @@
           
           try {
             const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${RANGE}?key=${API_KEY}`;
+            console.log('민원 데이터 요청 URL:', url); // 디버깅용
             const response = await fetch(url);
             
             if (!response.ok) {
