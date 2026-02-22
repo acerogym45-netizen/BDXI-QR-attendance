@@ -4216,54 +4216,65 @@
             <div style="font-family: 'Noto Sans KR', sans-serif; color: #000000; max-width: 100%;">
               <!-- 첫 페이지 -->
               <div style="position: relative; page-break-after: always;">
-                <!-- 헤더: 2개 영역으로 분할 -->
-                <div style="display: flex; gap: 10px; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 3px solid #000000;">
+                <!-- 헤더: 2개 영역으로 분할 (카인드원 브랜드 디자인) -->
+                <div style="display: flex; gap: 12px; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 3px solid #1a5e3f;">
                   <!-- 1번 영역: 업무 일지 + 아파트명 (70%) -->
-                  <div style="flex: 7; border: 2px solid #333333; border-radius: 6px; padding: 12px; background: #ffffff; text-align: center;">
-                    <h1 style="font-size: 28px; font-weight: 900; margin: 0 0 8px 0; letter-spacing: -1px; color: #000000;">업무 일지</h1>
-                    <p style="font-size: 14px; color: #333333; margin: 0; font-weight: 600;">${apartmentName}</p>
+                  <div style="flex: 7; background: linear-gradient(135deg, #1a5e3f 0%, #2d6e4a 100%); border-radius: 8px; padding: 16px 20px; box-shadow: 0 2px 8px rgba(26, 94, 63, 0.15);">
+                    <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 8px;">
+                      <div style="width: 28px; height: 28px; background: white; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                        <span style="font-size: 18px; color: #1a5e3f;">📋</span>
+                      </div>
+                      <h1 style="font-size: 32px; font-weight: 900; margin: 0; letter-spacing: -0.5px; color: #ffffff; text-shadow: 0 1px 2px rgba(0,0,0,0.1);">업무 일지</h1>
+                    </div>
+                    <p style="font-size: 15px; color: rgba(255,255,255,0.95); margin: 0; font-weight: 600; letter-spacing: 0.3px;">${apartmentName}</p>
+                    <div style="margin-top: 6px; padding-top: 6px; border-top: 1px solid rgba(255,255,255,0.2);">
+                      <p style="font-size: 9px; color: rgba(255,255,255,0.7); margin: 0; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 500;">ALL FOR SERVICE</p>
+                    </div>
                   </div>
                   
                   <!-- 2번 영역: 검수 확인란 (30%) -->
-                  <div style="flex: 3; border: 2px solid #333333; border-radius: 6px; padding: 8px; background: #f9f9f9;">
-                    <p style="font-size: 10px; font-weight: 800; margin: 0 0 6px 0; color: #000000; text-align: center; border-bottom: 1px solid #cccccc; padding-bottom: 4px;">검수 확인</p>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px;">
+                  <div style="flex: 3; border: 2px solid #1a5e3f; border-radius: 8px; padding: 10px; background: linear-gradient(to bottom, #f8faf9 0%, #ffffff 100%); box-shadow: 0 2px 6px rgba(26, 94, 63, 0.08);">
+                    <div style="display: flex; align-items: center; justify-content: center; gap: 4px; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 2px solid #1a5e3f;">
+                      <span style="font-size: 12px; color: #1a5e3f;">✓</span>
+                      <p style="font-size: 11px; font-weight: 900; margin: 0; color: #1a5e3f; letter-spacing: 0.5px;">검수 확인</p>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px;">
                       <!-- 센터장 -->
-                      <div style="border: 1px solid #cccccc; border-radius: 3px; overflow: hidden;">
-                        <div style="background: #f0f0f0; padding: 4px 2px; border-bottom: 1px solid #cccccc; text-align: center;">
-                          <p style="font-size: 7px; font-weight: 800; margin: 0; color: #000000;">☐센터장</p>
+                      <div style="border: 1.5px solid #d1d5db; border-radius: 4px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                        <div style="background: linear-gradient(to bottom, #1a5e3f 0%, #2d6e4a 100%); padding: 5px 3px; text-align: center;">
+                          <p style="font-size: 7px; font-weight: 900; margin: 0; color: #ffffff; letter-spacing: 0.3px;">☐ 센터장</p>
                         </div>
-                        <div style="padding: 4px 2px; background: white;">
-                          <p style="font-size: 6px; margin: 0 0 2px 0; color: #666666; line-height: 1.3;">서명:</p>
-                          <p style="font-size: 6px; color: #999999; border-bottom: 1px solid #999; margin: 0 0 3px 0; padding: 0 2px; line-height: 1.3;">　</p>
-                          <p style="font-size: 6px; margin: 0 0 2px 0; color: #666666; line-height: 1.3;">날짜:</p>
-                          <p style="font-size: 6px; color: #999999; border-bottom: 1px solid #999; margin: 0; padding: 0 2px; line-height: 1.3;">　</p>
+                        <div style="padding: 5px 3px; background: white;">
+                          <p style="font-size: 6px; margin: 0 0 2px 0; color: #1a5e3f; line-height: 1.4; font-weight: 600;">서명:</p>
+                          <div style="border-bottom: 1px solid #2d6e4a; margin: 0 0 3px 0; padding: 1px 2px; min-height: 8px;"></div>
+                          <p style="font-size: 6px; margin: 0 0 2px 0; color: #1a5e3f; line-height: 1.4; font-weight: 600;">날짜:</p>
+                          <div style="border-bottom: 1px solid #2d6e4a; margin: 0; padding: 1px 2px; min-height: 8px;"></div>
                         </div>
                       </div>
                       
                       <!-- 팀장 -->
-                      <div style="border: 1px solid #cccccc; border-radius: 3px; overflow: hidden;">
-                        <div style="background: #f0f0f0; padding: 4px 2px; border-bottom: 1px solid #cccccc; text-align: center;">
-                          <p style="font-size: 7px; font-weight: 800; margin: 0; color: #000000;">☐팀장</p>
+                      <div style="border: 1.5px solid #d1d5db; border-radius: 4px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                        <div style="background: linear-gradient(to bottom, #1a5e3f 0%, #2d6e4a 100%); padding: 5px 3px; text-align: center;">
+                          <p style="font-size: 7px; font-weight: 900; margin: 0; color: #ffffff; letter-spacing: 0.3px;">☐ 팀장</p>
                         </div>
-                        <div style="padding: 4px 2px; background: white;">
-                          <p style="font-size: 6px; margin: 0 0 2px 0; color: #666666; line-height: 1.3;">서명:</p>
-                          <p style="font-size: 6px; color: #999999; border-bottom: 1px solid #999; margin: 0 0 3px 0; padding: 0 2px; line-height: 1.3;">　</p>
-                          <p style="font-size: 6px; margin: 0 0 2px 0; color: #666666; line-height: 1.3;">날짜:</p>
-                          <p style="font-size: 6px; color: #999999; border-bottom: 1px solid #999; margin: 0; padding: 0 2px; line-height: 1.3;">　</p>
+                        <div style="padding: 5px 3px; background: white;">
+                          <p style="font-size: 6px; margin: 0 0 2px 0; color: #1a5e3f; line-height: 1.4; font-weight: 600;">서명:</p>
+                          <div style="border-bottom: 1px solid #2d6e4a; margin: 0 0 3px 0; padding: 1px 2px; min-height: 8px;"></div>
+                          <p style="font-size: 6px; margin: 0 0 2px 0; color: #1a5e3f; line-height: 1.4; font-weight: 600;">날짜:</p>
+                          <div style="border-bottom: 1px solid #2d6e4a; margin: 0; padding: 1px 2px; min-height: 8px;"></div>
                         </div>
                       </div>
                       
                       <!-- 소장 -->
-                      <div style="border: 1px solid #cccccc; border-radius: 3px; overflow: hidden;">
-                        <div style="background: #f0f0f0; padding: 4px 2px; border-bottom: 1px solid #cccccc; text-align: center;">
-                          <p style="font-size: 7px; font-weight: 800; margin: 0; color: #000000;">☐소장</p>
+                      <div style="border: 1.5px solid #d1d5db; border-radius: 4px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                        <div style="background: linear-gradient(to bottom, #1a5e3f 0%, #2d6e4a 100%); padding: 5px 3px; text-align: center;">
+                          <p style="font-size: 7px; font-weight: 900; margin: 0; color: #ffffff; letter-spacing: 0.3px;">☐ 소장</p>
                         </div>
-                        <div style="padding: 4px 2px; background: white;">
-                          <p style="font-size: 6px; margin: 0 0 2px 0; color: #666666; line-height: 1.3;">서명:</p>
-                          <p style="font-size: 6px; color: #999999; border-bottom: 1px solid #999; margin: 0 0 3px 0; padding: 0 2px; line-height: 1.3;">　</p>
-                          <p style="font-size: 6px; margin: 0 0 2px 0; color: #666666; line-height: 1.3;">날짜:</p>
-                          <p style="font-size: 6px; color: #999999; border-bottom: 1px solid #999; margin: 0; padding: 0 2px; line-height: 1.3;">　</p>
+                        <div style="padding: 5px 3px; background: white;">
+                          <p style="font-size: 6px; margin: 0 0 2px 0; color: #1a5e3f; line-height: 1.4; font-weight: 600;">서명:</p>
+                          <div style="border-bottom: 1px solid #2d6e4a; margin: 0 0 3px 0; padding: 1px 2px; min-height: 8px;"></div>
+                          <p style="font-size: 6px; margin: 0 0 2px 0; color: #1a5e3f; line-height: 1.4; font-weight: 600;">날짜:</p>
+                          <div style="border-bottom: 1px solid #2d6e4a; margin: 0; padding: 1px 2px; min-height: 8px;"></div>
                         </div>
                       </div>
                     </div>
