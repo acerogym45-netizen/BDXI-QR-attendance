@@ -3655,22 +3655,23 @@
               return rowDate >= start && rowDate <= end;
             });
             
-            // 통계 계산
+            // 통계 계산 (G열 = 인덱스 6, 0-based)
             const stats = {
               total: filteredRows.length,
-              completed: filteredRows.filter(r => r[7] === '완료').length,
-              inProgress: filteredRows.filter(r => r[7] === '진행중').length,
-              pending: filteredRows.filter(r => r[7] === '보류').length,
+              completed: filteredRows.filter(r => r[6] === '완료').length,
+              inProgress: filteredRows.filter(r => r[6] === '진행중').length,
+              pending: filteredRows.filter(r => r[6] === '보류').length,
             };
             
             stats.completionRate = stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0;
             
-            // 최근 3건 (민감정보 제외)
-            const recentComplaints = filteredRows.slice(0, 3).map(row => ({
+            // 최근 3건 (역순 정렬 후 앞 3개 = 가장 최근 3개)
+            const recentComplaints = filteredRows.slice(-3).reverse().map(row => ({
               date: row[0] || '',
               area: row[1] || '미지정',
-              status: row[7] || '대기',
-              summary: (row[8] || '내용 없음').substring(0, 20) + (row[8] && row[8].length > 20 ? '...' : '')
+              status: row[6] || '대기',
+              content: (row[7] || '내용 없음').substring(0, 20) + (row[7] && row[7].length > 20 ? '...' : ''),
+              action: (row[8] || '조치 없음').substring(0, 20) + (row[8] && row[8].length > 20 ? '...' : '')
             }));
             
             this.complaintData = { stats, recentComplaints };
@@ -4089,7 +4090,7 @@
                     <p style="font-size: 12px; font-weight: bold; margin: 0 0 5px 0; color: #92400e;">최근 처리 현황</p>
                     ${recentComplaints.map((c, i) => `
                       <p style="font-size: 11px; color: #374151; margin: 3px 0;">
-                        ${i + 1}. [${c.area}] ${c.summary} → ${c.status}
+                        ${i + 1}. [${c.area}] ${c.content} → ${c.action} (${c.status})
                       </p>
                     `).join('')}
                   </div>
