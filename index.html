@@ -2506,7 +2506,8 @@
               });
               
               // Generate QR code
-              const qrUrl = `https://bdxi-qr-attendance.vercel.app/scan?loc=${loc.id}&apt=${loc.apartment_code || 'BJD001'}`;
+              const aptCode = this.currentApartment?.code || 'BJD001';
+              const qrUrl = `https://bdxi-qr-attendance.vercel.app/scan.html?loc=${loc.id}&apt=${aptCode}`;
               new QRCode(document.getElementById(`qr-${loc.id}`), {
                 text: qrUrl,
                 width: 150,
