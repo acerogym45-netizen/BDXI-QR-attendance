@@ -3594,6 +3594,13 @@
               task.employee_position = employeeMap[task.employee_name] || '직원';
             });
             
+            // 디버깅: 첫 3개 태스크의 photo_urls 확인
+            console.log('📸 업무 일지 데이터 확인 (첫 3개):', tasks.slice(0, 3).map(t => ({
+              location: t.location,
+              photo_urls: t.photo_urls,
+              has_photos: t.photo_urls && t.photo_urls.length > 0
+            })));
+            
             // 인력 현황 계산
             const totalStaff = (employees || []).length;
             const activeStaff = (employees || []).filter(e => e.status === 'active').length;
@@ -3950,13 +3957,35 @@
               <div class="bg-white p-8 rounded-xl shadow-2xl text-center">
                 <div class="loader mb-4"></div>
                 <p class="text-lg font-bold text-gray-800">PDF 생성 중...</p>
-                <p class="text-sm text-gray-600 mt-2">잠시만 기다려주세요</p>
+                <p class="text-sm text-gray-600 mt-2">이미지를 처리하고 있습니다...</p>
               </div>
             `;
             document.body.appendChild(loadingMsg);
             
             // 약간의 딜레이 (UI 업데이트)
             await new Promise(resolve => setTimeout(resolve, 100));
+            
+            // 이미지를 Data URL로 변환
+            const workItems = document.querySelectorAll('#report-work-items > div');
+            const imageConversionPromises = [];
+            
+            workItems.forEach(item => {
+              const images = item.querySelectorAll('img');
+              images.forEach(img => {
+                const originalSrc = img.src;
+                const promise = this.loadImageAsDataURL(originalSrc)
+                  .then(dataURL => {
+                    img.src = dataURL;
+                  })
+                  .catch(error => {
+                    console.error('이미지 변환 실패:', originalSrc, error);
+                  });
+                imageConversionPromises.push(promise);
+              });
+            });
+            
+            // 모든 이미지 변환 대기
+            await Promise.all(imageConversionPromises);
             
             // PDF용 HTML 생성
             const pdfContent = this.createPDFHTML(startDate, endDate);
