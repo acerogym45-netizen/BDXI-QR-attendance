@@ -3589,17 +3589,59 @@
               employeeMap[emp.name] = emp.position || '직원';
             });
             
-            // 업무에 직원 정보 추가
+            // Before/After 레코드 합치기 (같은 group_id를 가진 레코드들)
+            const groupedTasks = {};
+            const processedTasks = [];
+            
             tasks.forEach(task => {
               task.employee_position = employeeMap[task.employee_name] || '직원';
+              
+              // group_id가 있고 upload_type이 'before_after'인 경우
+              if (task.group_id && task.upload_type === 'before_after') {
+                if (!groupedTasks[task.group_id]) {
+                  groupedTasks[task.group_id] = {
+                    ...task,
+                    photo_urls: [],
+                    original_records: []
+                  };
+                }
+                
+                // photo_order에 따라 Before/After 정렬
+                groupedTasks[task.group_id].original_records.push(task);
+                groupedTasks[task.group_id].original_records.sort((a, b) => 
+                  (a.photo_order || 0) - (b.photo_order || 0)
+                );
+                
+                // photo_urls 배열 재구성
+                groupedTasks[task.group_id].photo_urls = 
+                  groupedTasks[task.group_id].original_records.map(r => r.photo_url);
+                
+              } else {
+                // 일반 업무는 그대로 추가
+                processedTasks.push(task);
+              }
             });
             
+            // Before/After 그룹화된 업무 추가
+            Object.values(groupedTasks).forEach(group => {
+              processedTasks.push(group);
+            });
+            
+            // 다시 날짜순 정렬
+            processedTasks.sort((a, b) => 
+              new Date(b.created_at) - new Date(a.created_at)
+            );
+            
             // 디버깅: 첫 3개 태스크의 photo_urls 확인
-            console.log('📸 업무 일지 데이터 확인 (첫 3개):', tasks.slice(0, 3).map(t => ({
+            console.log('📸 업무 일지 데이터 확인 (첫 3개):', processedTasks.slice(0, 3).map(t => ({
               location: t.location,
               photo_urls: t.photo_urls,
-              has_photos: t.photo_urls && t.photo_urls.length > 0
+              has_photos: t.photo_urls && t.photo_urls.length > 0,
+              is_before_after: t.upload_type === 'before_after'
             })));
+            
+            // processedTasks를 tasks로 교체
+            const finalTasks = processedTasks;
             
             // 인력 현황 계산
             const totalStaff = (employees || []).length;
@@ -3623,10 +3665,10 @@
             }
             
             // 요약 정보 표시
-            const uniqueEmployees = new Set(tasks.map(t => t.employee_name)).size;
+            const uniqueEmployees = new Set(finalTasks.map(t => t.employee_name)).size;
             document.getElementById('report-period').textContent = 
               `${new Date(startDate).toLocaleDateString('ko-KR')} ~ ${new Date(endDate).toLocaleDateString('ko-KR')}`;
-            document.getElementById('report-total-tasks').textContent = tasks.length;
+            document.getElementById('report-total-tasks').textContent = finalTasks.length;
             document.getElementById('report-total-employees').textContent = uniqueEmployees;
             
             document.getElementById('report-summary').classList.remove('hidden');
@@ -3638,10 +3680,10 @@
             document.getElementById('report-pdf-button').classList.remove('hidden');
             
             // 업무 체크박스 리스트 생성
-            this.renderTaskCheckboxes(tasks);
+            this.renderTaskCheckboxes(finalTasks);
             
             // 초기 업무 저장 (최근 3개)
-            this.currentReportTasks = tasks;
+            this.currentReportTasks = finalTasks;
             
             // 민원 데이터 로드
             await this.loadComplaintData(startDate, endDate);
