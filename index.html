@@ -4175,148 +4175,153 @@
             `;
           });
           
+          // 민원 현황 HTML (진행된 업무 뒤에 배치)
+          const complaintHTML = `
+            <div style="background: #f9f9f9; padding: 12px; border-radius: 8px; margin-bottom: 20px; border: 2px solid #333333; page-break-inside: avoid;">
+              <h3 style="font-size: 14px; font-weight: 900; margin: 0 0 8px 0; color: #000000;">
+                주민 민원 처리 현황
+              </h3>
+              <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 10px;">
+                <div style="text-align: center; background: white; padding: 8px; border-radius: 6px; border: 1px solid #666666;">
+                  <p style="font-size: 9px; color: #666666; margin: 0 0 3px 0; font-weight: 600;">총 접수</p>
+                  <p style="font-size: 16px; font-weight: 900; margin: 0; color: #000000;">${complaintStats.total}건</p>
+                </div>
+                <div style="text-align: center; background: white; padding: 8px; border-radius: 6px; border: 1px solid #666666;">
+                  <p style="font-size: 9px; color: #666666; margin: 0 0 3px 0; font-weight: 600;">완료</p>
+                  <p style="font-size: 16px; font-weight: 900; margin: 0; color: #000000;">${complaintStats.completed}건</p>
+                </div>
+                <div style="text-align: center; background: white; padding: 8px; border-radius: 6px; border: 1px solid #666666;">
+                  <p style="font-size: 9px; color: #666666; margin: 0 0 3px 0; font-weight: 600;">진행중</p>
+                  <p style="font-size: 16px; font-weight: 900; margin: 0; color: #000000;">${complaintStats.inProgress}건</p>
+                </div>
+                <div style="text-align: center; background: white; padding: 8px; border-radius: 6px; border: 1px solid #666666;">
+                  <p style="font-size: 9px; color: #666666; margin: 0 0 3px 0; font-weight: 600;">완료율</p>
+                  <p style="font-size: 16px; font-weight: 900; margin: 0; color: #000000;">${complaintStats.completionRate}%</p>
+                </div>
+              </div>
+              ${recentComplaints.length > 0 ? `
+                <div style="border-top: 1px solid #cccccc; padding-top: 8px;">
+                  <p style="font-size: 10px; font-weight: 700; margin: 0 0 4px 0; color: #000000;">최근 처리 현황</p>
+                  ${recentComplaints.map((c, i) => `
+                    <p style="font-size: 9px; color: #333333; margin: 2px 0;">
+                      ${i + 1}. [${c.area}] ${c.content} → ${c.action} (${c.status})
+                    </p>
+                  `).join('')}
+                </div>
+              ` : ''}
+            </div>
+          `;
+
           return `
             <div style="font-family: 'Noto Sans KR', sans-serif; color: #000000; max-width: 100%;">
-              <!-- 헤더 -->
-              <div style="text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 4px solid #000000;">
-                <h1 style="font-size: 32px; font-weight: 900; margin: 0 0 10px 0; letter-spacing: -1px;">업무 일지</h1>
-                <p style="font-size: 16px; color: #333333; margin: 0; font-weight: 600;">${apartmentName}</p>
-              </div>
-              
-              <!-- 기간 및 인력 현황 -->
-              <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 2px solid #333333;">
-                <div style="margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #cccccc;">
-                  <p style="font-size: 11px; color: #666666; margin: 0 0 5px 0; font-weight: 600;">조회 기간</p>
-                  <p style="font-size: 14px; font-weight: 800; margin: 0; color: #000000;">${new Date(startDate).toLocaleDateString('ko-KR')} ~ ${new Date(endDate).toLocaleDateString('ko-KR')}</p>
-                </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; text-align: center;">
-                  <div style="background: white; padding: 10px; border-radius: 6px; border: 1px solid #666666;">
-                    <p style="font-size: 10px; color: #666666; margin: 0 0 5px 0; font-weight: 600;">총원</p>
-                    <p style="font-size: 22px; font-weight: 900; color: #000000; margin: 0;">${staffTotal}</p>
+              <!-- 첫 페이지 -->
+              <div style="position: relative; page-break-after: always;">
+                <!-- 헤더 + 검수 확인란 (우측 상단) -->
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 3px solid #000000;">
+                  <div style="flex: 1; text-align: center;">
+                    <h1 style="font-size: 28px; font-weight: 900; margin: 0 0 8px 0; letter-spacing: -1px;">업무 일지</h1>
+                    <p style="font-size: 14px; color: #333333; margin: 0; font-weight: 600;">${apartmentName}</p>
                   </div>
-                  <div style="background: white; padding: 10px; border-radius: 6px; border: 1px solid #666666;">
-                    <p style="font-size: 10px; color: #666666; margin: 0 0 5px 0; font-weight: 600;">휴가/결근</p>
-                    <p style="font-size: 22px; font-weight: 900; color: #000000; margin: 0;">${staffAbsent}</p>
-                  </div>
-                  <div style="background: white; padding: 10px; border-radius: 6px; border: 1px solid #666666;">
-                    <p style="font-size: 10px; color: #666666; margin: 0 0 5px 0; font-weight: 600;">현재원</p>
-                    <p style="font-size: 22px; font-weight: 900; color: #000000; margin: 0;">${staffPresent}</p>
+                  
+                  <!-- 검수 확인란 (우측 상단, 작게) -->
+                  <div style="border: 1px solid #333333; border-radius: 6px; padding: 8px; background: #f9f9f9; min-width: 180px;">
+                    <p style="font-size: 10px; font-weight: 800; margin: 0 0 6px 0; color: #000000; text-align: center; border-bottom: 1px solid #cccccc; padding-bottom: 4px;">검수 확인</p>
+                    <div style="margin-bottom: 5px;">
+                      <p style="font-size: 9px; margin: 0; color: #000000;">☐ 센터장</p>
+                    </div>
+                    <div style="margin-bottom: 5px;">
+                      <p style="font-size: 9px; margin: 0; color: #000000;">☐ 관리팀장</p>
+                    </div>
+                    <div>
+                      <p style="font-size: 9px; margin: 0; color: #000000;">☐ 관리소장</p>
+                    </div>
                   </div>
                 </div>
-              </div>
-              
-              <!-- 업무 요약 -->
-              <div style="background: #ffffff; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 2px solid #333333;">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; text-align: center;">
-                  <div>
-                    <p style="font-size: 11px; color: #666666; margin: 0 0 5px 0; font-weight: 600;">총 업무 건수</p>
-                    <p style="font-size: 20px; font-weight: 900; color: #000000; margin: 0;">${totalTasks}건</p>
-                  </div>
-                  <div>
-                    <p style="font-size: 11px; color: #666666; margin: 0 0 5px 0; font-weight: 600;">담당 직원 수</p>
-                    <p style="font-size: 20px; font-weight: 900; color: #000000; margin: 0;">${totalEmployees}명</p>
-                  </div>
-                </div>
-              </div>
-              
-              <!-- 주민 민원 처리 현황 -->
-              <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 2px solid #333333;">
-                <h3 style="font-size: 16px; font-weight: 900; margin: 0 0 10px 0; color: #000000;">
-                  주민 민원 처리 현황
-                </h3>
-                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 15px;">
-                  <div style="text-align: center; background: white; padding: 10px; border-radius: 6px; border: 1px solid #666666;">
-                    <p style="font-size: 10px; color: #666666; margin: 0 0 5px 0; font-weight: 600;">총 접수</p>
-                    <p style="font-size: 18px; font-weight: 900; margin: 0; color: #000000;">${complaintStats.total}건</p>
-                  </div>
-                  <div style="text-align: center; background: white; padding: 10px; border-radius: 6px; border: 1px solid #666666;">
-                    <p style="font-size: 10px; color: #666666; margin: 0 0 5px 0; font-weight: 600;">완료</p>
-                    <p style="font-size: 18px; font-weight: 900; margin: 0; color: #000000;">${complaintStats.completed}건</p>
-                  </div>
-                  <div style="text-align: center; background: white; padding: 10px; border-radius: 6px; border: 1px solid #666666;">
-                    <p style="font-size: 10px; color: #666666; margin: 0 0 5px 0; font-weight: 600;">진행중</p>
-                    <p style="font-size: 18px; font-weight: 900; margin: 0; color: #000000;">${complaintStats.inProgress}건</p>
-                  </div>
-                  <div style="text-align: center; background: white; padding: 10px; border-radius: 6px; border: 1px solid #666666;">
-                    <p style="font-size: 10px; color: #666666; margin: 0 0 5px 0; font-weight: 600;">완료율</p>
-                    <p style="font-size: 18px; font-weight: 900; margin: 0; color: #000000;">${complaintStats.completionRate}%</p>
-                  </div>
-                </div>
-                ${recentComplaints.length > 0 ? `
-                  <div style="border-top: 1px solid #cccccc; padding-top: 10px;">
-                    <p style="font-size: 11px; font-weight: 700; margin: 0 0 5px 0; color: #000000;">최근 처리 현황</p>
-                    ${recentComplaints.map((c, i) => `
-                      <p style="font-size: 10px; color: #333333; margin: 3px 0;">
-                        ${i + 1}. [${c.area}] ${c.content} → ${c.action} (${c.status})
-                      </p>
-                    `).join('')}
-                  </div>
-                ` : ''}
-              </div>
-              
-              <!-- 시설 점검 -->
-              <div style="background: #ffffff; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 2px solid #333333;">
-                <h3 style="font-size: 16px; font-weight: 900; margin: 0 0 12px 0; color: #000000;">
-                  시설 점검
-                </h3>
                 
-                ${facilityChecks.length > 0 ? `
-                  <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
-                    ${facilityChecks.map(item => `
-                      <div style="border: 1px solid #cccccc; border-radius: 6px; overflow: hidden;">
-                        <div style="background: #f0f0f0; padding: 6px 8px; border-bottom: 1px solid #cccccc;">
-                          <p style="font-size: 10px; font-weight: 800; margin: 0; color: #000000; text-align: center;">${item.name}</p>
-                        </div>
-                        <div style="padding: 6px 8px; background: white;">
-                          <p style="font-size: 10px; margin: 0 0 4px 0; color: #000000;">
-                            <strong>상태:</strong> ${item.status}
-                          </p>
-                          ${item.note ? `
-                            <p style="font-size: 9px; margin: 0; color: #666666; line-height: 1.4;">
-                              ${item.note}
-                            </p>
-                          ` : ''}
-                        </div>
-                      </div>
-                    `).join('')}
+                <!-- 기간 및 인력 현황 -->
+                <div style="background: #f9f9f9; padding: 10px; border-radius: 8px; margin-bottom: 12px; border: 2px solid #333333;">
+                  <div style="margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid #cccccc;">
+                    <p style="font-size: 10px; color: #666666; margin: 0 0 4px 0; font-weight: 600;">조회 기간</p>
+                    <p style="font-size: 12px; font-weight: 800; margin: 0; color: #000000;">${new Date(startDate).toLocaleDateString('ko-KR')} ~ ${new Date(endDate).toLocaleDateString('ko-KR')}</p>
                   </div>
-                ` : '<p style="font-size: 11px; color: #999999; font-style: italic;">점검 항목 없음</p>'}
+                  <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; text-align: center;">
+                    <div style="background: white; padding: 8px; border-radius: 6px; border: 1px solid #666666;">
+                      <p style="font-size: 9px; color: #666666; margin: 0 0 3px 0; font-weight: 600;">총원</p>
+                      <p style="font-size: 18px; font-weight: 900; color: #000000; margin: 0;">${staffTotal}</p>
+                    </div>
+                    <div style="background: white; padding: 8px; border-radius: 6px; border: 1px solid #666666;">
+                      <p style="font-size: 9px; color: #666666; margin: 0 0 3px 0; font-weight: 600;">휴가/결근</p>
+                      <p style="font-size: 18px; font-weight: 900; color: #000000; margin: 0;">${staffAbsent}</p>
+                    </div>
+                    <div style="background: white; padding: 8px; border-radius: 6px; border: 1px solid #666666;">
+                      <p style="font-size: 9px; color: #666666; margin: 0 0 3px 0; font-weight: 600;">현재원</p>
+                      <p style="font-size: 18px; font-weight: 900; color: #000000; margin: 0;">${staffPresent}</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- 업무 요약 -->
+                <div style="background: #ffffff; padding: 10px; border-radius: 8px; margin-bottom: 12px; border: 2px solid #333333;">
+                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; text-align: center;">
+                    <div>
+                      <p style="font-size: 10px; color: #666666; margin: 0 0 4px 0; font-weight: 600;">총 업무 건수</p>
+                      <p style="font-size: 18px; font-weight: 900; color: #000000; margin: 0;">${totalTasks}건</p>
+                    </div>
+                    <div>
+                      <p style="font-size: 10px; color: #666666; margin: 0 0 4px 0; font-weight: 600;">담당 직원 수</p>
+                      <p style="font-size: 18px; font-weight: 900; color: #000000; margin: 0;">${totalEmployees}명</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- 시설 점검 -->
+                <div style="background: #ffffff; padding: 10px; border-radius: 8px; margin-bottom: 12px; border: 2px solid #333333;">
+                  <h3 style="font-size: 14px; font-weight: 900; margin: 0 0 8px 0; color: #000000;">
+                    시설 점검
+                  </h3>
+                  
+                  ${facilityChecks.length > 0 ? `
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px;">
+                      ${facilityChecks.map(item => `
+                        <div style="border: 1px solid #cccccc; border-radius: 6px; overflow: hidden;">
+                          <div style="background: #f0f0f0; padding: 4px 6px; border-bottom: 1px solid #cccccc;">
+                            <p style="font-size: 9px; font-weight: 800; margin: 0; color: #000000; text-align: center;">${item.name}</p>
+                          </div>
+                          <div style="padding: 4px 6px; background: white;">
+                            <p style="font-size: 9px; margin: 0 0 2px 0; color: #000000;">
+                              <strong>상태:</strong> ${item.status}
+                            </p>
+                            ${item.note ? `
+                              <p style="font-size: 8px; margin: 0; color: #666666; line-height: 1.3;">
+                                ${item.note}
+                              </p>
+                            ` : ''}
+                          </div>
+                        </div>
+                      `).join('')}
+                    </div>
+                  ` : '<p style="font-size: 10px; color: #999999; font-style: italic;">점검 항목 없음</p>'}
+                </div>
               </div>
               
-              <!-- 진행된 업무 항목 -->
-              <div style="margin-bottom: 30px;">
-                <h2 style="font-size: 18px; font-weight: 900; margin: 0 0 15px 0; color: #000000; border-bottom: 3px solid #000000; padding-bottom: 8px;">진행된 업무</h2>
+              <!-- 두 번째 페이지부터: 진행된 업무 -->
+              <div style="margin-bottom: 20px;">
+                <h2 style="font-size: 16px; font-weight: 900; margin: 0 0 12px 0; color: #000000; border-bottom: 3px solid #000000; padding-bottom: 6px;">진행된 업무</h2>
                 ${itemsHTML}
               </div>
               
-              <!-- 진행 예정 업무 & 특이사항 -->
-              <div style="margin-bottom: 30px; padding: 20px; background: #f9f9f9; border: 2px solid #333333; border-radius: 8px;">
-                <div style="margin-bottom: 20px;">
-                  <h3 style="font-size: 14px; font-weight: 800; margin: 0 0 10px 0; color: #000000;">진행 예정 업무</h3>
-                  <p style="font-size: 12px; color: #333333; margin: 0; white-space: pre-wrap; line-height: 1.6;">${futureWork}</p>
-                </div>
-                <div style="padding-top: 15px; border-top: 1px solid #cccccc;">
-                  <h3 style="font-size: 14px; font-weight: 800; margin: 0 0 10px 0; color: #000000;">특이사항 / 비고</h3>
-                  <p style="font-size: 12px; color: #333333; margin: 0; white-space: pre-wrap; line-height: 1.6;">${notes}</p>
-                </div>
-              </div>
+              <!-- 진행된 업무 끝나면: 민원 처리 현황 -->
+              ${complaintHTML}
               
-              <!-- 검수 확인란 -->
-              <div style="margin-top: 40px; padding-top: 30px; border-top: 4px solid #000000;">
-                <h2 style="font-size: 18px; font-weight: 900; margin: 0 0 20px 0; color: #000000;">검수 확인</h2>
-                <div style="space-y: 15px;">
-                  <div style="padding: 15px; background: #ffffff; border: 2px solid #333333; border-radius: 8px; margin-bottom: 15px;">
-                    <p style="font-size: 14px; font-weight: 700; margin: 0 0 8px 0; color: #000000;">☐ 센터장 확인</p>
-                    <p style="font-size: 11px; color: #666666; margin: 0;">확인자: ____________________  날짜: __________</p>
-                  </div>
-                  <div style="padding: 15px; background: #ffffff; border: 2px solid #333333; border-radius: 8px; margin-bottom: 15px;">
-                    <p style="font-size: 14px; font-weight: 700; margin: 0 0 8px 0; color: #000000;">☐ 관리팀장 확인</p>
-                    <p style="font-size: 11px; color: #666666; margin: 0;">확인자: ____________________  날짜: __________</p>
-                  </div>
-                  <div style="padding: 15px; background: #ffffff; border: 2px solid #333333; border-radius: 8px; margin-bottom: 15px;">
-                    <p style="font-size: 14px; font-weight: 700; margin: 0 0 8px 0; color: #000000;">☐ 관리소장 확인</p>
-                    <p style="font-size: 11px; color: #666666; margin: 0;">확인자: ____________________  날짜: __________</p>
-                  </div>
+              <!-- 진행 예정 업무 & 특이사항 -->
+              <div style="margin-bottom: 20px; padding: 15px; background: #f9f9f9; border: 2px solid #333333; border-radius: 8px; page-break-inside: avoid;">
+                <div style="margin-bottom: 15px;">
+                  <h3 style="font-size: 13px; font-weight: 800; margin: 0 0 8px 0; color: #000000;">진행 예정 업무</h3>
+                  <p style="font-size: 11px; color: #333333; margin: 0; white-space: pre-wrap; line-height: 1.6;">${futureWork}</p>
+                </div>
+                <div style="padding-top: 12px; border-top: 1px solid #cccccc;">
+                  <h3 style="font-size: 13px; font-weight: 800; margin: 0 0 8px 0; color: #000000;">특이사항 / 비고</h3>
+                  <p style="font-size: 11px; color: #333333; margin: 0; white-space: pre-wrap; line-height: 1.6;">${notes}</p>
                 </div>
               </div>
             </div>
