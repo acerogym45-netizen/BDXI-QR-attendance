@@ -933,6 +933,100 @@
             </div>
           </div>
           
+          <!-- Complaint Data Section -->
+          <div id="report-complaint-section" class="hidden bg-white p-4 rounded-xl shadow-sm border">
+            <h3 class="text-base font-bold text-gray-800 mb-3">
+              <i class="fas fa-comments mr-2 text-yellow-600"></i>주민 민원 처리 현황
+            </h3>
+            <div class="grid grid-cols-2 gap-2 mb-3">
+              <div class="text-center p-2 bg-gray-50 rounded-lg">
+                <p class="text-xs text-gray-600">총 접수</p>
+                <p class="text-lg font-bold text-gray-800" id="complaint-total">0</p>
+              </div>
+              <div class="text-center p-2 bg-green-50 rounded-lg">
+                <p class="text-xs text-gray-600">완료</p>
+                <p class="text-lg font-bold text-green-600" id="complaint-completed">0</p>
+              </div>
+              <div class="text-center p-2 bg-blue-50 rounded-lg">
+                <p class="text-xs text-gray-600">진행중</p>
+                <p class="text-lg font-bold text-blue-600" id="complaint-inprogress">0</p>
+              </div>
+              <div class="text-center p-2 bg-purple-50 rounded-lg">
+                <p class="text-xs text-gray-600">완료율</p>
+                <p class="text-lg font-bold text-purple-600" id="complaint-rate">0%</p>
+              </div>
+            </div>
+            <div class="text-xs text-gray-500 p-2 bg-yellow-50 rounded">
+              <i class="fas fa-lock mr-1"></i>개인정보 보호를 위해 통계만 표시됩니다
+            </div>
+          </div>
+          
+          <!-- Facility Check Section -->
+          <div id="report-facility-check" class="hidden bg-white p-4 rounded-xl shadow-sm border">
+            <h3 class="text-base font-bold text-gray-800 mb-3">
+              <i class="fas fa-tools mr-2 text-orange-600"></i>시설물 점검 현황
+            </h3>
+            
+            <!-- 일일 점검 -->
+            <div class="mb-3">
+              <p class="text-sm font-medium text-gray-700 mb-2">일일 점검</p>
+              <div class="space-y-2">
+                <label class="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 p-1 rounded">
+                  <input type="checkbox" id="check-elevator" checked class="rounded" onchange="app.updateReportPreviewFromSelection()">
+                  <span>엘리베이터 작동</span>
+                </label>
+                <label class="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 p-1 rounded">
+                  <input type="checkbox" id="check-fire" checked class="rounded" onchange="app.updateReportPreviewFromSelection()">
+                  <span>소방시설 정상</span>
+                </label>
+                <label class="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 p-1 rounded">
+                  <input type="checkbox" id="check-cctv" checked class="rounded" onchange="app.updateReportPreviewFromSelection()">
+                  <span>CCTV 작동</span>
+                </label>
+                <label class="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 p-1 rounded">
+                  <input type="checkbox" id="check-lighting" class="rounded" onchange="app.updateReportPreviewFromSelection()">
+                  <span>공용조명</span>
+                </label>
+                <label class="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 p-1 rounded">
+                  <input type="checkbox" id="check-emergency" checked class="rounded" onchange="app.updateReportPreviewFromSelection()">
+                  <span>비상구 통로</span>
+                </label>
+              </div>
+            </div>
+            
+            <!-- 주간 점검 -->
+            <div class="mb-3">
+              <p class="text-sm font-medium text-gray-700 mb-2">주간 점검</p>
+              <div class="space-y-2">
+                <label class="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 p-1 rounded">
+                  <input type="checkbox" id="check-pump" checked class="rounded" onchange="app.updateReportPreviewFromSelection()">
+                  <span>급수펌프</span>
+                </label>
+                <label class="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 p-1 rounded">
+                  <input type="checkbox" id="check-drain" checked class="rounded" onchange="app.updateReportPreviewFromSelection()">
+                  <span>배수시설</span>
+                </label>
+                <label class="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 p-1 rounded">
+                  <input type="checkbox" id="check-parking" class="rounded" onchange="app.updateReportPreviewFromSelection()">
+                  <span>주차장 조명</span>
+                </label>
+              </div>
+            </div>
+            
+            <!-- 자유 입력 -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">
+                특이사항 및 조치내역
+              </label>
+              <textarea 
+                id="facility-notes" 
+                rows="3" 
+                class="w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500"
+                placeholder="예: 3층 복도 LED 교체 완료&#10;주차장 CCTV 각도 조정"
+                oninput="app.updateReportPreviewFromSelection()"></textarea>
+            </div>
+          </div>
+          
           <!-- Approval Section -->
           <div id="report-approval" class="hidden bg-white p-4 rounded-xl shadow-sm border">
             <h3 class="text-base font-bold text-gray-800 mb-3">
@@ -3504,6 +3598,7 @@
             document.getElementById('report-staff-status').classList.remove('hidden');
             document.getElementById('report-tasks-list').classList.remove('hidden');
             document.getElementById('report-notes-section').classList.remove('hidden');
+            document.getElementById('report-facility-check').classList.remove('hidden');
             document.getElementById('report-approval').classList.remove('hidden');
             document.getElementById('report-pdf-button').classList.remove('hidden');
             
@@ -3513,12 +3608,85 @@
             // 초기 업무 저장 (최근 3개)
             this.currentReportTasks = tasks;
             
+            // 민원 데이터 로드
+            await this.loadComplaintData(startDate, endDate);
+            
             // PDF 미리보기 업데이트
             this.updateReportPreview(startDate, endDate, tasks);
             
           } catch (error) {
             console.error('업무 일지 로드 실패:', error);
             alert('업무 일지 로드 실패: ' + error.message);
+          }
+        },
+        
+        loadComplaintData: async function(startDate, endDate) {
+          const SHEET_ID = '1Q2eWuYqc8rueSAzN89eLTW0PdG3kIS2f8UZjh4NK-HM';
+          const API_KEY = 'AIzaSyC0GBEpgXSFKHcyKVn9t-Pq9upa04QqmmQ';
+          const RANGE = '월간 민원 처리 현황 DB!A:K';
+          
+          try {
+            const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${RANGE}?key=${API_KEY}`;
+            const response = await fetch(url);
+            
+            if (!response.ok) {
+              throw new Error('민원 데이터 로드 실패');
+            }
+            
+            const data = await response.json();
+            const rows = data.values;
+            
+            if (!rows || rows.length < 2) {
+              this.complaintData = { stats: { total: 0, completed: 0, inProgress: 0, pending: 0, completionRate: 0 }, recentComplaints: [] };
+              return;
+            }
+            
+            // 헤더 제외
+            const dataRows = rows.slice(1);
+            
+            // 날짜 필터링 (작성일시가 선택 기간 내)
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            end.setHours(23, 59, 59);
+            
+            const filteredRows = dataRows.filter(row => {
+              if (!row[0]) return false; // 작성일시 없으면 제외
+              const rowDate = new Date(row[0]);
+              return rowDate >= start && rowDate <= end;
+            });
+            
+            // 통계 계산
+            const stats = {
+              total: filteredRows.length,
+              completed: filteredRows.filter(r => r[7] === '완료').length,
+              inProgress: filteredRows.filter(r => r[7] === '진행중').length,
+              pending: filteredRows.filter(r => r[7] === '보류').length,
+            };
+            
+            stats.completionRate = stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0;
+            
+            // 최근 3건 (민감정보 제외)
+            const recentComplaints = filteredRows.slice(0, 3).map(row => ({
+              date: row[0] || '',
+              area: row[1] || '미지정',
+              status: row[7] || '대기',
+              summary: (row[8] || '내용 없음').substring(0, 20) + (row[8] && row[8].length > 20 ? '...' : '')
+            }));
+            
+            this.complaintData = { stats, recentComplaints };
+            
+            // UI 업데이트
+            document.getElementById('complaint-total').textContent = stats.total;
+            document.getElementById('complaint-completed').textContent = stats.completed;
+            document.getElementById('complaint-inprogress').textContent = stats.inProgress;
+            document.getElementById('complaint-rate').textContent = stats.completionRate + '%';
+            
+            // UI 표시
+            document.getElementById('report-complaint-section').classList.remove('hidden');
+            
+          } catch (error) {
+            console.error('민원 데이터 로드 실패:', error);
+            this.complaintData = { stats: { total: 0, completed: 0, inProgress: 0, pending: 0, completionRate: 0 }, recentComplaints: [] };
           }
         },
         
@@ -3572,6 +3740,23 @@
           const endDate = document.getElementById('report-end-date').value;
           
           this.updateReportPreview(startDate, endDate, selectedTasks);
+        },
+        
+        getFacilityCheckStatus: function() {
+          return {
+            daily: [
+              { name: '엘리베이터 작동', checked: document.getElementById('check-elevator')?.checked || false },
+              { name: '소방시설 정상', checked: document.getElementById('check-fire')?.checked || false },
+              { name: 'CCTV 작동', checked: document.getElementById('check-cctv')?.checked || false },
+              { name: '공용조명', checked: document.getElementById('check-lighting')?.checked || false },
+              { name: '비상구 통로', checked: document.getElementById('check-emergency')?.checked || false },
+            ],
+            weekly: [
+              { name: '급수펌프', checked: document.getElementById('check-pump')?.checked || false },
+              { name: '배수시설', checked: document.getElementById('check-drain')?.checked || false },
+              { name: '주차장 조명', checked: document.getElementById('check-parking')?.checked || false },
+            ]
+          };
         },
         
         renderWorkReportItems: function(tasks) {
@@ -3759,6 +3944,14 @@
           const staffAbsent = document.getElementById('staff-absent').textContent;
           const staffPresent = document.getElementById('staff-present').textContent;
           
+          // 민원 데이터
+          const complaintStats = this.complaintData?.stats || { total: 0, completed: 0, inProgress: 0, pending: 0, completionRate: 0 };
+          const recentComplaints = this.complaintData?.recentComplaints || [];
+          
+          // 시설물 점검
+          const facilityChecks = this.getFacilityCheckStatus();
+          const facilityNotes = document.getElementById('facility-notes')?.value || '특이사항 없음';
+          
           // 추가 정보
           const futureWork = document.getElementById('report-future-work').value || '없음';
           const notes = document.getElementById('report-notes').value || '없음';
@@ -3855,7 +4048,7 @@
               </div>
               
               <!-- 업무 요약 -->
-              <div style="background: #fef3c7; padding: 15px; border-radius: 8px; margin-bottom: 30px; border: 1px solid #fde68a;">
+              <div style="background: #fef3c7; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #fde68a;">
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; text-align: center;">
                   <div>
                     <p style="font-size: 12px; color: #92400e; margin: 0 0 5px 0;">총 업무 건수</p>
@@ -3865,6 +4058,71 @@
                     <p style="font-size: 12px; color: #92400e; margin: 0 0 5px 0;">담당 직원 수</p>
                     <p style="font-size: 16px; font-weight: bold; color: #92400e; margin: 0;">${totalEmployees}명</p>
                   </div>
+                </div>
+              </div>
+              
+              <!-- 주민 민원 처리 현황 -->
+              <div style="background: #fef3c7; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #fde68a;">
+                <h3 style="font-size: 16px; font-weight: bold; margin: 0 0 10px 0; color: #92400e;">
+                  📋 주민 민원 처리 현황
+                </h3>
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 15px;">
+                  <div style="text-align: center; background: white; padding: 10px; border-radius: 6px;">
+                    <p style="font-size: 11px; color: #92400e; margin: 0 0 5px 0;">총 접수</p>
+                    <p style="font-size: 18px; font-weight: bold; margin: 0;">${complaintStats.total}건</p>
+                  </div>
+                  <div style="text-align: center; background: white; padding: 10px; border-radius: 6px;">
+                    <p style="font-size: 11px; color: #92400e; margin: 0 0 5px 0;">완료</p>
+                    <p style="font-size: 18px; font-weight: bold; color: #059669; margin: 0;">${complaintStats.completed}건</p>
+                  </div>
+                  <div style="text-align: center; background: white; padding: 10px; border-radius: 6px;">
+                    <p style="font-size: 11px; color: #92400e; margin: 0 0 5px 0;">진행중</p>
+                    <p style="font-size: 18px; font-weight: bold; color: #2563eb; margin: 0;">${complaintStats.inProgress}건</p>
+                  </div>
+                  <div style="text-align: center; background: white; padding: 10px; border-radius: 6px;">
+                    <p style="font-size: 11px; color: #92400e; margin: 0 0 5px 0;">완료율</p>
+                    <p style="font-size: 18px; font-weight: bold; color: #7c3aed; margin: 0;">${complaintStats.completionRate}%</p>
+                  </div>
+                </div>
+                ${recentComplaints.length > 0 ? `
+                  <div style="border-top: 1px solid #fde68a; padding-top: 10px;">
+                    <p style="font-size: 12px; font-weight: bold; margin: 0 0 5px 0; color: #92400e;">최근 처리 현황</p>
+                    ${recentComplaints.map((c, i) => `
+                      <p style="font-size: 11px; color: #374151; margin: 3px 0;">
+                        ${i + 1}. [${c.area}] ${c.summary} → ${c.status}
+                      </p>
+                    `).join('')}
+                  </div>
+                ` : ''}
+              </div>
+              
+              <!-- 시설물 점검 현황 -->
+              <div style="background: #dbeafe; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #bfdbfe;">
+                <h3 style="font-size: 16px; font-weight: bold; margin: 0 0 10px 0; color: #1e40af;">
+                  🔧 시설물 점검 현황
+                </h3>
+                
+                <div style="margin-bottom: 10px;">
+                  <p style="font-size: 12px; font-weight: bold; margin: 0 0 5px 0; color: #1e40af;">일일 점검</p>
+                  ${facilityChecks.daily.map(item => `
+                    <p style="font-size: 11px; color: #374151; margin: 2px 0;">
+                      ${item.checked ? '✅' : '⚠️'} ${item.name}${!item.checked ? ' (점검 필요)' : ''}
+                    </p>
+                  `).join('')}
+                </div>
+                
+                <div style="margin-bottom: 10px;">
+                  <p style="font-size: 12px; font-weight: bold; margin: 0 0 5px 0; color: #1e40af;">주간 점검</p>
+                  ${facilityChecks.weekly.map(item => `
+                    <p style="font-size: 11px; color: #374151; margin: 2px 0;">
+                      ${item.checked ? '✅' : '⚠️'} ${item.name}${!item.checked ? ' (점검 예정)' : ''}
+                    </p>
+                  `).join('')}
+                </div>
+                
+                <div style="border-top: 1px solid #bfdbfe; padding-top: 10px;">
+                  <p style="font-size: 12px; font-weight: bold; margin: 0 0 5px 0; color: #1e40af;">특이사항 및 조치내역</p>
+                  <p style="font-size: 11px; color: #374151; white-space: pre-wrap;">${facilityNotes}</p>
                 </div>
               </div>
               
