@@ -1303,6 +1303,9 @@
             }
             this.sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
             console.log('✅ Supabase 클라이언트 생성 완료');
+            
+            // 🔴 Realtime 구독 설정 (cleaning_tasks 테이블 변경 감지)
+            this.setupRealtimeSubscription();
           } catch (error) {
             console.error('❌ Supabase 초기화 실패:', error);
             return;
@@ -1328,6 +1331,50 @@
             this.setupEmployeeSearch('filter-employee-input', 'filter-employee-dropdown');
             this.setupEmployeeSearch('hist-employee-input', 'hist-employee-dropdown');
           }, 1000);
+        },
+        
+        // 🔴 Realtime 구독 설정 (새로 추가)
+        setupRealtimeSubscription: function() {
+          console.log('📡 Realtime 구독 시작...');
+          
+          // cleaning_tasks 테이블 변경 감지
+          const channel = this.sb
+            .channel('cleaning_tasks_changes')
+            .on(
+              'postgres_changes',
+              {
+                event: '*', // INSERT, UPDATE, DELETE 모두 감지
+                schema: 'public',
+                table: 'cleaning_tasks'
+              },
+              (payload) => {
+                console.log('🔔 DB 변경 감지:', payload);
+                
+                // 현재 탭이 갤러리 또는 상세 조회면 자동 새로고침
+                const currentTab = document.querySelector('.tab-content:not(.hidden)');
+                if (currentTab) {
+                  const tabId = currentTab.id;
+                  
+                  if (tabId === 'tab-gallery') {
+                    console.log('🔄 갤러리 자동 새로고침');
+                    this.loadGallery();
+                  } else if (tabId === 'tab-history') {
+                    console.log('🔄 상세 조회 자동 새로고침');
+                    this.loadHistory();
+                  }
+                }
+              }
+            )
+            .subscribe((status) => {
+              if (status === 'SUBSCRIBED') {
+                console.log('✅ Realtime 구독 완료');
+              } else if (status === 'CHANNEL_ERROR') {
+                console.error('❌ Realtime 구독 실패');
+              }
+            });
+          
+          // 구독 객체 저장 (나중에 unsubscribe 가능)
+          this.realtimeChannel = channel;
         },
 
         // 아파트 목록 로드
