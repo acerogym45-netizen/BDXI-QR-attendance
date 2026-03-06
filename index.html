@@ -651,33 +651,6 @@
             </div>
           </div>
 
-          <!-- Charts -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="bg-white p-6 rounded-xl shadow-sm border">
-              <h3 class="font-bold text-gray-800 mb-4">일별 출근 현황</h3>
-              <div class="h-64">
-                <canvas id="daily-chart"></canvas>
-              </div>
-            </div>
-            <div class="bg-white p-6 rounded-xl shadow-sm border">
-              <h3 class="font-bold text-gray-800 mb-4">구역별 청소 작업</h3>
-              <div class="h-64">
-                <canvas id="location-chart"></canvas>
-              </div>
-            </div>
-            <div class="bg-white p-6 rounded-xl shadow-sm border">
-              <h3 class="font-bold text-gray-800 mb-4">직원별 작업량</h3>
-              <div class="h-64">
-                <canvas id="employee-chart"></canvas>
-              </div>
-            </div>
-            <div class="bg-white p-6 rounded-xl shadow-sm border">
-              <h3 class="font-bold text-gray-800 mb-4">근태 유형 분포</h3>
-              <div class="h-64">
-                <canvas id="type-chart"></canvas>
-              </div>
-            </div>
-          </div>
         </div>
 
         <!-- TAB 4: Data -->
@@ -2639,8 +2612,6 @@
             document.getElementById('total-daily').textContent = totalDaily.toFixed(1);
             document.getElementById('total-weekly').textContent = totalWeekly.toFixed(1);
             document.getElementById('total-monthly').textContent = totalMonthly.toFixed(1);
-
-            this.renderCharts(safeAtts, safeCleans);
           } catch (e) {
             console.error(e);
           }
@@ -2654,67 +2625,6 @@
             cust.classList.add('hidden');
             this.loadStats();
           }
-        },
-
-        renderCharts: function (atts, cleans) {
-          Object.values(this.charts).forEach((c) => c && c.destroy());
-
-          // Daily
-          const dailyData = {};
-          atts
-            .filter((a) => a.attendance_type === '출근')
-            .forEach((a) => {
-              const d = a.scan_time.split('T')[0];
-              dailyData[d] = (dailyData[d] || 0) + 1;
-            });
-          this.charts.daily = new Chart(document.getElementById('daily-chart'), {
-            type: 'line',
-            data: {
-              labels: Object.keys(dailyData),
-              datasets: [{ label: '출근', data: Object.values(dailyData), borderColor: '#3b82f6', tension: 0.4 }],
-            },
-            options: { maintainAspectRatio: false },
-          });
-
-          // Location
-          const locData = {};
-          cleans.forEach((c) => (locData[c.location || '미정'] = (locData[c.location] || 0) + 1));
-          this.charts.loc = new Chart(document.getElementById('location-chart'), {
-            type: 'doughnut',
-            data: {
-              labels: Object.keys(locData),
-              datasets: [
-                { data: Object.values(locData), backgroundColor: ['#ef4444', '#f97316', '#eab308', '#22c55e'] },
-              ],
-            },
-            options: { maintainAspectRatio: false },
-          });
-
-          // Employee
-          const empData = {};
-          cleans.forEach((c) => (empData[c.employee_name] = (empData[c.employee_name] || 0) + 1));
-          this.charts.emp = new Chart(document.getElementById('employee-chart'), {
-            type: 'bar',
-            data: {
-              labels: Object.keys(empData),
-              datasets: [{ label: '작업 건수', data: Object.values(empData), backgroundColor: '#8b5cf6' }],
-            },
-            options: { maintainAspectRatio: false },
-          });
-
-          // Type
-          const typeData = {};
-          atts.forEach((a) => (typeData[a.attendance_type] = (typeData[a.attendance_type] || 0) + 1));
-          this.charts.type = new Chart(document.getElementById('type-chart'), {
-            type: 'pie',
-            data: {
-              labels: Object.keys(typeData),
-              datasets: [
-                { data: Object.values(typeData), backgroundColor: ['#3b82f6', '#22c55e', '#eab308', '#ef4444'] },
-              ],
-            },
-            options: { maintainAspectRatio: false },
-          });
         },
 
         downloadData: async function () {
