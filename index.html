@@ -4149,26 +4149,30 @@
               error: attError
             });
             
-            // 3. 실제 출근한 직원 수 계산 (attendance_type='출근')
-            const presentEmployees = new Set();
-            (attendanceRecords || []).forEach(record => {
-              console.log('출석 기록 처리:', record.employee_name, record.attendance_type);
-              if (record.attendance_type === '출근') {
-                presentEmployees.add(record.employee_name);
-              }
-            });
-            const presentCount = presentEmployees.size;
+            // 3. 실제 출근한 직원 수 계산 (근태 관리와 동일한 방식)
+            // 활성 직원 이름 목록 생성
+            const activeEmpNames = new Set(activeEmployees.map(e => e.name));
+            
+            // 출근한 직원 집합 (활성 직원 중에서만)
+            const presentSet = new Set(
+              (attendanceRecords || [])
+                .filter((a) => a.attendance_type === '출근' && activeEmpNames.has(a.employee_name))
+                .map((a) => a.employee_name)
+            );
+            const presentCount = presentSet.size;
             
             console.log('📊 업무 일지 - 출근 직원:', {
-              presentEmployees: Array.from(presentEmployees),
+              activeEmpNames: Array.from(activeEmpNames).slice(0, 5), // 처음 5명만
+              presentEmployees: Array.from(presentSet),
               presentCount,
-              activeEmployeeCount: totalStaff
+              activeEmployeeCount: totalStaff,
+              totalRecords: (attendanceRecords || []).length
             });
             
             // 4. 휴가 데이터 조회
             let vacationQuery = this.sb
               .from('vacations')
-              .select('employee_name')
+              .select('*')
               .gte('vacation_date', startDate)
               .lte('vacation_date', endDate);
             
@@ -4181,9 +4185,13 @@
               console.error('휴가 데이터 조회 실패:', vacError);
             }
             
-            // 5. 휴가 중인 직원 수
-            const vacationEmployees = new Set((vacationRecords || []).map(v => v.employee_name));
-            const vacationCount = vacationEmployees.size;
+            // 5. 휴가 중인 직원 수 (활성 직원 중에서만)
+            const vacationSet = new Set(
+              (vacationRecords || [])
+                .filter(v => activeEmpNames.has(v.employee_name))
+                .map(v => v.employee_name)
+            );
+            const vacationCount = vacationSet.size;
             
             // 6. 결근 인원 = 총 활성 직원 - 출근 - 휴가
             const absentCount = Math.max(0, totalStaff - presentCount - vacationCount);
