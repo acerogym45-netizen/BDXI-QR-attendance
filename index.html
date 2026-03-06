@@ -2414,8 +2414,12 @@
 
           try {
             // 🏢 아파트 필터를 위한 쿼리 수정
-            // 활성 직원만 조회 (status = 'active')
-            let empQuery = this.sb.from('employees').select('id, name, position, status').eq('status', 'active');
+            // 1. 활성 직원만 조회 (통계 카드용)
+            let activeEmpQuery = this.sb.from('employees').select('id, name, position, status').eq('status', 'active');
+            
+            // 2. 모든 직원 조회 (근로시간 집계용 - 중도퇴사자 포함)
+            let allEmpQuery = this.sb.from('employees').select('id, name, position, status');
+            
             let attsQuery = this.sb
               .from('attendance_records')
               .select('*')
@@ -2431,37 +2435,42 @@
 
             // 아파트 필터 적용
             if (this.currentApartment && this.currentApartment.id) {
-              empQuery = empQuery.eq('apartment_id', this.currentApartment.id);
+              activeEmpQuery = activeEmpQuery.eq('apartment_id', this.currentApartment.id);
+              allEmpQuery = allEmpQuery.eq('apartment_id', this.currentApartment.id);
               attsQuery = attsQuery.eq('apartment_id', this.currentApartment.id);
               vacQuery = vacQuery.eq('apartment_id', this.currentApartment.id);
             }
 
-            const { data: emps } = await empQuery;
+            const { data: activeEmps } = await activeEmpQuery;
+            const { data: allEmps } = await allEmpQuery;
             const { data: atts } = await attsQuery;
             const { data: vacations } = await vacQuery;
 
-            const safeEmps = emps || [];
+            const safeActiveEmps = activeEmps || [];
+            const safeAllEmps = allEmps || [];
             const safeAtts = atts || [];
             const safeVacations = vacations || [];
 
             console.log('📊 근태 통계 로드:', { 
-              활성직원: safeEmps.length, 
+              활성직원: safeActiveEmps.length,
+              전체직원: safeAllEmps.length,
               출퇴근기록: safeAtts.length,
               휴가기록: safeVacations.length,
               기간: `${start} ~ ${end}`
             });
 
-            // KPIs 계산
-            const total = safeEmps.length; // 활성 직원 수만 표시
+            // KPIs 계산 (활성 직원 기준)
+            const total = safeActiveEmps.length; // 활성 직원 수만 표시
             
-            // 출근한 직원 집합
+            // 출근한 직원 집합 (활성 직원만)
+            const activeEmpNames = new Set(safeActiveEmps.map(e => e.name));
             const presentSet = new Set(
-              safeAtts.filter((a) => a.attendance_type === '출근').map((a) => a.employee_name),
+              safeAtts.filter((a) => a.attendance_type === '출근' && activeEmpNames.has(a.employee_name)).map((a) => a.employee_name),
             );
             const present = presentSet.size;
             
-            // 휴가 중인 직원 집합 (기간 내)
-            const vacationSet = new Set(safeVacations.map(v => v.employee_name));
+            // 휴가 중인 직원 집합 (기간 내, 활성 직원만)
+            const vacationSet = new Set(safeVacations.filter(v => activeEmpNames.has(v.employee_name)).map(v => v.employee_name));
             const vacationCount = vacationSet.size;
             
             // 결근: 총원 - 출근 - 휴가
@@ -2499,15 +2508,20 @@
               monthly: `${monthStartStr} ~ ${queryEnd}` 
             });
 
-            // Build employee hours map with position
+            // Build employee hours map with position and status
+            // 모든 직원을 포함 (중도퇴사자도 포함)
             const employeeHours = {};
-            safeEmps.forEach(emp => {
+            const empStatusMap = {}; // 직원 상태 맵
+            
+            safeAllEmps.forEach(emp => {
               employeeHours[emp.name] = { 
-                position: emp.position || '직원', 
+                position: emp.position || '직원',
+                status: emp.status,
                 daily: 0, 
                 weekly: 0, 
                 monthly: 0 
               };
+              empStatusMap[emp.name] = emp.status;
             });
 
             // Calculate hours for each work record
@@ -2589,13 +2603,33 @@
             
             let totalDaily = 0, totalWeekly = 0, totalMonthly = 0;
             
-            // 직원명으로 정렬하여 표시
-            Object.entries(employeeHours)
-              .sort((a, b) => a[0].localeCompare(b[0], 'ko-KR'))
-              .forEach(([name, data]) => {
+            // 근로시간이 0보다 큰 직원만 표시 (출근 기록이 있는 직원)
+            const workingEmployees = Object.entries(employeeHours)
+              .filter(([name, data]) => data.daily > 0 || data.weekly > 0 || data.monthly > 0)
+              .sort((a, b) => {
+                // 활성 직원을 먼저, 그 다음 이름순
+                if (a[1].status !== b[1].status) {
+                  return a[1].status === 'active' ? -1 : 1;
+                }
+                return a[0].localeCompare(b[0], 'ko-KR');
+              });
+            
+            if (workingEmployees.length === 0) {
+              tbody.innerHTML = '<tr><td colspan="5" class="px-4 py-8 text-center text-gray-400">근무 기록이 없습니다</td></tr>';
+            } else {
+              workingEmployees.forEach(([name, data]) => {
                 const tr = document.createElement('tr');
+                
+                // 비활성 직원 표시
+                const statusBadge = data.status === 'inactive' 
+                  ? '<span class="ml-2 px-2 py-0.5 text-xs bg-gray-200 text-gray-600 rounded">퇴사</span>'
+                  : '';
+                
+                const rowClass = data.status === 'inactive' ? 'bg-gray-50' : '';
+                tr.className = rowClass;
+                
                 tr.innerHTML = `
-                  <td class="px-4 py-3 text-sm font-medium text-gray-800">${name}</td>
+                  <td class="px-4 py-3 text-sm font-medium text-gray-800">${name}${statusBadge}</td>
                   <td class="px-4 py-3 text-sm text-gray-600">${data.position}</td>
                   <td class="px-4 py-3 text-right text-sm text-gray-600">${data.daily.toFixed(1)}h</td>
                   <td class="px-4 py-3 text-right text-sm text-gray-600">${data.weekly.toFixed(1)}h</td>
@@ -2607,6 +2641,7 @@
                 totalWeekly += data.weekly;
                 totalMonthly += data.monthly;
               });
+            }
             
             // Update totals
             document.getElementById('total-daily').textContent = totalDaily.toFixed(1);
