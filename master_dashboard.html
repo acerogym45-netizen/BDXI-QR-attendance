@@ -916,7 +916,9 @@
         });
 
         function openApartmentDashboard(apartmentId) {
-            window.open(`index.html?apartment=${apartmentId}`, '_blank');
+            // 마스터 토큰과 함께 URL 생성 (로그인 없이 바로 대시보드로)
+            const masterToken = btoa('master2026:' + Date.now()); // 간단한 토큰 생성
+            window.open(`index.html?apartment=${apartmentId}&masterToken=${masterToken}`, '_blank');
         }
 
         function logout() {

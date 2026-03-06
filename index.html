@@ -1494,13 +1494,45 @@
         },
 
         checkLogin: function () {
+          // URL 파라미터 확인 (마스터 관리자에서 바로 접근)
+          const urlParams = new URLSearchParams(window.location.search);
+          const apartmentId = urlParams.get('apartment');
+          const masterToken = urlParams.get('masterToken');
+          
+          // 마스터 토큰이 있으면 자동 로그인
+          if (apartmentId && masterToken) {
+            console.log('🔑 마스터 관리자 직접 접근 감지');
+            
+            // 아파트 정보 찾기
+            const selectedApartment = this.apartments.find(a => a.id === apartmentId);
+            
+            if (selectedApartment) {
+              this.currentApartment = selectedApartment;
+              
+              // 세션에 저장
+              sessionStorage.setItem('kindwon_login', 'true');
+              sessionStorage.setItem('kindwon_apartment_id', apartmentId);
+              sessionStorage.setItem('kindwon_apartment_name', selectedApartment.name);
+              sessionStorage.setItem('kindwon_master_access', 'true'); // 마스터 접근 표시
+              
+              // URL에서 파라미터 제거 (깔끔하게)
+              window.history.replaceState({}, document.title, window.location.pathname);
+              
+              this.showDashboard();
+              return;
+            } else {
+              console.error('❌ 아파트를 찾을 수 없습니다:', apartmentId);
+            }
+          }
+          
+          // 기존 로그인 확인
           if (sessionStorage.getItem('kindwon_login') === 'true') {
             // 저장된 아파트 정보 복원
-            const apartmentId = sessionStorage.getItem('kindwon_apartment_id');
+            const storedApartmentId = sessionStorage.getItem('kindwon_apartment_id');
             const apartmentName = sessionStorage.getItem('kindwon_apartment_name');
             
-            if (apartmentId && apartmentName) {
-              this.currentApartment = { id: apartmentId, name: apartmentName };
+            if (storedApartmentId && apartmentName) {
+              this.currentApartment = { id: storedApartmentId, name: apartmentName };
               this.showDashboard();
             } else {
               // 아파트 정보가 없으면 로그인 화면으로
