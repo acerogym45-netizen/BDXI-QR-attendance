@@ -1581,12 +1581,12 @@
             // 마스터 대시보드로 리다이렉트
             window.location.href = 'master_dashboard.html';
           } else {
-            document.getElementById('msg-error').innerHTML = '<i class="fas fa-crown mr-1"></i>마스터 PIN이 올바르지 않습니다. (힌트: master2026)';
+            document.getElementById('msg-error').innerHTML = '<i class="fas fa-crown mr-1"></i>마스터 PIN이 올바르지 않습니다.';
             document.getElementById('msg-error').classList.remove('hidden');
-            // 3초 후 힌트 숨기기
+            // 3초 후 메시지 숨기기
             setTimeout(() => {
               document.getElementById('msg-error').classList.add('hidden');
-            }, 5000);
+            }, 3000);
           }
         },
 
