@@ -95,12 +95,21 @@
         min-height: 0 !important;
         height: calc(100vh - 140px) !important;
         overflow: hidden !important;
+        max-width: none !important; /* 최대 너비 제한 제거 */
       }
       
       #tab-report > div {
         height: 100% !important;
         margin: 0 !important;
         padding: 0 !important;
+        max-width: none !important; /* 최대 너비 제한 제거 */
+      }
+      
+      /* Other tabs - centered with max-width */
+      .tab-content:not(#tab-report) {
+        max-width: 80rem !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
       }
 
       /* Modal */
@@ -341,7 +350,7 @@
       </nav>
 
       <!-- Main Content -->
-      <main class="flex-1 max-w-7xl w-full mx-auto">
+      <main id="main-content" class="flex-1 w-full">
         <!-- 계약 만료 알림 배너 -->
         <div id="contract-alert-banner" class="hidden bg-gradient-to-r from-orange-50 to-red-50 border-2 border-orange-300 rounded-xl p-4 shadow-lg mx-4 mt-4" style="margin-bottom: 1rem;">
           <div class="flex items-start gap-3">
