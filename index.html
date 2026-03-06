@@ -96,7 +96,7 @@
         right: 0 !important;
         bottom: 0 !important;
         margin: 0 !important;
-        padding: 1rem 0 0 0 !important; /* 상단 여백 추가 */
+        padding: 1.5rem 0 0 0 !important; /* 상단 여백 증가 (24px) */
         width: 100% !important;
         height: 100% !important;
         overflow: hidden !important;
@@ -4095,14 +4095,63 @@
             // processedTasks를 tasks로 교체
             const finalTasks = processedTasks;
             
-            // 인력 현황 계산
-            const totalStaff = (employees || []).length;
-            const activeStaff = (employees || []).filter(e => e.status === 'active').length;
-            const absentStaff = totalStaff - activeStaff;
+            // 인력 현황 계산 (근태 관리와 동일한 로직)
+            // 1. 활성 직원 수
+            const activeEmployees = (employees || []).filter(e => e.status === 'active');
+            const totalStaff = activeEmployees.length;
             
+            // 2. 출근 데이터 조회
+            let attendanceQuery = this.sb
+              .from('attendance_records')
+              .select('employee_name, attendance_type')
+              .gte('scan_time', `${startDate}T00:00:00Z`)
+              .lte('scan_time', `${endDate}T23:59:59Z`);
+            
+            if (this.currentApartment && this.currentApartment.id) {
+              attendanceQuery = attendanceQuery.eq('apartment_id', this.currentApartment.id);
+            }
+            
+            const { data: attendanceRecords, error: attError } = await attendanceQuery;
+            if (attError) {
+              console.error('출근 데이터 조회 실패:', attError);
+            }
+            
+            // 3. 실제 출근한 직원 수 계산 (attendance_type='출근')
+            const presentEmployees = new Set();
+            (attendanceRecords || []).forEach(record => {
+              if (record.attendance_type === '출근') {
+                presentEmployees.add(record.employee_name);
+              }
+            });
+            const presentCount = presentEmployees.size;
+            
+            // 4. 휴가 데이터 조회
+            let vacationQuery = this.sb
+              .from('vacations')
+              .select('employee_name')
+              .gte('vacation_date', startDate)
+              .lte('vacation_date', endDate);
+            
+            if (this.currentApartment && this.currentApartment.id) {
+              vacationQuery = vacationQuery.eq('apartment_id', this.currentApartment.id);
+            }
+            
+            const { data: vacationRecords, error: vacError } = await vacationQuery;
+            if (vacError) {
+              console.error('휴가 데이터 조회 실패:', vacError);
+            }
+            
+            // 5. 휴가 중인 직원 수
+            const vacationEmployees = new Set((vacationRecords || []).map(v => v.employee_name));
+            const vacationCount = vacationEmployees.size;
+            
+            // 6. 결근 인원 = 총 활성 직원 - 출근 - 휴가
+            const absentCount = Math.max(0, totalStaff - presentCount - vacationCount);
+            
+            // UI 업데이트
             document.getElementById('staff-total').textContent = totalStaff;
-            document.getElementById('staff-absent').textContent = absentStaff;
-            document.getElementById('staff-present').textContent = activeStaff;
+            document.getElementById('staff-absent').textContent = vacationCount + absentCount; // 휴가 + 결근
+            document.getElementById('staff-present').textContent = presentCount;
             
             // 구역 정보 로드 (시설물 점검용)
             let locationQuery = this.sb.from('locations').select('name').order('name', { ascending: true });
