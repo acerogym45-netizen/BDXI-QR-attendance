@@ -4108,7 +4108,7 @@
             const activeEmployees = (employees || []).filter(e => e.status === 'active');
             const totalStaff = activeEmployees.length;
             
-            // 2. 출근 데이터 조회 (근태 관리와 동일한 방식)
+            // 2. 출근 데이터 조회 (근태 관리와 완전히 동일한 방식)
             console.log('🔍 쿼리 파라미터 확인:', {
               startDate,
               endDate,
@@ -4121,9 +4121,10 @@
               apartmentName: this.currentApartment ? this.currentApartment.name : null
             });
             
+            // 근태 관리와 동일: select('*')로 모든 필드 조회
             let attendanceQuery = this.sb
               .from('attendance_records')
-              .select('employee_name, attendance_type, scan_time')
+              .select('*')
               .gte('scan_time', `${startDate}T00:00:00Z`)
               .lte('scan_time', `${endDate}T23:59:59Z`);
             
