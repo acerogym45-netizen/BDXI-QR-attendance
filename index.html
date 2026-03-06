@@ -2414,8 +2414,8 @@
 
           try {
             // 🏢 아파트 필터를 위한 쿼리 수정
-            // 활성 직원만 조회 (is_active = true)
-            let empQuery = this.sb.from('employees').select('id, name, position, is_active').eq('is_active', true);
+            // 활성 직원만 조회 (status = 'active')
+            let empQuery = this.sb.from('employees').select('id, name, position, status').eq('status', 'active');
             let attsQuery = this.sb
               .from('attendance_records')
               .select('*')
@@ -2857,7 +2857,7 @@
           try {
             let query = this.sb.from('employees')
               .select('id, name, position')
-              .eq('is_active', true)
+              .eq('status', 'active')
               .order('name');
             
             if (this.currentApartment && this.currentApartment.id) {
