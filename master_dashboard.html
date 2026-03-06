@@ -521,14 +521,22 @@
                 const complaintCount = pendingComp?.length || 0;
                 const attendanceRate = employeeCount > 0 ? Math.round(attendanceCount / employeeCount * 100) : 0;
 
-                // Determine status
+                // Determine status (더 세밀한 기준)
                 let status = 'normal';
                 let statusText = '정상';
                 
-                if (complaintCount > 5 || attendanceRate < 50) {
+                // 긴급 조건 (하나라도 해당되면)
+                if (complaintCount >= 10 ||              // 미처리 민원 10건 이상
+                    attendanceRate < 40 ||               // 출근율 40% 미만
+                    (complaintCount >= 5 && attendanceRate < 60)) {  // 민원 5건 + 출근율 60% 미만
                     status = 'critical';
                     statusText = '긴급';
-                } else if (complaintCount > 2 || attendanceRate < 70) {
+                } 
+                // 주의 조건 (하나라도 해당되면)
+                else if (complaintCount >= 5 ||          // 미처리 민원 5건 이상
+                         attendanceRate < 60 ||          // 출근율 60% 미만
+                         (complaintCount >= 3 && attendanceRate < 75) ||  // 민원 3건 + 출근율 75% 미만
+                         employeeCount === 0) {          // 직원 0명 (배정 안 됨)
                     status = 'warning';
                     statusText = '주의';
                 }
