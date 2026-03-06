@@ -4111,9 +4111,9 @@
             // 2. 출근 데이터 조회
             let attendanceQuery = this.sb
               .from('attendance_records')
-              .select('employee_name, attendance_type')
-              .gte('scan_time', `${startDate}T00:00:00Z`)
-              .lte('scan_time', `${endDate}T23:59:59Z`);
+              .select('employee_name, attendance_type, scan_time')
+              .gte('scan_time', `${startDate}T00:00:00`)
+              .lte('scan_time', `${endDate}T23:59:59`);
             
             if (this.currentApartment && this.currentApartment.id) {
               attendanceQuery = attendanceQuery.eq('apartment_id', this.currentApartment.id);
@@ -4124,6 +4124,13 @@
               console.error('출근 데이터 조회 실패:', attError);
             }
             
+            console.log('📊 업무 일지 - 출석 데이터:', {
+              startDate,
+              endDate,
+              recordCount: (attendanceRecords || []).length,
+              records: attendanceRecords
+            });
+            
             // 3. 실제 출근한 직원 수 계산 (attendance_type='출근')
             const presentEmployees = new Set();
             (attendanceRecords || []).forEach(record => {
@@ -4132,6 +4139,11 @@
               }
             });
             const presentCount = presentEmployees.size;
+            
+            console.log('📊 업무 일지 - 출근 직원:', {
+              presentEmployees: Array.from(presentEmployees),
+              presentCount
+            });
             
             // 4. 휴가 데이터 조회
             let vacationQuery = this.sb
