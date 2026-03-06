@@ -4108,12 +4108,12 @@
             const activeEmployees = (employees || []).filter(e => e.status === 'active');
             const totalStaff = activeEmployees.length;
             
-            // 2. 출근 데이터 조회
+            // 2. 출근 데이터 조회 (근태 관리와 동일한 방식)
             let attendanceQuery = this.sb
               .from('attendance_records')
               .select('employee_name, attendance_type, scan_time')
-              .gte('scan_time', `${startDate}T00:00:00`)
-              .lte('scan_time', `${endDate}T23:59:59`);
+              .gte('scan_time', `${startDate}T00:00:00Z`)
+              .lte('scan_time', `${endDate}T23:59:59Z`);
             
             if (this.currentApartment && this.currentApartment.id) {
               attendanceQuery = attendanceQuery.eq('apartment_id', this.currentApartment.id);
@@ -4124,16 +4124,20 @@
               console.error('출근 데이터 조회 실패:', attError);
             }
             
-            console.log('📊 업무 일지 - 출석 데이터:', {
+            console.log('📊 업무 일지 - 출석 데이터 조회:', {
               startDate,
               endDate,
+              queryStart: `${startDate}T00:00:00Z`,
+              queryEnd: `${endDate}T23:59:59Z`,
               recordCount: (attendanceRecords || []).length,
-              records: attendanceRecords
+              records: attendanceRecords,
+              currentApartment: this.currentApartment ? this.currentApartment.name : 'All'
             });
             
             // 3. 실제 출근한 직원 수 계산 (attendance_type='출근')
             const presentEmployees = new Set();
             (attendanceRecords || []).forEach(record => {
+              console.log('출석 기록 처리:', record.employee_name, record.attendance_type);
               if (record.attendance_type === '출근') {
                 presentEmployees.add(record.employee_name);
               }
@@ -4142,7 +4146,8 @@
             
             console.log('📊 업무 일지 - 출근 직원:', {
               presentEmployees: Array.from(presentEmployees),
-              presentCount
+              presentCount,
+              activeEmployeeCount: totalStaff
             });
             
             // 4. 휴가 데이터 조회
