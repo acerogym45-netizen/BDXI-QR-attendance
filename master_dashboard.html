@@ -14,7 +14,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
         body {
@@ -77,13 +76,21 @@
         }
         .brand-color { color: #1b5e3e; }
         .brand-bg { background-color: #1b5e3e; }
+        .modal-backdrop {
+            backdrop-filter: blur(8px);
+            animation: fadeIn 0.2s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
     </style>
 </head>
 <body>
     <div class="container mx-auto px-4 py-8">
         <!-- Header -->
         <div class="glass-card p-6 mb-6">
-            <div class="flex items-center justify-between">
+            <div class="flex items-center justify-between flex-wrap gap-4">
                 <div class="flex items-center gap-4">
                     <div class="w-12 h-12 brand-bg rounded-full flex items-center justify-center">
                         <i class="fas fa-crown text-white text-xl"></i>
@@ -95,7 +102,7 @@
                 </div>
                 <div class="text-right">
                     <p class="text-sm text-gray-600">로그인 계정</p>
-                    <p class="font-bold brand-color" id="masterAccount">master@kindwon.com</p>
+                    <p class="font-bold brand-color">master@kindwon.com</p>
                     <button onclick="logout()" class="text-sm text-red-600 hover:text-red-700 mt-2">
                         <i class="fas fa-sign-out-alt"></i> 로그아웃
                     </button>
@@ -154,15 +161,19 @@
                 </div>
             </div>
 
-            <!-- Apartments Grid -->
-            <div class="glass-card p-6">
-                <div class="flex items-center justify-between mb-6">
+            <!-- Apartments Management -->
+            <div class="glass-card p-6 mb-6">
+                <div class="flex items-center justify-between mb-6 flex-wrap gap-4">
                     <h2 class="text-2xl font-bold brand-color">
                         <i class="fas fa-building mr-2"></i>
-                        아파트별 현황
+                        아파트 관리
                     </h2>
                     <div class="flex gap-2">
-                        <button onclick="filterStatus('all')" class="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 text-sm font-medium" id="filterAll">
+                        <button onclick="openAddApartmentModal()" class="px-6 py-3 brand-bg hover:opacity-90 text-white rounded-lg font-medium transition shadow-lg">
+                            <i class="fas fa-plus mr-2"></i>
+                            아파트 추가
+                        </button>
+                        <button onclick="filterStatus('all')" class="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 text-sm font-medium brand-bg text-white" id="filterAll">
                             전체
                         </button>
                         <button onclick="filterStatus('warning')" class="px-4 py-2 rounded-lg bg-yellow-100 hover:bg-yellow-200 text-sm font-medium" id="filterWarning">
@@ -180,7 +191,7 @@
             </div>
 
             <!-- Recent Activities -->
-            <div class="glass-card p-6 mt-6">
+            <div class="glass-card p-6">
                 <h2 class="text-2xl font-bold brand-color mb-6">
                     <i class="fas fa-history mr-2"></i>
                     최근 활동 내역
@@ -192,51 +203,174 @@
         </div>
     </div>
 
+    <!-- Add/Edit Apartment Modal -->
+    <div id="apartmentModal" class="fixed inset-0 bg-black bg-opacity-50 modal-backdrop hidden items-center justify-center z-50" onclick="if(event.target === this) closeApartmentModal()">
+        <div class="bg-white rounded-2xl p-8 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-2xl font-bold brand-color" id="modalTitle">
+                    <i class="fas fa-building mr-2"></i>
+                    아파트 추가
+                </h2>
+                <button onclick="closeApartmentModal()" class="text-gray-400 hover:text-gray-600 text-2xl">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <form id="apartmentForm" class="space-y-4">
+                <input type="hidden" id="apartmentId">
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-building mr-1"></i>
+                        아파트 이름 *
+                    </label>
+                    <input type="text" id="apartmentName" required
+                           class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-green-600"
+                           placeholder="예: 봉담자이프라이드시티">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-code mr-1"></i>
+                        아파트 코드
+                    </label>
+                    <input type="text" id="apartmentCode"
+                           class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-green-600"
+                           placeholder="예: APT001">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-map-marker-alt mr-1"></i>
+                        주소
+                    </label>
+                    <input type="text" id="apartmentAddress"
+                           class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-green-600"
+                           placeholder="예: 경기도 화성시 봉담읍">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fab fa-google mr-1"></i>
+                        Google 시트 ID
+                    </label>
+                    <input type="text" id="googleSheetId"
+                           class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-green-600"
+                           placeholder="예: 1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms">
+                    <p class="text-xs text-gray-500 mt-1">
+                        <i class="fas fa-info-circle"></i>
+                        URL에서 /d/ 뒤의 ID만 입력하세요
+                    </p>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-table mr-1"></i>
+                        시트 이름
+                    </label>
+                    <input type="text" id="googleSheetName"
+                           class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-green-600"
+                           placeholder="예: 근무표" value="근무표">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-user mr-1"></i>
+                        담당자 이름
+                    </label>
+                    <input type="text" id="contactPerson"
+                           class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-green-600"
+                           placeholder="예: 홍길동">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-phone mr-1"></i>
+                        담당자 연락처
+                    </label>
+                    <input type="tel" id="contactPhone"
+                           class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-green-600"
+                           placeholder="예: 010-1234-5678">
+                </div>
+
+                <div class="flex gap-3 pt-4">
+                    <button type="submit" class="flex-1 brand-bg hover:opacity-90 text-white font-bold py-4 rounded-lg transition">
+                        <i class="fas fa-save mr-2"></i>
+                        저장
+                    </button>
+                    <button type="button" onclick="closeApartmentModal()" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-4 rounded-lg transition">
+                        <i class="fas fa-times mr-2"></i>
+                        취소
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
         const SUPABASE_URL = 'https://ezyjulsdodriyxuaohmz.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV6eWp1bHNkb2RyaXl4dWFvaG16Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU3MjE5NTYsImV4cCI6MjA1MTI5Nzk1Nn0.IzGLnExj7NeZFnGOGjzN7y0RFhPE4VWhxfb5fhqPR4k';
         
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let apartmentsData = [];
         let currentFilter = 'all';
+        let editingApartmentId = null;
 
         async function loadDashboard() {
             try {
+                console.log('🚀 Dashboard loading started...');
+                
                 // Load all apartments
-                const { data: apartments, error: aptError } = await supabase
+                const { data: apartments, error: aptError } = await supabaseClient
                     .from('apartments')
                     .select('*')
                     .order('name');
 
-                if (aptError) throw aptError;
+                if (aptError) {
+                    console.error('Apartments load error:', aptError);
+                    throw aptError;
+                }
 
+                console.log('✅ Apartments loaded:', apartments?.length || 0);
                 apartmentsData = apartments || [];
 
                 // Load employees count
-                const { count: employeesCount, error: empError } = await supabase
+                const { count: employeesCount, error: empError } = await supabaseClient
                     .from('employees')
                     .select('*', { count: 'exact', head: true });
 
-                if (empError) throw empError;
+                if (empError && empError.code !== 'PGRST116') {
+                    console.error('Employees count error:', empError);
+                }
+
+                console.log('✅ Employees count:', employeesCount || 0);
 
                 // Load today's attendance
                 const today = new Date().toISOString().split('T')[0];
-                const { data: attendanceData, error: attError } = await supabase
+                const { data: attendanceData, error: attError } = await supabaseClient
                     .from('attendance_records')
                     .select('*')
                     .gte('check_in_time', `${today}T00:00:00`)
                     .lte('check_in_time', `${today}T23:59:59`);
 
-                if (attError) throw attError;
+                if (attError && attError.code !== 'PGRST116') {
+                    console.error('Attendance load error:', attError);
+                }
+
+                console.log('✅ Today attendance:', attendanceData?.length || 0);
 
                 // Load complaints
-                const { data: complaints, error: compError } = await supabase
+                const { data: complaints, error: compError } = await supabaseClient
                     .from('complaints')
                     .select('*')
                     .eq('status', 'pending');
 
-                if (compError) throw compError;
+                if (compError && compError.code !== 'PGRST116') {
+                    console.error('Complaints load error:', compError);
+                }
+
+                console.log('✅ Pending complaints:', complaints?.length || 0);
 
                 // Calculate stats
                 const totalEmployees = employeesCount || 0;
@@ -260,8 +394,10 @@
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('dashboard').style.display = 'block';
 
+                console.log('✅ Dashboard loaded successfully');
+
             } catch (error) {
-                console.error('Dashboard load error:', error);
+                console.error('❌ Dashboard load error:', error);
                 document.getElementById('loading').innerHTML = `
                     <div class="text-red-600">
                         <i class="fas fa-exclamation-circle text-4xl mb-4"></i>
@@ -279,15 +415,29 @@
             const container = document.getElementById('apartmentsList');
             const today = new Date().toISOString().split('T')[0];
 
+            if (apartmentsData.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-2 text-center py-12">
+                        <i class="fas fa-building text-5xl text-gray-300 mb-4"></i>
+                        <p class="text-gray-500 text-lg">등록된 아파트가 없습니다.</p>
+                        <button onclick="openAddApartmentModal()" class="mt-4 px-6 py-3 brand-bg text-white rounded-lg hover:opacity-90">
+                            <i class="fas fa-plus mr-2"></i>
+                            첫 아파트 추가하기
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+
             const apartmentCards = await Promise.all(apartmentsData.map(async (apt) => {
                 // Get employee count
-                const { count: empCount } = await supabase
+                const { count: empCount } = await supabaseClient
                     .from('employees')
                     .select('*', { count: 'exact', head: true })
                     .eq('apartment_id', apt.id);
 
                 // Get today's attendance
-                const { data: todayAtt } = await supabase
+                const { data: todayAtt } = await supabaseClient
                     .from('attendance_records')
                     .select('*')
                     .eq('apartment_id', apt.id)
@@ -295,7 +445,7 @@
                     .lte('check_in_time', `${today}T23:59:59`);
 
                 // Get pending complaints
-                const { data: pendingComp } = await supabase
+                const { data: pendingComp } = await supabaseClient
                     .from('complaints')
                     .select('*')
                     .eq('apartment_id', apt.id)
@@ -329,9 +479,18 @@
                     html: `
                         <div class="apartment-card" data-status="${status}">
                             <div class="flex items-start justify-between mb-4">
-                                <div>
+                                <div class="flex-1">
                                     <h3 class="text-xl font-bold brand-color mb-1">${apt.name}</h3>
                                     <p class="text-sm text-gray-600">${apt.address || '주소 미등록'}</p>
+                                    ${apt.google_sheet_id ? `
+                                        <p class="text-xs text-green-600 mt-1">
+                                            <i class="fab fa-google"></i> Google 시트 연동됨
+                                        </p>
+                                    ` : `
+                                        <p class="text-xs text-orange-600 mt-1">
+                                            <i class="fas fa-exclamation-triangle"></i> Google 시트 미연동
+                                        </p>
+                                    `}
                                 </div>
                                 <span class="status-badge status-${status}">${statusText}</span>
                             </div>
@@ -352,13 +511,16 @@
                             </div>
 
                             <div class="flex gap-2">
-                                <button onclick="viewDetails('${apt.id}', '${apt.name}')" class="flex-1 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium transition">
-                                    <i class="fas fa-eye mr-1"></i>
-                                    상세보기
+                                <button onclick="editApartment('${apt.id}')" class="flex-1 px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg text-sm font-medium transition">
+                                    <i class="fas fa-edit mr-1"></i>
+                                    수정
                                 </button>
                                 <button onclick="openApartmentDashboard('${apt.id}')" class="flex-1 px-4 py-2 brand-bg hover:opacity-90 text-white rounded-lg text-sm font-medium transition">
                                     <i class="fas fa-external-link-alt mr-1"></i>
-                                    관리 페이지
+                                    관리
+                                </button>
+                                <button onclick="deleteApartment('${apt.id}', '${apt.name}')" class="px-4 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg text-sm font-medium transition">
+                                    <i class="fas fa-trash"></i>
                                 </button>
                             </div>
                         </div>
@@ -390,8 +552,7 @@
         async function loadRecentActivities() {
             const container = document.getElementById('recentActivities');
             
-            // Get recent attendance records
-            const { data: recentAtt, error } = await supabase
+            const { data: recentAtt, error } = await supabaseClient
                 .from('attendance_records')
                 .select(`
                     *,
@@ -401,8 +562,9 @@
                 .order('check_in_time', { ascending: false })
                 .limit(10);
 
-            if (error) {
+            if (error && error.code !== 'PGRST116') {
                 console.error('Activities load error:', error);
+                container.innerHTML = '<p class="text-gray-500 text-center py-8">활동 내역을 불러올 수 없습니다.</p>';
                 return;
             }
 
@@ -437,27 +599,123 @@
         function filterStatus(status) {
             currentFilter = status;
             
-            // Update button styles
             ['filterAll', 'filterWarning', 'filterCritical'].forEach(id => {
                 const btn = document.getElementById(id);
                 btn.classList.remove('brand-bg', 'text-white');
+                btn.classList.add('bg-gray-200');
             });
             
             const activeBtn = document.getElementById(`filter${status.charAt(0).toUpperCase() + status.slice(1)}`);
             if (activeBtn) {
+                activeBtn.classList.remove('bg-gray-200');
                 activeBtn.classList.add('brand-bg', 'text-white');
             }
             
             loadApartmentsDetails();
         }
 
-        function viewDetails(apartmentId, apartmentName) {
-            alert(`${apartmentName}의 상세 정보를 표시합니다.\n\n아파트 ID: ${apartmentId}`);
-            // TODO: 모달 또는 상세 페이지로 이동
+        function openAddApartmentModal() {
+            editingApartmentId = null;
+            document.getElementById('modalTitle').innerHTML = '<i class="fas fa-building mr-2"></i>아파트 추가';
+            document.getElementById('apartmentForm').reset();
+            document.getElementById('apartmentId').value = '';
+            document.getElementById('apartmentModal').classList.remove('hidden');
+            document.getElementById('apartmentModal').classList.add('flex');
         }
 
+        async function editApartment(apartmentId) {
+            editingApartmentId = apartmentId;
+            const apartment = apartmentsData.find(apt => apt.id === apartmentId);
+            
+            if (!apartment) {
+                alert('아파트 정보를 찾을 수 없습니다.');
+                return;
+            }
+
+            document.getElementById('modalTitle').innerHTML = '<i class="fas fa-edit mr-2"></i>아파트 수정';
+            document.getElementById('apartmentId').value = apartment.id;
+            document.getElementById('apartmentName').value = apartment.name || '';
+            document.getElementById('apartmentCode').value = apartment.code || '';
+            document.getElementById('apartmentAddress').value = apartment.address || '';
+            document.getElementById('googleSheetId').value = apartment.google_sheet_id || '';
+            document.getElementById('googleSheetName').value = apartment.google_sheet_name || '근무표';
+            document.getElementById('contactPerson').value = apartment.contact_person || '';
+            document.getElementById('contactPhone').value = apartment.contact_phone || '';
+            
+            document.getElementById('apartmentModal').classList.remove('hidden');
+            document.getElementById('apartmentModal').classList.add('flex');
+        }
+
+        async function deleteApartment(apartmentId, apartmentName) {
+            if (!confirm(`"${apartmentName}" 아파트를 정말 삭제하시겠습니까?\n\n⚠️ 주의: 이 작업은 되돌릴 수 없으며, 관련된 모든 데이터가 삭제될 수 있습니다.`)) {
+                return;
+            }
+
+            try {
+                const { error } = await supabaseClient
+                    .from('apartments')
+                    .delete()
+                    .eq('id', apartmentId);
+
+                if (error) throw error;
+
+                alert('✅ 아파트가 삭제되었습니다.');
+                loadDashboard();
+            } catch (error) {
+                console.error('Delete error:', error);
+                alert('❌ 삭제 실패: ' + error.message);
+            }
+        }
+
+        function closeApartmentModal() {
+            document.getElementById('apartmentModal').classList.add('hidden');
+            document.getElementById('apartmentModal').classList.remove('flex');
+            document.getElementById('apartmentForm').reset();
+            editingApartmentId = null;
+        }
+
+        document.getElementById('apartmentForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const apartmentData = {
+                name: document.getElementById('apartmentName').value.trim(),
+                code: document.getElementById('apartmentCode').value.trim() || null,
+                address: document.getElementById('apartmentAddress').value.trim() || null,
+                google_sheet_id: document.getElementById('googleSheetId').value.trim() || null,
+                google_sheet_name: document.getElementById('googleSheetName').value.trim() || '근무표',
+                contact_person: document.getElementById('contactPerson').value.trim() || null,
+                contact_phone: document.getElementById('contactPhone').value.trim() || null
+            };
+
+            try {
+                if (editingApartmentId) {
+                    // Update
+                    const { error } = await supabaseClient
+                        .from('apartments')
+                        .update(apartmentData)
+                        .eq('id', editingApartmentId);
+
+                    if (error) throw error;
+                    alert('✅ 아파트 정보가 수정되었습니다.');
+                } else {
+                    // Insert
+                    const { error } = await supabaseClient
+                        .from('apartments')
+                        .insert([apartmentData]);
+
+                    if (error) throw error;
+                    alert('✅ 새 아파트가 추가되었습니다.');
+                }
+
+                closeApartmentModal();
+                loadDashboard();
+            } catch (error) {
+                console.error('Save error:', error);
+                alert('❌ 저장 실패: ' + error.message);
+            }
+        });
+
         function openApartmentDashboard(apartmentId) {
-            // Open main dashboard with apartment selected
             window.open(`index.html?apartment=${apartmentId}`, '_blank');
         }
 
@@ -469,13 +727,13 @@
 
         // Load dashboard on page load
         window.addEventListener('DOMContentLoaded', () => {
-            console.log('Master dashboard loading...');
+            console.log('🚀 Master dashboard initializing...');
             loadDashboard();
         });
 
         // Auto refresh every 5 minutes
         setInterval(() => {
-            console.log('Auto-refreshing dashboard...');
+            console.log('🔄 Auto-refreshing dashboard...');
             loadDashboard();
         }, 5 * 60 * 1000);
     </script>
