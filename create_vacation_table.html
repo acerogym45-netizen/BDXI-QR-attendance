@@ -78,7 +78,7 @@ CREATE TABLE IF NOT EXISTS public.vacations (
   employee_id UUID REFERENCES public.employees(id) ON DELETE CASCADE,
   employee_name TEXT NOT NULL,
   vacation_date DATE NOT NULL,
-  vacation_type TEXT NOT NULL CHECK (vacation_type IN ('연차', '반차', '병가', '경조사', '기타')),
+  vacation_type TEXT NOT NULL,
   note TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
