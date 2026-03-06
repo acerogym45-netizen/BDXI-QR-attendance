@@ -118,7 +118,7 @@
 
         <!-- Dashboard Content -->
         <div id="dashboard" style="display: none;">
-            <!-- Summary Stats -->
+            <!-- Summary Stats Row 1 -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
                 <!-- 1. 전체 아파트 -->
                 <div class="stat-card">
@@ -154,7 +154,28 @@
                     </div>
                 </div>
 
-                <!-- 4. 긴급 아파트 -->
+                <!-- 4. 계약 관리 -->
+                <div class="stat-card" style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);" 
+                     onclick="showContractModal()" 
+                     style="cursor: pointer;">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm opacity-90">계약 관리</p>
+                            <h3 class="text-4xl font-bold mt-2">
+                                <span id="contractExpiring">0</span>
+                                <span class="text-xl"> / </span>
+                                <span id="contractExpired" class="text-2xl text-red-600">0</span>
+                            </h3>
+                            <p class="text-xs opacity-75 mt-1">임박 / 만료</p>
+                        </div>
+                        <i class="fas fa-file-contract text-5xl opacity-30"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Summary Stats Row 2 -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                <!-- 1. 긴급 현장 -->
                 <div class="stat-card" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
                     <div class="flex items-center justify-between">
                         <div>
@@ -163,6 +184,42 @@
                             <p class="text-xs opacity-75 mt-1">즉각 대응</p>
                         </div>
                         <i class="fas fa-fire text-5xl opacity-30"></i>
+                    </div>
+                </div>
+
+                <!-- 2. Google 시트 미연동 -->
+                <div class="stat-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm opacity-90">시트 미연동</p>
+                            <h3 class="text-4xl font-bold mt-2" id="unlinkedSheets">0</h3>
+                            <p class="text-xs opacity-75 mt-1">연동 필요</p>
+                        </div>
+                        <i class="fab fa-google text-5xl opacity-30"></i>
+                    </div>
+                </div>
+
+                <!-- 3. 직원 미배정 -->
+                <div class="stat-card" style="background: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%);">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm opacity-90">직원 미배정</p>
+                            <h3 class="text-4xl font-bold mt-2" id="noEmployees">0</h3>
+                            <p class="text-xs opacity-75 mt-1">배치 필요</p>
+                        </div>
+                        <i class="fas fa-user-slash text-5xl opacity-30"></i>
+                    </div>
+                </div>
+
+                <!-- 4. 출근율 저조 -->
+                <div class="stat-card" style="background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm opacity-90">금일 출근율</p>
+                            <h3 class="text-4xl font-bold mt-2" id="todayAttendanceRate">0%</h3>
+                            <p class="text-xs opacity-75 mt-1">전체 평균</p>
+                        </div>
+                        <i class="fas fa-chart-line text-5xl opacity-30"></i>
                     </div>
                 </div>
             </div>
@@ -313,6 +370,65 @@
         </div>
     </div>
 
+    <!-- Contract Management Modal -->
+    <div id="contractModal" class="fixed inset-0 bg-black bg-opacity-50 modal-backdrop hidden items-center justify-center z-50" onclick="if(event.target === this) closeContractModal()">
+        <div class="bg-white rounded-2xl p-8 max-w-6xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-2xl font-bold brand-color">
+                    <i class="fas fa-file-contract mr-2"></i>
+                    계약 관리
+                </h2>
+                <button onclick="closeContractModal()" class="text-gray-400 hover:text-gray-600 text-2xl">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <!-- 통계 요약 -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div class="p-4 bg-red-50 border-l-4 border-red-500 rounded-lg">
+                    <p class="text-sm text-red-700 font-medium">🔴 계약 만료 (활성)</p>
+                    <p class="text-3xl font-bold text-red-600 mt-2" id="modalExpiredCount">0</p>
+                    <p class="text-xs text-red-600 mt-1">즉시 갱신 필요</p>
+                </div>
+                <div class="p-4 bg-orange-50 border-l-4 border-orange-500 rounded-lg">
+                    <p class="text-sm text-orange-700 font-medium">⚠️ 7일 이내 만료</p>
+                    <p class="text-3xl font-bold text-orange-600 mt-2" id="modalWeekCount">0</p>
+                    <p class="text-xs text-orange-600 mt-1">긴급 대응</p>
+                </div>
+                <div class="p-4 bg-yellow-50 border-l-4 border-yellow-500 rounded-lg">
+                    <p class="text-sm text-yellow-700 font-medium">💡 30일 이내 만료</p>
+                    <p class="text-3xl font-bold text-yellow-600 mt-2" id="modalMonthCount">0</p>
+                    <p class="text-xs text-yellow-600 mt-1">준비 필요</p>
+                </div>
+            </div>
+
+            <!-- 탭 -->
+            <div class="flex gap-2 mb-4 border-b">
+                <button onclick="switchContractTab('expired')" id="tabExpired" class="px-4 py-2 font-medium text-red-600 border-b-2 border-red-600">
+                    만료 (활성)
+                </button>
+                <button onclick="switchContractTab('week')" id="tabWeek" class="px-4 py-2 font-medium text-gray-600 hover:text-orange-600">
+                    7일 이내
+                </button>
+                <button onclick="switchContractTab('month')" id="tabMonth" class="px-4 py-2 font-medium text-gray-600 hover:text-yellow-600">
+                    30일 이내
+                </button>
+            </div>
+
+            <!-- 직원 목록 -->
+            <div id="contractList" class="space-y-2">
+                <!-- 동적으로 로드됨 -->
+            </div>
+
+            <div class="mt-6 flex justify-end">
+                <button onclick="closeContractModal()" class="px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold rounded-lg transition">
+                    <i class="fas fa-times mr-2"></i>
+                    닫기
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
         const SUPABASE_URL = 'https://qgpqhtuynxhmgawakjxe.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFncHFodHV5bnhobWdhd2FranhlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcyOTQyNTEsImV4cCI6MjA4Mjg3MDI1MX0.WNljQIKDbeZCDlXe8fpBdZs58XRFfujGt7lBGfq_pVg';
@@ -338,6 +454,12 @@
         let apartmentsData = [];
         let currentFilter = 'all';
         let editingApartmentId = null;
+        let contractData = {
+            expired: [],
+            week: [],
+            month: []
+        };
+        let currentContractTab = 'expired';
 
         async function loadDashboard(retryCount = 0) {
             try {
@@ -383,6 +505,9 @@
                 }
 
                 console.log('✅ Employees count:', employeesCount || 0);
+
+                // 계약 데이터 로드
+                await loadContractData();
 
                 // 기본 통계 업데이트
                 document.getElementById('totalApartments').textContent = apartmentsData.length;
@@ -585,10 +710,25 @@
             const warningCount = apartmentCards.filter(card => card.status === 'warning').length;
             const criticalCount = apartmentCards.filter(card => card.status === 'critical').length;
             
+            // Google 시트 미연동 개수
+            const unlinkedCount = apartmentCards.filter(card => !card.apt.google_sheet_id).length;
+            
+            // 직원 미배정 개수
+            const noEmployeeCount = apartmentCards.filter(card => card.employeeCount === 0).length;
+            
+            // 전체 출근율 계산
+            const totalEmployees = apartmentCards.reduce((sum, card) => sum + card.employeeCount, 0);
+            const totalAttendance = apartmentCards.reduce((sum, card) => sum + card.attendanceCount, 0);
+            const avgAttendanceRate = totalEmployees > 0 ? Math.round(totalAttendance / totalEmployees * 100) : 0;
+            
             document.getElementById('warningApartments').textContent = warningCount;
             document.getElementById('criticalApartments').textContent = criticalCount;
+            document.getElementById('unlinkedSheets').textContent = unlinkedCount;
+            document.getElementById('noEmployees').textContent = noEmployeeCount;
+            document.getElementById('todayAttendanceRate').textContent = avgAttendanceRate + '%';
             
             console.log('📊 Status counts - Warning:', warningCount, 'Critical:', criticalCount);
+            console.log('📊 Additional - Unlinked:', unlinkedCount, 'No employees:', noEmployeeCount, 'Attendance:', avgAttendanceRate + '%');
         }
 
         function renderApartments(apartmentCards) {
@@ -783,6 +923,191 @@
             if (confirm('로그아웃 하시겠습니까?')) {
                 window.location.href = 'index.html';
             }
+        }
+
+        // ==================== 계약 관리 기능 ====================
+        
+        async function loadContractData() {
+            try {
+                const today = new Date();
+                const todayStr = today.toISOString().split('T')[0];
+                
+                // 모든 직원 데이터 로드 (contract_end 있는 직원만)
+                const { data: employees, error } = await supabaseClient
+                    .from('employees')
+                    .select(`
+                        *,
+                        apartments (name)
+                    `)
+                    .not('contract_end', 'is', null)
+                    .eq('is_active', true); // 활성 상태인 직원만
+
+                if (error && error.code !== 'PGRST116') {
+                    console.error('Contract data load error:', error);
+                    return;
+                }
+
+                if (!employees || employees.length === 0) {
+                    console.log('📝 No contract data');
+                    document.getElementById('contractExpiring').textContent = '0';
+                    document.getElementById('contractExpired').textContent = '0';
+                    return;
+                }
+
+                // 계약 상태별 분류
+                contractData.expired = [];
+                contractData.week = [];
+                contractData.month = [];
+
+                employees.forEach(emp => {
+                    if (!emp.contract_end) return;
+
+                    const contractEnd = new Date(emp.contract_end);
+                    const daysUntilExpiry = Math.ceil((contractEnd - today) / (1000 * 60 * 60 * 24));
+
+                    emp.daysUntilExpiry = daysUntilExpiry;
+                    emp.contractEndFormatted = contractEnd.toLocaleDateString('ko-KR');
+
+                    if (daysUntilExpiry < 0) {
+                        // 이미 만료되었지만 활성 상태
+                        contractData.expired.push(emp);
+                    } else if (daysUntilExpiry <= 7) {
+                        // 7일 이내 만료
+                        contractData.week.push(emp);
+                    } else if (daysUntilExpiry <= 30) {
+                        // 30일 이내 만료
+                        contractData.month.push(emp);
+                    }
+                });
+
+                // 통계 업데이트
+                const expiringCount = contractData.week.length + contractData.month.length;
+                const expiredCount = contractData.expired.length;
+
+                document.getElementById('contractExpiring').textContent = expiringCount;
+                document.getElementById('contractExpired').textContent = expiredCount;
+
+                console.log('📊 Contract stats - Expiring:', expiringCount, 'Expired:', expiredCount);
+                console.log('  - Week:', contractData.week.length, 'Month:', contractData.month.length);
+
+            } catch (error) {
+                console.error('❌ Load contract data error:', error);
+            }
+        }
+
+        function showContractModal() {
+            document.getElementById('contractModal').classList.remove('hidden');
+            document.getElementById('contractModal').classList.add('flex');
+            
+            // 모달 통계 업데이트
+            document.getElementById('modalExpiredCount').textContent = contractData.expired.length;
+            document.getElementById('modalWeekCount').textContent = contractData.week.length;
+            document.getElementById('modalMonthCount').textContent = contractData.month.length;
+            
+            // 기본 탭 (만료) 표시
+            switchContractTab('expired');
+        }
+
+        function closeContractModal() {
+            document.getElementById('contractModal').classList.add('hidden');
+            document.getElementById('contractModal').classList.remove('flex');
+        }
+
+        function switchContractTab(tab) {
+            currentContractTab = tab;
+            
+            // 탭 스타일 변경
+            ['tabExpired', 'tabWeek', 'tabMonth'].forEach(id => {
+                const btn = document.getElementById(id);
+                btn.classList.remove('text-red-600', 'border-b-2', 'border-red-600', 
+                                     'text-orange-600', 'border-orange-600',
+                                     'text-yellow-600', 'border-yellow-600');
+                btn.classList.add('text-gray-600');
+            });
+            
+            if (tab === 'expired') {
+                document.getElementById('tabExpired').classList.add('text-red-600', 'border-b-2', 'border-red-600');
+                document.getElementById('tabExpired').classList.remove('text-gray-600');
+            } else if (tab === 'week') {
+                document.getElementById('tabWeek').classList.add('text-orange-600', 'border-b-2', 'border-orange-600');
+                document.getElementById('tabWeek').classList.remove('text-gray-600');
+            } else if (tab === 'month') {
+                document.getElementById('tabMonth').classList.add('text-yellow-600', 'border-b-2', 'border-yellow-600');
+                document.getElementById('tabMonth').classList.remove('text-gray-600');
+            }
+            
+            // 목록 렌더링
+            renderContractList();
+        }
+
+        function renderContractList() {
+            const container = document.getElementById('contractList');
+            const data = contractData[currentContractTab] || [];
+            
+            if (data.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-12 text-gray-500">
+                        <i class="fas fa-check-circle text-5xl mb-4 opacity-50"></i>
+                        <p class="text-lg">해당하는 직원이 없습니다.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // 만료일 임박 순으로 정렬
+            data.sort((a, b) => a.daysUntilExpiry - b.daysUntilExpiry);
+            
+            container.innerHTML = data.map(emp => {
+                let statusColor = '';
+                let statusText = '';
+                let statusIcon = '';
+                
+                if (currentContractTab === 'expired') {
+                    statusColor = 'bg-red-100 text-red-700 border-red-300';
+                    statusText = `만료 ${Math.abs(emp.daysUntilExpiry)}일 경과`;
+                    statusIcon = '🔴';
+                } else if (currentContractTab === 'week') {
+                    statusColor = 'bg-orange-100 text-orange-700 border-orange-300';
+                    statusText = `${emp.daysUntilExpiry}일 남음`;
+                    statusIcon = '⚠️';
+                } else {
+                    statusColor = 'bg-yellow-100 text-yellow-700 border-yellow-300';
+                    statusText = `${emp.daysUntilExpiry}일 남음`;
+                    statusIcon = '💡';
+                }
+                
+                return `
+                    <div class="p-4 bg-white border-2 ${statusColor} rounded-lg hover:shadow-md transition">
+                        <div class="flex items-center justify-between">
+                            <div class="flex-1">
+                                <div class="flex items-center gap-3">
+                                    <span class="text-2xl">${statusIcon}</span>
+                                    <div>
+                                        <h3 class="font-bold text-lg">${emp.name}</h3>
+                                        <p class="text-sm text-gray-600">
+                                            <i class="fas fa-building mr-1"></i>
+                                            ${emp.apartments?.name || '아파트 미지정'}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-bold text-lg ${statusColor.split(' ')[1]}">${statusText}</p>
+                                <p class="text-sm text-gray-600 mt-1">
+                                    <i class="fas fa-calendar mr-1"></i>
+                                    만료일: ${emp.contractEndFormatted}
+                                </p>
+                                ${emp.phone ? `
+                                    <p class="text-xs text-gray-500 mt-1">
+                                        <i class="fas fa-phone mr-1"></i>
+                                        ${emp.phone}
+                                    </p>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
         }
 
         // Load dashboard on page load
