@@ -215,7 +215,7 @@
                 <div class="stat-card" style="background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-sm opacity-90">금일 출근율</p>
+                            <p class="text-sm opacity-90">이번 달 출근율</p>
                             <h3 class="text-4xl font-bold mt-2" id="todayAttendanceRate">0%</h3>
                             <p class="text-xs opacity-75 mt-1">전체 평균</p>
                         </div>
@@ -300,6 +300,20 @@
                     <input type="text" id="apartmentCode"
                            class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-green-600"
                            placeholder="예: APT001">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-key mr-1 text-yellow-600"></i>
+                        로그인 비밀번호 *
+                    </label>
+                    <input type="text" id="apartmentPassword"
+                           class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-green-600"
+                           placeholder="예: apt12345" value="bdxi2026">
+                    <p class="text-xs text-gray-500 mt-1">
+                        <i class="fas fa-info-circle"></i>
+                        이 아파트 관리자가 로그인할 때 사용할 비밀번호 (기본: bdxi2026)
+                    </p>
                 </div>
 
                 <div>
@@ -600,25 +614,51 @@
                     .select('*', { count: 'exact', head: true })
                     .eq('apartment_id', apt.id);
 
-                // Get today's attendance
-                const { data: todayAtt } = await supabaseClient
+                // 📅 이번 달 출근율 계산 (월별 통계)
+                const today = new Date();
+                const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+                const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+                
+                const firstDayStr = firstDayOfMonth.toISOString().split('T')[0];
+                const lastDayStr = lastDayOfMonth.toISOString().split('T')[0];
+                
+                // 이번 달 출근 기록 조회
+                const { data: monthAtt } = await supabaseClient
                     .from('attendance_records')
                     .select('*')
                     .eq('apartment_id', apt.id)
-                    .gte('check_in_time', `${today}T00:00:00`)
-                    .lte('check_in_time', `${today}T23:59:59`);
+                    .gte('check_in_time', `${firstDayStr}T00:00:00`)
+                    .lte('check_in_time', `${lastDayStr}T23:59:59`);
 
-                // Get pending complaints
-                const { data: pendingComp } = await supabaseClient
+                // 📋 이번 달 미처리 민원 조회 (월별 통계)
+                const { data: monthComp } = await supabaseClient
                     .from('complaints')
                     .select('*')
                     .eq('apartment_id', apt.id)
-                    .eq('status', 'pending');
+                    .eq('status', 'pending')
+                    .gte('created_at', `${firstDayStr}T00:00:00`)
+                    .lte('created_at', `${lastDayStr}T23:59:59`);
 
                 const employeeCount = empCount || 0;
-                const attendanceCount = todayAtt?.length || 0;
-                const complaintCount = pendingComp?.length || 0;
-                const attendanceRate = employeeCount > 0 ? Math.round(attendanceCount / employeeCount * 100) : 0;
+                const attendanceCount = monthAtt?.length || 0;
+                const complaintCount = monthComp?.length || 0;
+                
+                // 이번 달 근무일수 계산 (오늘까지)
+                const workDays = Math.min(today.getDate(), lastDayOfMonth.getDate());
+                const expectedAttendance = employeeCount * workDays;
+                const attendanceRate = expectedAttendance > 0 
+                    ? Math.round((attendanceCount / expectedAttendance) * 100) 
+                    : 0;
+
+                console.log(`📊 ${apt.name} - 이번 달(${today.getMonth() + 1}월) 통계:`, {
+                    근무일수: workDays,
+                    직원수: employeeCount,
+                    예상출근: expectedAttendance,
+                    실제출근: attendanceCount,
+                    출근율: attendanceRate + '%',
+                    민원: complaintCount
+                });
+
 
                 // Determine status (더 세밀한 기준)
                 let status = 'normal';
@@ -716,10 +756,17 @@
             // 직원 미배정 개수
             const noEmployeeCount = apartmentCards.filter(card => card.employeeCount === 0).length;
             
-            // 전체 출근율 계산
+            // 📅 이번 달 전체 출근율 계산
+            const today = new Date();
+            const workDays = Math.min(today.getDate(), new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate());
+            
             const totalEmployees = apartmentCards.reduce((sum, card) => sum + card.employeeCount, 0);
             const totalAttendance = apartmentCards.reduce((sum, card) => sum + card.attendanceCount, 0);
-            const avgAttendanceRate = totalEmployees > 0 ? Math.round(totalAttendance / totalEmployees * 100) : 0;
+            const expectedTotalAttendance = totalEmployees * workDays;
+            
+            const avgAttendanceRate = expectedTotalAttendance > 0 
+                ? Math.round((totalAttendance / expectedTotalAttendance) * 100) 
+                : 0;
             
             document.getElementById('warningApartments').textContent = warningCount;
             document.getElementById('criticalApartments').textContent = criticalCount;
@@ -727,8 +774,15 @@
             document.getElementById('noEmployees').textContent = noEmployeeCount;
             document.getElementById('todayAttendanceRate').textContent = avgAttendanceRate + '%';
             
+            console.log('📊 이번 달 전체 통계:', {
+                근무일수: workDays,
+                전체직원: totalEmployees,
+                예상출근: expectedTotalAttendance,
+                실제출근: totalAttendance,
+                평균출근율: avgAttendanceRate + '%'
+            });
             console.log('📊 Status counts - Warning:', warningCount, 'Critical:', criticalCount);
-            console.log('📊 Additional - Unlinked:', unlinkedCount, 'No employees:', noEmployeeCount, 'Attendance:', avgAttendanceRate + '%');
+            console.log('📊 Additional - Unlinked:', unlinkedCount, 'No employees:', noEmployeeCount);
         }
 
         function renderApartments(apartmentCards) {
@@ -836,6 +890,7 @@
             document.getElementById('apartmentId').value = apartment.id;
             document.getElementById('apartmentName').value = apartment.name || '';
             document.getElementById('apartmentCode').value = apartment.code || '';
+            document.getElementById('apartmentPassword').value = apartment.password || 'bdxi2026'; // 🔑 비밀번호 로드
             document.getElementById('apartmentAddress').value = apartment.address || '';
             document.getElementById('googleSheetId').value = apartment.google_sheet_id || '';
             document.getElementById('googleSheetName').value = apartment.google_sheet_name || '근무표';
@@ -880,6 +935,7 @@
             const apartmentData = {
                 name: document.getElementById('apartmentName').value.trim(),
                 code: document.getElementById('apartmentCode').value.trim() || null,
+                password: document.getElementById('apartmentPassword').value.trim() || 'bdxi2026', // 🔑 비밀번호 추가
                 address: document.getElementById('apartmentAddress').value.trim() || null,
                 google_sheet_id: document.getElementById('googleSheetId').value.trim() || null,
                 google_sheet_name: document.getElementById('googleSheetName').value.trim() || '근무표',
