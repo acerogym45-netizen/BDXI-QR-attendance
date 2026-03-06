@@ -707,19 +707,42 @@
             </div>
           </div>
 
-          <!-- 아파트 관리 -->
+          <!-- 💰 매출 관리 -->
           <div class="bg-white p-6 rounded-xl shadow-sm border">
             <div class="flex justify-between items-center mb-4">
               <h3 class="font-bold text-gray-800">
-                <i class="fas fa-building mr-2 text-indigo-600"></i>아파트 관리
+                <i class="fas fa-chart-line mr-2 text-green-600"></i>매출 관리
               </h3>
-              <button onclick="app.showEditApartmentModal()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
-                <i class="fas fa-edit mr-2"></i>아파트 정보 수정
+              <button onclick="app.showAddSalesModal()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                <i class="fas fa-plus mr-2"></i>매출 기록 추가
               </button>
             </div>
-            <p class="text-sm text-gray-600 mb-4">현재 선택된 아파트 정보를 확인하고 수정할 수 있습니다.</p>
-            <div id="apartment-info" class="space-y-3">
-              <!-- JS로 동적 생성 -->
+            <p class="text-sm text-gray-600 mb-4">월별 매출 정보를 기록하고 관리합니다.</p>
+            
+            <!-- 최근 3개월 매출 카드 -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <div id="sales-cards-container">
+                <!-- JS로 동적 생성 -->
+              </div>
+            </div>
+            
+            <!-- 매출 기록 테이블 -->
+            <div class="overflow-x-auto">
+              <table class="w-full">
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">년도</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">월</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">매출액</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">전월 대비</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">메모</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">관리</th>
+                  </tr>
+                </thead>
+                <tbody id="sales-list" class="divide-y divide-gray-100">
+                  <!-- JS로 동적 생성 -->
+                </tbody>
+              </table>
             </div>
           </div>
 
@@ -1262,6 +1285,76 @@
       </div>
     </div>
 
+    <!-- 💰 매출 추가/수정 모달 -->
+    <div id="sales-modal" class="fixed inset-0 z-50 bg-black bg-opacity-80 items-center justify-center p-4" style="display: none;">
+      <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl" onclick="event.stopPropagation()">
+        <div class="flex justify-between items-center p-6 border-b">
+          <h3 class="text-xl font-bold text-gray-800">
+            <i class="fas fa-chart-line mr-2 text-green-600"></i><span id="sales-modal-title">매출 기록 추가</span>
+          </h3>
+          <button onclick="app.closeSalesModal()" class="text-gray-400 hover:text-gray-600 text-2xl">×</button>
+        </div>
+        <div class="p-6 space-y-4">
+          <input type="hidden" id="edit-sales-id">
+          
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                <i class="fas fa-calendar-alt mr-1"></i>년도 *
+              </label>
+              <input type="number" id="sales-year" min="2020" max="2099" placeholder="2026" 
+                     class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                <i class="fas fa-calendar mr-1"></i>월 *
+              </label>
+              <select id="sales-month" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                <option value="1">1월</option>
+                <option value="2">2월</option>
+                <option value="3">3월</option>
+                <option value="4">4월</option>
+                <option value="5">5월</option>
+                <option value="6">6월</option>
+                <option value="7">7월</option>
+                <option value="8">8월</option>
+                <option value="9">9월</option>
+                <option value="10">10월</option>
+                <option value="11">11월</option>
+                <option value="12">12월</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              <i class="fas fa-won-sign mr-1"></i>매출액 (원) *
+            </label>
+            <input type="number" id="sales-amount" min="0" step="1000" placeholder="5000000" 
+                   class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+            <p class="text-xs text-gray-500 mt-1">💡 숫자만 입력 (예: 5000000)</p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              <i class="fas fa-sticky-note mr-1"></i>메모 (선택)
+            </label>
+            <textarea id="sales-note" rows="3" placeholder="특이사항이나 메모를 입력하세요" 
+                      class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"></textarea>
+          </div>
+
+          <div class="flex gap-3">
+            <button onclick="app.closeSalesModal()" class="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium">
+              <i class="fas fa-times mr-2"></i>취소
+            </button>
+            <button onclick="app.saveSales()" class="flex-1 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium">
+              <i class="fas fa-save mr-2"></i>저장
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
 
     <!-- JavaScript -->
     <script>
@@ -1617,7 +1710,7 @@
             const now = new Date();
             document.getElementById('last-update-time').textContent = now.toLocaleString('ko-KR');
           } else if (tab === 'data') {
-            this.loadApartmentInfo(); // 아파트 정보 로드
+            this.loadSales(); // 💰 매출 데이터 로드
             this.loadEmployees();
             this.loadLocations();
             this.loadQRCodes();
@@ -4505,6 +4598,244 @@
       console.log('🟡 app 객체 정의 완료');
       console.log('app.showAddLocationModal 타입:', typeof app.showAddLocationModal);
       
+      // 💰 매출 관리 함수들
+      app.loadSales = async function() {
+        if (!this.currentApartment) return;
+        
+        try {
+          const { data: sales, error } = await this.sb
+            .from('sales')
+            .select('*')
+            .eq('apartment_id', this.currentApartment.id)
+            .order('year', { ascending: false })
+            .order('month', { ascending: false });
+            
+          if (error) throw error;
+          
+          // 최근 3개월 카드 생성
+          const now = new Date();
+          const currentYear = now.getFullYear();
+          const currentMonth = now.getMonth() + 1;
+          
+          const last3Months = [];
+          for (let i = 0; i < 3; i++) {
+            let month = currentMonth - i;
+            let year = currentYear;
+            if (month <= 0) {
+              month += 12;
+              year -= 1;
+            }
+            last3Months.push({ year, month });
+          }
+          
+          const cardsHTML = last3Months.map(({ year, month }) => {
+            const sale = sales?.find(s => s.year === year && s.month === month);
+            const amount = sale?.amount || 0;
+            
+            // 전월 대비 계산
+            let prevMonth = month - 1;
+            let prevYear = year;
+            if (prevMonth <= 0) {
+              prevMonth = 12;
+              prevYear -= 1;
+            }
+            const prevSale = sales?.find(s => s.year === prevYear && s.month === prevMonth);
+            const prevAmount = prevSale?.amount || 0;
+            
+            let changePercent = 0;
+            let changeIcon = '';
+            let changeColor = '';
+            if (prevAmount > 0) {
+              changePercent = ((amount - prevAmount) / prevAmount * 100).toFixed(1);
+              if (changePercent > 0) {
+                changeIcon = '📈';
+                changeColor = 'text-green-600';
+              } else if (changePercent < 0) {
+                changeIcon = '📉';
+                changeColor = 'text-red-600';
+              } else {
+                changeIcon = '➡️';
+                changeColor = 'text-gray-600';
+              }
+            }
+            
+            return `
+              <div class="bg-gradient-to-br from-green-50 to-emerald-50 p-4 rounded-lg border border-green-200">
+                <p class="text-sm text-gray-600 mb-1">${year}년 ${month}월</p>
+                <p class="text-2xl font-bold text-green-700">${amount.toLocaleString()}원</p>
+                ${changePercent !== 0 ? `
+                  <p class="text-xs ${changeColor} mt-2">
+                    ${changeIcon} 전월 대비 ${Math.abs(changePercent)}%
+                  </p>
+                ` : ''}
+              </div>
+            `;
+          }).join('');
+          
+          document.getElementById('sales-cards-container').innerHTML = cardsHTML || '<p class="text-gray-500 col-span-3 text-center">매출 데이터가 없습니다.</p>';
+          
+          // 테이블 생성
+          const tableHTML = sales?.map((sale, index) => {
+            // 전월 데이터
+            let prevMonth = sale.month - 1;
+            let prevYear = sale.year;
+            if (prevMonth <= 0) {
+              prevMonth = 12;
+              prevYear -= 1;
+            }
+            const prevSale = sales.find(s => s.year === prevYear && s.month === prevMonth);
+            const prevAmount = prevSale?.amount || 0;
+            
+            let changeText = '-';
+            let changeClass = '';
+            if (prevAmount > 0) {
+              const changePercent = ((sale.amount - prevAmount) / prevAmount * 100).toFixed(1);
+              if (changePercent > 0) {
+                changeText = `<span class="text-green-600">+${changePercent}% 📈</span>`;
+              } else if (changePercent < 0) {
+                changeText = `<span class="text-red-600">${changePercent}% 📉</span>`;
+              } else {
+                changeText = `<span class="text-gray-600">0% ➡️</span>`;
+              }
+            }
+            
+            return `
+              <tr class="hover:bg-gray-50">
+                <td class="px-4 py-3">${sale.year}년</td>
+                <td class="px-4 py-3">${sale.month}월</td>
+                <td class="px-4 py-3 font-bold text-green-700">${sale.amount.toLocaleString()}원</td>
+                <td class="px-4 py-3">${changeText}</td>
+                <td class="px-4 py-3 text-sm text-gray-600">${sale.note || '-'}</td>
+                <td class="px-4 py-3">
+                  <button onclick="app.editSales('${sale.id}')" class="text-blue-600 hover:text-blue-800 mr-2">
+                    <i class="fas fa-edit"></i>
+                  </button>
+                  <button onclick="app.deleteSales('${sale.id}', ${sale.year}, ${sale.month})" class="text-red-600 hover:text-red-800">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </td>
+              </tr>
+            `;
+          }).join('') || '<tr><td colspan="6" class="px-4 py-8 text-center text-gray-500">매출 기록이 없습니다.</td></tr>';
+          
+          document.getElementById('sales-list').innerHTML = tableHTML;
+          
+        } catch (error) {
+          console.error('매출 로드 실패:', error);
+        }
+      };
+      
+      app.showAddSalesModal = function() {
+        const now = new Date();
+        document.getElementById('sales-modal-title').textContent = '매출 기록 추가';
+        document.getElementById('edit-sales-id').value = '';
+        document.getElementById('sales-year').value = now.getFullYear();
+        document.getElementById('sales-month').value = now.getMonth() + 1;
+        document.getElementById('sales-amount').value = '';
+        document.getElementById('sales-note').value = '';
+        document.getElementById('sales-modal').style.display = 'flex';
+      };
+      
+      app.editSales = async function(salesId) {
+        try {
+          const { data: sale, error } = await this.sb
+            .from('sales')
+            .select('*')
+            .eq('id', salesId)
+            .single();
+            
+          if (error) throw error;
+          
+          document.getElementById('sales-modal-title').textContent = '매출 기록 수정';
+          document.getElementById('edit-sales-id').value = sale.id;
+          document.getElementById('sales-year').value = sale.year;
+          document.getElementById('sales-month').value = sale.month;
+          document.getElementById('sales-amount').value = sale.amount;
+          document.getElementById('sales-note').value = sale.note || '';
+          document.getElementById('sales-modal').style.display = 'flex';
+        } catch (error) {
+          console.error('매출 데이터 로드 실패:', error);
+          alert('❌ 매출 데이터를 불러오지 못했습니다.');
+        }
+      };
+      
+      app.saveSales = async function() {
+        if (!this.currentApartment) return;
+        
+        const salesId = document.getElementById('edit-sales-id').value;
+        const year = parseInt(document.getElementById('sales-year').value);
+        const month = parseInt(document.getElementById('sales-month').value);
+        const amount = parseFloat(document.getElementById('sales-amount').value);
+        const note = document.getElementById('sales-note').value.trim();
+        
+        if (!year || !month || isNaN(amount)) {
+          alert('⚠️ 필수 항목을 모두 입력하세요.');
+          return;
+        }
+        
+        try {
+          const salesData = {
+            apartment_id: this.currentApartment.id,
+            year,
+            month,
+            amount,
+            note: note || null
+          };
+          
+          if (salesId) {
+            // 수정
+            const { error } = await this.sb
+              .from('sales')
+              .update(salesData)
+              .eq('id', salesId);
+              
+            if (error) throw error;
+            alert('✅ 매출 기록이 수정되었습니다.');
+          } else {
+            // 추가
+            const { error } = await this.sb
+              .from('sales')
+              .insert([salesData]);
+              
+            if (error) throw error;
+            alert('✅ 매출 기록이 추가되었습니다.');
+          }
+          
+          this.closeSalesModal();
+          this.loadSales();
+        } catch (error) {
+          console.error('매출 저장 실패:', error);
+          if (error.code === '23505') {
+            alert('❌ 해당 년월의 매출 기록이 이미 존재합니다.');
+          } else {
+            alert('❌ 매출 저장에 실패했습니다: ' + error.message);
+          }
+        }
+      };
+      
+      app.deleteSales = async function(salesId, year, month) {
+        if (!confirm(`${year}년 ${month}월 매출 기록을 삭제하시겠습니까?`)) return;
+        
+        try {
+          const { error } = await this.sb
+            .from('sales')
+            .delete()
+            .eq('id', salesId);
+            
+          if (error) throw error;
+          
+          alert('✅ 매출 기록이 삭제되었습니다.');
+          this.loadSales();
+        } catch (error) {
+          console.error('매출 삭제 실패:', error);
+          alert('❌ 매출 삭제에 실패했습니다: ' + error.message);
+        }
+      };
+      
+      app.closeSalesModal = function() {
+        document.getElementById('sales-modal').style.display = 'none';
+      };
+      
       // 전역에 app 즉시 노출
       window.app = app;
       console.log('✅ window.app 노출 완료');
@@ -4514,7 +4845,7 @@
         console.log('🚀 DOMContentLoaded 이벤트 발생');
         
         // 모든 모달의 배경 클릭 이벤트
-        ['location-modal', 'location-edit-modal', 'employee-modal', 'edit-employee-modal', 'apartment-modal'].forEach(id => {
+        ['location-modal', 'location-edit-modal', 'employee-modal', 'edit-employee-modal', 'apartment-modal', 'sales-modal'].forEach(id => {
           const modal = document.getElementById(id);
           if (modal) {
             modal.addEventListener('click', (e) => {

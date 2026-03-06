@@ -650,13 +650,59 @@
                     ? Math.round((attendanceCount / expectedAttendance) * 100) 
                     : 0;
 
+                // 💰 매출 데이터 조회 (이번 달 & 전월)
+                const { data: currentSales } = await supabaseClient
+                    .from('sales')
+                    .select('amount')
+                    .eq('apartment_id', apt.id)
+                    .eq('year', today.getFullYear())
+                    .eq('month', today.getMonth() + 1)
+                    .single();
+                
+                let prevMonth = today.getMonth();
+                let prevYear = today.getFullYear();
+                if (prevMonth === 0) {
+                    prevMonth = 12;
+                    prevYear -= 1;
+                }
+                
+                const { data: prevSales } = await supabaseClient
+                    .from('sales')
+                    .select('amount')
+                    .eq('apartment_id', apt.id)
+                    .eq('year', prevYear)
+                    .eq('month', prevMonth)
+                    .single();
+                
+                const currentAmount = currentSales?.amount || 0;
+                const prevAmount = prevSales?.amount || 0;
+                
+                let salesChange = 0;
+                let salesChangeIcon = '';
+                let salesChangeColor = '';
+                if (prevAmount > 0) {
+                    salesChange = ((currentAmount - prevAmount) / prevAmount * 100).toFixed(1);
+                    if (salesChange > 0) {
+                        salesChangeIcon = '📈';
+                        salesChangeColor = 'text-green-600';
+                    } else if (salesChange < 0) {
+                        salesChangeIcon = '📉';
+                        salesChangeColor = 'text-red-600';
+                    } else {
+                        salesChangeIcon = '➡️';
+                        salesChangeColor = 'text-gray-600';
+                    }
+                }
+
                 console.log(`📊 ${apt.name} - 이번 달(${today.getMonth() + 1}월) 통계:`, {
                     근무일수: workDays,
                     직원수: employeeCount,
                     예상출근: expectedAttendance,
                     실제출근: attendanceCount,
                     출근율: attendanceRate + '%',
-                    민원: complaintCount
+                    민원: complaintCount,
+                    매출: currentAmount.toLocaleString() + '원',
+                    전월대비: salesChange + '%'
                 });
 
 
@@ -686,6 +732,8 @@
                     attendanceCount,
                     attendanceRate,
                     complaintCount,
+                    currentAmount,
+                    salesChange,
                     status,
                     statusText,
                     html: `
@@ -707,18 +755,28 @@
                                 <span class="status-badge status-${status}">${statusText}</span>
                             </div>
 
-                            <div class="grid grid-cols-3 gap-4 mb-4">
+                            <!-- 통계 그리드 -->
+                            <div class="grid grid-cols-4 gap-3 mb-4">
                                 <div class="text-center p-3 bg-gray-50 rounded-lg">
                                     <p class="text-xs text-gray-600 mb-1">직원</p>
-                                    <p class="text-2xl font-bold brand-color">${employeeCount}</p>
+                                    <p class="text-xl font-bold brand-color">${employeeCount}</p>
                                 </div>
                                 <div class="text-center p-3 bg-blue-50 rounded-lg">
                                     <p class="text-xs text-gray-600 mb-1">출근율</p>
-                                    <p class="text-2xl font-bold text-blue-600">${attendanceRate}%</p>
+                                    <p class="text-xl font-bold text-blue-600">${attendanceRate}%</p>
                                 </div>
                                 <div class="text-center p-3 bg-red-50 rounded-lg">
                                     <p class="text-xs text-gray-600 mb-1">미처리</p>
-                                    <p class="text-2xl font-bold text-red-600">${complaintCount}</p>
+                                    <p class="text-xl font-bold text-red-600">${complaintCount}</p>
+                                </div>
+                                <div class="text-center p-3 bg-green-50 rounded-lg">
+                                    <p class="text-xs text-gray-600 mb-1">이번달 매출</p>
+                                    <p class="text-sm font-bold text-green-700">${(currentAmount / 10000).toFixed(0)}만원</p>
+                                    ${salesChange !== 0 ? `
+                                        <p class="text-xs ${salesChangeColor} mt-1">
+                                            ${salesChangeIcon} ${Math.abs(salesChange)}%
+                                        </p>
+                                    ` : ''}
                                 </div>
                             </div>
 
