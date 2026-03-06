@@ -321,7 +321,7 @@
               <i class="fas fa-history mr-2"></i>상세 조회
             </button>
             <button onclick="app.switchTab('stats')" class="nav-tab py-4 px-2 text-sm font-medium transition-all tab-inactive">
-              <i class="fas fa-chart-bar mr-2"></i>통계 요약
+              <i class="fas fa-calendar-check mr-2"></i>근태 관리
             </button>
             <button onclick="app.switchTab('data')" class="nav-tab py-4 px-2 text-sm font-medium transition-all tab-inactive">
               <i class="fas fa-database mr-2"></i>데이터 관리
@@ -517,13 +517,15 @@
         <!-- TAB 3: Stats -->
         <div id="tab-stats" class="tab-content space-y-6 px-4 hidden">
           <!-- 실시간 요약 배너 -->
-          <div class="bg-gradient-to-r from-green-600 to-green-700 p-6 rounded-xl shadow-lg text-white">
+          <div class="bg-white p-6 rounded-xl shadow-sm border">
             <div class="flex items-center justify-between">
               <div>
-                <h2 class="text-2xl font-bold mb-2">📊 실시간 현황</h2>
-                <p class="text-green-100 text-sm">마지막 업데이트: <span id="last-update-time">-</span></p>
+                <h2 class="text-2xl font-bold mb-2 text-gray-800">
+                  <i class="fas fa-chart-line text-blue-600 mr-2"></i>실시간 근태 현황
+                </h2>
+                <p class="text-gray-500 text-sm">마지막 업데이트: <span id="last-update-time" class="text-gray-700 font-medium">-</span></p>
               </div>
-              <button onclick="app.loadStats()" class="px-4 py-2 bg-white text-green-600 rounded-lg hover:bg-green-50 transition-colors font-medium">
+              <button onclick="app.loadStats()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium shadow-sm">
                 <i class="fas fa-sync-alt mr-2"></i>새로고침
               </button>
             </div>
@@ -558,50 +560,57 @@
           </div>
 
           <!-- Cards -->
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-l-4 border-l-blue-500">
-              <div class="flex justify-between items-start">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- 총원 카드 -->
+            <div class="bg-white p-6 rounded-xl shadow-sm border hover:shadow-md transition-shadow">
+              <div class="flex justify-between items-start mb-4">
                 <div>
-                  <p class="text-sm text-gray-500 mb-1">총원</p>
-                  <p class="text-3xl font-bold text-gray-800"><span id="stat-total">0</span></p>
+                  <p class="text-sm text-gray-500 mb-2 font-medium">활성 직원</p>
+                  <p class="text-4xl font-bold text-gray-800"><span id="stat-total">0</span><span class="text-lg text-gray-500 ml-1">명</span></p>
                 </div>
-                <div class="p-3 bg-blue-50 rounded-lg">
-                  <i class="fas fa-users text-2xl text-blue-500"></i>
+                <div class="p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl">
+                  <i class="fas fa-users text-3xl text-blue-600"></i>
                 </div>
               </div>
+              <p class="text-xs text-gray-400">등록된 활성 직원 수</p>
             </div>
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-l-4 border-l-red-500">
-              <div class="flex justify-between items-start">
-                <div>
-                  <p class="text-sm text-gray-500 mb-1">휴가/결근</p>
-                  <p class="text-3xl font-bold text-gray-800"><span id="stat-absent">0</span></p>
+
+            <!-- 휴가/결근 카드 (개선) -->
+            <div class="bg-white p-6 rounded-xl shadow-sm border hover:shadow-md transition-shadow">
+              <div class="flex justify-between items-start mb-4">
+                <div class="flex-1">
+                  <p class="text-sm text-gray-500 mb-2 font-medium">휴가/결근</p>
+                  <div class="flex items-baseline gap-3">
+                    <div>
+                      <p class="text-sm text-orange-600 font-medium">휴가 <span id="stat-vacation" class="text-2xl font-bold">0</span></p>
+                    </div>
+                    <div>
+                      <p class="text-sm text-red-600 font-medium">결근 <span id="stat-absent" class="text-2xl font-bold">0</span></p>
+                    </div>
+                  </div>
                 </div>
-                <div class="p-3 bg-red-50 rounded-lg">
-                  <i class="fas fa-user-times text-2xl text-red-500"></i>
+                <div class="p-4 bg-gradient-to-br from-orange-50 to-red-100 rounded-xl">
+                  <i class="fas fa-user-times text-3xl text-red-600"></i>
                 </div>
               </div>
+              <button onclick="app.showVacationModal()" class="text-xs text-blue-600 hover:text-blue-700 font-medium">
+                <i class="fas fa-plus-circle mr-1"></i>휴가 등록
+              </button>
             </div>
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-l-4 border-l-green-500">
-              <div class="flex justify-between items-start">
+
+            <!-- 현재원 카드 -->
+            <div class="bg-white p-6 rounded-xl shadow-sm border hover:shadow-md transition-shadow">
+              <div class="flex justify-between items-start mb-4">
                 <div>
-                  <p class="text-sm text-gray-500 mb-1">현재원</p>
-                  <p class="text-3xl font-bold text-gray-800"><span id="stat-present">0</span></p>
+                  <p class="text-sm text-gray-500 mb-2 font-medium">출근 인원</p>
+                  <p class="text-4xl font-bold text-gray-800"><span id="stat-present">0</span><span class="text-lg text-gray-500 ml-1">명</span></p>
+                  <p class="text-sm text-green-600 font-medium mt-1">출근율 <span id="stat-rate">0</span>%</p>
                 </div>
-                <div class="p-3 bg-green-50 rounded-lg">
-                  <i class="fas fa-user-check text-2xl text-green-500"></i>
+                <div class="p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-xl">
+                  <i class="fas fa-user-check text-3xl text-green-600"></i>
                 </div>
               </div>
-            </div>
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-l-4 border-l-purple-500">
-              <div class="flex justify-between items-start">
-                <div>
-                  <p class="text-sm text-gray-500 mb-1">청소 작업</p>
-                  <p class="text-3xl font-bold text-gray-800"><span id="stat-cleaning">0</span></p>
-                </div>
-                <div class="p-3 bg-purple-50 rounded-lg">
-                  <i class="fas fa-broom text-2xl text-purple-500"></i>
-                </div>
-              </div>
+              <p class="text-xs text-gray-400">당일 출근 완료</p>
             </div>
           </div>
 
@@ -1246,6 +1255,78 @@
           <button onclick="app.addLocation()" class="w-full px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium">
             <i class="fas fa-plus mr-2"></i>추가
           </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Vacation Modal -->
+    <div id="vacation-modal" class="fixed inset-0 z-50 bg-black bg-opacity-80 items-center justify-center p-4" style="display: none;">
+      <div class="bg-white rounded-2xl max-w-2xl w-full shadow-2xl max-h-[90vh] overflow-y-auto" onclick="event.stopPropagation()">
+        <div class="flex justify-between items-center p-6 border-b bg-gradient-to-r from-orange-50 to-red-50">
+          <h3 class="text-xl font-bold text-gray-800">
+            <i class="fas fa-calendar-alt mr-2 text-orange-600"></i>휴가 관리
+          </h3>
+          <button onclick="app.closeVacationModal()" class="text-gray-400 hover:text-gray-600 text-2xl">×</button>
+        </div>
+        
+        <!-- 휴가 등록 폼 -->
+        <div class="p-6 border-b bg-gray-50">
+          <h4 class="font-bold text-gray-700 mb-4"><i class="fas fa-plus-circle mr-2 text-blue-600"></i>휴가 등록</h4>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">직원 선택 *</label>
+              <select id="vacation-employee" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500">
+                <option value="">직원을 선택하세요</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">휴가 날짜 *</label>
+              <input type="date" id="vacation-date" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">휴가 유형 *</label>
+              <select id="vacation-type" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500">
+                <option value="연차">연차</option>
+                <option value="반차">반차</option>
+                <option value="병가">병가</option>
+                <option value="경조사">경조사</option>
+                <option value="기타">기타</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">메모</label>
+              <input type="text" id="vacation-note" placeholder="특이사항 입력" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500">
+            </div>
+          </div>
+          <button onclick="app.addVacation()" class="mt-4 px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors font-medium">
+            <i class="fas fa-plus mr-2"></i>등록
+          </button>
+        </div>
+
+        <!-- 당월 휴가 목록 -->
+        <div class="p-6">
+          <div class="flex justify-between items-center mb-4">
+            <h4 class="font-bold text-gray-700"><i class="fas fa-list mr-2 text-green-600"></i>당월 휴가 목록</h4>
+            <span class="text-sm text-gray-500" id="vacation-month-label"></span>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead class="bg-gray-50 border-b">
+                <tr>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600">날짜</th>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600">직원명</th>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600">유형</th>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600">메모</th>
+                  <th class="px-4 py-3 text-center text-xs font-semibold text-gray-600">삭제</th>
+                </tr>
+              </thead>
+              <tbody id="vacation-list">
+                <tr>
+                  <td colspan="5" class="px-4 py-8 text-center text-gray-400">등록된 휴가가 없습니다</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
@@ -2360,39 +2441,61 @@
 
           try {
             // 🏢 아파트 필터를 위한 쿼리 수정
-            let empQuery = this.sb.from('employees').select('id, name, position').eq('status', 'active');
+            // 활성 직원만 조회 (is_active = true)
+            let empQuery = this.sb.from('employees').select('id, name, position, is_active').eq('is_active', true);
             let attsQuery = this.sb
               .from('attendance_records')
               .select('*')
               .gte('scan_time', `${start}T00:00:00Z`)
               .lte('scan_time', `${end}T23:59:59Z`);
-            let cleansQuery = this.sb
-              .from('cleaning_tasks')
+            
+            // 휴가 데이터 조회 (기간 내)
+            let vacQuery = this.sb
+              .from('vacations')
               .select('*')
-              .gte('created_at', `${start}T00:00:00Z`)
-              .lte('created_at', `${end}T23:59:59Z`);
+              .gte('vacation_date', start)
+              .lte('vacation_date', end);
 
             // 아파트 필터 적용
             if (this.currentApartment && this.currentApartment.id) {
               empQuery = empQuery.eq('apartment_id', this.currentApartment.id);
               attsQuery = attsQuery.eq('apartment_id', this.currentApartment.id);
-              cleansQuery = cleansQuery.eq('apartment_id', this.currentApartment.id);
+              vacQuery = vacQuery.eq('apartment_id', this.currentApartment.id);
             }
 
             const { data: emps } = await empQuery;
             const { data: atts } = await attsQuery;
-            const { data: cleans } = await cleansQuery;
+            const { data: vacations } = await vacQuery;
 
             const safeEmps = emps || [];
             const safeAtts = atts || [];
-            const safeCleans = cleans || [];
+            const safeVacations = vacations || [];
 
-            // KPIs
-            const total = safeEmps.length;
+            console.log('📊 근태 통계 로드:', { 
+              활성직원: safeEmps.length, 
+              출퇴근기록: safeAtts.length,
+              휴가기록: safeVacations.length,
+              기간: `${start} ~ ${end}`
+            });
+
+            // KPIs 계산
+            const total = safeEmps.length; // 활성 직원 수만 표시
+            
+            // 출근한 직원 집합
             const presentSet = new Set(
               safeAtts.filter((a) => a.attendance_type === '출근').map((a) => a.employee_name),
             );
             const present = presentSet.size;
+            
+            // 휴가 중인 직원 집합 (기간 내)
+            const vacationSet = new Set(safeVacations.map(v => v.employee_name));
+            const vacationCount = vacationSet.size;
+            
+            // 결근: 총원 - 출근 - 휴가
+            const absentCount = total - present - vacationCount;
+            
+            // 출근율 계산
+            const attendanceRate = total > 0 ? Math.round((present / total) * 100) : 0;
 
             // Calc Hours by Period - 개선된 로직
             const workMap = {};
@@ -2491,9 +2594,21 @@
 
             // Update KPI cards
             document.getElementById('stat-total').textContent = total;
-            document.getElementById('stat-absent').textContent = total - present;
+            document.getElementById('stat-vacation').textContent = vacationCount;
+            document.getElementById('stat-absent').textContent = Math.max(0, absentCount);
             document.getElementById('stat-present').textContent = present;
-            document.getElementById('stat-cleaning').textContent = safeCleans.length;
+            document.getElementById('stat-rate').textContent = attendanceRate;
+            
+            // 업데이트 시간 표시
+            const updateTime = new Date().toLocaleString('ko-KR', {
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit',
+              hour: '2-digit',
+              minute: '2-digit',
+              second: '2-digit'
+            });
+            document.getElementById('last-update-time').textContent = updateTime;
 
             // Render employee hours table
             const tbody = document.getElementById('hours-table-body');
@@ -2797,6 +2912,200 @@
           
           const today = new Date().toISOString().split('T')[0];
           XLSX.writeFile(wb, `근로시간_집계_${today}.xlsx`);
+        },
+
+        // Vacation Management
+        showVacationModal: async function () {
+          const modal = document.getElementById('vacation-modal');
+          modal.style.display = 'flex';
+          
+          // 직원 목록 로드
+          await this.loadVacationEmployees();
+          
+          // 당월 휴가 목록 로드
+          await this.loadMonthlyVacations();
+          
+          // 현재 월 표시
+          const now = new Date();
+          const monthLabel = `${now.getFullYear()}년 ${now.getMonth() + 1}월`;
+          document.getElementById('vacation-month-label').textContent = monthLabel;
+          
+          // 오늘 날짜 기본값
+          document.getElementById('vacation-date').value = now.toISOString().split('T')[0];
+        },
+
+        closeVacationModal: function () {
+          document.getElementById('vacation-modal').style.display = 'none';
+          // 폼 초기화
+          document.getElementById('vacation-employee').value = '';
+          document.getElementById('vacation-date').value = '';
+          document.getElementById('vacation-type').value = '연차';
+          document.getElementById('vacation-note').value = '';
+        },
+
+        loadVacationEmployees: async function () {
+          try {
+            let query = this.sb.from('employees')
+              .select('id, name, position')
+              .eq('is_active', true)
+              .order('name');
+            
+            if (this.currentApartment && this.currentApartment.id) {
+              query = query.eq('apartment_id', this.currentApartment.id);
+            }
+            
+            const { data, error } = await query;
+            if (error) throw error;
+            
+            const select = document.getElementById('vacation-employee');
+            select.innerHTML = '<option value="">직원을 선택하세요</option>';
+            
+            (data || []).forEach(emp => {
+              const opt = document.createElement('option');
+              opt.value = emp.id;
+              opt.textContent = `${emp.name} (${emp.position || '직원'})`;
+              opt.dataset.name = emp.name;
+              select.appendChild(opt);
+            });
+          } catch (e) {
+            console.error('❌ 직원 목록 로드 실패:', e);
+          }
+        },
+
+        loadMonthlyVacations: async function () {
+          try {
+            const now = new Date();
+            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+            const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+            
+            let query = this.sb.from('vacations')
+              .select('*')
+              .gte('vacation_date', startOfMonth)
+              .lte('vacation_date', endOfMonth)
+              .order('vacation_date', { ascending: false });
+            
+            if (this.currentApartment && this.currentApartment.id) {
+              query = query.eq('apartment_id', this.currentApartment.id);
+            }
+            
+            const { data, error } = await query;
+            if (error) throw error;
+            
+            const tbody = document.getElementById('vacation-list');
+            tbody.innerHTML = '';
+            
+            if (!data || data.length === 0) {
+              tbody.innerHTML = '<tr><td colspan="5" class="px-4 py-8 text-center text-gray-400">등록된 휴가가 없습니다</td></tr>';
+              return;
+            }
+            
+            data.forEach(vac => {
+              const tr = document.createElement('tr');
+              tr.className = 'border-b hover:bg-gray-50';
+              
+              // 휴가 유형 색상
+              const typeColors = {
+                '연차': 'text-blue-600',
+                '반차': 'text-cyan-600',
+                '병가': 'text-red-600',
+                '경조사': 'text-purple-600',
+                '기타': 'text-gray-600'
+              };
+              const typeColor = typeColors[vac.vacation_type] || 'text-gray-600';
+              
+              tr.innerHTML = `
+                <td class="px-4 py-3 text-sm text-gray-700">${new Date(vac.vacation_date).toLocaleDateString('ko-KR')}</td>
+                <td class="px-4 py-3 text-sm font-medium text-gray-800">${vac.employee_name}</td>
+                <td class="px-4 py-3 text-sm ${typeColor} font-medium">${vac.vacation_type}</td>
+                <td class="px-4 py-3 text-sm text-gray-600">${vac.note || '-'}</td>
+                <td class="px-4 py-3 text-center">
+                  <button onclick="app.deleteVacation('${vac.id}')" class="text-red-600 hover:text-red-800" title="삭제">
+                    <i class="fas fa-trash-alt"></i>
+                  </button>
+                </td>
+              `;
+              tbody.appendChild(tr);
+            });
+          } catch (e) {
+            console.error('❌ 휴가 목록 로드 실패:', e);
+          }
+        },
+
+        addVacation: async function () {
+          const employeeSelect = document.getElementById('vacation-employee');
+          const employeeId = employeeSelect.value;
+          const employeeName = employeeSelect.selectedOptions[0]?.dataset.name;
+          const vacationDate = document.getElementById('vacation-date').value;
+          const vacationType = document.getElementById('vacation-type').value;
+          const note = document.getElementById('vacation-note').value.trim();
+          
+          if (!employeeId || !vacationDate) {
+            alert('직원과 날짜를 선택하세요.');
+            return;
+          }
+          
+          if (!this.currentApartment || !this.currentApartment.id) {
+            alert('아파트 정보가 없습니다.');
+            return;
+          }
+          
+          try {
+            const { error } = await this.sb.from('vacations').insert({
+              apartment_id: this.currentApartment.id,
+              employee_id: employeeId,
+              employee_name: employeeName,
+              vacation_date: vacationDate,
+              vacation_type: vacationType,
+              note: note || null
+            });
+            
+            if (error) {
+              if (error.code === '23505') { // 중복 오류
+                alert('해당 날짜에 이미 같은 유형의 휴가가 등록되어 있습니다.');
+              } else {
+                throw error;
+              }
+              return;
+            }
+            
+            alert('✅ 휴가가 등록되었습니다.');
+            
+            // 폼 초기화
+            document.getElementById('vacation-employee').value = '';
+            document.getElementById('vacation-note').value = '';
+            
+            // 목록 새로고침
+            await this.loadMonthlyVacations();
+            
+            // 통계 새로고침
+            await this.loadStats();
+          } catch (e) {
+            console.error('❌ 휴가 등록 실패:', e);
+            alert('휴가 등록에 실패했습니다: ' + e.message);
+          }
+        },
+
+        deleteVacation: async function (vacationId) {
+          if (!confirm('이 휴가 기록을 삭제하시겠습니까?')) {
+            return;
+          }
+          
+          try {
+            const { error } = await this.sb.from('vacations').delete().eq('id', vacationId);
+            
+            if (error) throw error;
+            
+            alert('✅ 휴가 기록이 삭제되었습니다.');
+            
+            // 목록 새로고침
+            await this.loadMonthlyVacations();
+            
+            // 통계 새로고침
+            await this.loadStats();
+          } catch (e) {
+            console.error('❌ 휴가 삭제 실패:', e);
+            alert('휴가 삭제에 실패했습니다: ' + e.message);
+          }
         },
         
         // Employee Management
@@ -4869,7 +5178,7 @@
         console.log('🚀 DOMContentLoaded 이벤트 발생');
         
         // 모든 모달의 배경 클릭 이벤트
-        ['location-modal', 'location-edit-modal', 'employee-modal', 'edit-employee-modal', 'apartment-modal', 'sales-modal'].forEach(id => {
+        ['location-modal', 'location-edit-modal', 'employee-modal', 'edit-employee-modal', 'apartment-modal', 'sales-modal', 'vacation-modal'].forEach(id => {
           const modal = document.getElementById(id);
           if (modal) {
             modal.addEventListener('click', (e) => {
