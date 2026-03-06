@@ -96,7 +96,7 @@
         right: 0 !important;
         bottom: 0 !important;
         margin: 0 !important;
-        padding: 1.5rem 0 0 0 !important; /* 상단 여백 증가 (24px) */
+        padding: 2rem 0 0 0 !important; /* 상단 여백 증가 (32px) */
         width: 100% !important;
         height: 100% !important;
         overflow: hidden !important;
@@ -3980,19 +3980,27 @@
           const startInput = document.getElementById('report-start-date');
           const endInput = document.getElementById('report-end-date');
           
+          // 로컬 날짜를 YYYY-MM-DD 형식으로 변환하는 헬퍼 함수
+          const formatLocalDate = (date) => {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+          };
+          
           if (range === 'today') {
-            const dateStr = today.toISOString().split('T')[0];
+            const dateStr = formatLocalDate(today);
             startInput.value = dateStr;
             endInput.value = dateStr;
           } else if (range === 'week') {
             const weekAgo = new Date(today);
             weekAgo.setDate(today.getDate() - 6); // 오늘 포함 7일
-            startInput.value = weekAgo.toISOString().split('T')[0];
-            endInput.value = today.toISOString().split('T')[0];
+            startInput.value = formatLocalDate(weekAgo);
+            endInput.value = formatLocalDate(today);
           } else if (range === 'month') {
             const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
-            startInput.value = monthStart.toISOString().split('T')[0];
-            endInput.value = today.toISOString().split('T')[0];
+            startInput.value = formatLocalDate(monthStart);
+            endInput.value = formatLocalDate(today);
           }
           
           // 자동으로 조회
