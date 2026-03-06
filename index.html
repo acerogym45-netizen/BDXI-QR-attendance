@@ -90,10 +90,15 @@
       
       /* Work Report Tab - No spacing, Fill screen */
       #tab-report {
+        position: absolute !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
         margin: 0 !important;
         padding: 0 !important;
-        min-height: 0 !important;
-        height: calc(100vh - 140px) !important;
+        width: 100% !important;
+        height: 100% !important;
         overflow: hidden !important;
         max-width: none !important; /* 최대 너비 제한 제거 */
       }
@@ -350,7 +355,7 @@
       </nav>
 
       <!-- Main Content -->
-      <main id="main-content" class="flex-1 w-full">
+      <main id="main-content" class="flex-1 w-full relative">
         <!-- 계약 만료 알림 배너 -->
         <div id="contract-alert-banner" class="hidden bg-gradient-to-r from-orange-50 to-red-50 border-2 border-orange-300 rounded-xl p-4 shadow-lg mx-4 mt-4" style="margin-bottom: 1rem;">
           <div class="flex items-start gap-3">
