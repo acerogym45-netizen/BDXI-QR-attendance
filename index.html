@@ -4109,6 +4109,18 @@
             const totalStaff = activeEmployees.length;
             
             // 2. 출근 데이터 조회 (근태 관리와 동일한 방식)
+            console.log('🔍 쿼리 파라미터 확인:', {
+              startDate,
+              endDate,
+              startDateType: typeof startDate,
+              endDateType: typeof endDate,
+              queryStart: `${startDate}T00:00:00Z`,
+              queryEnd: `${endDate}T23:59:59Z`,
+              hasApartment: !!(this.currentApartment && this.currentApartment.id),
+              apartmentId: this.currentApartment ? this.currentApartment.id : null,
+              apartmentName: this.currentApartment ? this.currentApartment.name : null
+            });
+            
             let attendanceQuery = this.sb
               .from('attendance_records')
               .select('employee_name, attendance_type, scan_time')
@@ -4116,22 +4128,24 @@
               .lte('scan_time', `${endDate}T23:59:59Z`);
             
             if (this.currentApartment && this.currentApartment.id) {
+              console.log('✅ 아파트 필터 적용:', this.currentApartment.id);
               attendanceQuery = attendanceQuery.eq('apartment_id', this.currentApartment.id);
+            } else {
+              console.log('⚠️ 아파트 필터 없음 - 전체 조회');
             }
             
             const { data: attendanceRecords, error: attError } = await attendanceQuery;
+            
             if (attError) {
-              console.error('출근 데이터 조회 실패:', attError);
+              console.error('❌ 출근 데이터 조회 실패:', attError);
+              alert('출석 데이터 조회 중 오류 발생: ' + attError.message);
             }
             
-            console.log('📊 업무 일지 - 출석 데이터 조회:', {
-              startDate,
-              endDate,
-              queryStart: `${startDate}T00:00:00Z`,
-              queryEnd: `${endDate}T23:59:59Z`,
+            console.log('📊 업무 일지 - 출석 데이터 조회 결과:', {
+              성공: !attError,
               recordCount: (attendanceRecords || []).length,
               records: attendanceRecords,
-              currentApartment: this.currentApartment ? this.currentApartment.name : 'All'
+              error: attError
             });
             
             // 3. 실제 출근한 직원 수 계산 (attendance_type='출근')
