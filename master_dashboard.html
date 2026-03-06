@@ -653,7 +653,7 @@
                 // 💰 매출 데이터 조회 (이번 달 & 전월)
                 const { data: currentSales } = await supabaseClient
                     .from('sales')
-                    .select('amount')
+                    .select('*')
                     .eq('apartment_id', apt.id)
                     .eq('year', today.getFullYear())
                     .eq('month', today.getMonth() + 1)
@@ -676,6 +676,8 @@
                 
                 const currentAmount = currentSales?.amount || 0;
                 const prevAmount = prevSales?.amount || 0;
+                const increaseReason = currentSales?.increase_reason || '';
+                const decreaseReason = currentSales?.decrease_reason || '';
                 
                 let salesChange = 0;
                 let salesChangeIcon = '';
@@ -734,6 +736,8 @@
                     complaintCount,
                     currentAmount,
                     salesChange,
+                    increaseReason,
+                    decreaseReason,
                     status,
                     statusText,
                     html: `
@@ -755,8 +759,8 @@
                                 <span class="status-badge status-${status}">${statusText}</span>
                             </div>
 
-                            <!-- 통계 그리드 -->
-                            <div class="grid grid-cols-4 gap-3 mb-4">
+                            <!-- 통계 그리드 3칸 -->
+                            <div class="grid grid-cols-3 gap-3 mb-4">
                                 <div class="text-center p-3 bg-gray-50 rounded-lg">
                                     <p class="text-xs text-gray-600 mb-1">직원</p>
                                     <p class="text-xl font-bold brand-color">${employeeCount}</p>
@@ -766,18 +770,50 @@
                                     <p class="text-xl font-bold text-blue-600">${attendanceRate}%</p>
                                 </div>
                                 <div class="text-center p-3 bg-red-50 rounded-lg">
-                                    <p class="text-xs text-gray-600 mb-1">미처리</p>
+                                    <p class="text-xs text-gray-600 mb-1">민원 미처리</p>
                                     <p class="text-xl font-bold text-red-600">${complaintCount}</p>
                                 </div>
-                                <div class="text-center p-3 bg-green-50 rounded-lg">
-                                    <p class="text-xs text-gray-600 mb-1">이번달 매출</p>
-                                    <p class="text-sm font-bold text-green-700">${(currentAmount / 10000).toFixed(0)}만원</p>
+                            </div>
+
+                            <!-- 매출 정보 섹션 -->
+                            <div class="bg-green-50 p-4 rounded-lg mb-4 border border-green-200">
+                                <div class="flex items-center justify-between mb-3">
+                                    <div>
+                                        <p class="text-sm text-gray-600 mb-1">금월 매출액</p>
+                                        <p class="text-2xl font-bold text-green-700">${(currentAmount / 10000).toFixed(0)}만원</p>
+                                    </div>
                                     ${salesChange !== 0 ? `
-                                        <p class="text-xs ${salesChangeColor} mt-1">
-                                            ${salesChangeIcon} ${Math.abs(salesChange)}%
-                                        </p>
+                                        <div class="text-right">
+                                            <p class="text-xs text-gray-600">전월 대비</p>
+                                            <p class="text-lg font-bold ${salesChangeColor}">
+                                                ${salesChangeIcon} ${Math.abs(salesChange)}%
+                                            </p>
+                                        </div>
                                     ` : ''}
                                 </div>
+                                
+                                ${increaseReason || decreaseReason ? `
+                                    <div class="border-t border-green-200 pt-3 mt-3 space-y-2">
+                                        ${increaseReason ? `
+                                            <div class="flex items-start gap-2">
+                                                <i class="fas fa-arrow-up text-green-600 mt-1"></i>
+                                                <div class="flex-1">
+                                                    <p class="text-xs text-gray-600 mb-1">상승 요인</p>
+                                                    <p class="text-sm text-gray-800">${increaseReason}</p>
+                                                </div>
+                                            </div>
+                                        ` : ''}
+                                        ${decreaseReason ? `
+                                            <div class="flex items-start gap-2">
+                                                <i class="fas fa-arrow-down text-red-600 mt-1"></i>
+                                                <div class="flex-1">
+                                                    <p class="text-xs text-gray-600 mb-1">하락 요인</p>
+                                                    <p class="text-sm text-gray-800">${decreaseReason}</p>
+                                                </div>
+                                            </div>
+                                        ` : ''}
+                                    </div>
+                                ` : ''}
                             </div>
 
                             <div class="flex gap-2">
