@@ -120,6 +120,7 @@
         <div id="dashboard" style="display: none;">
             <!-- Summary Stats -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                <!-- 1. 전체 아파트 -->
                 <div class="stat-card">
                     <div class="flex items-center justify-between">
                         <div>
@@ -130,6 +131,7 @@
                     </div>
                 </div>
 
+                <!-- 2. 전체 직원 -->
                 <div class="stat-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
                     <div class="flex items-center justify-between">
                         <div>
@@ -140,23 +142,27 @@
                     </div>
                 </div>
 
-                <div class="stat-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                <!-- 3. 주의 아파트 -->
+                <div class="stat-card" style="background: linear-gradient(135deg, #ffa751 0%, #ffe259 100%);">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-sm opacity-90">금일 출근율</p>
-                            <h3 class="text-4xl font-bold mt-2" id="todayAttendance">0%</h3>
+                            <p class="text-sm opacity-90">주의 현장</p>
+                            <h3 class="text-4xl font-bold mt-2" id="warningApartments">0</h3>
+                            <p class="text-xs opacity-75 mt-1">개선 필요</p>
                         </div>
-                        <i class="fas fa-chart-line text-5xl opacity-30"></i>
+                        <i class="fas fa-exclamation-circle text-5xl opacity-30"></i>
                     </div>
                 </div>
 
+                <!-- 4. 긴급 아파트 -->
                 <div class="stat-card" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-sm opacity-90">미처리 민원</p>
-                            <h3 class="text-4xl font-bold mt-2" id="pendingComplaints">0</h3>
+                            <p class="text-sm opacity-90">긴급 현장</p>
+                            <h3 class="text-4xl font-bold mt-2" id="criticalApartments">0</h3>
+                            <p class="text-xs opacity-75 mt-1">즉각 대응</p>
                         </div>
-                        <i class="fas fa-exclamation-triangle text-5xl opacity-30"></i>
+                        <i class="fas fa-fire text-5xl opacity-30"></i>
                     </div>
                 </div>
             </div>
@@ -378,45 +384,13 @@
 
                 console.log('✅ Employees count:', employeesCount || 0);
 
-                // Load today's attendance
-                const today = new Date().toISOString().split('T')[0];
-                const { data: attendanceData, error: attError } = await supabaseClient
-                    .from('attendance_records')
-                    .select('*')
-                    .gte('check_in_time', `${today}T00:00:00`)
-                    .lte('check_in_time', `${today}T23:59:59`);
-
-                if (attError && attError.code !== 'PGRST116') {
-                    console.error('Attendance load error:', attError);
-                }
-
-                console.log('✅ Today attendance:', attendanceData?.length || 0);
-
-                // Load complaints
-                const { data: complaints, error: compError } = await supabaseClient
-                    .from('complaints')
-                    .select('*')
-                    .eq('status', 'pending');
-
-                if (compError && compError.code !== 'PGRST116') {
-                    console.error('Complaints load error:', compError);
-                }
-
-                console.log('✅ Pending complaints:', complaints?.length || 0);
-
-                // Calculate stats
-                const totalEmployees = employeesCount || 0;
-                const attendanceRate = totalEmployees > 0 
-                    ? Math.round((attendanceData?.length || 0) / totalEmployees * 100) 
-                    : 0;
-
-                // Update summary stats
+                // 기본 통계 업데이트
                 document.getElementById('totalApartments').textContent = apartmentsData.length;
-                document.getElementById('totalEmployees').textContent = totalEmployees;
-                document.getElementById('todayAttendance').textContent = attendanceRate + '%';
-                document.getElementById('pendingComplaints').textContent = complaints?.length || 0;
-
-                // Load detailed apartment data
+                document.getElementById('totalEmployees').textContent = employeesCount || 0;
+                document.getElementById('warningApartments').textContent = '0';
+                document.getElementById('criticalApartments').textContent = '0';
+                
+                // 아파트별 상세 데이터 로드 (상태별 카운트는 여기서 업데이트됨)
                 await loadApartmentsDetails();
 
                 // Load recent activities
@@ -602,6 +576,19 @@
             }));
 
             renderApartments(apartmentCards);
+            
+            // 상태별 카운트 업데이트
+            updateStatusCounts(apartmentCards);
+        }
+
+        function updateStatusCounts(apartmentCards) {
+            const warningCount = apartmentCards.filter(card => card.status === 'warning').length;
+            const criticalCount = apartmentCards.filter(card => card.status === 'critical').length;
+            
+            document.getElementById('warningApartments').textContent = warningCount;
+            document.getElementById('criticalApartments').textContent = criticalCount;
+            
+            console.log('📊 Status counts - Warning:', warningCount, 'Critical:', criticalCount);
         }
 
         function renderApartments(apartmentCards) {
