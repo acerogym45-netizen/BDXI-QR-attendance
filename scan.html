@@ -852,14 +852,22 @@
           try {
             // 🚫 출근 시 차단 검증 (출근 타입만)
             if (type === '출근') {
+              console.log('🔍 차단 검증 시작:', {
+                aptId: this.state.aptId,
+                empId: this.state.selectedEmp.id,
+                empName: this.state.selectedEmp.name
+              });
+
               const { data: validationResult, error: validationError } = await this.sb
                 .rpc('validate_check_in', {
                   apartment_id_param: this.state.aptId,
                   employee_id_param: this.state.selectedEmp.id
                 });
 
+              console.log('📊 차단 검증 결과:', { validationResult, validationError });
+
               if (validationError) {
-                console.error('차단 검증 실패:', validationError);
+                console.error('❌ 차단 검증 실패:', validationError);
               } else if (validationResult && validationResult.blocked) {
                 // 출근 차단됨!
                 const incompleteCount = validationResult.incomplete_count || 0;
@@ -881,7 +889,10 @@
                 
                 btnIcon.className = originalClass;
                 alert(message);
+                console.log('🚫 출근 차단됨!', { incompleteCount, records });
                 return; // 출근 차단!
+              } else {
+                console.log('✅ 차단 없음 - 정상 처리');
               }
             }
 
