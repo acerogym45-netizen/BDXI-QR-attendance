@@ -850,8 +850,45 @@
           btnIcon.className = 'fas fa-spinner fa-spin text-2xl mb-1';
 
           try {
+            // 🚫 출근 시 차단 검증 (출근 타입만)
+            if (type === '출근') {
+              const { data: validationResult, error: validationError } = await this.sb
+                .rpc('validate_check_in', {
+                  apartment_id_param: this.state.aptId,
+                  employee_id_param: this.state.selectedEmp.id
+                });
+
+              if (validationError) {
+                console.error('차단 검증 실패:', validationError);
+              } else if (validationResult && validationResult.blocked) {
+                // 출근 차단됨!
+                const incompleteCount = validationResult.incomplete_count || 0;
+                const records = validationResult.incomplete_records || [];
+                
+                let message = `🚫 출근이 차단되었습니다\n\n`;
+                message += `퇴근 기록이 없는 날이 ${incompleteCount}건 있습니다:\n\n`;
+                
+                records.slice(0, 3).forEach(record => {
+                  const date = new Date(record.date).toLocaleDateString('ko-KR');
+                  message += `• ${date} (${record.days_ago}일 전)\n`;
+                });
+                
+                if (records.length > 3) {
+                  message += `• ... 외 ${records.length - 3}건\n`;
+                }
+                
+                message += `\n센터 관리자에게 문의하여\n퇴근 시간을 등록해주세요.`;
+                
+                btnIcon.className = originalClass;
+                alert(message);
+                return; // 출근 차단!
+              }
+            }
+
+            // 정상 처리
             const payload = {
               employee_name: this.state.selectedEmp.name,
+              employee_id: this.state.selectedEmp.id,
               apartment_id: this.state.aptId,
               attendance_type: type,
               location: this.state.locationName,
