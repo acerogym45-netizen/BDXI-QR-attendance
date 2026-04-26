@@ -2820,33 +2820,31 @@
             
             let totalDaily = 0, totalWeekly = 0, totalMonthly = 0;
             
-            // 근로시간이 0보다 큰 직원만 표시 (출근 기록이 있는 직원)
+            // 모든 활성 직원 표시 (근로시간 0이어도 표시)
             const workingEmployees = Object.entries(employeeHours)
-              .filter(([name, data]) => data.daily > 0 || data.weekly > 0 || data.monthly > 0)
+              .filter(([name, data]) => data.status === 'active') // active 직원만
               .sort((a, b) => {
-                // 활성 직원을 먼저, 그 다음 이름순
-                if (a[1].status !== b[1].status) {
-                  return a[1].status === 'active' ? -1 : 1;
-                }
+                // 이름순 정렬
                 return a[0].localeCompare(b[0], 'ko-KR');
               });
             
             if (workingEmployees.length === 0) {
-              tbody.innerHTML = '<tr><td colspan="5" class="px-4 py-8 text-center text-gray-400">근무 기록이 없습니다</td></tr>';
+              tbody.innerHTML = '<tr><td colspan="5" class="px-4 py-8 text-center text-gray-400">직원이 없습니다</td></tr>';
             } else {
               workingEmployees.forEach(([name, data]) => {
                 const tr = document.createElement('tr');
                 
-                // 비활성 직원 표시
-                const statusBadge = data.status === 'inactive' 
-                  ? '<span class="ml-2 px-2 py-0.5 text-xs bg-gray-200 text-gray-600 rounded">퇴사</span>'
+                // 근로시간이 모두 0이면 경고 표시
+                const hasNoHours = data.daily === 0 && data.weekly === 0 && data.monthly === 0;
+                const warningBadge = hasNoHours 
+                  ? '<span class="ml-2 px-2 py-0.5 text-xs bg-yellow-200 text-yellow-800 rounded">⚠️ 근무 기록 없음</span>'
                   : '';
                 
-                const rowClass = data.status === 'inactive' ? 'bg-gray-50' : '';
+                const rowClass = hasNoHours ? 'bg-yellow-50' : '';
                 tr.className = rowClass;
                 
                 tr.innerHTML = `
-                  <td class="px-4 py-3 text-sm font-medium text-gray-800">${name}${statusBadge}</td>
+                  <td class="px-4 py-3 text-sm font-medium text-gray-800">${name}${warningBadge}</td>
                   <td class="px-4 py-3 text-sm text-gray-600">${data.position}</td>
                   <td class="px-4 py-3 text-right text-sm text-gray-600">${data.daily.toFixed(1)}h</td>
                   <td class="px-4 py-3 text-right text-sm text-gray-600">${data.weekly.toFixed(1)}h</td>
