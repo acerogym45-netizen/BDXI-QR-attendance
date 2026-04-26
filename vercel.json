@@ -1,6 +1,6 @@
 {
-  "version": 2,
-  "rewrites": [
-    { "source": "/scan", "destination": "/scan.html" }
-  ]
+  "buildCommand": "echo 'No build needed'",
+  "outputDirectory": ".",
+  "cleanUrls": true,
+  "trailingSlash": false
 }
