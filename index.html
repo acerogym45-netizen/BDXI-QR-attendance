@@ -4338,6 +4338,14 @@
             // 헤더 제외
             const dataRows = rows.slice(1);
             
+            console.log('📅 민원 데이터 날짜 필터링:', {
+              startDate,
+              endDate,
+              totalDataRows: dataRows.length,
+              firstRowDate: dataRows[0]?.[0],
+              firstRowDateParsed: new Date(dataRows[0]?.[0])
+            });
+            
             // 날짜 필터링 (작성일시가 선택 기간 내)
             const start = new Date(startDate);
             const end = new Date(endDate);
@@ -4346,7 +4354,16 @@
             const filteredRows = dataRows.filter(row => {
               if (!row[0]) return false; // 작성일시 없으면 제외
               const rowDate = new Date(row[0]);
-              return rowDate >= start && rowDate <= end;
+              const isValid = rowDate >= start && rowDate <= end;
+              if (!isValid) {
+                console.log('❌ 필터링됨:', row[0], '→', rowDate, '범위:', start, '~', end);
+              }
+              return isValid;
+            });
+            
+            console.log('📊 필터링 결과:', {
+              원본: dataRows.length,
+              필터링후: filteredRows.length
             });
             
             // 통계 계산 (G열 = 인덱스 6, 0-based)
