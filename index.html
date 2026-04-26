@@ -1728,21 +1728,36 @@
             const storedApartmentId = sessionStorage.getItem('kindwon_apartment_id');
             const apartmentName = sessionStorage.getItem('kindwon_apartment_name');
             
+            console.log('🔍 세션 정보 확인:', {
+              storedApartmentId,
+              apartmentName,
+              apartmentsArrayLength: this.apartments?.length || 0,
+              apartmentsArray: this.apartments
+            });
+            
             if (storedApartmentId && apartmentName) {
               // 아파트 전체 정보 다시 로드 (구글 시트 정보 포함)
               const fullApartmentInfo = this.apartments.find(a => a.id === storedApartmentId);
               
+              console.log('🔍 아파트 검색 결과:', {
+                found: !!fullApartmentInfo,
+                fullInfo: fullApartmentInfo
+              });
+              
               if (fullApartmentInfo) {
                 // 전체 정보 사용 (google_sheet_id, google_sheet_name 포함)
                 this.currentApartment = fullApartmentInfo;
-                console.log('✅ 아파트 정보 복원:', {
+                console.log('✅ 아파트 정보 복원 성공:', {
                   name: this.currentApartment.name,
                   google_sheet_id: this.currentApartment.google_sheet_id,
                   google_sheet_name: this.currentApartment.google_sheet_name
                 });
               } else {
-                // apartments 배열이 아직 로드 안 되었을 수 있으니 기본값으로 설정
-                this.currentApartment = { id: storedApartmentId, name: apartmentName };
+                // apartments 배열이 비어있거나 로드 안 됨
+                console.error('❌ apartments 배열에서 아파트를 찾을 수 없습니다!');
+                console.error('재로그인이 필요합니다.');
+                this.logout();
+                return;
               }
               
               this.showDashboard();
