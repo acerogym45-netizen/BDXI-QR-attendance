@@ -4338,12 +4338,35 @@
             // 헤더 제외
             const dataRows = rows.slice(1);
             
+            // 날짜 파싱 함수 (YY.MM.DD → YYYY-MM-DD)
+            const parseSheetDate = (dateStr) => {
+              if (!dateStr) return null;
+              
+              // "26.04.01" 형식 처리
+              const parts = dateStr.toString().split('.');
+              if (parts.length === 3) {
+                let year = parseInt(parts[0]);
+                const month = parts[1].padStart(2, '0');
+                const day = parts[2].padStart(2, '0');
+                
+                // 2자리 연도를 4자리로 변환 (20xx 또는 19xx)
+                if (year < 100) {
+                  year = year < 50 ? 2000 + year : 1900 + year;
+                }
+                
+                return new Date(`${year}-${month}-${day}`);
+              }
+              
+              // 다른 형식은 기본 Date 파싱 시도
+              return new Date(dateStr);
+            };
+            
             console.log('📅 민원 데이터 날짜 필터링:', {
               startDate,
               endDate,
               totalDataRows: dataRows.length,
               firstRowDate: dataRows[0]?.[0],
-              firstRowDateParsed: new Date(dataRows[0]?.[0])
+              firstRowDateParsed: parseSheetDate(dataRows[0]?.[0])
             });
             
             // 날짜 필터링 (작성일시가 선택 기간 내)
@@ -4353,10 +4376,16 @@
             
             const filteredRows = dataRows.filter(row => {
               if (!row[0]) return false; // 작성일시 없으면 제외
-              const rowDate = new Date(row[0]);
+              const rowDate = parseSheetDate(row[0]);
+              
+              if (!rowDate || isNaN(rowDate.getTime())) {
+                console.log('⚠️ 날짜 파싱 실패:', row[0]);
+                return false;
+              }
+              
               const isValid = rowDate >= start && rowDate <= end;
               if (!isValid) {
-                console.log('❌ 필터링됨:', row[0], '→', rowDate, '범위:', start, '~', end);
+                console.log('❌ 범위 밖:', row[0], '→', rowDate.toLocaleDateString('ko-KR'), '| 범위:', start.toLocaleDateString('ko-KR'), '~', end.toLocaleDateString('ko-KR'));
               }
               return isValid;
             });
