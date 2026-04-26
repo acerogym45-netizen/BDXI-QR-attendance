@@ -1729,7 +1729,22 @@
             const apartmentName = sessionStorage.getItem('kindwon_apartment_name');
             
             if (storedApartmentId && apartmentName) {
-              this.currentApartment = { id: storedApartmentId, name: apartmentName };
+              // 아파트 전체 정보 다시 로드 (구글 시트 정보 포함)
+              const fullApartmentInfo = this.apartments.find(a => a.id === storedApartmentId);
+              
+              if (fullApartmentInfo) {
+                // 전체 정보 사용 (google_sheet_id, google_sheet_name 포함)
+                this.currentApartment = fullApartmentInfo;
+                console.log('✅ 아파트 정보 복원:', {
+                  name: this.currentApartment.name,
+                  google_sheet_id: this.currentApartment.google_sheet_id,
+                  google_sheet_name: this.currentApartment.google_sheet_name
+                });
+              } else {
+                // apartments 배열이 아직 로드 안 되었을 수 있으니 기본값으로 설정
+                this.currentApartment = { id: storedApartmentId, name: apartmentName };
+              }
+              
               this.showDashboard();
             } else {
               // 아파트 정보가 없으면 로그인 화면으로
