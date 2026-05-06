@@ -273,6 +273,26 @@
           </div>
         </div>
 
+        <!-- 🆕 구매 요청 관리 버튼 -->
+        <button
+          onclick="app.showMyPurchases()"
+          class="btn-professional bg-white border-2 border-indigo-200 text-gray-800 p-5 rounded-xl flex items-center justify-between group hover:border-indigo-300 transition-all"
+        >
+          <div class="flex items-center gap-4">
+            <div class="w-12 h-12 rounded-lg bg-indigo-50 flex items-center justify-center group-hover:bg-indigo-100 transition-colors">
+              <i class="fas fa-shopping-cart text-xl text-indigo-600"></i>
+            </div>
+            <div class="text-left">
+              <div class="font-bold text-base flex items-center gap-2">
+                내 구매 요청
+                <span id="purchase-badge" class="hidden px-2 py-0.5 text-xs font-bold bg-red-500 text-white rounded-full"></span>
+              </div>
+              <div class="text-gray-500 text-xs mt-0.5">검수 대기 항목 확인</div>
+            </div>
+          </div>
+          <i class="fas fa-chevron-right text-gray-400 group-hover:text-indigo-600 transition-colors"></i>
+        </button>
+
         <!-- Before/After Mode Toggle -->
         <div class="bg-white border-2 border-gray-200 rounded-xl p-4 flex items-center justify-between">
           <div class="flex items-center gap-3">
@@ -479,6 +499,107 @@
         />
       </div>
     </main>
+
+    <!-- 🆕 Purchase Requests Modal -->
+    <div id="purchase-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+      <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden shadow-2xl">
+        <!-- Header -->
+        <div class="flex justify-between items-center p-6 border-b bg-gradient-to-r from-indigo-500 to-purple-600">
+          <h3 class="text-xl font-bold text-white flex items-center gap-2">
+            <i class="fas fa-shopping-cart"></i>
+            내 구매 요청
+          </h3>
+          <button onclick="app.closePurchaseModal()" class="text-white hover:bg-white/20 w-8 h-8 rounded-full flex items-center justify-center transition-colors">
+            <i class="fas fa-times text-xl"></i>
+          </button>
+        </div>
+
+        <!-- Tabs -->
+        <div class="flex border-b bg-gray-50">
+          <button onclick="app.switchPurchaseTab('pending')" id="tab-pending" class="flex-1 px-4 py-3 text-sm font-medium text-gray-600 border-b-2 border-transparent hover:text-indigo-600 transition-colors">
+            <i class="fas fa-clock mr-1"></i>검수 대기 <span id="count-pending" class="ml-1 px-2 py-0.5 text-xs font-bold bg-orange-100 text-orange-600 rounded-full">0</span>
+          </button>
+          <button onclick="app.switchPurchaseTab('all')" id="tab-all" class="flex-1 px-4 py-3 text-sm font-medium text-gray-600 border-b-2 border-transparent hover:text-indigo-600 transition-colors">
+            <i class="fas fa-list mr-1"></i>전체 목록 <span id="count-all" class="ml-1 px-2 py-0.5 text-xs font-bold bg-gray-200 text-gray-600 rounded-full">0</span>
+          </button>
+        </div>
+
+        <!-- Content -->
+        <div id="purchase-list" class="p-6 overflow-y-auto" style="max-height: 60vh;">
+          <div id="loading-purchases" class="text-center py-8">
+            <i class="fas fa-spinner fa-spin text-4xl text-indigo-600"></i>
+            <p class="mt-4 text-gray-600">불러오는 중...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 🆕 Purchase Inspection Modal -->
+    <div id="inspection-modal" class="hidden fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4">
+      <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden shadow-2xl">
+        <!-- Header -->
+        <div class="flex justify-between items-center p-6 border-b bg-gradient-to-r from-green-500 to-emerald-600">
+          <h3 class="text-xl font-bold text-white flex items-center gap-2">
+            <i class="fas fa-camera"></i>
+            물품 검수
+          </h3>
+          <button onclick="app.closeInspectionModal()" class="text-white hover:bg-white/20 w-8 h-8 rounded-full flex items-center justify-center transition-colors">
+            <i class="fas fa-times text-xl"></i>
+          </button>
+        </div>
+
+        <!-- Purchase Info -->
+        <div class="p-6 border-b bg-gray-50">
+          <h4 class="text-sm font-bold text-gray-700 mb-3">구매 정보</h4>
+          <div id="inspection-purchase-info" class="space-y-2 text-sm">
+            <!-- Dynamic content -->
+          </div>
+        </div>
+
+        <!-- Inspection Form -->
+        <div class="p-6 space-y-4 overflow-y-auto" style="max-height: 50vh;">
+          <!-- Photos -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              <i class="fas fa-images mr-1 text-green-600"></i>물품 사진 (최대 5장) *
+            </label>
+            <input type="file" id="inspection-photos" accept="image/*" multiple capture="environment" class="hidden">
+            <button onclick="document.getElementById('inspection-photos').click()" class="w-full px-6 py-8 border-2 border-dashed border-gray-300 rounded-lg hover:border-green-500 transition-colors text-gray-500 hover:text-green-500">
+              <i class="fas fa-camera text-4xl mb-2"></i>
+              <p class="text-sm font-medium">사진 촬영 / 선택</p>
+              <p class="text-xs mt-1">물품, 영수증 등을 촬영해주세요</p>
+            </button>
+            <div id="inspection-photo-preview" class="grid grid-cols-3 gap-2 mt-3"></div>
+          </div>
+
+          <!-- Actual Amount -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              <i class="fas fa-won-sign mr-1 text-green-600"></i>실제 금액 *
+            </label>
+            <input type="number" id="inspection-actual-amount" placeholder="실제 지불 금액 입력" class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+          </div>
+
+          <!-- Notes -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              <i class="fas fa-comment mr-1 text-green-600"></i>메모 (선택)
+            </label>
+            <textarea id="inspection-notes" rows="3" placeholder="특이사항이 있으면 입력하세요" class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"></textarea>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex gap-3 p-6 border-t bg-gray-50">
+          <button onclick="app.closeInspectionModal()" class="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium">
+            취소
+          </button>
+          <button onclick="app.submitInspection()" class="flex-1 px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:from-green-600 hover:to-emerald-700 transition-all shadow-md font-medium">
+            <i class="fas fa-check-circle mr-2"></i>검수 완료
+          </button>
+        </div>
+      </div>
+    </div>
 
     <!-- Photo Preview Overlay -->
     <div id="preview-overlay" class="hidden fixed inset-0 bg-black/95 z-50 flex flex-col p-4 animate-fade-in">
@@ -823,6 +944,9 @@
 
           document.getElementById('btn-reset-emp').classList.remove('hidden');
           document.getElementById('section-work').classList.remove('hidden');
+
+          // 🆕 구매 요청 배지 로드
+          this.loadPurchaseBadge();
 
           // Scroll to work section
           setTimeout(() => {
@@ -1508,6 +1632,343 @@
           document.getElementById('screen-loading').classList.add('hidden');
           document.getElementById('screen-error').classList.remove('hidden');
           document.getElementById('error-msg').textContent = msg;
+        },
+
+        // 🆕 ========== 구매 요청 관리 시스템 ==========
+        
+        // 구매 요청 배지 로드 (검수 대기 개수)
+        loadPurchaseBadge: async function () {
+          try {
+            if (!this.state.selectedEmp || !this.state.selectedEmp.id) return;
+            
+            const employeeId = this.state.selectedEmp.id;
+            const employeeName = this.state.selectedEmp.name;
+            
+            const { data, error } = await this.sb
+              .from('purchases')
+              .select('id, status')
+              .or(`requester_name.eq.${employeeName},requester_employee_id.eq.${employeeId}`)
+              .eq('status', 'approved');
+            
+            if (error) {
+              console.error('구매 배지 로드 실패:', error);
+              return;
+            }
+            
+            const pendingCount = (data || []).length;
+            const badge = document.getElementById('purchase-badge');
+            
+            if (pendingCount > 0) {
+              badge.textContent = pendingCount;
+              badge.classList.remove('hidden');
+            } else {
+              badge.classList.add('hidden');
+            }
+          } catch (err) {
+            console.error('❌ 구매 배지 로드 실패:', err);
+          }
+        },
+        
+        // 내 구매 요청 모달 열기
+        showMyPurchases: async function () {
+          if (!this.state.selectedEmp || !this.state.selectedEmp.id) {
+            this.showToast('⚠️ 직원 정보를 찾을 수 없습니다', 'warning');
+            return;
+          }
+
+          // 모달 열기
+          document.getElementById('purchase-modal').classList.remove('hidden');
+          
+          // 기본 탭 활성화
+          this.switchPurchaseTab('pending');
+          
+          // 데이터 로드
+          await this.loadMyPurchases();
+        },
+
+        // 구매 요청 목록 로드
+        loadMyPurchases: async function () {
+          try {
+            document.getElementById('loading-purchases').classList.remove('hidden');
+            
+            const employeeId = this.state.selectedEmp.id;
+            const employeeName = this.state.selectedEmp.name;
+            
+            // 직원 ID 또는 이름으로 구매 요청 조회
+            const { data, error } = await this.sb
+              .from('purchases')
+              .select(`
+                *,
+                purchase_items(*),
+                purchase_photos(*)
+              `)
+              .or(`requester_name.eq.${employeeName},requester_employee_id.eq.${employeeId}`)
+              .order('created_at', { ascending: false });
+            
+            if (error) throw error;
+            
+            this.state.myPurchases = data || [];
+            
+            // 배지 업데이트
+            const pendingCount = data.filter(p => p.status === 'approved').length;
+            const badge = document.getElementById('purchase-badge');
+            if (pendingCount > 0) {
+              badge.textContent = pendingCount;
+              badge.classList.remove('hidden');
+            } else {
+              badge.classList.add('hidden');
+            }
+            
+            document.getElementById('count-pending').textContent = pendingCount;
+            document.getElementById('count-all').textContent = data.length;
+            
+            // 현재 탭에 맞게 렌더링
+            this.renderPurchaseList();
+            
+            document.getElementById('loading-purchases').classList.add('hidden');
+          } catch (err) {
+            console.error('❌ 구매 요청 로드 실패:', err);
+            document.getElementById('loading-purchases').innerHTML = `
+              <div class="text-center py-8">
+                <i class="fas fa-exclamation-triangle text-4xl text-red-500"></i>
+                <p class="mt-4 text-red-600">구매 요청을 불러올 수 없습니다</p>
+              </div>
+            `;
+          }
+        },
+
+        // 구매 요청 탭 전환
+        switchPurchaseTab: function (tab) {
+          // 탭 버튼 스타일 업데이트
+          document.querySelectorAll('#purchase-modal button[id^="tab-"]').forEach(btn => {
+            btn.classList.remove('text-indigo-600', 'border-indigo-600');
+            btn.classList.add('text-gray-600', 'border-transparent');
+          });
+          
+          const activeTab = document.getElementById(`tab-${tab}`);
+          activeTab.classList.remove('text-gray-600', 'border-transparent');
+          activeTab.classList.add('text-indigo-600', 'border-indigo-600');
+          
+          this.state.currentPurchaseTab = tab;
+          this.renderPurchaseList();
+        },
+
+        // 구매 요청 목록 렌더링
+        renderPurchaseList: function () {
+          const container = document.getElementById('purchase-list');
+          const tab = this.state.currentPurchaseTab || 'pending';
+          
+          let filtered = this.state.myPurchases || [];
+          
+          if (tab === 'pending') {
+            filtered = filtered.filter(p => p.status === 'approved');
+          }
+          
+          if (filtered.length === 0) {
+            const message = tab === 'pending' ? '검수 대기 중인 구매 요청이 없습니다' : '구매 요청 내역이 없습니다';
+            container.innerHTML = `
+              <div class="text-center py-12">
+                <i class="fas fa-inbox text-6xl text-gray-300"></i>
+                <p class="mt-4 text-gray-500">${message}</p>
+              </div>
+            `;
+            return;
+          }
+          
+          container.innerHTML = filtered.map(p => {
+            const statusBadge = {
+              pending: '<span class="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">승인 대기</span>',
+              approved: '<span class="px-2 py-1 text-xs font-medium bg-orange-100 text-orange-800 rounded-full">검수 대기</span>',
+              rejected: '<span class="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full">반려됨</span>',
+              completed: '<span class="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">완료</span>'
+            }[p.status];
+            
+            const itemCount = (p.purchase_items || []).length;
+            const itemText = itemCount > 0 ? `${p.purchase_items[0].item_name}${itemCount > 1 ? ` 외 ${itemCount - 1}건` : ''}` : '항목 없음';
+            
+            const canInspect = p.status === 'approved';
+            
+            return `
+              <div class="bg-white border rounded-xl p-4 mb-3 hover:shadow-md transition-shadow">
+                <div class="flex justify-between items-start mb-3">
+                  <div class="flex-1">
+                    <h4 class="font-bold text-gray-800">${itemText}</h4>
+                    <p class="text-xs text-gray-500 mt-1">${new Date(p.created_at).toLocaleDateString('ko-KR')}</p>
+                  </div>
+                  ${statusBadge}
+                </div>
+                <div class="text-sm text-gray-600 mb-3">
+                  <div class="flex justify-between">
+                    <span>예상 금액:</span>
+                    <span class="font-medium text-indigo-600">₩${parseFloat(p.total_amount).toLocaleString('ko-KR')}</span>
+                  </div>
+                  ${p.actual_amount ? `
+                    <div class="flex justify-between mt-1">
+                      <span>실제 금액:</span>
+                      <span class="font-medium text-green-600">₩${parseFloat(p.actual_amount).toLocaleString('ko-KR')}</span>
+                    </div>
+                  ` : ''}
+                </div>
+                ${canInspect ? `
+                  <button onclick="app.openInspection('${p.id}')" class="w-full px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:from-green-600 hover:to-emerald-700 transition-all shadow-sm font-medium">
+                    <i class="fas fa-camera mr-2"></i>검수하기
+                  </button>
+                ` : ''}
+                ${p.status === 'rejected' && p.rejection_reason ? `
+                  <div class="mt-2 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700">
+                    <i class="fas fa-info-circle mr-1"></i>${p.rejection_reason}
+                  </div>
+                ` : ''}
+              </div>
+            `;
+          }).join('');
+        },
+
+        // 구매 요청 모달 닫기
+        closePurchaseModal: function () {
+          document.getElementById('purchase-modal').classList.add('hidden');
+        },
+
+        // 검수 모달 열기
+        openInspection: async function (purchaseId) {
+          try {
+            const purchase = this.state.myPurchases.find(p => p.id === purchaseId);
+            if (!purchase) {
+              this.showToast('❌ 구매 요청을 찾을 수 없습니다', 'error');
+              return;
+            }
+            
+            this.state.currentInspection = purchase;
+            
+            // 구매 정보 표시
+            const infoContainer = document.getElementById('inspection-purchase-info');
+            infoContainer.innerHTML = `
+              <div class="flex justify-between">
+                <span class="text-gray-600">물품:</span>
+                <span class="font-medium">${purchase.purchase_items.map(i => i.item_name).join(', ')}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-600">요청일:</span>
+                <span class="font-medium">${new Date(purchase.created_at).toLocaleDateString('ko-KR')}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-600">예상 금액:</span>
+                <span class="font-medium text-indigo-600">₩${parseFloat(purchase.total_amount).toLocaleString('ko-KR')}</span>
+              </div>
+            `;
+            
+            // 입력 필드 초기화
+            document.getElementById('inspection-photos').value = '';
+            document.getElementById('inspection-photo-preview').innerHTML = '';
+            document.getElementById('inspection-actual-amount').value = '';
+            document.getElementById('inspection-notes').value = '';
+            
+            // 사진 선택 이벤트
+            document.getElementById('inspection-photos').onchange = (e) => {
+              const files = Array.from(e.target.files).slice(0, 5);
+              const preview = document.getElementById('inspection-photo-preview');
+              preview.innerHTML = '';
+              
+              files.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                  preview.insertAdjacentHTML('beforeend', `
+                    <img src="${e.target.result}" class="w-full h-24 object-cover rounded-lg border-2 border-green-300">
+                  `);
+                };
+                reader.readAsDataURL(file);
+              });
+            };
+            
+            // 모달 열기
+            document.getElementById('inspection-modal').classList.remove('hidden');
+          } catch (err) {
+            console.error('❌ 검수 모달 열기 실패:', err);
+            this.showToast('❌ 오류가 발생했습니다', 'error');
+          }
+        },
+
+        // 검수 모달 닫기
+        closeInspectionModal: function () {
+          document.getElementById('inspection-modal').classList.add('hidden');
+        },
+
+        // 검수 완료 제출
+        submitInspection: async function () {
+          const files = document.getElementById('inspection-photos').files;
+          const actualAmount = parseFloat(document.getElementById('inspection-actual-amount').value);
+          const notes = document.getElementById('inspection-notes').value;
+          
+          // 유효성 검사
+          if (files.length === 0) {
+            this.showToast('⚠️ 사진을 업로드하세요', 'warning');
+            return;
+          }
+          
+          if (!actualAmount || actualAmount <= 0) {
+            this.showToast('⚠️ 실제 금액을 입력하세요', 'warning');
+            return;
+          }
+          
+          try {
+            this.showToast('📤 검수 정보를 업로드하는 중...', 'info');
+            
+            // 사진 업로드
+            const photoUrls = [];
+            for (let i = 0; i < files.length; i++) {
+              const file = files[i];
+              const fileName = `${this.state.currentInspection.id}_${Date.now()}_${i}.jpg`;
+              
+              const { data, error } = await this.sb.storage
+                .from('purchase-photos')
+                .upload(fileName, file);
+              
+              if (error) throw error;
+              
+              const { data: urlData } = this.sb.storage
+                .from('purchase-photos')
+                .getPublicUrl(fileName);
+              
+              photoUrls.push(urlData.publicUrl);
+            }
+            
+            // 사진 정보 저장
+            const photoRecords = photoUrls.map(url => ({
+              purchase_id: this.state.currentInspection.id,
+              photo_url: url,
+              uploaded_by: this.state.selectedEmp.name
+            }));
+            
+            const { error: e1 } = await this.sb
+              .from('purchase_photos')
+              .insert(photoRecords);
+            
+            if (e1) throw e1;
+            
+            // 구매 요청 완료 처리
+            const { error: e2 } = await this.sb
+              .from('purchases')
+              .update({
+                status: 'completed',
+                completion_time: new Date().toISOString(),
+                actual_amount: actualAmount,
+                inspected_by: this.state.selectedEmp.name,
+                inspected_at: new Date().toISOString(),
+                inspection_notes: notes || null
+              })
+              .eq('id', this.state.currentInspection.id);
+            
+            if (e2) throw e2;
+            
+            this.showToast('✅ 검수가 완료되었습니다!', 'success');
+            this.closeInspectionModal();
+            
+            // 목록 새로고침
+            await this.loadMyPurchases();
+          } catch (err) {
+            console.error('❌ 검수 완료 처리 실패:', err);
+            this.showToast('❌ 검수 처리 중 오류가 발생했습니다', 'error');
+          }
         },
 
         // 🔍 자동 진단 함수
