@@ -1377,36 +1377,11 @@
             <label class="block text-sm font-medium text-gray-700 mb-2">주소</label>
             <input type="text" id="edit-apartment-address" placeholder="예: 경기도 화성시 봉담읍" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
           </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">아파트 코드</label>
-            <input type="text" id="edit-apartment-code" placeholder="예: APT004" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">상태</label>
-            <select id="edit-apartment-status" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-              <option value="true">활성</option>
-              <option value="false">비활성</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">
-              <i class="fas fa-table mr-1 text-green-600"></i>Google Sheets ID
-            </label>
-            <input type="text" id="edit-apartment-sheet-id" placeholder="예: 1Q2eWuYqc8rueSAzN89eLTW0PdG3kIS2f8UZjh4NK-HM" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 font-mono text-sm">
-            <p class="text-xs text-gray-500 mt-1">💡 스프레드시트 URL의 /d/ 와 /edit 사이 문자열</p>
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">
-              <i class="fas fa-file-alt mr-1 text-green-600"></i>시트 이름
-            </label>
-            <input type="text" id="edit-apartment-sheet-name" placeholder="예: 월간 민원 처리 현황 DB" value="월간 민원 처리 현황 DB" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-            <p class="text-xs text-gray-500 mt-1">💡 스프레드시트 하단의 탭 이름</p>
-          </div>
           
           <!-- GPS 좌표 설정 -->
-          <div class="border-t pt-4 mt-4">
+          <div class="border-t border-b py-4 my-4 bg-red-50">
             <h4 class="font-bold text-gray-700 mb-3">
-              <i class="fas fa-map-marker-alt mr-2 text-red-600"></i>GPS 위치 설정 (직원 앱용)
+              <i class="fas fa-map-marker-alt mr-2 text-red-600"></i>📍 GPS 위치 설정 (직원 앱용)
             </h4>
             <div class="grid grid-cols-2 gap-3">
               <div>
@@ -1437,6 +1412,32 @@
                 <i class="fas fa-map mr-1"></i>Google Maps 열기
               </button>
             </div>
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">아파트 코드</label>
+            <input type="text" id="edit-apartment-code" placeholder="예: APT004" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">상태</label>
+            <select id="edit-apartment-status" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+              <option value="true">활성</option>
+              <option value="false">비활성</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              <i class="fas fa-table mr-1 text-green-600"></i>Google Sheets ID
+            </label>
+            <input type="text" id="edit-apartment-sheet-id" placeholder="예: 1Q2eWuYqc8rueSAzN89eLTW0PdG3kIS2f8UZjh4NK-HM" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 font-mono text-sm">
+            <p class="text-xs text-gray-500 mt-1">💡 스프레드시트 URL의 /d/ 와 /edit 사이 문자열</p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              <i class="fas fa-file-alt mr-1 text-green-600"></i>시트 이름
+            </label>
+            <input type="text" id="edit-apartment-sheet-name" placeholder="예: 월간 민원 처리 현황 DB" value="월간 민원 처리 현황 DB" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+            <p class="text-xs text-gray-500 mt-1">💡 스프레드시트 하단의 탭 이름</p>
           </div>
           
           <div class="flex gap-3">
