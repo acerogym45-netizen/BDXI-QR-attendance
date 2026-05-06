@@ -738,10 +738,12 @@
       
       showLocationError(error) {
         let message = 'GPS 위치를 가져올 수 없습니다';
+        let showSettingsButton = false;
         
         switch (error.code) {
           case error.PERMISSION_DENIED:
             message = '위치 권한이 거부되었습니다. 설정에서 권한을 허용해주세요.';
+            showSettingsButton = true;
             break;
           case error.POSITION_UNAVAILABLE:
             message = 'GPS 신호를 받을 수 없습니다. 야외로 나가주세요.';
@@ -752,11 +754,51 @@
         }
         
         document.getElementById('location-info').innerHTML = `
-          <div class="flex items-center gap-2 text-red-600">
-            <i class="fas fa-exclamation-circle"></i>
-            <span>${message}</span>
+          <div class="flex flex-col gap-3">
+            <div class="flex items-center gap-2 text-red-600">
+              <i class="fas fa-exclamation-circle"></i>
+              <span>${message}</span>
+            </div>
+            ${showSettingsButton ? `
+              <button 
+                onclick="app.openLocationSettings()" 
+                class="btn-touch bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-bold shadow-lg flex items-center justify-center gap-2 transition"
+              >
+                <i class="fas fa-cog"></i>
+                위치 권한 설정 열기
+              </button>
+            ` : ''}
           </div>
         `;
+      },
+      
+      // ==================== 위치 설정 열기 ====================
+      openLocationSettings() {
+        // iOS Safari
+        if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
+          alert('📱 위치 권한 허용 방법:\n\n1. 설정 앱 열기\n2. Safari → 위치\n3. "사용하는 동안" 선택');
+          return;
+        }
+        
+        // Android Chrome
+        if (/Android/.test(navigator.userAgent)) {
+          // Chrome의 경우 설정으로 직접 이동 시도
+          const currentUrl = window.location.href;
+          
+          // Chrome 사이트 설정으로 이동
+          const settingsUrl = 'chrome://settings/content/siteDetails?site=' + encodeURIComponent(currentUrl);
+          
+          try {
+            window.open(settingsUrl, '_blank');
+          } catch (e) {
+            // 직접 열기 실패 시 안내
+            this.showToast('📱 위치 권한 허용 방법:\n\n1. 주소창 왼쪽 자물쇠/정보 아이콘 터치\n2. "권한" 또는 "사이트 설정" 선택\n3. 위치 → 허용', 'info', 5000);
+          }
+          return;
+        }
+        
+        // 기타 브라우저
+        alert('📱 위치 권한을 허용하려면:\n\n브라우저 설정에서 이 사이트의 위치 권한을 허용해주세요.');
       },
       
       // ==================== 거리 계산 (Haversine) ====================
