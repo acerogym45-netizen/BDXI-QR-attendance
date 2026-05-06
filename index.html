@@ -892,11 +892,11 @@
     </div>
 
     <!-- TAB 6: Purchase Request (구매 요청) -->
-    <div id="tab-purchase" class="tab-content hidden p-4">
+    <div id="tab-purchase" class="tab-content hidden px-4 pt-2 pb-4">
       <!-- 상단 대시보드 -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
         <!-- 승인 대기 -->
-        <div class="bg-gradient-to-br from-yellow-50 to-orange-50 p-4 rounded-xl shadow-sm border-2 border-yellow-200">
+        <div class="bg-gradient-to-br from-yellow-50 to-orange-50 p-3 rounded-xl shadow-sm border-2 border-yellow-200">
           <div class="flex items-center justify-between">
             <div>
               <p class="text-sm text-gray-600 mb-1">승인 대기</p>
@@ -910,7 +910,7 @@
         </div>
 
         <!-- 반려 -->
-        <div class="bg-gradient-to-br from-red-50 to-pink-50 p-4 rounded-xl shadow-sm border-2 border-red-200">
+        <div class="bg-gradient-to-br from-red-50 to-pink-50 p-3 rounded-xl shadow-sm border-2 border-red-200">
           <div class="flex items-center justify-between">
             <div>
               <p class="text-sm text-gray-600 mb-1">반려</p>
@@ -924,7 +924,7 @@
         </div>
 
         <!-- 이번 달 구매 현황 -->
-        <div class="bg-gradient-to-br from-blue-50 to-indigo-50 p-4 rounded-xl shadow-sm border-2 border-blue-200">
+        <div class="bg-gradient-to-br from-blue-50 to-indigo-50 p-3 rounded-xl shadow-sm border-2 border-blue-200">
           <div class="flex items-center justify-between">
             <div>
               <p class="text-sm text-gray-600 mb-1">이번 달 구매</p>
@@ -939,7 +939,7 @@
       </div>
 
       <!-- 액션 버튼 -->
-      <div class="flex gap-3 mb-4">
+      <div class="flex gap-3 mb-3">
         <button onclick="app.openNewPurchaseModal()" class="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:from-green-600 hover:to-emerald-700 transition-all shadow-md font-medium">
           <i class="fas fa-plus mr-2"></i>새 구매 요청
         </button>
@@ -952,7 +952,7 @@
       </div>
 
       <!-- 필터 -->
-      <div class="bg-white p-4 rounded-xl shadow-sm border mb-4">
+      <div class="bg-white p-3 rounded-xl shadow-sm border mb-3">
         <div class="flex flex-wrap gap-3">
           <select id="filter-status" onchange="app.filterPurchases()" class="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
             <option value="all">전체 상태</option>
