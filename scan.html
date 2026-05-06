@@ -2183,32 +2183,36 @@
           try {
             this.showToast('📤 구매 요청을 제출하는 중...', 'info');
             
-            console.log('🔍 구매 요청 데이터:', {
+            const requestData = {
               apartment_id: this.state.aptId,
               requester_name: this.state.selectedEmp.name,
               requester_employee_id: this.state.selectedEmp.id,
               requester_role: this.state.selectedEmp.position || '직원',
               reason: reason,
               total_amount: totalAmount,
-              items: items
-            });
+              status: 'pending'
+            };
+            
+            console.log('🔍 [1/4] 구매 요청 데이터 준비:', requestData);
+            console.log('🔍 [2/4] 물품 목록:', items);
             
             // 구매 요청 생성
-            const { data: purchase, error: e1 } = await this.sb
+            console.log('🔍 [3/4] Supabase에 INSERT 시도...');
+            const insertResult = await this.sb
               .from('purchases')
-              .insert({
-                apartment_id: this.state.aptId,
-                requester_name: this.state.selectedEmp.name,
-                requester_employee_id: this.state.selectedEmp.id,
-                requester_role: this.state.selectedEmp.position || '직원',
-                reason: reason,
-                total_amount: totalAmount,
-                status: 'pending'
-              })
+              .insert(requestData)
               .select()
               .single();
             
-            if (e1) throw e1;
+            console.log('🔍 [3/4] Supabase 응답:', insertResult);
+            
+            if (insertResult.error) {
+              console.error('❌ [3/4] INSERT 실패:', insertResult.error);
+              throw insertResult.error;
+            }
+            
+            const purchase = insertResult.data;
+            console.log('✅ [3/4] 구매 요청 생성 성공:', purchase);
             
             // 물품 항목 추가
             const itemRecords = items.map(item => ({
@@ -2216,12 +2220,20 @@
               ...item
             }));
             
-            const { error: e2 } = await this.sb
+            console.log('🔍 [4/4] 물품 항목 INSERT 시도...', itemRecords);
+            const itemsResult = await this.sb
               .from('purchase_items')
               .insert(itemRecords);
             
-            if (e2) throw e2;
+            console.log('🔍 [4/4] 물품 항목 응답:', itemsResult);
             
+            if (itemsResult.error) {
+              console.error('❌ [4/4] 물품 항목 INSERT 실패:', itemsResult.error);
+              throw itemsResult.error;
+            }
+            
+            console.log('✅ [4/4] 물품 항목 생성 성공');
+            console.log('✅ 전체 구매 요청 제출 완료!');
             this.showToast('✅ 구매 요청이 제출되었습니다!', 'success');
             this.closeNewPurchaseModal();
             
@@ -2235,13 +2247,30 @@
             }
           } catch (err) {
             console.error('❌ 구매 요청 제출 실패:', err);
-            console.error('에러 상세:', {
+            console.error('📋 에러 타입:', typeof err);
+            console.error('📋 에러 객체:', err);
+            console.error('📋 에러 상세:', {
               message: err.message,
               code: err.code,
               details: err.details,
-              hint: err.hint
+              hint: err.hint,
+              status: err.status,
+              statusCode: err.statusCode
             });
-            this.showToast('❌ 구매 요청 제출 중 오류가 발생했습니다', 'error');
+            
+            // 에러 메시지 분석
+            let errorMsg = '❌ 구매 요청 제출 중 오류가 발생했습니다';
+            if (err.code === '42501') {
+              errorMsg = '❌ 권한 오류: 데이터베이스 접근 권한이 없습니다';
+            } else if (err.code === '42703') {
+              errorMsg = '❌ 스키마 오류: 데이터베이스 컬럼이 존재하지 않습니다';
+            } else if (err.code === '23505') {
+              errorMsg = '❌ 중복 오류: 이미 존재하는 데이터입니다';
+            } else if (err.message) {
+              errorMsg = `❌ ${err.message}`;
+            }
+            
+            this.showToast(errorMsg, 'error');
           }
         },
 
