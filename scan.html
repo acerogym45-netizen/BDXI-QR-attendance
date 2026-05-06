@@ -514,6 +514,14 @@
           </button>
         </div>
 
+        <!-- 🆕 New Purchase Request Button -->
+        <div class="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-b">
+          <button onclick="app.openNewPurchaseRequest()" class="w-full px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl hover:from-blue-600 hover:to-indigo-700 transition-all shadow-md font-bold flex items-center justify-center gap-2">
+            <i class="fas fa-plus-circle text-xl"></i>
+            새 구매 요청
+          </button>
+        </div>
+
         <!-- Tabs -->
         <div class="flex border-b bg-gray-50">
           <button onclick="app.switchPurchaseTab('pending')" id="tab-pending" class="flex-1 px-4 py-3 text-sm font-medium text-gray-600 border-b-2 border-transparent hover:text-indigo-600 transition-colors">
@@ -596,6 +604,66 @@
           </button>
           <button onclick="app.submitInspection()" class="flex-1 px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:from-green-600 hover:to-emerald-700 transition-all shadow-md font-medium">
             <i class="fas fa-check-circle mr-2"></i>검수 완료
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 🆕 New Purchase Request Modal -->
+    <div id="new-purchase-modal" class="hidden fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4">
+      <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden shadow-2xl">
+        <!-- Header -->
+        <div class="flex justify-between items-center p-6 border-b bg-gradient-to-r from-blue-500 to-indigo-600">
+          <h3 class="text-xl font-bold text-white flex items-center gap-2">
+            <i class="fas fa-plus-circle"></i>
+            새 구매 요청
+          </h3>
+          <button onclick="app.closeNewPurchaseModal()" class="text-white hover:bg-white/20 w-8 h-8 rounded-full flex items-center justify-center transition-colors">
+            <i class="fas fa-times text-xl"></i>
+          </button>
+        </div>
+
+        <!-- Form -->
+        <div class="p-6 overflow-y-auto" style="max-height: 70vh;">
+          <!-- Reason -->
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              <i class="fas fa-comment-dots mr-1 text-blue-600"></i>구매 사유 *
+            </label>
+            <textarea id="new-purchase-reason" rows="3" placeholder="구매가 필요한 이유를 입력하세요" class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required></textarea>
+          </div>
+
+          <!-- Items -->
+          <div class="mb-4">
+            <div class="flex justify-between items-center mb-2">
+              <label class="block text-sm font-medium text-gray-700">
+                <i class="fas fa-boxes mr-1 text-blue-600"></i>물품 목록 *
+              </label>
+              <button onclick="app.addPurchaseItemRow()" class="px-3 py-1 text-xs font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                <i class="fas fa-plus mr-1"></i>물품 추가
+              </button>
+            </div>
+            <div id="new-purchase-items" class="space-y-3">
+              <!-- Dynamic items will be added here -->
+            </div>
+          </div>
+
+          <!-- Total Amount -->
+          <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div class="flex justify-between items-center">
+              <span class="text-sm font-medium text-gray-700">총 예상 금액:</span>
+              <span id="new-purchase-total" class="text-xl font-bold text-blue-600">₩0</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex gap-3 p-6 border-t bg-gray-50">
+          <button onclick="app.closeNewPurchaseModal()" class="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium">
+            취소
+          </button>
+          <button onclick="app.submitNewPurchaseRequest()" class="flex-1 px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg hover:from-blue-600 hover:to-indigo-700 transition-all shadow-md font-medium">
+            <i class="fas fa-paper-plane mr-2"></i>요청 제출
           </button>
         </div>
       </div>
@@ -1968,6 +2036,172 @@
           } catch (err) {
             console.error('❌ 검수 완료 처리 실패:', err);
             this.showToast('❌ 검수 처리 중 오류가 발생했습니다', 'error');
+          }
+        },
+
+        // 🆕 ========== 새 구매 요청 기능 ==========
+        
+        // 새 구매 요청 모달 열기
+        openNewPurchaseRequest: function () {
+          // 초기화
+          document.getElementById('new-purchase-reason').value = '';
+          document.getElementById('new-purchase-items').innerHTML = '';
+          document.getElementById('new-purchase-total').textContent = '₩0';
+          
+          // 초기 물품 1개 추가
+          this.state.newPurchaseItemCounter = 0;
+          this.addPurchaseItemRow();
+          
+          // 모달 열기
+          document.getElementById('new-purchase-modal').classList.remove('hidden');
+        },
+
+        // 새 구매 요청 모달 닫기
+        closeNewPurchaseModal: function () {
+          document.getElementById('new-purchase-modal').classList.add('hidden');
+        },
+
+        // 물품 항목 추가
+        addPurchaseItemRow: function () {
+          const itemId = ++this.state.newPurchaseItemCounter;
+          const container = document.getElementById('new-purchase-items');
+          
+          const itemHtml = `
+            <div id="item-${itemId}" class="bg-gray-50 border border-gray-200 rounded-lg p-3">
+              <div class="flex justify-between items-start mb-2">
+                <span class="text-xs font-medium text-gray-600">물품 #${itemId}</span>
+                ${itemId > 1 ? `<button onclick="app.removePurchaseItemRow(${itemId})" class="text-red-500 hover:text-red-700 text-xs"><i class="fas fa-times"></i></button>` : ''}
+              </div>
+              <div class="space-y-2">
+                <input type="text" id="item-name-${itemId}" placeholder="물품명" class="w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500" required onchange="app.calculateNewPurchaseTotal()">
+                <div class="grid grid-cols-2 gap-2">
+                  <input type="number" id="item-quantity-${itemId}" placeholder="수량" class="w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500" value="1" min="1" required onchange="app.calculateNewPurchaseTotal()">
+                  <input type="number" id="item-price-${itemId}" placeholder="단가" class="w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500" min="0" required onchange="app.calculateNewPurchaseTotal()">
+                </div>
+                <select id="item-category-${itemId}" class="w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500">
+                  <option value="">카테고리 선택</option>
+                  <option value="청소용품">청소용품</option>
+                  <option value="운동기구">운동기구</option>
+                  <option value="사무용품">사무용품</option>
+                  <option value="소모품">소모품</option>
+                  <option value="기타">기타</option>
+                </select>
+              </div>
+            </div>
+          `;
+          
+          container.insertAdjacentHTML('beforeend', itemHtml);
+        },
+
+        // 물품 항목 제거
+        removePurchaseItemRow: function (itemId) {
+          const item = document.getElementById(`item-${itemId}`);
+          if (item) {
+            item.remove();
+            this.calculateNewPurchaseTotal();
+          }
+        },
+
+        // 총 금액 계산
+        calculateNewPurchaseTotal: function () {
+          let total = 0;
+          const items = document.querySelectorAll('#new-purchase-items > div');
+          
+          items.forEach(item => {
+            const id = item.id.replace('item-', '');
+            const quantity = parseFloat(document.getElementById(`item-quantity-${id}`)?.value || 0);
+            const price = parseFloat(document.getElementById(`item-price-${id}`)?.value || 0);
+            total += quantity * price;
+          });
+          
+          document.getElementById('new-purchase-total').textContent = '₩' + total.toLocaleString('ko-KR');
+        },
+
+        // 새 구매 요청 제출
+        submitNewPurchaseRequest: async function () {
+          const reason = document.getElementById('new-purchase-reason').value.trim();
+          
+          if (!reason) {
+            this.showToast('⚠️ 구매 사유를 입력하세요', 'warning');
+            return;
+          }
+          
+          // 물품 수집
+          const items = [];
+          const itemDivs = document.querySelectorAll('#new-purchase-items > div');
+          
+          for (let itemDiv of itemDivs) {
+            const id = itemDiv.id.replace('item-', '');
+            const name = document.getElementById(`item-name-${id}`)?.value.trim();
+            const quantity = parseInt(document.getElementById(`item-quantity-${id}`)?.value || 0);
+            const price = parseFloat(document.getElementById(`item-price-${id}`)?.value || 0);
+            const category = document.getElementById(`item-category-${id}`)?.value || '기타';
+            
+            if (!name) {
+              this.showToast('⚠️ 물품명을 입력하세요', 'warning');
+              return;
+            }
+            
+            if (quantity <= 0 || price < 0) {
+              this.showToast('⚠️ 수량과 단가를 정확히 입력하세요', 'warning');
+              return;
+            }
+            
+            items.push({
+              item_name: name,
+              quantity: quantity,
+              unit_price: price,
+              category: category
+            });
+          }
+          
+          if (items.length === 0) {
+            this.showToast('⚠️ 최소 1개 이상의 물품을 추가하세요', 'warning');
+            return;
+          }
+          
+          const totalAmount = items.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0);
+          
+          try {
+            this.showToast('📤 구매 요청을 제출하는 중...', 'info');
+            
+            // 구매 요청 생성
+            const { data: purchase, error: e1 } = await this.sb
+              .from('purchases')
+              .insert({
+                apartment_id: this.state.aptId,
+                requester_name: this.state.selectedEmp.name,
+                requester_employee_id: this.state.selectedEmp.id,
+                requester_role: this.state.selectedEmp.position || '직원',
+                reason: reason,
+                total_amount: totalAmount,
+                status: 'pending'
+              })
+              .select()
+              .single();
+            
+            if (e1) throw e1;
+            
+            // 물품 항목 추가
+            const itemRecords = items.map(item => ({
+              purchase_id: purchase.id,
+              ...item
+            }));
+            
+            const { error: e2 } = await this.sb
+              .from('purchase_items')
+              .insert(itemRecords);
+            
+            if (e2) throw e2;
+            
+            this.showToast('✅ 구매 요청이 제출되었습니다!', 'success');
+            this.closeNewPurchaseModal();
+            
+            // 목록 새로고침
+            await this.loadMyPurchases();
+          } catch (err) {
+            console.error('❌ 구매 요청 제출 실패:', err);
+            this.showToast('❌ 구매 요청 제출 중 오류가 발생했습니다', 'error');
           }
         },
 
