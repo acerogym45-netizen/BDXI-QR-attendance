@@ -1870,7 +1870,8 @@
       calculateNewPurchaseTotal() {
         let total = 0;
         const container = document.getElementById('new-purchase-items');
-        const items = container.querySelectorAll('[id^="item-"]');
+        // 직계 자식 div만 선택 (id가 "item-숫자" 형태인 것만)
+        const items = Array.from(container.children).filter(el => /^item-\d+$/.test(el.id));
         
         items.forEach(item => {
           const id = item.id.split('-')[1];
@@ -1891,7 +1892,8 @@
         }
         
         const container = document.getElementById('new-purchase-items');
-        const itemElements = container.querySelectorAll('[id^="item-"]');
+        // 직계 자식 div만 선택 (id가 "item-숫자" 형태인 것만)
+        const itemElements = Array.from(container.children).filter(el => /^item-\d+$/.test(el.id));
         const items = [];
         
         console.log('📦 물품 항목 개수:', itemElements.length);
