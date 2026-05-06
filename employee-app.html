@@ -1925,7 +1925,7 @@
             return;
           }
           
-          items.push({ item_name: name, quantity, estimated_price: price, subtotal: quantity * price });
+          items.push({ item_name: name, quantity, unit_price: price, category: '기타', subtotal: quantity * price });
         }
         
         console.log('✅ 검증 통과, 총 물품:', items);
@@ -1960,7 +1960,8 @@
             purchase_id: purchase.id,
             item_name: item.item_name,
             quantity: item.quantity,
-            estimated_price: item.estimated_price
+            unit_price: item.unit_price,
+            category: item.category || '기타'
           }));
           
           const { error: e2 } = await this.sb
