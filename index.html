@@ -406,6 +406,109 @@
           </div>
         </div>
 
+    <!-- TAB 6: Purchase Request (구매 요청) -->
+    <div id="tab-purchase" class="tab-content hidden px-4 pt-2 pb-4">
+      <!-- 상단 대시보드 -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+        <!-- 승인 대기 -->
+        <div class="bg-gradient-to-br from-yellow-50 to-orange-50 p-3 rounded-xl shadow-sm border-2 border-yellow-200">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm text-gray-600 mb-1">승인 대기</p>
+              <p class="text-3xl font-bold text-orange-600" id="pending-count">0</p>
+              <p class="text-xs text-gray-500 mt-1">건</p>
+            </div>
+            <div class="text-orange-400 text-4xl">
+              <i class="fas fa-clock"></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- 반려 -->
+        <div class="bg-gradient-to-br from-red-50 to-pink-50 p-3 rounded-xl shadow-sm border-2 border-red-200">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm text-gray-600 mb-1">반려</p>
+              <p class="text-3xl font-bold text-red-600" id="rejected-count">0</p>
+              <p class="text-xs text-gray-500 mt-1">건</p>
+            </div>
+            <div class="text-red-400 text-4xl">
+              <i class="fas fa-times-circle"></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- 이번 달 구매 현황 -->
+        <div class="bg-gradient-to-br from-blue-50 to-indigo-50 p-3 rounded-xl shadow-sm border-2 border-blue-200">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm text-gray-600 mb-1">이번 달 구매</p>
+              <p class="text-2xl font-bold text-blue-600" id="month-amount">₩0</p>
+              <p class="text-xs text-gray-500 mt-1"><span id="month-count">0</span>건</p>
+            </div>
+            <div class="text-blue-400 text-4xl">
+              <i class="fas fa-chart-line"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 액션 버튼 -->
+      <div class="flex gap-3 mb-3">
+        <button onclick="app.openNewPurchaseModal()" class="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:from-green-600 hover:to-emerald-700 transition-all shadow-md font-medium">
+          <i class="fas fa-plus mr-2"></i>새 구매 요청
+        </button>
+        <button onclick="app.refreshPurchaseList()" class="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium">
+          <i class="fas fa-sync-alt mr-2"></i>새로고침
+        </button>
+        <button onclick="app.showQRCodeManagement()" class="px-6 py-3 bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-lg hover:from-purple-600 hover:to-indigo-700 transition-all shadow-md font-medium">
+          <i class="fas fa-qrcode mr-2"></i>QR 코드 관리
+        </button>
+      </div>
+
+      <!-- 필터 -->
+      <div class="bg-white p-3 rounded-xl shadow-sm border mb-3">
+        <div class="flex flex-wrap gap-3">
+          <select id="filter-status" onchange="app.filterPurchases()" class="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+            <option value="all">전체 상태</option>
+            <option value="pending">승인 대기</option>
+            <option value="approved">승인됨</option>
+            <option value="rejected">반려됨</option>
+            <option value="delivered">배송 완료</option>
+            <option value="completed">검수 완료</option>
+          </select>
+          <input type="date" id="filter-start-date" onchange="app.filterPurchases()" class="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+          <input type="date" id="filter-end-date" onchange="app.filterPurchases()" class="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+          <input type="text" id="filter-search" onkeyup="app.filterPurchases()" placeholder="물품명, 요청자 검색..." class="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 flex-1">
+        </div>
+      </div>
+
+      <!-- 구매 요청 목록 -->
+      <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead class="bg-gray-50 border-b">
+              <tr>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">요청일</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">요청자</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">물품</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">금액</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">상태</th>
+                <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">작업</th>
+              </tr>
+            </thead>
+            <tbody id="purchase-list" class="divide-y divide-gray-200">
+              <!-- 구매 요청 목록이 여기에 표시됩니다 -->
+            </tbody>
+          </table>
+        </div>
+        <div id="no-purchase-data" class="hidden p-8 text-center text-gray-400">
+          <i class="fas fa-shopping-cart text-6xl mb-4"></i>
+          <p class="text-lg font-medium">구매 요청이 없습니다</p>
+          <p class="text-sm">새 구매 요청을 등록해보세요.</p>
+        </div>
+      </div>
+    </div>
         <!-- TAB 1: Gallery -->
         <div id="tab-gallery" class="tab-content space-y-6 px-4">
           <!-- Search Bar -->
@@ -912,109 +1015,6 @@
       </main>
     </div>
 
-    <!-- TAB 6: Purchase Request (구매 요청) -->
-    <div id="tab-purchase" class="tab-content hidden px-4 pt-2 pb-4">
-      <!-- 상단 대시보드 -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
-        <!-- 승인 대기 -->
-        <div class="bg-gradient-to-br from-yellow-50 to-orange-50 p-3 rounded-xl shadow-sm border-2 border-yellow-200">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm text-gray-600 mb-1">승인 대기</p>
-              <p class="text-3xl font-bold text-orange-600" id="pending-count">0</p>
-              <p class="text-xs text-gray-500 mt-1">건</p>
-            </div>
-            <div class="text-orange-400 text-4xl">
-              <i class="fas fa-clock"></i>
-            </div>
-          </div>
-        </div>
-
-        <!-- 반려 -->
-        <div class="bg-gradient-to-br from-red-50 to-pink-50 p-3 rounded-xl shadow-sm border-2 border-red-200">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm text-gray-600 mb-1">반려</p>
-              <p class="text-3xl font-bold text-red-600" id="rejected-count">0</p>
-              <p class="text-xs text-gray-500 mt-1">건</p>
-            </div>
-            <div class="text-red-400 text-4xl">
-              <i class="fas fa-times-circle"></i>
-            </div>
-          </div>
-        </div>
-
-        <!-- 이번 달 구매 현황 -->
-        <div class="bg-gradient-to-br from-blue-50 to-indigo-50 p-3 rounded-xl shadow-sm border-2 border-blue-200">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm text-gray-600 mb-1">이번 달 구매</p>
-              <p class="text-2xl font-bold text-blue-600" id="month-amount">₩0</p>
-              <p class="text-xs text-gray-500 mt-1"><span id="month-count">0</span>건</p>
-            </div>
-            <div class="text-blue-400 text-4xl">
-              <i class="fas fa-chart-line"></i>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 액션 버튼 -->
-      <div class="flex gap-3 mb-3">
-        <button onclick="app.openNewPurchaseModal()" class="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:from-green-600 hover:to-emerald-700 transition-all shadow-md font-medium">
-          <i class="fas fa-plus mr-2"></i>새 구매 요청
-        </button>
-        <button onclick="app.refreshPurchaseList()" class="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium">
-          <i class="fas fa-sync-alt mr-2"></i>새로고침
-        </button>
-        <button onclick="app.showQRCodeManagement()" class="px-6 py-3 bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-lg hover:from-purple-600 hover:to-indigo-700 transition-all shadow-md font-medium">
-          <i class="fas fa-qrcode mr-2"></i>QR 코드 관리
-        </button>
-      </div>
-
-      <!-- 필터 -->
-      <div class="bg-white p-3 rounded-xl shadow-sm border mb-3">
-        <div class="flex flex-wrap gap-3">
-          <select id="filter-status" onchange="app.filterPurchases()" class="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
-            <option value="all">전체 상태</option>
-            <option value="pending">승인 대기</option>
-            <option value="approved">승인됨</option>
-            <option value="rejected">반려됨</option>
-            <option value="delivered">배송 완료</option>
-            <option value="completed">검수 완료</option>
-          </select>
-          <input type="date" id="filter-start-date" onchange="app.filterPurchases()" class="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
-          <input type="date" id="filter-end-date" onchange="app.filterPurchases()" class="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
-          <input type="text" id="filter-search" onkeyup="app.filterPurchases()" placeholder="물품명, 요청자 검색..." class="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 flex-1">
-        </div>
-      </div>
-
-      <!-- 구매 요청 목록 -->
-      <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
-        <div class="overflow-x-auto">
-          <table class="w-full">
-            <thead class="bg-gray-50 border-b">
-              <tr>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">요청일</th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">요청자</th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">물품</th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">금액</th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">상태</th>
-                <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">작업</th>
-              </tr>
-            </thead>
-            <tbody id="purchase-list" class="divide-y divide-gray-200">
-              <!-- 구매 요청 목록이 여기에 표시됩니다 -->
-            </tbody>
-          </table>
-        </div>
-        <div id="no-purchase-data" class="hidden p-8 text-center text-gray-400">
-          <i class="fas fa-shopping-cart text-6xl mb-4"></i>
-          <p class="text-lg font-medium">구매 요청이 없습니다</p>
-          <p class="text-sm">새 구매 요청을 등록해보세요.</p>
-        </div>
-      </div>
-    </div>
 
     <!-- Image Modal -->
     <div id="image-modal" class="fixed inset-0 z-50 hidden modal-backdrop bg-black/80 flex items-center justify-center p-4" onclick="if (event.target === this) app.closeModal();">
