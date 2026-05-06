@@ -246,7 +246,10 @@
             <div class="grid grid-cols-2 gap-4">
               <div class="border-2 border-dashed border-blue-300 rounded-xl p-4 text-center">
                 <div class="text-blue-500 font-bold mb-2">Before</div>
-                <div id="before-preview" class="bg-gray-100 rounded-lg aspect-square flex items-center justify-center mb-2">
+                <div id="before-photo-preview" class="hidden bg-gray-100 rounded-lg aspect-square overflow-hidden mb-2">
+                  <img id="before-photo-img" class="w-full h-full object-cover">
+                </div>
+                <div id="before-photo-placeholder" class="bg-gray-100 rounded-lg aspect-square flex items-center justify-center mb-2">
                   <i class="fas fa-image text-4xl text-gray-300"></i>
                 </div>
                 <button id="btn-before-photo" class="btn-touch w-full bg-blue-500 text-white py-2 rounded-lg text-sm">
@@ -255,7 +258,10 @@
               </div>
               <div class="border-2 border-dashed border-green-300 rounded-xl p-4 text-center">
                 <div class="text-green-500 font-bold mb-2">After</div>
-                <div id="after-preview" class="bg-gray-100 rounded-lg aspect-square flex items-center justify-center mb-2">
+                <div id="after-photo-preview" class="hidden bg-gray-100 rounded-lg aspect-square overflow-hidden mb-2">
+                  <img id="after-photo-img" class="w-full h-full object-cover">
+                </div>
+                <div id="after-photo-placeholder" class="bg-gray-100 rounded-lg aspect-square flex items-center justify-center mb-2">
                   <i class="fas fa-image text-4xl text-gray-300"></i>
                 </div>
                 <button id="btn-after-photo" class="btn-touch w-full bg-green-500 text-white py-2 rounded-lg text-sm">
@@ -263,10 +269,19 @@
                 </button>
               </div>
             </div>
-            <button id="btn-submit-before-after" class="btn-touch w-full bg-gradient-to-r from-blue-500 to-green-500 text-white py-4 rounded-xl font-bold shadow-lg hover:shadow-xl transition disabled:opacity-50" disabled>
-              <i class="fas fa-check mr-2"></i>업로드
+            <div class="mb-3">
+              <label class="block text-sm font-semibold text-gray-700 mb-2">작업 메모 (선택사항)</label>
+              <input type="text" id="inp-notes-before-after" placeholder="예: 외부 청소 작업" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            </div>
+            <button id="btn-submit-before-after" class="btn-touch w-full bg-gradient-to-r from-blue-500 to-green-500 text-white py-4 rounded-xl font-bold shadow-lg hover:shadow-xl transition disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+              <span id="btn-before-after-text"><i class="fas fa-check mr-2"></i>2장 모두 업로드</span>
+              <i id="spinner-before-after" class="fas fa-spinner fa-spin ml-2 hidden"></i>
             </button>
           </div>
+          
+          <!-- Hidden file inputs for Before/After mode -->
+          <input type="file" id="inp-before-capture" accept="image/*" capture="environment" class="hidden">
+          <input type="file" id="inp-after-capture" accept="image/*" capture="environment" class="hidden">
           
           <div id="photo-preview-container" class="hidden mt-4">
             <div class="font-bold mb-2">선택한 사진</div>
@@ -999,6 +1014,272 @@
         }).join('');
       },
       
+      // ==================== 업무 사진 ====================
+      toggleBeforeAfterMode() {
+        const toggle = document.getElementById('before-after-toggle');
+        const singleMode = document.getElementById('single-photo-mode');
+        const beforeAfterMode = document.getElementById('before-after-mode');
+        
+        if (toggle.checked) {
+          singleMode.classList.add('hidden');
+          beforeAfterMode.classList.remove('hidden');
+          // Reset photos
+          this.state.beforePhoto = null;
+          this.state.afterPhoto = null;
+          this.updateBeforeAfterUI();
+        } else {
+          singleMode.classList.remove('hidden');
+          beforeAfterMode.classList.add('hidden');
+        }
+      },
+      
+      async handleBeforeAfterPhoto(type, input) {
+        if (!input.files || !input.files[0]) return;
+        
+        const file = input.files[0];
+        
+        // 12시간 이내 촬영 검증
+        const isValid = await this.validatePhotoTime(file);
+        if (!isValid) {
+          alert('⚠️ 촬영 시간 제한\n\n12시간 이내에 촬영된 사진만 업로드 가능합니다.\n오래된 사진의 재활용을 방지하기 위한 정책입니다.');
+          input.value = '';
+          return;
+        }
+        
+        // Store photo
+        if (type === 'before') {
+          this.state.beforePhoto = file;
+        } else {
+          this.state.afterPhoto = file;
+        }
+        
+        // Update UI
+        this.updateBeforeAfterUI();
+        input.value = '';
+      },
+      
+      updateBeforeAfterUI() {
+        const beforePreview = document.getElementById('before-photo-preview');
+        const beforePlaceholder = document.getElementById('before-photo-placeholder');
+        const beforeImg = document.getElementById('before-photo-img');
+        
+        const afterPreview = document.getElementById('after-photo-preview');
+        const afterPlaceholder = document.getElementById('after-photo-placeholder');
+        const afterImg = document.getElementById('after-photo-img');
+        
+        const uploadBtn = document.getElementById('btn-submit-before-after');
+        
+        // Update Before
+        if (this.state.beforePhoto) {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            beforeImg.src = e.target.result;
+            beforePreview.classList.remove('hidden');
+            beforePlaceholder.classList.add('hidden');
+          };
+          reader.readAsDataURL(this.state.beforePhoto);
+        } else {
+          beforePreview.classList.add('hidden');
+          beforePlaceholder.classList.remove('hidden');
+        }
+        
+        // Update After
+        if (this.state.afterPhoto) {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            afterImg.src = e.target.result;
+            afterPreview.classList.remove('hidden');
+            afterPlaceholder.classList.add('hidden');
+          };
+          reader.readAsDataURL(this.state.afterPhoto);
+        } else {
+          afterPreview.classList.add('hidden');
+          afterPlaceholder.classList.remove('hidden');
+        }
+        
+        // Enable upload button only when both photos are ready
+        if (this.state.beforePhoto && this.state.afterPhoto) {
+          uploadBtn.disabled = false;
+        } else {
+          uploadBtn.disabled = true;
+        }
+      },
+      
+      async uploadBeforeAfter() {
+        if (!this.state.beforePhoto || !this.state.afterPhoto) {
+          this.showToast('⚠️ Before와 After 사진을 모두 선택해주세요.', 'error');
+          return;
+        }
+        
+        const btn = document.getElementById('btn-submit-before-after');
+        const spinner = document.getElementById('spinner-before-after');
+        const btnText = document.getElementById('btn-before-after-text');
+        
+        btn.disabled = true;
+        btnText.textContent = '업로드 중...';
+        spinner.classList.remove('hidden');
+        
+        try {
+          const notes = document.getElementById('inp-notes-before-after').value;
+          
+          // Upload Before photo
+          const beforeExt = this.state.beforePhoto.name.split('.').pop() || 'jpg';
+          const beforeFileName = `${this.state.employee.apartment_id}/${Date.now()}_before_${Math.random().toString(36).substr(2, 9)}.${beforeExt}`;
+          
+          const { data: beforeUpload, error: beforeError } = await this.sb.storage
+            .from('cleaning-photos')
+            .upload(beforeFileName, this.state.beforePhoto);
+          
+          if (beforeError) throw beforeError;
+          
+          const { data: { publicUrl: beforeUrl } } = this.sb.storage
+            .from('cleaning-photos')
+            .getPublicUrl(beforeFileName);
+          
+          // Upload After photo
+          const afterExt = this.state.afterPhoto.name.split('.').pop() || 'jpg';
+          const afterFileName = `${this.state.employee.apartment_id}/${Date.now()}_after_${Math.random().toString(36).substr(2, 9)}.${afterExt}`;
+          
+          const { data: afterUpload, error: afterError } = await this.sb.storage
+            .from('cleaning-photos')
+            .upload(afterFileName, this.state.afterPhoto);
+          
+          if (afterError) throw afterError;
+          
+          const { data: { publicUrl: afterUrl } } = this.sb.storage
+            .from('cleaning-photos')
+            .getPublicUrl(afterFileName);
+          
+          // Save to database
+          const groupId = String(Date.now());
+          
+          const payloads = [
+            {
+              employee_name: this.state.employee.name,
+              status: 'completed',
+              location: this.state.workplace.name,
+              apartment_id: this.state.employee.apartment_id,
+              photo_url: beforeUrl,
+              notes: notes || 'Before/After 청소 작업',
+              group_id: groupId,
+              before_after: 'before',
+              upload_type: 'before_after',
+              photo_order: 0,
+              created_at: new Date().toISOString(),
+            },
+            {
+              employee_name: this.state.employee.name,
+              status: 'completed',
+              location: this.state.workplace.name,
+              apartment_id: this.state.employee.apartment_id,
+              photo_url: afterUrl,
+              notes: notes || 'Before/After 청소 작업',
+              group_id: groupId,
+              before_after: 'after',
+              upload_type: 'before_after',
+              photo_order: 1,
+              created_at: new Date().toISOString(),
+            }
+          ];
+          
+          const { error: dbError } = await this.sb.from('cleaning_tasks').insert(payloads);
+          if (dbError) throw dbError;
+          
+          this.showToast('✅ Before/After 청소 작업이 기록되었습니다.');
+          
+          // Reset UI
+          this.state.beforePhoto = null;
+          this.state.afterPhoto = null;
+          document.getElementById('inp-notes-before-after').value = '';
+          this.updateBeforeAfterUI();
+          
+          // Reload today's photos
+          await this.loadTodayPhotos();
+          
+        } catch (e) {
+          console.error('업로드 실패:', e);
+          this.showToast('❌ 업로드 실패: ' + e.message, 'error');
+        } finally {
+          btn.disabled = false;
+          btnText.textContent = '2장 모두 업로드';
+          spinner.classList.add('hidden');
+        }
+      },
+      
+      async validatePhotoTime(file) {
+        return new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            try {
+              const view = new DataView(e.target.result);
+              
+              // Check if JPEG (starts with FFD8)
+              if (view.getUint16(0, false) !== 0xFFD8) {
+                // Not a JPEG, use file modification time
+                const fileTime = file.lastModified;
+                const now = Date.now();
+                const hoursDiff = (now - fileTime) / (1000 * 60 * 60);
+                resolve(hoursDiff <= 12);
+                return;
+              }
+              
+              // Use file modification time (simplified version)
+              const fileTime = file.lastModified;
+              const now = Date.now();
+              const hoursDiff = (now - fileTime) / (1000 * 60 * 60);
+              resolve(hoursDiff <= 12);
+            } catch (err) {
+              console.error('사진 검증 에러:', err);
+              // On error, allow the upload
+              resolve(true);
+            }
+          };
+          reader.readAsArrayBuffer(file);
+        });
+      },
+      
+      async loadTodayPhotos() {
+        const today = new Date().toISOString().split('T')[0];
+        
+        const { data, error } = await this.sb
+          .from('cleaning_tasks')
+          .select('*')
+          .eq('employee_name', this.state.employee.name)
+          .gte('created_at', today + 'T00:00:00')
+          .order('created_at', { ascending: false });
+        
+        if (error) {
+          console.error('사진 로드 실패:', error);
+          return;
+        }
+        
+        const container = document.getElementById('today-photos');
+        
+        if (!data || data.length === 0) {
+          container.innerHTML = `
+            <div class="col-span-3 text-center text-gray-400 py-8">
+              <i class="fas fa-images text-4xl mb-2"></i>
+              <div>사진이 없습니다</div>
+            </div>
+          `;
+          return;
+        }
+        
+        container.innerHTML = data.map(photo => {
+          const time = new Date(photo.created_at).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+          const badge = photo.before_after === 'before' ? 'Before' : photo.before_after === 'after' ? 'After' : '';
+          const badgeColor = photo.before_after === 'before' ? 'bg-blue-500' : 'bg-green-500';
+          
+          return `
+            <div class="relative aspect-square rounded-lg overflow-hidden shadow-md">
+              <img src="${photo.photo_url}" class="w-full h-full object-cover">
+              ${badge ? `<div class="${badgeColor} text-white text-xs font-bold px-2 py-1 absolute top-1 left-1 rounded">${badge}</div>` : ''}
+              <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs px-2 py-1">${time}</div>
+            </div>
+          `;
+        }).join('');
+      },
+      
       // ==================== 토스트 메시지 ====================
       showToast(message, type = 'success', duration = 3000) {
         const toast = document.createElement('div');
@@ -1026,6 +1307,9 @@
         
         // 오늘의 기록 로드
         this.loadTodayAttendance();
+        
+        // 오늘의 사진 로드
+        this.loadTodayPhotos();
       },
       
       // ==================== 이벤트 리스너 ====================
@@ -1057,22 +1341,35 @@
         
         // Before/After 토글
         document.getElementById('before-after-toggle').addEventListener('change', (e) => {
-          if (e.target.checked) {
-            document.getElementById('single-photo-mode').classList.add('hidden');
-            document.getElementById('before-after-mode').classList.remove('hidden');
-          } else {
-            document.getElementById('single-photo-mode').classList.remove('hidden');
-            document.getElementById('before-after-mode').classList.add('hidden');
-          }
+          this.toggleBeforeAfterMode();
         });
         
-        // 사진 촬영/선택 (기본 기능만 - 상세 구현은 scan.html 참고)
-        document.getElementById('btn-take-photo').addEventListener('click', () => {
-          document.getElementById('file-photo').click();
+        // Before/After 사진 촬영
+        document.getElementById('btn-before-photo').addEventListener('click', () => {
+          document.getElementById('inp-before-capture').click();
         });
         
-        document.getElementById('btn-select-photo').addEventListener('click', () => {
-          document.getElementById('file-gallery').click();
+        document.getElementById('btn-after-photo').addEventListener('click', () => {
+          document.getElementById('inp-after-capture').click();
+        });
+        
+        // Before/After 파일 선택
+        document.getElementById('inp-before-capture').addEventListener('change', (e) => {
+          this.handleBeforeAfterPhoto('before', e.target);
+        });
+        
+        document.getElementById('inp-after-capture').addEventListener('change', (e) => {
+          this.handleBeforeAfterPhoto('after', e.target);
+        });
+        
+        // Before/After 업로드
+        document.getElementById('btn-submit-before-after').addEventListener('click', () => {
+          this.uploadBeforeAfter();
+        });
+        
+        // 사진 새로고침
+        document.getElementById('btn-refresh-photos').addEventListener('click', () => {
+          this.loadTodayPhotos();
         });
         
         // 구매 요청 버튼 (scan.html의 모달 재사용)
