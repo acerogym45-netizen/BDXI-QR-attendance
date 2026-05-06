@@ -2123,6 +2123,8 @@
             this.loadQRCodes();
             this.checkContractExpirationsInDataTab(); // 계약 만료 섹션 표시
           } else if (tab === 'purchase') {
+            console.log('🛒 구매 요청 탭 로드 시작');
+            console.log('  currentApartment:', this.currentApartment);
             this.loadPurchases();
             this.loadPurchaseDashboard();
           } else if (tab === 'report') {
@@ -6038,8 +6040,10 @@
       
       // 구매 요청 대시보드 로드
       app.loadPurchaseDashboard = async function() {
+        console.log('📊 loadPurchaseDashboard 시작');
         try {
           const aptId = this.currentApartment.id;
+          console.log('  aptId:', aptId);
           const now = new Date();
           const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
           
@@ -6082,8 +6086,10 @@
       
       // 구매 요청 목록 로드
       app.loadPurchases = async function() {
+        console.log('📦 loadPurchases 시작');
         try {
           const aptId = this.currentApartment.id;
+          console.log('  aptId:', aptId);
           
           const { data, error } = await this.sb
             .from('purchases')
@@ -6096,6 +6102,7 @@
           
           if (error) throw error;
           
+          console.log('  로드된 구매 요청:', data?.length || 0, '건');
           this.purchases = data || [];
           this.renderPurchaseList(this.purchases);
         } catch (err) {
@@ -6106,16 +6113,22 @@
       
       // 구매 요청 목록 렌더링
       app.renderPurchaseList = function(purchases) {
+        console.log('🎨 renderPurchaseList 시작, purchases:', purchases?.length || 0);
         const tbody = document.getElementById('purchase-list');
         const noData = document.getElementById('no-purchase-data');
+        
+        console.log('  tbody:', tbody);
+        console.log('  noData:', noData);
         
         if (!purchases || purchases.length === 0) {
           tbody.innerHTML = '';
           noData.classList.remove('hidden');
+          console.log('  ✅ 빈 목록 표시');
           return;
         }
         
         noData.classList.add('hidden');
+        console.log('  ✅ 목록 렌더링 시작');
         
         tbody.innerHTML = purchases.map(p => {
           const date = new Date(p.created_at).toLocaleDateString('ko-KR');
