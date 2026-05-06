@@ -345,7 +345,176 @@
     </div>
   </div>
   
-  <!-- 모달들 (구매 요청, 검수 등) - scan.html에서 가져올 예정 -->
+  <!-- 모달들 -->
+  
+  <!-- 내 구매 요청 모달 -->
+  <div id="purchase-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden shadow-2xl">
+      <!-- Header -->
+      <div class="flex justify-between items-center p-6 border-b bg-gradient-to-r from-indigo-500 to-purple-600">
+        <h3 class="text-xl font-bold text-white flex items-center gap-2">
+          <i class="fas fa-shopping-cart"></i>
+          내 구매 요청
+        </h3>
+        <button onclick="app.closePurchaseModal()" class="text-white hover:bg-white/20 w-8 h-8 rounded-full flex items-center justify-center transition-colors">
+          <i class="fas fa-times text-xl"></i>
+        </button>
+      </div>
+
+      <!-- 새 구매 요청 버튼 -->
+      <div class="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-b">
+        <button onclick="app.openNewPurchaseRequest()" class="w-full px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl hover:from-blue-600 hover:to-indigo-700 transition-all shadow-md font-bold flex items-center justify-center gap-2">
+          <i class="fas fa-plus-circle text-xl"></i>
+          새 구매 요청
+        </button>
+      </div>
+
+      <!-- Tabs -->
+      <div class="flex border-b bg-gray-50">
+        <button onclick="app.switchPurchaseTab('pending')" id="tab-pending" class="flex-1 px-4 py-3 text-sm font-medium text-gray-600 border-b-2 border-transparent hover:text-indigo-600 transition-colors">
+          <i class="fas fa-clock mr-1"></i>검수 대기 <span id="count-pending" class="ml-1 px-2 py-0.5 text-xs font-bold bg-orange-100 text-orange-600 rounded-full">0</span>
+        </button>
+        <button onclick="app.switchPurchaseTab('all')" id="tab-all" class="flex-1 px-4 py-3 text-sm font-medium text-gray-600 border-b-2 border-transparent hover:text-indigo-600 transition-colors">
+          <i class="fas fa-list mr-1"></i>전체 목록 <span id="count-all" class="ml-1 px-2 py-0.5 text-xs font-bold bg-gray-200 text-gray-600 rounded-full">0</span>
+        </button>
+      </div>
+
+      <!-- Content -->
+      <div id="purchase-list" class="p-6 overflow-y-auto" style="max-height: 60vh;">
+        <div id="loading-purchases" class="text-center py-8">
+          <i class="fas fa-spinner fa-spin text-4xl text-indigo-600"></i>
+          <p class="mt-4 text-gray-600">불러오는 중...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 물품 검수 모달 -->
+  <div id="inspection-modal" class="hidden fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden shadow-2xl">
+      <!-- Header -->
+      <div class="flex justify-between items-center p-6 border-b bg-gradient-to-r from-green-500 to-emerald-600">
+        <h3 class="text-xl font-bold text-white flex items-center gap-2">
+          <i class="fas fa-camera"></i>
+          물품 검수
+        </h3>
+        <button onclick="app.closeInspectionModal()" class="text-white hover:bg-white/20 w-8 h-8 rounded-full flex items-center justify-center transition-colors">
+          <i class="fas fa-times text-xl"></i>
+        </button>
+      </div>
+
+      <!-- Purchase Info -->
+      <div class="p-6 border-b bg-gray-50">
+        <h4 class="text-sm font-bold text-gray-700 mb-3">구매 정보</h4>
+        <div id="inspection-purchase-info" class="space-y-2 text-sm">
+          <!-- Dynamic content -->
+        </div>
+      </div>
+
+      <!-- Inspection Form -->
+      <div class="p-6 space-y-4 overflow-y-auto" style="max-height: 50vh;">
+        <!-- Photos -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            <i class="fas fa-images mr-1 text-green-600"></i>물품 사진 (최대 5장) *
+          </label>
+          <input type="file" id="inspection-photos" accept="image/*" multiple capture="environment" class="hidden">
+          <button onclick="document.getElementById('inspection-photos').click()" class="w-full px-6 py-8 border-2 border-dashed border-gray-300 rounded-lg hover:border-green-500 transition-colors text-gray-500 hover:text-green-500">
+            <i class="fas fa-camera text-4xl mb-2"></i>
+            <p class="text-sm font-medium">사진 촬영 / 선택</p>
+            <p class="text-xs mt-1">물품, 영수증 등을 촬영해주세요</p>
+          </button>
+          <div id="inspection-photo-preview" class="grid grid-cols-3 gap-2 mt-3"></div>
+        </div>
+
+        <!-- Actual Amount -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            <i class="fas fa-won-sign mr-1 text-green-600"></i>실제 금액 *
+          </label>
+          <input type="number" id="inspection-actual-amount" placeholder="실제 지불 금액 입력" class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+        </div>
+
+        <!-- Notes -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            <i class="fas fa-comment mr-1 text-green-600"></i>메모 (선택)
+          </label>
+          <textarea id="inspection-notes" rows="3" placeholder="특이사항이 있으면 입력하세요" class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"></textarea>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex gap-3 p-6 border-t bg-gray-50">
+        <button onclick="app.closeInspectionModal()" class="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium">
+          취소
+        </button>
+        <button onclick="app.submitInspection()" class="flex-1 px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:from-green-600 hover:to-emerald-700 transition-all shadow-md font-medium">
+          <i class="fas fa-check-circle mr-2"></i>검수 완료
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 새 구매 요청 모달 -->
+  <div id="new-purchase-modal" class="hidden fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden shadow-2xl">
+      <!-- Header -->
+      <div class="flex justify-between items-center p-6 border-b bg-gradient-to-r from-blue-500 to-indigo-600">
+        <h3 class="text-xl font-bold text-white flex items-center gap-2">
+          <i class="fas fa-plus-circle"></i>
+          새 구매 요청
+        </h3>
+        <button onclick="app.closeNewPurchaseModal()" class="text-white hover:bg-white/20 w-8 h-8 rounded-full flex items-center justify-center transition-colors">
+          <i class="fas fa-times text-xl"></i>
+        </button>
+      </div>
+
+      <!-- Form -->
+      <div class="p-6 overflow-y-auto" style="max-height: 70vh;">
+        <!-- Reason -->
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            <i class="fas fa-comment-dots mr-1 text-blue-600"></i>구매 사유 *
+          </label>
+          <textarea id="new-purchase-reason" rows="3" placeholder="구매가 필요한 이유를 입력하세요" class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required></textarea>
+        </div>
+
+        <!-- Items -->
+        <div class="mb-4">
+          <div class="flex justify-between items-center mb-2">
+            <label class="block text-sm font-medium text-gray-700">
+              <i class="fas fa-boxes mr-1 text-blue-600"></i>물품 목록 *
+            </label>
+            <button onclick="app.addPurchaseItemRow()" class="px-3 py-1 text-xs font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+              <i class="fas fa-plus mr-1"></i>물품 추가
+            </button>
+          </div>
+          <div id="new-purchase-items" class="space-y-3">
+            <!-- Dynamic items will be added here -->
+          </div>
+        </div>
+
+        <!-- Total Amount -->
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div class="flex justify-between items-center">
+            <span class="text-sm font-medium text-gray-700">총 예상 금액:</span>
+            <span id="new-purchase-total" class="text-xl font-bold text-blue-600">₩0</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex gap-3 p-6 border-t bg-gray-50">
+        <button onclick="app.closeNewPurchaseModal()" class="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium">
+          취소
+        </button>
+        <button onclick="app.submitNewPurchaseRequest()" class="flex-1 px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg hover:from-blue-600 hover:to-indigo-700 transition-all shadow-md font-medium">
+          <i class="fas fa-paper-plane mr-2"></i>요청 제출
+        </button>
+      </div>
+    </div>
+  </div>
   
   <script>
     // ==============================================
@@ -366,7 +535,11 @@
         beforePhoto: null,
         afterPhoto: null,
         selectedPhotos: [],
-        currentTab: 'attendance'
+        currentTab: 'attendance',
+        myPurchases: [],
+        currentPurchaseTab: 'pending',
+        currentInspection: null,
+        newPurchaseItemCounter: 0
       },
       
       // ==================== 초기화 ====================
@@ -1280,6 +1453,509 @@
         }).join('');
       },
       
+      // ==================== 구매 요청 시스템 ====================
+      async loadPurchaseBadge() {
+        try {
+          if (!this.state.employee || !this.state.employee.id) return;
+          
+          const employeeId = this.state.employee.id;
+          const employeeName = this.state.employee.name;
+          
+          const { data, error } = await this.sb
+            .from('purchases')
+            .select('id, status')
+            .or(`requester_name.eq.${employeeName},requester_employee_id.eq.${employeeId}`)
+            .eq('status', 'approved');
+          
+          if (error) {
+            console.error('구매 배지 로드 실패:', error);
+            return;
+          }
+          
+          const pendingCount = (data || []).length;
+          const badge = document.getElementById('purchase-badge');
+          
+          if (pendingCount > 0) {
+            badge.textContent = pendingCount;
+            badge.classList.remove('hidden');
+          } else {
+            badge.classList.add('hidden');
+          }
+          
+          // Update pending inspections list
+          const container = document.getElementById('pending-inspections');
+          if (pendingCount === 0) {
+            container.innerHTML = `
+              <div class="text-center text-gray-400 py-8">
+                <i class="fas fa-clipboard-check text-4xl mb-2"></i>
+                <div>검수 대기 항목이 없습니다</div>
+              </div>
+            `;
+          } else {
+            // Load full purchase data for pending items
+            const { data: purchases } = await this.sb
+              .from('purchases')
+              .select('*, purchase_items(*)')
+              .or(`requester_name.eq.${employeeName},requester_employee_id.eq.${employeeId}`)
+              .eq('status', 'approved')
+              .order('created_at', { ascending: false });
+            
+            container.innerHTML = (purchases || []).map(p => {
+              const itemCount = (p.purchase_items || []).length;
+              const itemText = itemCount > 0 ? `${p.purchase_items[0].item_name}${itemCount > 1 ? ` 외 ${itemCount - 1}건` : ''}` : '항목 없음';
+              
+              return `
+                <div class="bg-orange-50 border-l-4 border-orange-500 p-4 rounded">
+                  <div class="flex justify-between items-start mb-2">
+                    <div class="flex-1">
+                      <h4 class="font-bold text-gray-800">${itemText}</h4>
+                      <p class="text-xs text-gray-500 mt-1">${new Date(p.created_at).toLocaleDateString('ko-KR')}</p>
+                    </div>
+                    <span class="px-2 py-1 text-xs font-medium bg-orange-100 text-orange-800 rounded-full">검수 대기</span>
+                  </div>
+                  <div class="text-sm text-gray-600 mb-3">
+                    <span>예상 금액: <span class="font-medium text-indigo-600">₩${parseFloat(p.total_amount).toLocaleString('ko-KR')}</span></span>
+                  </div>
+                  <button onclick="app.openInspection('${p.id}')" class="w-full px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:from-green-600 hover:to-emerald-700 transition-all shadow-sm font-medium">
+                    <i class="fas fa-camera mr-2"></i>검수하기
+                  </button>
+                </div>
+              `;
+            }).join('');
+          }
+        } catch (err) {
+          console.error('❌ 구매 배지 로드 실패:', err);
+        }
+      },
+      
+      async showMyPurchases() {
+        if (!this.state.employee || !this.state.employee.id) {
+          this.showToast('⚠️ 직원 정보를 찾을 수 없습니다', 'error');
+          return;
+        }
+
+        document.getElementById('purchase-modal').classList.remove('hidden');
+        this.switchPurchaseTab('pending');
+        await this.loadMyPurchases();
+      },
+
+      async loadMyPurchases() {
+        try {
+          const loadingEl = document.getElementById('loading-purchases');
+          if (loadingEl) {
+            loadingEl.classList.remove('hidden');
+          }
+          
+          const employeeId = this.state.employee.id;
+          const employeeName = this.state.employee.name;
+          
+          const { data, error } = await this.sb
+            .from('purchases')
+            .select(`
+              *,
+              purchase_items(*),
+              purchase_photos(*)
+            `)
+            .or(`requester_name.eq.${employeeName},requester_employee_id.eq.${employeeId}`)
+            .order('created_at', { ascending: false });
+          
+          if (error) throw error;
+          
+          this.state.myPurchases = data || [];
+          
+          const pendingCount = data.filter(p => p.status === 'approved').length;
+          const badge = document.getElementById('purchase-badge');
+          if (badge) {
+            if (pendingCount > 0) {
+              badge.textContent = pendingCount;
+              badge.classList.remove('hidden');
+            } else {
+              badge.classList.add('hidden');
+            }
+          }
+          
+          const countPending = document.getElementById('count-pending');
+          const countAll = document.getElementById('count-all');
+          if (countPending) countPending.textContent = pendingCount;
+          if (countAll) countAll.textContent = data.length;
+          
+          this.renderPurchaseList();
+          
+          if (loadingEl) {
+            loadingEl.classList.add('hidden');
+          }
+        } catch (err) {
+          console.error('❌ 구매 요청 로드 실패:', err);
+          const loadingEl = document.getElementById('loading-purchases');
+          if (loadingEl) {
+            loadingEl.innerHTML = `
+              <div class="text-center py-8">
+                <i class="fas fa-exclamation-triangle text-4xl text-red-500"></i>
+                <p class="mt-4 text-red-600">구매 요청을 불러올 수 없습니다</p>
+              </div>
+            `;
+          }
+        }
+      },
+
+      switchPurchaseTab(tab) {
+        document.querySelectorAll('#purchase-modal button[id^="tab-"]').forEach(btn => {
+          btn.classList.remove('text-indigo-600', 'border-indigo-600');
+          btn.classList.add('text-gray-600', 'border-transparent');
+        });
+        
+        const activeTab = document.getElementById(`tab-${tab}`);
+        activeTab.classList.remove('text-gray-600', 'border-transparent');
+        activeTab.classList.add('text-indigo-600', 'border-indigo-600');
+        
+        this.state.currentPurchaseTab = tab;
+        this.renderPurchaseList();
+      },
+
+      renderPurchaseList() {
+        const container = document.getElementById('purchase-list');
+        const tab = this.state.currentPurchaseTab || 'pending';
+        
+        let filtered = this.state.myPurchases || [];
+        
+        if (tab === 'pending') {
+          filtered = filtered.filter(p => p.status === 'approved');
+        }
+        
+        if (filtered.length === 0) {
+          const message = tab === 'pending' ? '검수 대기 중인 구매 요청이 없습니다' : '구매 요청 내역이 없습니다';
+          container.innerHTML = `
+            <div class="text-center py-12">
+              <i class="fas fa-inbox text-6xl text-gray-300"></i>
+              <p class="mt-4 text-gray-500">${message}</p>
+            </div>
+          `;
+          return;
+        }
+        
+        container.innerHTML = filtered.map(p => {
+          const statusBadge = {
+            pending: '<span class="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">승인 대기</span>',
+            approved: '<span class="px-2 py-1 text-xs font-medium bg-orange-100 text-orange-800 rounded-full">검수 대기</span>',
+            rejected: '<span class="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full">반려됨</span>',
+            completed: '<span class="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">완료</span>'
+          }[p.status];
+          
+          const itemCount = (p.purchase_items || []).length;
+          const itemText = itemCount > 0 ? `${p.purchase_items[0].item_name}${itemCount > 1 ? ` 외 ${itemCount - 1}건` : ''}` : '항목 없음';
+          
+          const canInspect = p.status === 'approved';
+          
+          return `
+            <div class="bg-white border rounded-xl p-4 mb-3 hover:shadow-md transition-shadow">
+              <div class="flex justify-between items-start mb-3">
+                <div class="flex-1">
+                  <h4 class="font-bold text-gray-800">${itemText}</h4>
+                  <p class="text-xs text-gray-500 mt-1">${new Date(p.created_at).toLocaleDateString('ko-KR')}</p>
+                </div>
+                ${statusBadge}
+              </div>
+              <div class="text-sm text-gray-600 mb-3">
+                <div class="flex justify-between">
+                  <span>예상 금액:</span>
+                  <span class="font-medium text-indigo-600">₩${parseFloat(p.total_amount).toLocaleString('ko-KR')}</span>
+                </div>
+                ${p.actual_amount ? `
+                  <div class="flex justify-between mt-1">
+                    <span>실제 금액:</span>
+                    <span class="font-medium text-green-600">₩${parseFloat(p.actual_amount).toLocaleString('ko-KR')}</span>
+                  </div>
+                ` : ''}
+              </div>
+              ${canInspect ? `
+                <button onclick="app.openInspection('${p.id}')" class="w-full px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:from-green-600 hover:to-emerald-700 transition-all shadow-sm font-medium">
+                  <i class="fas fa-camera mr-2"></i>검수하기
+                </button>
+              ` : ''}
+              ${p.status === 'rejected' && p.rejection_reason ? `
+                <div class="mt-2 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700">
+                  <i class="fas fa-info-circle mr-1"></i>${p.rejection_reason}
+                </div>
+              ` : ''}
+            </div>
+          `;
+        }).join('');
+      },
+
+      closePurchaseModal() {
+        document.getElementById('purchase-modal').classList.add('hidden');
+      },
+
+      async openInspection(purchaseId) {
+        try {
+          const purchase = this.state.myPurchases.find(p => p.id === purchaseId);
+          if (!purchase) {
+            this.showToast('❌ 구매 요청을 찾을 수 없습니다', 'error');
+            return;
+          }
+          
+          this.state.currentInspection = purchase;
+          
+          const infoContainer = document.getElementById('inspection-purchase-info');
+          infoContainer.innerHTML = `
+            <div class="flex justify-between">
+              <span class="text-gray-600">물품:</span>
+              <span class="font-medium">${purchase.purchase_items.map(i => i.item_name).join(', ')}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-600">요청일:</span>
+              <span class="font-medium">${new Date(purchase.created_at).toLocaleDateString('ko-KR')}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-600">예상 금액:</span>
+              <span class="font-medium text-indigo-600">₩${parseFloat(purchase.total_amount).toLocaleString('ko-KR')}</span>
+            </div>
+          `;
+          
+          document.getElementById('inspection-photos').value = '';
+          document.getElementById('inspection-photo-preview').innerHTML = '';
+          document.getElementById('inspection-actual-amount').value = '';
+          document.getElementById('inspection-notes').value = '';
+          
+          document.getElementById('inspection-photos').onchange = (e) => {
+            const files = Array.from(e.target.files).slice(0, 5);
+            const preview = document.getElementById('inspection-photo-preview');
+            preview.innerHTML = '';
+            
+            files.forEach(file => {
+              const reader = new FileReader();
+              reader.onload = (e) => {
+                preview.insertAdjacentHTML('beforeend', `
+                  <img src="${e.target.result}" class="w-full h-24 object-cover rounded-lg border-2 border-green-300">
+                `);
+              };
+              reader.readAsDataURL(file);
+            });
+          };
+          
+          document.getElementById('inspection-modal').classList.remove('hidden');
+        } catch (err) {
+          console.error('❌ 검수 모달 열기 실패:', err);
+          this.showToast('❌ 오류가 발생했습니다', 'error');
+        }
+      },
+
+      closeInspectionModal() {
+        document.getElementById('inspection-modal').classList.add('hidden');
+      },
+
+      async submitInspection() {
+        const files = document.getElementById('inspection-photos').files;
+        const actualAmount = parseFloat(document.getElementById('inspection-actual-amount').value);
+        const notes = document.getElementById('inspection-notes').value;
+        
+        if (files.length === 0) {
+          this.showToast('⚠️ 사진을 업로드하세요', 'error');
+          return;
+        }
+        
+        if (!actualAmount || actualAmount <= 0) {
+          this.showToast('⚠️ 실제 금액을 입력하세요', 'error');
+          return;
+        }
+        
+        try {
+          this.showToast('📤 검수 정보를 업로드하는 중...', 'info');
+          
+          const photoUrls = [];
+          for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            const fileName = `${this.state.currentInspection.id}_${Date.now()}_${i}.jpg`;
+            
+            const { data, error } = await this.sb.storage
+              .from('purchase-photos')
+              .upload(fileName, file);
+            
+            if (error) throw error;
+            
+            const { data: urlData } = this.sb.storage
+              .from('purchase-photos')
+              .getPublicUrl(fileName);
+            
+            photoUrls.push(urlData.publicUrl);
+          }
+          
+          const photoRecords = photoUrls.map(url => ({
+            purchase_id: this.state.currentInspection.id,
+            photo_url: url,
+            uploaded_by: this.state.employee.name
+          }));
+          
+          const { error: e1 } = await this.sb
+            .from('purchase_photos')
+            .insert(photoRecords);
+          
+          if (e1) throw e1;
+          
+          const { error: e2 } = await this.sb
+            .from('purchases')
+            .update({
+              status: 'completed',
+              completion_time: new Date().toISOString(),
+              actual_amount: actualAmount,
+              inspected_by: this.state.employee.name,
+              inspected_at: new Date().toISOString(),
+              inspection_notes: notes || null
+            })
+            .eq('id', this.state.currentInspection.id);
+          
+          if (e2) throw e2;
+          
+          this.showToast('✅ 검수가 완료되었습니다!', 'success');
+          this.closeInspectionModal();
+          
+          await this.loadPurchaseBadge();
+          
+          const purchaseModal = document.getElementById('purchase-modal');
+          if (purchaseModal && !purchaseModal.classList.contains('hidden')) {
+            await this.loadMyPurchases();
+          }
+        } catch (err) {
+          console.error('❌ 검수 완료 처리 실패:', err);
+          this.showToast('❌ 검수 처리 중 오류가 발생했습니다', 'error');
+        }
+      },
+
+      openNewPurchaseRequest() {
+        document.getElementById('new-purchase-reason').value = '';
+        document.getElementById('new-purchase-items').innerHTML = '';
+        document.getElementById('new-purchase-total').textContent = '₩0';
+        
+        this.state.newPurchaseItemCounter = 0;
+        this.addPurchaseItemRow();
+        
+        document.getElementById('new-purchase-modal').classList.remove('hidden');
+      },
+
+      closeNewPurchaseModal() {
+        document.getElementById('new-purchase-modal').classList.add('hidden');
+      },
+
+      addPurchaseItemRow() {
+        const itemId = ++this.state.newPurchaseItemCounter;
+        const container = document.getElementById('new-purchase-items');
+        
+        const itemHtml = `
+          <div id="item-${itemId}" class="bg-gray-50 border border-gray-200 rounded-lg p-3">
+            <div class="flex justify-between items-start mb-2">
+              <span class="text-xs font-medium text-gray-600">물품 #${itemId}</span>
+              ${itemId > 1 ? `<button onclick="app.removePurchaseItemRow(${itemId})" class="text-red-500 hover:text-red-700 text-xs"><i class="fas fa-times"></i></button>` : ''}
+            </div>
+            <div class="space-y-2">
+              <input type="text" id="item-name-${itemId}" placeholder="물품명" class="w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500" required onchange="app.calculateNewPurchaseTotal()">
+              <div class="grid grid-cols-2 gap-2">
+                <input type="number" id="item-quantity-${itemId}" placeholder="수량" class="w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500" value="1" min="1" required onchange="app.calculateNewPurchaseTotal()">
+                <input type="number" id="item-price-${itemId}" placeholder="단가" class="w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500" min="0" required onchange="app.calculateNewPurchaseTotal()">
+              </div>
+            </div>
+          </div>
+        `;
+        
+        container.insertAdjacentHTML('beforeend', itemHtml);
+      },
+
+      removePurchaseItemRow(itemId) {
+        const element = document.getElementById(`item-${itemId}`);
+        if (element) {
+          element.remove();
+          this.calculateNewPurchaseTotal();
+        }
+      },
+
+      calculateNewPurchaseTotal() {
+        let total = 0;
+        const container = document.getElementById('new-purchase-items');
+        const items = container.querySelectorAll('[id^="item-"]');
+        
+        items.forEach(item => {
+          const id = item.id.split('-')[1];
+          const quantity = parseFloat(document.getElementById(`item-quantity-${id}`)?.value) || 0;
+          const price = parseFloat(document.getElementById(`item-price-${id}`)?.value) || 0;
+          total += quantity * price;
+        });
+        
+        document.getElementById('new-purchase-total').textContent = `₩${total.toLocaleString('ko-KR')}`;
+      },
+
+      async submitNewPurchaseRequest() {
+        const reason = document.getElementById('new-purchase-reason').value.trim();
+        
+        if (!reason) {
+          this.showToast('⚠️ 구매 사유를 입력하세요', 'error');
+          return;
+        }
+        
+        const container = document.getElementById('new-purchase-items');
+        const itemElements = container.querySelectorAll('[id^="item-"]');
+        const items = [];
+        
+        for (let el of itemElements) {
+          const id = el.id.split('-')[1];
+          const name = document.getElementById(`item-name-${id}`)?.value.trim();
+          const quantity = parseFloat(document.getElementById(`item-quantity-${id}`)?.value) || 0;
+          const price = parseFloat(document.getElementById(`item-price-${id}`)?.value) || 0;
+          
+          if (!name || quantity <= 0 || price < 0) {
+            this.showToast('⚠️ 모든 물품 정보를 정확히 입력하세요', 'error');
+            return;
+          }
+          
+          items.push({ item_name: name, quantity, estimated_price: price, subtotal: quantity * price });
+        }
+        
+        if (items.length === 0) {
+          this.showToast('⚠️ 최소 1개 이상의 물품을 추가하세요', 'error');
+          return;
+        }
+        
+        const totalAmount = items.reduce((sum, item) => sum + item.subtotal, 0);
+        
+        try {
+          this.showToast('📤 구매 요청을 제출하는 중...', 'info');
+          
+          const { data: purchase, error: e1 } = await this.sb
+            .from('purchases')
+            .insert([{
+              apartment_id: this.state.employee.apartment_id,
+              requester_employee_id: this.state.employee.id,
+              requester_name: this.state.employee.name,
+              reason: reason,
+              total_amount: totalAmount,
+              status: 'pending'
+            }])
+            .select()
+            .single();
+          
+          if (e1) throw e1;
+          
+          const itemRecords = items.map(item => ({
+            purchase_id: purchase.id,
+            item_name: item.item_name,
+            quantity: item.quantity,
+            estimated_price: item.estimated_price
+          }));
+          
+          const { error: e2 } = await this.sb
+            .from('purchase_items')
+            .insert(itemRecords);
+          
+          if (e2) throw e2;
+          
+          this.showToast('✅ 구매 요청이 제출되었습니다!', 'success');
+          this.closeNewPurchaseModal();
+          
+          await this.loadPurchaseBadge();
+        } catch (err) {
+          console.error('❌ 구매 요청 제출 실패:', err);
+          this.showToast('❌ 구매 요청 제출에 실패했습니다', 'error');
+        }
+      },
+      
       // ==================== 토스트 메시지 ====================
       showToast(message, type = 'success', duration = 3000) {
         const toast = document.createElement('div');
@@ -1310,6 +1986,9 @@
         
         // 오늘의 사진 로드
         this.loadTodayPhotos();
+        
+        // 구매 요청 배지 로드
+        this.loadPurchaseBadge();
       },
       
       // ==================== 이벤트 리스너 ====================
@@ -1374,12 +2053,11 @@
         
         // 구매 요청 버튼 (scan.html의 모달 재사용)
         document.getElementById('btn-new-purchase').addEventListener('click', () => {
-          this.showToast('구매 요청 기능은 scan.html 페이지를 참고하세요', 'info');
-          // 실제로는 scan.html의 모달 코드를 여기에 복사해야 함
+          this.openNewPurchaseRequest();
         });
         
         document.getElementById('btn-my-purchases').addEventListener('click', () => {
-          this.showToast('구매 목록 기능은 scan.html 페이지를 참고하세요', 'info');
+          this.showMyPurchases();
         });
       },
       
