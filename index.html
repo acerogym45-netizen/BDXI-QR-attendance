@@ -1731,6 +1731,7 @@
         employeeList: [],
         apartments: [], // 아파트 목록
         currentApartment: null, // 현재 선택된 아파트
+        currentAdmin: null, // 현재 로그인한 관리자 정보
         purchases: [], // 구매 요청 목록
         currentPurchase: null, // 현재 선택된 구매 요청
         purchaseItemCounter: 0, // 물품 카운터
@@ -2051,6 +2052,14 @@
         showDashboard: function () {
           document.getElementById('view-login').classList.add('hidden');
           document.getElementById('view-dashboard').classList.remove('hidden');
+          
+          // 관리자 정보 설정
+          if (!this.currentAdmin && this.currentApartment) {
+            this.currentAdmin = {
+              name: this.currentApartment.name + ' 관리자',
+              apartmentId: this.currentApartment.id
+            };
+          }
           
           // 헤더에 아파트 이름 표시
           const apartmentNameEl = document.getElementById('current-apartment-name');
