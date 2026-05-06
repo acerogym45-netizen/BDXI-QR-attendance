@@ -2136,6 +2136,9 @@
     };
     
     // ==================== 앱 시작 ====================
+    // 전역 스코프에 노출 (HTML onclick에서 사용하기 위해)
+    window.app = app;
+    
     document.addEventListener('DOMContentLoaded', () => {
       app.init();
     });
