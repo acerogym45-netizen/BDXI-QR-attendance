@@ -1731,6 +1731,10 @@
         employeeList: [],
         apartments: [], // 아파트 목록
         currentApartment: null, // 현재 선택된 아파트
+        purchases: [], // 구매 요청 목록
+        currentPurchase: null, // 현재 선택된 구매 요청
+        purchaseItemCounter: 0, // 물품 카운터
+        currentInspectionPurchaseId: null, // 검수 중인 구매 요청 ID
 
         init: async function () {
           try {
@@ -6199,8 +6203,6 @@
       };
       
       // 물품 항목 추가
-      app.purchaseItemCounter = 0;
-      
       app.addPurchaseItem = async function() {
         const itemId = ++this.purchaseItemCounter;
         const container = document.getElementById('purchase-items-container');
