@@ -914,19 +914,20 @@
           
           this.showToast(`${type} 기록 중...`, 'info');
           
-          // DB에 저장
+          // DB에 저장 (attendance_records 테이블 사용 - scan.html과 동일)
           const { data, error } = await this.sb
-            .from('attendance')
+            .from('attendance_records')
             .insert({
               employee_id: this.state.employee.id,
+              employee_name: this.state.employee.name,
               apartment_id: this.state.workplace.id,
               location_id: this.state.workplace.id,
-              type: type,
+              attendance_type: type,
+              scan_time: new Date().toISOString(),
               location_lat: verification.location.lat,
               location_lng: verification.location.lng,
               gps_accuracy: verification.accuracy,
-              distance_from_workplace: verification.distance,
-              timestamp: new Date().toISOString()
+              distance_from_workplace: verification.distance
             });
           
           if (error) throw error;
@@ -945,12 +946,12 @@
       async loadTodayAttendance() {
         const today = new Date().toISOString().split('T')[0];
         
-        const { data, error } = await this.sb
-          .from('attendance')
+        const { data, error} = await this.sb
+          .from('attendance_records')
           .select('*')
           .eq('employee_id', this.state.employee.id)
-          .gte('timestamp', today + 'T00:00:00')
-          .order('timestamp', { ascending: false });
+          .gte('scan_time', today + 'T00:00:00')
+          .order('scan_time', { ascending: false });
         
         if (error) {
           console.error('기록 로드 실패:', error);
@@ -970,23 +971,33 @@
         }
         
         container.innerHTML = data.map(record => {
-          const time = new Date(record.timestamp).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+          const time = new Date(record.scan_time).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
           const typeIcons = {
             '출근': { icon: 'fa-sign-in-alt', color: 'text-green-600', bg: 'bg-green-50' },
             '퇴근': { icon: 'fa-sign-out-alt', color: 'text-orange-600', bg: 'bg-orange-50' },
             '휴게 시작': { icon: 'fa-coffee', color: 'text-blue-600', bg: 'bg-blue-50' },
             '휴게 종료': { icon: 'fa-play', color: 'text-purple-600', bg: 'bg-purple-50' }
           };
-          const style = typeIcons[record.type] || typeIcons['출근'];
+          const style = typeIcons[record.attendance_type] || typeIcons['출근'];
           
           return `
             <div class="${style.bg} border-l-4 border-${style.color.split('-')[1]}-500 p-3 rounded">
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-2">
                   <i class="fas ${style.icon} ${style.color}"></i>
-                  <span class="font-bold">${record.type}</span>
+                  <span class="font-bold">${record.attendance_type}</span>
                 </div>
                 <span class="text-sm text-gray-600">${time}</span>
+              </div>
+              ${record.distance_from_workplace ? `
+                <div class="text-xs text-gray-500 mt-1">
+                  📍 거리: ${Math.round(record.distance_from_workplace)}m / 정확도: ±${Math.round(record.gps_accuracy)}m
+                </div>
+              ` : ''}
+            </div>
+          `;
+        }).join('');
+      },
               </div>
               <div class="text-xs text-gray-500 mt-1">
                 📍 ${record.distance_from_workplace}m (±${record.gps_accuracy}m)
