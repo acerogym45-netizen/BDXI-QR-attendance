@@ -527,41 +527,87 @@
       
       // ==================== 직원 선택 UI ====================
       async showEmployeeSelector() {
-        // 간단한 프롬프트로 직원 이름 입력 (임시)
-        const name = prompt('직원 이름을 입력하세요:');
+        // 이름 + 전화번호 뒷자리 4자리 입력
+        const name = prompt('이름을 입력하세요:');
         if (!name) {
-          alert('직원 이름이 필요합니다.');
+          alert('이름이 필요합니다.');
           location.reload();
           return;
         }
         
-        // DB에서 직원 검색
-        const { data, error } = await this.sb
+        const phone4 = prompt('전화번호 뒷자리 4자리를 입력하세요:\n(예: 1234)');
+        if (!phone4 || phone4.length !== 4) {
+          alert('전화번호 뒷자리 4자리를 정확히 입력해주세요.');
+          location.reload();
+          return;
+        }
+        
+        // DB에서 직원 검색 (이름 + 전화번호 뒷자리)
+        const { data: employees, error } = await this.sb
           .from('employees')
-          .select('*')
-          .ilike('name', `%${name}%`)
-          .limit(10);
+          .select(`
+            *,
+            apartment:apartments(code, name)
+          `)
+          .ilike('name', name);
         
-        if (error || !data || data.length === 0) {
-          alert('직원을 찾을 수 없습니다.');
+        if (error) {
+          console.error('직원 검색 실패:', error);
+          alert('직원 검색 중 오류가 발생했습니다.');
           location.reload();
           return;
         }
         
-        // 여러 명이면 선택
-        let selected = data[0];
-        if (data.length > 1) {
-          const names = data.map((e, i) => `${i + 1}. ${e.name} (${e.position || '직원'})`).join('\n');
-          const choice = parseInt(prompt(`여러 명이 검색되었습니다. 번호를 선택하세요:\n${names}`));
-          if (choice && choice > 0 && choice <= data.length) {
-            selected = data[choice - 1];
-          }
+        if (!employees || employees.length === 0) {
+          alert('일치하는 직원을 찾을 수 없습니다.');
+          location.reload();
+          return;
         }
         
-        this.state.employee = selected;
-        localStorage.setItem('employee_id', selected.id);
+        // 전화번호 뒷자리로 필터링
+        const matched = employees.filter(emp => {
+          const phone = emp.phone || '';
+          const last4 = phone.replace(/\D/g, '').slice(-4);
+          return last4 === phone4;
+        });
         
-        console.log('✅ 직원 선택:', selected.name);
+        if (matched.length === 0) {
+          alert('이름 또는 전화번호가 일치하지 않습니다.');
+          location.reload();
+          return;
+        }
+        
+        if (matched.length > 1) {
+          // 여러 명이면 선택 (단지 정보 포함)
+          const names = matched.map((e, i) => {
+            const aptName = e.apartment?.name || '알 수 없음';
+            const position = e.position || '직원';
+            return `${i + 1}. ${e.name} (${aptName} - ${position})`;
+          }).join('\n');
+          
+          const choice = parseInt(prompt(`여러 개의 계정이 검색되었습니다. 번호를 선택하세요:\n${names}`));
+          
+          if (!choice || choice < 1 || choice > matched.length) {
+            alert('올바른 번호를 선택해주세요.');
+            location.reload();
+            return;
+          }
+          
+          this.state.employee = matched[choice - 1];
+        } else {
+          // 한 명만 매칭
+          this.state.employee = matched[0];
+        }
+        
+        localStorage.setItem('employee_id', this.state.employee.id);
+        
+        const aptName = this.state.employee.apartment?.name || '단지 정보 없음';
+        const position = this.state.employee.position || '직원';
+        
+        console.log('✅ 직원 인증 성공:', this.state.employee.name, aptName, position);
+        
+        // 인증 성공 메시지
+        alert(`환영합니다!\n\n이름: ${this.state.employee.name}\n소속: ${aptName}\n직책: ${position}`);
       },
       
       // ==================== 근무지 정보 로드 ====================
