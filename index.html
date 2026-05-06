@@ -360,7 +360,7 @@
       <!-- Main Content -->
       <main id="main-content" class="flex-1 w-full relative">
         <!-- 계약 만료 알림 배너 -->
-        <div id="contract-alert-banner" class="hidden bg-gradient-to-r from-orange-50 to-red-50 border-2 border-orange-300 rounded-xl p-4 shadow-lg mx-4 mt-4">
+        <div id="contract-alert-banner" class="hidden bg-gradient-to-r from-orange-50 to-red-50 border-2 border-orange-300 rounded-xl shadow-lg">
           <div class="flex items-start gap-3">
             <div class="flex-shrink-0">
               <i class="fas fa-exclamation-triangle text-orange-600 text-2xl"></i>
@@ -541,7 +541,7 @@
         <!-- TAB 3: Stats -->
         <div id="tab-stats" class="tab-content space-y-6 px-4 hidden">
           <!-- 🚫 출근 차단 알림 배너 -->
-          <div id="blocked-employees-banner" class="hidden bg-red-50 border-2 border-red-400 rounded-xl p-4 shadow-lg">
+          <div id="blocked-employees-banner" class="hidden bg-red-50 border-2 border-red-400 rounded-xl shadow-lg">
             <div class="flex items-start gap-3">
               <i class="fas fa-user-lock text-red-600 text-3xl"></i>
               <div class="flex-1">
@@ -567,7 +567,7 @@
           </div>
 
           <!-- ⚠️ 오늘 퇴근 미기록 알림 배너 -->
-          <div id="incomplete-today-banner" class="hidden bg-yellow-50 border-2 border-yellow-400 rounded-xl p-4 shadow-lg">
+          <div id="incomplete-today-banner" class="hidden bg-yellow-50 border-2 border-yellow-400 rounded-xl shadow-lg">
             <div class="flex items-start gap-3">
               <i class="fas fa-exclamation-triangle text-yellow-600 text-3xl animate-pulse"></i>
               <div class="flex-1">
@@ -3737,7 +3737,10 @@
               });
               
               banner.classList.remove('hidden');
-              banner.style.marginBottom = '1.5rem'; // mb-6 equivalent (24px)
+              banner.classList.add('p-4', 'mx-4', 'mt-4', 'mb-6');
+            } else {
+              banner.classList.add('hidden');
+              banner.classList.remove('p-4', 'mx-4', 'mt-4', 'mb-6');
             }
           } catch (error) {
             console.error('계약 만료 체크 실패:', error);
@@ -5687,11 +5690,14 @@
           const blockedCount = data ? data.length : 0;
           
           // 배너 업데이트
+          const blockedBanner = document.getElementById('blocked-employees-banner');
           if (blockedCount > 0) {
             document.getElementById('blocked-count').textContent = blockedCount;
-            document.getElementById('blocked-employees-banner').classList.remove('hidden');
+            blockedBanner.classList.remove('hidden');
+            blockedBanner.classList.add('p-4', 'mx-4', 'mt-4', 'mb-4');
           } else {
-            document.getElementById('blocked-employees-banner').classList.add('hidden');
+            blockedBanner.classList.add('hidden');
+            blockedBanner.classList.remove('p-4', 'mx-4', 'mt-4', 'mb-4');
           }
           
         } catch (error) {
@@ -5722,11 +5728,14 @@
           const incompleteCount = data ? data.length : 0;
           
           // 배너 업데이트
+          const incompleteBanner = document.getElementById('incomplete-today-banner');
           if (incompleteCount > 0) {
             document.getElementById('incomplete-today-count').textContent = incompleteCount;
-            document.getElementById('incomplete-today-banner').classList.remove('hidden');
+            incompleteBanner.classList.remove('hidden');
+            incompleteBanner.classList.add('p-4', 'mx-4', 'mt-4', 'mb-4');
           } else {
-            document.getElementById('incomplete-today-banner').classList.add('hidden');
+            incompleteBanner.classList.add('hidden');
+            incompleteBanner.classList.remove('p-4', 'mx-4', 'mt-4', 'mb-4');
           }
           
         } catch (error) {
