@@ -6137,7 +6137,7 @@
           this.renderPurchaseList(this.purchases);
         } catch (err) {
           console.error('❌ 구매 요청 목록 로드 실패:', err);
-          this.showToast('구매 요청 목록 로드 실패', 'error');
+          alert('구매 요청 목록 로드 실패');
         }
       };
       
@@ -6351,7 +6351,7 @@
         const reason = document.getElementById('purchase-reason').value.trim();
         
         if (!reason) {
-          this.showToast('구매 사유를 입력하세요', 'error');
+          alert('구매 사유를 입력하세요');
           return;
         }
         
@@ -6373,7 +6373,7 @@
         });
         
         if (hasError || items.length === 0) {
-          this.showToast('모든 물품 정보를 정확히 입력하세요', 'error');
+          alert('모든 물품 정보를 정확히 입력하세요');
           return;
         }
         
@@ -6443,13 +6443,13 @@
             }
           }
           
-          this.showToast('구매 요청이 등록되었습니다', 'success');
+          alert('구매 요청이 등록되었습니다');
           this.closeNewPurchaseModal();
           this.loadPurchases();
           this.loadPurchaseDashboard();
         } catch (err) {
           console.error('❌ 구매 요청 등록 실패:', err);
-          this.showToast('구매 요청 등록 실패', 'error');
+          alert('구매 요청 등록 실패');
         }
       };
       
@@ -6614,7 +6614,7 @@
           document.getElementById('purchase-detail-modal').classList.remove('hidden');
         } catch (err) {
           console.error('❌ 구매 요청 상세 로드 실패:', err);
-          this.showToast('구매 요청 상세 로드 실패', 'error');
+          alert('구매 요청 상세 로드 실패');
         }
       };
       
@@ -6639,13 +6639,13 @@
           
           if (error) throw error;
           
-          this.showToast('구매 요청이 승인되었습니다', 'success');
+          alert('구매 요청이 승인되었습니다');
           this.closePurchaseDetailModal();
           this.loadPurchases();
           this.loadPurchaseDashboard();
         } catch (err) {
           console.error('❌ 승인 실패:', err);
-          this.showToast('승인 실패', 'error');
+          alert('승인 실패');
         }
       };
       
@@ -6667,13 +6667,13 @@
           
           if (error) throw error;
           
-          this.showToast('구매 요청이 반려되었습니다', 'success');
+          alert('구매 요청이 반려되었습니다');
           this.closePurchaseDetailModal();
           this.loadPurchases();
           this.loadPurchaseDashboard();
         } catch (err) {
           console.error('❌ 반려 실패:', err);
-          this.showToast('반려 실패', 'error');
+          alert('반려 실패');
         }
       };
       
@@ -6692,13 +6692,13 @@
           
           if (error) throw error;
           
-          this.showToast('배송 완료 처리되었습니다', 'success');
+          alert('배송 완료 처리되었습니다');
           this.closePurchaseDetailModal();
           this.loadPurchases();
           this.loadPurchaseDashboard();
         } catch (err) {
           console.error('❌ 배송 완료 처리 실패:', err);
-          this.showToast('배송 완료 처리 실패', 'error');
+          alert('배송 완료 처리 실패');
         }
       };
       
@@ -6741,12 +6741,12 @@
         const actualAmount = parseFloat(document.getElementById('actual-amount').value);
         
         if (files.length === 0) {
-          this.showToast('검수 사진을 업로드하세요', 'error');
+          alert('검수 사진을 업로드하세요');
           return;
         }
         
         if (!actualAmount || actualAmount <= 0) {
-          this.showToast('실제 구매 금액을 입력하세요', 'error');
+          alert('실제 구매 금액을 입력하세요');
           return;
         }
         
@@ -6794,13 +6794,13 @@
           
           if (e2) throw e2;
           
-          this.showToast('검수가 완료되었습니다', 'success');
+          alert('검수가 완료되었습니다');
           this.closeInspectionPhotoModal();
           this.loadPurchases();
           this.loadPurchaseDashboard();
         } catch (err) {
           console.error('❌ 검수 완료 처리 실패:', err);
-          this.showToast('검수 완료 처리 실패', 'error');
+          alert('검수 완료 처리 실패');
         }
       };
       
@@ -6808,7 +6808,7 @@
       app.refreshPurchaseList = function() {
         this.loadPurchases();
         this.loadPurchaseDashboard();
-        this.showToast('새로고침 완료', 'success');
+        alert('새로고침 완료');
       };
       
       // QR 코드 관리 모달 열기
@@ -6871,7 +6871,7 @@
         const locationName = document.getElementById('qr-location-name').value.trim();
         
         if (!locationName) {
-          this.showToast('위치를 입력하세요', 'error');
+          alert('위치를 입력하세요');
           return;
         }
         
@@ -6889,12 +6889,12 @@
           
           if (error) throw error;
           
-          this.showToast('QR 코드가 생성되었습니다', 'success');
+          alert('QR 코드가 생성되었습니다');
           document.getElementById('qr-location-name').value = '';
           await this.loadPurchaseQRCodes();
         } catch (err) {
           console.error('❌ QR 코드 생성 실패:', err);
-          this.showToast('QR 코드 생성 실패', 'error');
+          alert('QR 코드 생성 실패');
         }
       };
       
@@ -6908,11 +6908,11 @@
           
           if (error) throw error;
           
-          this.showToast(`QR 코드가 ${isActive ? '활성화' : '비활성화'}되었습니다`, 'success');
+          alert(`QR 코드가 ${isActive ? '활성화' : '비활성화'}되었습니다`);
           await this.loadPurchaseQRCodes();
         } catch (err) {
           console.error('❌ QR 상태 변경 실패:', err);
-          this.showToast('QR 상태 변경 실패', 'error');
+          alert('QR 상태 변경 실패');
         }
       };
       
@@ -6943,7 +6943,7 @@
           document.body.removeChild(qrContainer);
         }, 300);
         
-        this.showToast('QR 코드 다운로드 시작', 'success');
+        alert('QR 코드 다운로드 시작');
       };
       
       // ==================== 기존 함수 ====================
