@@ -347,6 +347,9 @@
             <button onclick="app.switchTab('data')" class="nav-tab py-4 px-2 text-sm font-medium transition-all tab-inactive">
               <i class="fas fa-database mr-2"></i>데이터 관리
             </button>
+            <button onclick="app.switchTab('purchase')" class="nav-tab py-4 px-2 text-sm font-medium transition-all tab-inactive">
+              <i class="fas fa-shopping-cart mr-2"></i>구매 요청
+            </button>
             <button onclick="app.switchTab('report')" class="nav-tab py-4 px-2 text-sm font-medium transition-all tab-inactive">
               <i class="fas fa-file-alt mr-2"></i>업무 일지
             </button>
@@ -886,6 +889,110 @@
           </div>
         </div>
       </main>
+    </div>
+
+    <!-- TAB 6: Purchase Request (구매 요청) -->
+    <div id="tab-purchase" class="tab-content hidden p-6">
+      <!-- 상단 대시보드 -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <!-- 승인 대기 -->
+        <div class="bg-gradient-to-br from-yellow-50 to-orange-50 p-4 rounded-xl shadow-sm border-2 border-yellow-200">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm text-gray-600 mb-1">승인 대기</p>
+              <p class="text-3xl font-bold text-orange-600" id="pending-count">0</p>
+              <p class="text-xs text-gray-500 mt-1">건</p>
+            </div>
+            <div class="text-orange-400 text-4xl">
+              <i class="fas fa-clock"></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- 반려 -->
+        <div class="bg-gradient-to-br from-red-50 to-pink-50 p-4 rounded-xl shadow-sm border-2 border-red-200">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm text-gray-600 mb-1">반려</p>
+              <p class="text-3xl font-bold text-red-600" id="rejected-count">0</p>
+              <p class="text-xs text-gray-500 mt-1">건</p>
+            </div>
+            <div class="text-red-400 text-4xl">
+              <i class="fas fa-times-circle"></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- 이번 달 구매 현황 -->
+        <div class="bg-gradient-to-br from-blue-50 to-indigo-50 p-4 rounded-xl shadow-sm border-2 border-blue-200">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm text-gray-600 mb-1">이번 달 구매</p>
+              <p class="text-2xl font-bold text-blue-600" id="month-amount">₩0</p>
+              <p class="text-xs text-gray-500 mt-1"><span id="month-count">0</span>건</p>
+            </div>
+            <div class="text-blue-400 text-4xl">
+              <i class="fas fa-chart-line"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 액션 버튼 -->
+      <div class="flex gap-3 mb-6">
+        <button onclick="app.openNewPurchaseModal()" class="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:from-green-600 hover:to-emerald-700 transition-all shadow-md font-medium">
+          <i class="fas fa-plus mr-2"></i>새 구매 요청
+        </button>
+        <button onclick="app.refreshPurchaseList()" class="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium">
+          <i class="fas fa-sync-alt mr-2"></i>새로고침
+        </button>
+        <button onclick="app.showQRCodeManagement()" class="px-6 py-3 bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-lg hover:from-purple-600 hover:to-indigo-700 transition-all shadow-md font-medium">
+          <i class="fas fa-qrcode mr-2"></i>QR 코드 관리
+        </button>
+      </div>
+
+      <!-- 필터 -->
+      <div class="bg-white p-4 rounded-xl shadow-sm border mb-4">
+        <div class="flex flex-wrap gap-3">
+          <select id="filter-status" onchange="app.filterPurchases()" class="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+            <option value="all">전체 상태</option>
+            <option value="pending">승인 대기</option>
+            <option value="approved">승인됨</option>
+            <option value="rejected">반려됨</option>
+            <option value="delivered">배송 완료</option>
+            <option value="completed">검수 완료</option>
+          </select>
+          <input type="date" id="filter-start-date" onchange="app.filterPurchases()" class="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+          <input type="date" id="filter-end-date" onchange="app.filterPurchases()" class="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+          <input type="text" id="filter-search" onkeyup="app.filterPurchases()" placeholder="물품명, 요청자 검색..." class="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 flex-1">
+        </div>
+      </div>
+
+      <!-- 구매 요청 목록 -->
+      <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead class="bg-gray-50 border-b">
+              <tr>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">요청일</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">요청자</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">물품</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">금액</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">상태</th>
+                <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">작업</th>
+              </tr>
+            </thead>
+            <tbody id="purchase-list" class="divide-y divide-gray-200">
+              <!-- 구매 요청 목록이 여기에 표시됩니다 -->
+            </tbody>
+          </table>
+        </div>
+        <div id="no-purchase-data" class="hidden p-8 text-center text-gray-400">
+          <i class="fas fa-shopping-cart text-6xl mb-4"></i>
+          <p class="text-lg font-medium">구매 요청이 없습니다</p>
+          <p class="text-sm">새 구매 요청을 등록해보세요.</p>
+        </div>
+      </div>
     </div>
 
     <!-- Image Modal -->
@@ -2002,6 +2109,9 @@
             this.loadLocations();
             this.loadQRCodes();
             this.checkContractExpirationsInDataTab(); // 계약 만료 섹션 표시
+          } else if (tab === 'purchase') {
+            this.loadPurchases();
+            this.loadPurchaseDashboard();
           } else if (tab === 'report') {
             // 업무 일지 탭: 기본 날짜 설정 (이번 주)
             const today = new Date();
@@ -5911,6 +6021,877 @@
         alert(`💡 ${employeeName}님에게 전화하여 퇴근 체크를 요청해주세요.`);
       };
       
+      // ==================== 구매 요청 시스템 ====================
+      
+      // 구매 요청 대시보드 로드
+      app.loadPurchaseDashboard = async function() {
+        try {
+          const aptId = this.currentApartment.id;
+          const now = new Date();
+          const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+          
+          // 승인 대기
+          const { data: pending, error: e1 } = await this.sb
+            .from('purchases')
+            .select('*')
+            .eq('apartment_id', aptId)
+            .eq('status', 'pending');
+          
+          // 반려
+          const { data: rejected, error: e2 } = await this.sb
+            .from('purchases')
+            .select('*')
+            .eq('apartment_id', aptId)
+            .eq('status', 'rejected');
+          
+          // 이번 달 구매 (approved, delivered, completed)
+          const { data: monthPurchases, error: e3 } = await this.sb
+            .from('purchases')
+            .select('*')
+            .eq('apartment_id', aptId)
+            .in('status', ['approved', 'delivered', 'completed'])
+            .gte('created_at', monthStart.toISOString());
+          
+          if (e1 || e2 || e3) throw e1 || e2 || e3;
+          
+          document.getElementById('pending-count').textContent = (pending || []).length;
+          document.getElementById('rejected-count').textContent = (rejected || []).length;
+          
+          const monthCount = (monthPurchases || []).length;
+          const monthAmount = (monthPurchases || []).reduce((sum, p) => sum + parseFloat(p.total_amount || 0), 0);
+          
+          document.getElementById('month-count').textContent = monthCount;
+          document.getElementById('month-amount').textContent = '₩' + monthAmount.toLocaleString('ko-KR');
+        } catch (err) {
+          console.error('❌ 대시보드 로드 실패:', err);
+        }
+      };
+      
+      // 구매 요청 목록 로드
+      app.loadPurchases = async function() {
+        try {
+          const aptId = this.currentApartment.id;
+          
+          const { data, error } = await this.sb
+            .from('purchases')
+            .select(`
+              *,
+              purchase_items(*)
+            `)
+            .eq('apartment_id', aptId)
+            .order('created_at', { ascending: false });
+          
+          if (error) throw error;
+          
+          this.purchases = data || [];
+          this.renderPurchaseList(this.purchases);
+        } catch (err) {
+          console.error('❌ 구매 요청 목록 로드 실패:', err);
+          this.showToast('구매 요청 목록 로드 실패', 'error');
+        }
+      };
+      
+      // 구매 요청 목록 렌더링
+      app.renderPurchaseList = function(purchases) {
+        const tbody = document.getElementById('purchase-list');
+        const noData = document.getElementById('no-purchase-data');
+        
+        if (!purchases || purchases.length === 0) {
+          tbody.innerHTML = '';
+          noData.classList.remove('hidden');
+          return;
+        }
+        
+        noData.classList.add('hidden');
+        
+        tbody.innerHTML = purchases.map(p => {
+          const date = new Date(p.created_at).toLocaleDateString('ko-KR');
+          const itemCount = (p.purchase_items || []).length;
+          const firstItem = (p.purchase_items || [])[0]?.item_name || '없음';
+          const itemText = itemCount > 1 ? `${firstItem} 외 ${itemCount - 1}건` : firstItem;
+          
+          let statusBadge = '';
+          switch (p.status) {
+            case 'pending':
+              statusBadge = '<span class="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">승인 대기</span>';
+              break;
+            case 'approved':
+              statusBadge = '<span class="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">승인됨</span>';
+              break;
+            case 'rejected':
+              statusBadge = '<span class="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full">반려됨</span>';
+              break;
+            case 'delivered':
+              statusBadge = '<span class="px-2 py-1 text-xs font-medium bg-purple-100 text-purple-800 rounded-full">배송 완료</span>';
+              break;
+            case 'completed':
+              statusBadge = '<span class="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">검수 완료</span>';
+              break;
+          }
+          
+          return `
+            <tr class="hover:bg-gray-50">
+              <td class="px-4 py-3 text-sm text-gray-700">${date}</td>
+              <td class="px-4 py-3 text-sm text-gray-700">
+                <div class="font-medium">${p.requester_name}</div>
+                <div class="text-xs text-gray-500">${p.requester_role}</div>
+              </td>
+              <td class="px-4 py-3 text-sm text-gray-700">${itemText}</td>
+              <td class="px-4 py-3 text-sm font-medium text-gray-900">₩${parseFloat(p.total_amount).toLocaleString('ko-KR')}</td>
+              <td class="px-4 py-3">${statusBadge}</td>
+              <td class="px-4 py-3 text-center">
+                <button onclick="app.showPurchaseDetail('${p.id}')" class="px-3 py-1 text-xs font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                  상세보기
+                </button>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      };
+      
+      // 구매 요청 필터링
+      app.filterPurchases = function() {
+        const status = document.getElementById('filter-status').value;
+        const startDate = document.getElementById('filter-start-date').value;
+        const endDate = document.getElementById('filter-end-date').value;
+        const search = document.getElementById('filter-search').value.toLowerCase();
+        
+        let filtered = this.purchases || [];
+        
+        if (status !== 'all') {
+          filtered = filtered.filter(p => p.status === status);
+        }
+        
+        if (startDate) {
+          filtered = filtered.filter(p => new Date(p.created_at) >= new Date(startDate));
+        }
+        
+        if (endDate) {
+          filtered = filtered.filter(p => new Date(p.created_at) <= new Date(endDate));
+        }
+        
+        if (search) {
+          filtered = filtered.filter(p => 
+            p.requester_name.toLowerCase().includes(search) ||
+            (p.purchase_items || []).some(i => i.item_name.toLowerCase().includes(search))
+          );
+        }
+        
+        this.renderPurchaseList(filtered);
+      };
+      
+      // 새 구매 요청 모달 열기
+      app.openNewPurchaseModal = function() {
+        document.getElementById('purchase-requester-name').value = this.currentAdmin.name || '관리자';
+        document.getElementById('purchase-reason').value = '';
+        document.getElementById('purchase-items-container').innerHTML = '';
+        document.getElementById('purchase-total-amount').textContent = '₩0';
+        
+        // 첫 번째 물품 자동 추가
+        this.addPurchaseItem();
+        
+        document.getElementById('new-purchase-modal').classList.remove('hidden');
+      };
+      
+      // 새 구매 요청 모달 닫기
+      app.closeNewPurchaseModal = function() {
+        document.getElementById('new-purchase-modal').classList.add('hidden');
+      };
+      
+      // 물품 항목 추가
+      app.purchaseItemCounter = 0;
+      
+      app.addPurchaseItem = async function() {
+        const itemId = ++this.purchaseItemCounter;
+        const container = document.getElementById('purchase-items-container');
+        
+        // 자주 쓰는 물품 목록 로드
+        let frequentItems = [];
+        try {
+          const { data } = await this.sb
+            .from('frequent_items')
+            .select('*')
+            .eq('apartment_id', this.currentApartment.id)
+            .order('usage_count', { ascending: false });
+          frequentItems = data || [];
+        } catch (err) {
+          console.error('자주 쓰는 물품 로드 실패:', err);
+        }
+        
+        const itemHtml = `
+          <div class="border rounded-lg p-3 bg-gray-50" data-item-id="${itemId}">
+            <div class="flex justify-between items-center mb-2">
+              <span class="text-sm font-medium text-gray-700">물품 #${itemId}</span>
+              <button onclick="app.removePurchaseItem(${itemId})" class="text-red-500 hover:text-red-700">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <input list="frequent-items-${itemId}" type="text" placeholder="물품명" class="item-name w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" data-item-id="${itemId}">
+                <datalist id="frequent-items-${itemId}">
+                  ${frequentItems.map(f => `<option value="${f.item_name}" data-price="${f.unit_price}" data-category="${f.category}">`).join('')}
+                </datalist>
+              </div>
+              <input type="number" placeholder="수량" class="item-quantity w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" min="1" value="1" onchange="app.calculateTotal()">
+            </div>
+            
+            <div class="grid grid-cols-2 gap-2 mt-2">
+              <input type="number" placeholder="단가 (원)" class="item-price w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" min="0" onchange="app.calculateTotal()">
+              <select class="item-category w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                <option value="">카테고리 선택</option>
+                <option value="청소용품">청소용품</option>
+                <option value="운동기구">운동기구</option>
+                <option value="사무용품">사무용품</option>
+                <option value="소모품">소모품</option>
+                <option value="비품">비품</option>
+                <option value="기타">기타</option>
+              </select>
+            </div>
+          </div>
+        `;
+        
+        container.insertAdjacentHTML('beforeend', itemHtml);
+        
+        // 자주 쓰는 물품 선택 시 자동 입력
+        const nameInput = container.querySelector(`[data-item-id="${itemId}"]`);
+        if (nameInput) {
+          nameInput.addEventListener('input', (e) => {
+            const selected = frequentItems.find(f => f.item_name === e.target.value);
+            if (selected) {
+              const itemDiv = e.target.closest('[data-item-id]');
+              itemDiv.querySelector('.item-price').value = selected.unit_price || 0;
+              itemDiv.querySelector('.item-category').value = selected.category || '';
+              this.calculateTotal();
+            }
+          });
+        }
+      };
+      
+      // 물품 항목 제거
+      app.removePurchaseItem = function(itemId) {
+        const item = document.querySelector(`[data-item-id="${itemId}"]`);
+        if (item) {
+          item.remove();
+          this.calculateTotal();
+        }
+      };
+      
+      // 총 금액 계산
+      app.calculateTotal = function() {
+        let total = 0;
+        document.querySelectorAll('#purchase-items-container > div').forEach(item => {
+          const quantity = parseFloat(item.querySelector('.item-quantity').value) || 0;
+          const price = parseFloat(item.querySelector('.item-price').value) || 0;
+          total += quantity * price;
+        });
+        
+        document.getElementById('purchase-total-amount').textContent = '₩' + total.toLocaleString('ko-KR');
+      };
+      
+      // 구매 요청 제출
+      app.submitPurchaseRequest = async function() {
+        const requesterName = document.getElementById('purchase-requester-name').value;
+        const requesterRole = document.getElementById('purchase-requester-role').value;
+        const reason = document.getElementById('purchase-reason').value.trim();
+        
+        if (!reason) {
+          this.showToast('구매 사유를 입력하세요', 'error');
+          return;
+        }
+        
+        // 물품 수집
+        const items = [];
+        let hasError = false;
+        
+        document.querySelectorAll('#purchase-items-container > div').forEach(itemDiv => {
+          const name = itemDiv.querySelector('.item-name').value.trim();
+          const quantity = parseInt(itemDiv.querySelector('.item-quantity').value) || 0;
+          const price = parseFloat(itemDiv.querySelector('.item-price').value) || 0;
+          const category = itemDiv.querySelector('.item-category').value;
+          
+          if (!name || quantity <= 0 || price < 0 || !category) {
+            hasError = true;
+          } else {
+            items.push({ name, quantity, price, category });
+          }
+        });
+        
+        if (hasError || items.length === 0) {
+          this.showToast('모든 물품 정보를 정확히 입력하세요', 'error');
+          return;
+        }
+        
+        // 총 금액 계산
+        const totalAmount = items.reduce((sum, i) => sum + (i.quantity * i.price), 0);
+        
+        try {
+          // 구매 요청 생성
+          const { data: purchase, error: e1 } = await this.sb
+            .from('purchases')
+            .insert([{
+              apartment_id: this.currentApartment.id,
+              requester_name: requesterName,
+              requester_role: requesterRole,
+              reason: reason,
+              total_amount: totalAmount,
+              status: 'pending'
+            }])
+            .select()
+            .single();
+          
+          if (e1) throw e1;
+          
+          // 물품 목록 생성
+          const purchaseItems = items.map(i => ({
+            purchase_id: purchase.id,
+            item_name: i.name,
+            quantity: i.quantity,
+            unit_price: i.price,
+            category: i.category
+          }));
+          
+          const { error: e2 } = await this.sb
+            .from('purchase_items')
+            .insert(purchaseItems);
+          
+          if (e2) throw e2;
+          
+          // 자주 쓰는 물품 업데이트
+          for (const item of items) {
+            const { data: existing } = await this.sb
+              .from('frequent_items')
+              .select('*')
+              .eq('apartment_id', this.currentApartment.id)
+              .eq('item_name', item.name)
+              .single();
+            
+            if (existing) {
+              await this.sb
+                .from('frequent_items')
+                .update({
+                  usage_count: existing.usage_count + 1,
+                  unit_price: item.price,
+                  category: item.category
+                })
+                .eq('id', existing.id);
+            } else {
+              await this.sb
+                .from('frequent_items')
+                .insert([{
+                  apartment_id: this.currentApartment.id,
+                  item_name: item.name,
+                  category: item.category,
+                  unit_price: item.price,
+                  usage_count: 1
+                }]);
+            }
+          }
+          
+          this.showToast('구매 요청이 등록되었습니다', 'success');
+          this.closeNewPurchaseModal();
+          this.loadPurchases();
+          this.loadPurchaseDashboard();
+        } catch (err) {
+          console.error('❌ 구매 요청 등록 실패:', err);
+          this.showToast('구매 요청 등록 실패', 'error');
+        }
+      };
+      
+      // 구매 요청 상세 보기
+      app.showPurchaseDetail = async function(purchaseId) {
+        try {
+          const { data, error } = await this.sb
+            .from('purchases')
+            .select(`
+              *,
+              purchase_items(*),
+              purchase_photos(*)
+            `)
+            .eq('id', purchaseId)
+            .single();
+          
+          if (error) throw error;
+          
+          this.currentPurchase = data;
+          
+          // 상세 내용 렌더링
+          const content = document.getElementById('purchase-detail-content');
+          const statusText = {
+            pending: '승인 대기',
+            approved: '승인됨',
+            rejected: '반려됨',
+            delivered: '배송 완료',
+            completed: '검수 완료'
+          }[data.status];
+          
+          content.innerHTML = `
+            <div class="space-y-4">
+              <!-- 기본 정보 -->
+              <div class="bg-gray-50 p-4 rounded-lg">
+                <h4 class="text-sm font-bold text-gray-700 mb-3">기본 정보</h4>
+                <div class="grid grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <span class="text-gray-600">요청일:</span>
+                    <span class="ml-2 font-medium">${new Date(data.created_at).toLocaleString('ko-KR')}</span>
+                  </div>
+                  <div>
+                    <span class="text-gray-600">상태:</span>
+                    <span class="ml-2 font-medium">${statusText}</span>
+                  </div>
+                  <div>
+                    <span class="text-gray-600">요청자:</span>
+                    <span class="ml-2 font-medium">${data.requester_name} (${data.requester_role})</span>
+                  </div>
+                  <div>
+                    <span class="text-gray-600">총 금액:</span>
+                    <span class="ml-2 font-bold text-blue-600">₩${parseFloat(data.total_amount).toLocaleString('ko-KR')}</span>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- 구매 사유 -->
+              <div>
+                <h4 class="text-sm font-bold text-gray-700 mb-2">구매 사유</h4>
+                <p class="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">${data.reason}</p>
+              </div>
+              
+              <!-- 물품 목록 -->
+              <div>
+                <h4 class="text-sm font-bold text-gray-700 mb-2">물품 목록</h4>
+                <div class="border rounded-lg overflow-hidden">
+                  <table class="w-full text-sm">
+                    <thead class="bg-gray-50">
+                      <tr>
+                        <th class="px-3 py-2 text-left">물품명</th>
+                        <th class="px-3 py-2 text-left">카테고리</th>
+                        <th class="px-3 py-2 text-right">수량</th>
+                        <th class="px-3 py-2 text-right">단가</th>
+                        <th class="px-3 py-2 text-right">금액</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y">
+                      ${(data.purchase_items || []).map(i => `
+                        <tr>
+                          <td class="px-3 py-2">${i.item_name}</td>
+                          <td class="px-3 py-2 text-gray-600">${i.category}</td>
+                          <td class="px-3 py-2 text-right">${i.quantity}</td>
+                          <td class="px-3 py-2 text-right">₩${parseFloat(i.unit_price).toLocaleString('ko-KR')}</td>
+                          <td class="px-3 py-2 text-right font-medium">₩${(i.quantity * parseFloat(i.unit_price)).toLocaleString('ko-KR')}</td>
+                        </tr>
+                      `).join('')}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              
+              ${data.status === 'rejected' ? `
+                <div class="bg-red-50 p-4 rounded-lg">
+                  <h4 class="text-sm font-bold text-red-700 mb-2">반려 사유</h4>
+                  <p class="text-sm text-red-600">${data.rejection_reason || '없음'}</p>
+                </div>
+              ` : ''}
+              
+              ${data.status === 'approved' && data.approver_name ? `
+                <div class="bg-blue-50 p-4 rounded-lg">
+                  <h4 class="text-sm font-bold text-blue-700 mb-2">승인 정보</h4>
+                  <div class="text-sm text-blue-600">
+                    <div>승인자: ${data.approver_name}</div>
+                    <div>승인 시각: ${new Date(data.approval_time).toLocaleString('ko-KR')}</div>
+                  </div>
+                </div>
+              ` : ''}
+              
+              ${(data.purchase_photos || []).length > 0 ? `
+                <div>
+                  <h4 class="text-sm font-bold text-gray-700 mb-2">검수 사진</h4>
+                  <div class="grid grid-cols-3 gap-2">
+                    ${(data.purchase_photos || []).map(p => `
+                      <img src="${p.photo_url}" class="w-full h-32 object-cover rounded-lg cursor-pointer hover:opacity-80" onclick="window.open('${p.photo_url}', '_blank')">
+                    `).join('')}
+                  </div>
+                  ${data.actual_amount ? `
+                    <div class="mt-3 text-sm">
+                      <span class="text-gray-600">실제 구매 금액:</span>
+                      <span class="ml-2 font-bold text-green-600">₩${parseFloat(data.actual_amount).toLocaleString('ko-KR')}</span>
+                    </div>
+                  ` : ''}
+                </div>
+              ` : ''}
+            </div>
+          `;
+          
+          // 액션 버튼 렌더링
+          const actions = document.getElementById('purchase-detail-actions');
+          let actionButtons = '';
+          
+          if (data.status === 'pending') {
+            actionButtons = `
+              <button onclick="app.approvePurchase('${data.id}')" class="flex-1 px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg hover:from-blue-600 hover:to-indigo-700 transition-all shadow-md font-medium">
+                <i class="fas fa-check mr-2"></i>승인
+              </button>
+              <button onclick="app.rejectPurchase('${data.id}')" class="flex-1 px-6 py-3 bg-gradient-to-r from-red-500 to-pink-600 text-white rounded-lg hover:from-red-600 hover:to-pink-700 transition-all shadow-md font-medium">
+                <i class="fas fa-times mr-2"></i>반려
+              </button>
+            `;
+          } else if (data.status === 'approved') {
+            actionButtons = `
+              <button onclick="app.markAsDelivered('${data.id}')" class="flex-1 px-6 py-3 bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-lg hover:from-purple-600 hover:to-indigo-700 transition-all shadow-md font-medium">
+                <i class="fas fa-truck mr-2"></i>배송 완료
+              </button>
+            `;
+          } else if (data.status === 'delivered') {
+            actionButtons = `
+              <button onclick="app.openInspectionPhotoModal('${data.id}')" class="flex-1 px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:from-green-600 hover:to-emerald-700 transition-all shadow-md font-medium">
+                <i class="fas fa-camera mr-2"></i>검수 완료
+              </button>
+            `;
+          }
+          
+          actionButtons += `
+            <button onclick="app.closePurchaseDetailModal()" class="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium">
+              닫기
+            </button>
+          `;
+          
+          actions.innerHTML = actionButtons;
+          
+          document.getElementById('purchase-detail-modal').classList.remove('hidden');
+        } catch (err) {
+          console.error('❌ 구매 요청 상세 로드 실패:', err);
+          this.showToast('구매 요청 상세 로드 실패', 'error');
+        }
+      };
+      
+      // 구매 요청 상세 모달 닫기
+      app.closePurchaseDetailModal = function() {
+        document.getElementById('purchase-detail-modal').classList.add('hidden');
+      };
+      
+      // 구매 요청 승인
+      app.approvePurchase = async function(purchaseId) {
+        if (!confirm('이 구매 요청을 승인하시겠습니까?')) return;
+        
+        try {
+          const { error } = await this.sb
+            .from('purchases')
+            .update({
+              status: 'approved',
+              approver_name: this.currentAdmin.name || '관리자',
+              approval_time: new Date().toISOString()
+            })
+            .eq('id', purchaseId);
+          
+          if (error) throw error;
+          
+          this.showToast('구매 요청이 승인되었습니다', 'success');
+          this.closePurchaseDetailModal();
+          this.loadPurchases();
+          this.loadPurchaseDashboard();
+        } catch (err) {
+          console.error('❌ 승인 실패:', err);
+          this.showToast('승인 실패', 'error');
+        }
+      };
+      
+      // 구매 요청 반려
+      app.rejectPurchase = async function(purchaseId) {
+        const reason = prompt('반려 사유를 입력하세요:');
+        if (!reason) return;
+        
+        try {
+          const { error } = await this.sb
+            .from('purchases')
+            .update({
+              status: 'rejected',
+              approver_name: this.currentAdmin.name || '관리자',
+              approval_time: new Date().toISOString(),
+              rejection_reason: reason
+            })
+            .eq('id', purchaseId);
+          
+          if (error) throw error;
+          
+          this.showToast('구매 요청이 반려되었습니다', 'success');
+          this.closePurchaseDetailModal();
+          this.loadPurchases();
+          this.loadPurchaseDashboard();
+        } catch (err) {
+          console.error('❌ 반려 실패:', err);
+          this.showToast('반려 실패', 'error');
+        }
+      };
+      
+      // 배송 완료 처리
+      app.markAsDelivered = async function(purchaseId) {
+        if (!confirm('배송이 완료되었습니까?')) return;
+        
+        try {
+          const { error } = await this.sb
+            .from('purchases')
+            .update({
+              status: 'delivered',
+              delivery_time: new Date().toISOString()
+            })
+            .eq('id', purchaseId);
+          
+          if (error) throw error;
+          
+          this.showToast('배송 완료 처리되었습니다', 'success');
+          this.closePurchaseDetailModal();
+          this.loadPurchases();
+          this.loadPurchaseDashboard();
+        } catch (err) {
+          console.error('❌ 배송 완료 처리 실패:', err);
+          this.showToast('배송 완료 처리 실패', 'error');
+        }
+      };
+      
+      // 검수 사진 업로드 모달 열기
+      app.openInspectionPhotoModal = function(purchaseId) {
+        this.currentInspectionPurchaseId = purchaseId;
+        document.getElementById('actual-amount').value = '';
+        document.getElementById('inspection-preview').innerHTML = '';
+        document.getElementById('inspection-photos').value = '';
+        
+        this.closePurchaseDetailModal();
+        document.getElementById('inspection-photo-modal').classList.remove('hidden');
+        
+        // 사진 선택 이벤트
+        document.getElementById('inspection-photos').onchange = (e) => {
+          const files = Array.from(e.target.files).slice(0, 5);
+          const preview = document.getElementById('inspection-preview');
+          preview.innerHTML = '';
+          
+          files.forEach(file => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+              preview.insertAdjacentHTML('beforeend', `
+                <img src="${e.target.result}" class="w-full h-32 object-cover rounded-lg">
+              `);
+            };
+            reader.readAsDataURL(file);
+          });
+        };
+      };
+      
+      // 검수 사진 업로드 모달 닫기
+      app.closeInspectionPhotoModal = function() {
+        document.getElementById('inspection-photo-modal').classList.add('hidden');
+      };
+      
+      // 검수 완료 제출
+      app.submitInspectionPhotos = async function() {
+        const files = document.getElementById('inspection-photos').files;
+        const actualAmount = parseFloat(document.getElementById('actual-amount').value);
+        
+        if (files.length === 0) {
+          this.showToast('검수 사진을 업로드하세요', 'error');
+          return;
+        }
+        
+        if (!actualAmount || actualAmount <= 0) {
+          this.showToast('실제 구매 금액을 입력하세요', 'error');
+          return;
+        }
+        
+        try {
+          // 사진 업로드
+          const photoUrls = [];
+          for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            const fileName = `${this.currentInspectionPurchaseId}_${Date.now()}_${i}.jpg`;
+            const { data, error } = await this.sb.storage
+              .from('purchase-photos')
+              .upload(fileName, file);
+            
+            if (error) throw error;
+            
+            const { data: urlData } = this.sb.storage
+              .from('purchase-photos')
+              .getPublicUrl(fileName);
+            
+            photoUrls.push(urlData.publicUrl);
+          }
+          
+          // 사진 정보 저장
+          const photoRecords = photoUrls.map(url => ({
+            purchase_id: this.currentInspectionPurchaseId,
+            photo_url: url,
+            uploaded_by: this.currentAdmin.name || '관리자'
+          }));
+          
+          const { error: e1 } = await this.sb
+            .from('purchase_photos')
+            .insert(photoRecords);
+          
+          if (e1) throw e1;
+          
+          // 구매 요청 완료 처리
+          const { error: e2 } = await this.sb
+            .from('purchases')
+            .update({
+              status: 'completed',
+              completion_time: new Date().toISOString(),
+              actual_amount: actualAmount
+            })
+            .eq('id', this.currentInspectionPurchaseId);
+          
+          if (e2) throw e2;
+          
+          this.showToast('검수가 완료되었습니다', 'success');
+          this.closeInspectionPhotoModal();
+          this.loadPurchases();
+          this.loadPurchaseDashboard();
+        } catch (err) {
+          console.error('❌ 검수 완료 처리 실패:', err);
+          this.showToast('검수 완료 처리 실패', 'error');
+        }
+      };
+      
+      // 구매 요청 목록 새로고침
+      app.refreshPurchaseList = function() {
+        this.loadPurchases();
+        this.loadPurchaseDashboard();
+        this.showToast('새로고침 완료', 'success');
+      };
+      
+      // QR 코드 관리 모달 열기
+      app.showQRCodeManagement = async function() {
+        document.getElementById('qr-management-modal').classList.remove('hidden');
+        await this.loadPurchaseQRCodes();
+      };
+      
+      // QR 코드 관리 모달 닫기
+      app.closeQRManagementModal = function() {
+        document.getElementById('qr-management-modal').classList.add('hidden');
+      };
+      
+      // 구매 QR 코드 목록 로드
+      app.loadPurchaseQRCodes = async function() {
+        try {
+          const { data, error } = await this.sb
+            .from('purchase_qr_requests')
+            .select('*')
+            .eq('apartment_id', this.currentApartment.id)
+            .order('created_at', { ascending: false });
+          
+          if (error) throw error;
+          
+          const list = document.getElementById('qr-list');
+          
+          if (!data || data.length === 0) {
+            list.innerHTML = '<p class="text-sm text-gray-400 text-center py-4">생성된 QR 코드가 없습니다</p>';
+            return;
+          }
+          
+          list.innerHTML = data.map(qr => `
+            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div class="flex-1">
+                <div class="font-medium text-gray-800">${qr.location_name}</div>
+                <div class="text-xs text-gray-500 mt-1">
+                  생성일: ${new Date(qr.created_at).toLocaleDateString('ko-KR')}
+                </div>
+              </div>
+              <div class="flex gap-2">
+                <span class="px-2 py-1 text-xs ${qr.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'} rounded-full">
+                  ${qr.is_active ? '활성' : '비활성'}
+                </span>
+                <button onclick="app.toggleQRStatus('${qr.id}', ${!qr.is_active})" class="px-3 py-1 text-xs text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                  ${qr.is_active ? '비활성화' : '활성화'}
+                </button>
+                <button onclick="app.downloadQRCode('${qr.qr_code}', '${qr.location_name}')" class="px-3 py-1 text-xs text-purple-600 hover:bg-purple-50 rounded-lg transition-colors">
+                  <i class="fas fa-download"></i>
+                </button>
+              </div>
+            </div>
+          `).join('');
+        } catch (err) {
+          console.error('❌ QR 코드 목록 로드 실패:', err);
+        }
+      };
+      
+      // 구매 QR 코드 생성
+      app.generatePurchaseQR = async function() {
+        const locationName = document.getElementById('qr-location-name').value.trim();
+        
+        if (!locationName) {
+          this.showToast('위치를 입력하세요', 'error');
+          return;
+        }
+        
+        try {
+          const qrCode = crypto.randomUUID();
+          
+          const { error } = await this.sb
+            .from('purchase_qr_requests')
+            .insert([{
+              apartment_id: this.currentApartment.id,
+              qr_code: qrCode,
+              location_name: locationName,
+              is_active: true
+            }]);
+          
+          if (error) throw error;
+          
+          this.showToast('QR 코드가 생성되었습니다', 'success');
+          document.getElementById('qr-location-name').value = '';
+          await this.loadPurchaseQRCodes();
+        } catch (err) {
+          console.error('❌ QR 코드 생성 실패:', err);
+          this.showToast('QR 코드 생성 실패', 'error');
+        }
+      };
+      
+      // QR 코드 상태 토글
+      app.toggleQRStatus = async function(qrId, isActive) {
+        try {
+          const { error } = await this.sb
+            .from('purchase_qr_requests')
+            .update({ is_active: isActive })
+            .eq('id', qrId);
+          
+          if (error) throw error;
+          
+          this.showToast(`QR 코드가 ${isActive ? '활성화' : '비활성화'}되었습니다`, 'success');
+          await this.loadPurchaseQRCodes();
+        } catch (err) {
+          console.error('❌ QR 상태 변경 실패:', err);
+          this.showToast('QR 상태 변경 실패', 'error');
+        }
+      };
+      
+      // QR 코드 다운로드
+      app.downloadQRCode = function(qrCode, locationName) {
+        // QR 코드 이미지 생성 및 다운로드
+        const qrUrl = `${window.location.origin}/purchase-request.html?qr=${qrCode}`;
+        
+        const qrContainer = document.createElement('div');
+        qrContainer.style.position = 'absolute';
+        qrContainer.style.left = '-9999px';
+        document.body.appendChild(qrContainer);
+        
+        new QRCode(qrContainer, {
+          text: qrUrl,
+          width: 512,
+          height: 512
+        });
+        
+        setTimeout(() => {
+          const canvas = qrContainer.querySelector('canvas');
+          if (canvas) {
+            const link = document.createElement('a');
+            link.download = `구매요청_${locationName}_QR.png`;
+            link.href = canvas.toDataURL();
+            link.click();
+          }
+          document.body.removeChild(qrContainer);
+        }, 300);
+        
+        this.showToast('QR 코드 다운로드 시작', 'success');
+      };
+      
       // ==================== 기존 함수 ====================
       
       // 전역에 app 즉시 노출
@@ -5922,7 +6903,7 @@
         console.log('🚀 DOMContentLoaded 이벤트 발생');
         
         // 모든 모달의 배경 클릭 이벤트
-        ['location-modal', 'location-edit-modal', 'employee-modal', 'edit-employee-modal', 'apartment-modal', 'sales-modal', 'vacation-modal', 'blocked-employees-modal', 'incomplete-today-modal', 'checkout-input-modal'].forEach(id => {
+        ['location-modal', 'location-edit-modal', 'employee-modal', 'edit-employee-modal', 'apartment-modal', 'sales-modal', 'vacation-modal', 'blocked-employees-modal', 'incomplete-today-modal', 'checkout-input-modal', 'new-purchase-modal', 'purchase-detail-modal', 'qr-management-modal', 'inspection-photo-modal'].forEach(id => {
           const modal = document.getElementById(id);
           if (modal) {
             modal.addEventListener('click', (e) => {
@@ -5940,5 +6921,177 @@
       
       console.log('✅ 스크립트 로드 완료');
     </script>
+
+    <!-- 구매 요청 관련 모달 -->
+    
+    <!-- 새 구매 요청 모달 -->
+    <div id="new-purchase-modal" class="fixed inset-0 z-50 hidden bg-black/50 flex items-center justify-center p-4">
+      <div class="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden shadow-2xl">
+        <div class="flex justify-between items-center p-6 border-b">
+          <h3 class="text-xl font-bold text-gray-800">
+            <i class="fas fa-plus-circle mr-2 text-green-600"></i>새 구매 요청
+          </h3>
+          <button onclick="app.closeNewPurchaseModal()" class="text-gray-400 hover:text-gray-600 text-2xl">×</button>
+        </div>
+        
+        <div class="p-6 overflow-y-auto max-h-[calc(90vh-200px)]">
+          <!-- 요청자 정보 -->
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-2">요청자</label>
+            <input type="text" id="purchase-requester-name" readonly class="w-full px-4 py-2 bg-gray-100 border rounded-lg text-gray-600">
+            <input type="hidden" id="purchase-requester-role" value="센터 관리자">
+          </div>
+
+          <!-- 구매 사유 -->
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-2">구매 사유 *</label>
+            <textarea id="purchase-reason" rows="3" placeholder="구매가 필요한 이유를 입력하세요..." class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"></textarea>
+          </div>
+
+          <!-- 물품 목록 -->
+          <div class="mb-4">
+            <div class="flex justify-between items-center mb-3">
+              <label class="block text-sm font-medium text-gray-700">물품 목록 *</label>
+              <button onclick="app.addPurchaseItem()" class="px-3 py-1 bg-blue-500 text-white text-sm rounded-lg hover:bg-blue-600 transition-colors">
+                <i class="fas fa-plus mr-1"></i>물품 추가
+              </button>
+            </div>
+            
+            <div id="purchase-items-container" class="space-y-3">
+              <!-- 물품 항목들이 여기에 추가됩니다 -->
+            </div>
+          </div>
+
+          <!-- 총 금액 -->
+          <div class="bg-gray-50 p-4 rounded-lg border-2 border-gray-200">
+            <div class="flex justify-between items-center">
+              <span class="text-lg font-medium text-gray-700">총 금액</span>
+              <span class="text-2xl font-bold text-blue-600" id="purchase-total-amount">₩0</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex gap-3 p-6 border-t bg-gray-50">
+          <button onclick="app.closeNewPurchaseModal()" class="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium">
+            취소
+          </button>
+          <button onclick="app.submitPurchaseRequest()" class="flex-1 px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:from-green-600 hover:to-emerald-700 transition-all shadow-md font-medium">
+            <i class="fas fa-check mr-2"></i>요청 등록
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 구매 요청 상세 모달 -->
+    <div id="purchase-detail-modal" class="fixed inset-0 z-50 hidden bg-black/50 flex items-center justify-center p-4">
+      <div class="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-2xl">
+        <div class="flex justify-between items-center p-6 border-b">
+          <h3 class="text-xl font-bold text-gray-800">
+            <i class="fas fa-file-invoice mr-2 text-blue-600"></i>구매 요청 상세
+          </h3>
+          <button onclick="app.closePurchaseDetailModal()" class="text-gray-400 hover:text-gray-600 text-2xl">×</button>
+        </div>
+        
+        <div class="p-6 overflow-y-auto max-h-[calc(90vh-200px)]" id="purchase-detail-content">
+          <!-- 상세 내용이 여기에 동적으로 로드됩니다 -->
+        </div>
+
+        <div id="purchase-detail-actions" class="flex gap-3 p-6 border-t bg-gray-50">
+          <!-- 액션 버튼들이 여기에 동적으로 로드됩니다 -->
+        </div>
+      </div>
+    </div>
+
+    <!-- QR 코드 관리 모달 -->
+    <div id="qr-management-modal" class="fixed inset-0 z-50 hidden bg-black/50 flex items-center justify-center p-4">
+      <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden shadow-2xl">
+        <div class="flex justify-between items-center p-6 border-b">
+          <h3 class="text-xl font-bold text-gray-800">
+            <i class="fas fa-qrcode mr-2 text-purple-600"></i>QR 코드 관리
+          </h3>
+          <button onclick="app.closeQRManagementModal()" class="text-gray-400 hover:text-gray-600 text-2xl">×</button>
+        </div>
+        
+        <div class="p-6 overflow-y-auto max-h-[calc(90vh-200px)]">
+          <p class="text-sm text-gray-600 mb-4">
+            일반 직원이 QR 코드를 스캔하여 구매 요청을 할 수 있습니다.
+          </p>
+
+          <!-- 새 QR 생성 -->
+          <div class="bg-blue-50 p-4 rounded-lg mb-4">
+            <h4 class="text-sm font-bold text-gray-700 mb-3">새 QR 코드 생성</h4>
+            <div class="flex gap-3">
+              <input type="text" id="qr-location-name" placeholder="위치 입력 (예: 헬스장, 골프장)" class="flex-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+              <button onclick="app.generatePurchaseQR()" class="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
+                <i class="fas fa-plus mr-2"></i>생성
+              </button>
+            </div>
+          </div>
+
+          <!-- 기존 QR 코드 목록 -->
+          <div>
+            <h4 class="text-sm font-bold text-gray-700 mb-3">기존 QR 코드</h4>
+            <div id="qr-list" class="space-y-2">
+              <!-- QR 코드 목록이 여기에 표시됩니다 -->
+            </div>
+          </div>
+        </div>
+
+        <div class="flex gap-3 p-6 border-t bg-gray-50">
+          <button onclick="app.closeQRManagementModal()" class="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium">
+            닫기
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 검수 사진 업로드 모달 -->
+    <div id="inspection-photo-modal" class="fixed inset-0 z-50 hidden bg-black/50 flex items-center justify-center p-4">
+      <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden shadow-2xl">
+        <div class="flex justify-between items-center p-6 border-b">
+          <h3 class="text-xl font-bold text-gray-800">
+            <i class="fas fa-camera mr-2 text-green-600"></i>검수 사진 업로드
+          </h3>
+          <button onclick="app.closeInspectionPhotoModal()" class="text-gray-400 hover:text-gray-600 text-2xl">×</button>
+        </div>
+        
+        <div class="p-6">
+          <p class="text-sm text-gray-600 mb-4">
+            구매한 물품의 검수 사진을 업로드하세요. (최대 5장)
+          </p>
+
+          <!-- 사진 업로드 -->
+          <div class="mb-4">
+            <input type="file" id="inspection-photos" accept="image/*" multiple class="hidden">
+            <button onclick="document.getElementById('inspection-photos').click()" class="w-full px-6 py-8 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 transition-colors text-gray-500 hover:text-blue-500">
+              <i class="fas fa-cloud-upload text-4xl mb-2"></i>
+              <p class="text-sm font-medium">클릭하여 사진 선택</p>
+              <p class="text-xs">최대 5장까지 업로드 가능</p>
+            </button>
+          </div>
+
+          <!-- 미리보기 -->
+          <div id="inspection-preview" class="grid grid-cols-3 gap-3 mb-4">
+            <!-- 미리보기 이미지들이 여기에 표시됩니다 -->
+          </div>
+
+          <!-- 실제 구매 금액 입력 -->
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-2">실제 구매 금액</label>
+            <input type="number" id="actual-amount" placeholder="실제 구매 금액을 입력하세요" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+          </div>
+        </div>
+
+        <div class="flex gap-3 p-6 border-t bg-gray-50">
+          <button onclick="app.closeInspectionPhotoModal()" class="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium">
+            취소
+          </button>
+          <button onclick="app.submitInspectionPhotos()" class="flex-1 px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:from-green-600 hover:to-emerald-700 transition-all shadow-md font-medium">
+            <i class="fas fa-check mr-2"></i>검수 완료
+          </button>
+        </div>
+      </div>
+    </div>
+
 </body>
 </html>
