@@ -2183,6 +2183,16 @@
           try {
             this.showToast('📤 구매 요청을 제출하는 중...', 'info');
             
+            console.log('🔍 구매 요청 데이터:', {
+              apartment_id: this.state.aptId,
+              requester_name: this.state.selectedEmp.name,
+              requester_employee_id: this.state.selectedEmp.id,
+              requester_role: this.state.selectedEmp.position || '직원',
+              reason: reason,
+              total_amount: totalAmount,
+              items: items
+            });
+            
             // 구매 요청 생성
             const { data: purchase, error: e1 } = await this.sb
               .from('purchases')
@@ -2225,6 +2235,12 @@
             }
           } catch (err) {
             console.error('❌ 구매 요청 제출 실패:', err);
+            console.error('에러 상세:', {
+              message: err.message,
+              code: err.code,
+              details: err.details,
+              hint: err.hint
+            });
             this.showToast('❌ 구매 요청 제출 중 오류가 발생했습니다', 'error');
           }
         },
