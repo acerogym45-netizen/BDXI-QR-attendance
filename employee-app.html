@@ -1894,19 +1894,39 @@
         const itemElements = container.querySelectorAll('[id^="item-"]');
         const items = [];
         
+        console.log('📦 물품 항목 개수:', itemElements.length);
+        
         for (let el of itemElements) {
           const id = el.id.split('-')[1];
-          const name = document.getElementById(`item-name-${id}`)?.value.trim();
-          const quantity = parseFloat(document.getElementById(`item-quantity-${id}`)?.value) || 0;
-          const price = parseFloat(document.getElementById(`item-price-${id}`)?.value) || 0;
+          const nameEl = document.getElementById(`item-name-${id}`);
+          const quantityEl = document.getElementById(`item-quantity-${id}`);
+          const priceEl = document.getElementById(`item-price-${id}`);
           
-          if (!name || quantity <= 0 || price < 0) {
+          console.log(`물품 #${id}:`, {
+            nameEl: !!nameEl,
+            quantityEl: !!quantityEl,
+            priceEl: !!priceEl,
+            name: nameEl?.value,
+            quantity: quantityEl?.value,
+            price: priceEl?.value
+          });
+          
+          const name = nameEl?.value.trim();
+          const quantity = parseFloat(quantityEl?.value);
+          const price = parseFloat(priceEl?.value);
+          
+          console.log(`검증 결과 #${id}:`, { name, quantity, price, nameOk: !!name, qtyOk: quantity > 0, priceOk: price >= 0 });
+          
+          if (!name || !quantity || quantity <= 0 || !price || price < 0) {
+            console.error('❌ 검증 실패:', { name, quantity, price });
             this.showToast('⚠️ 모든 물품 정보를 정확히 입력하세요', 'error');
             return;
           }
           
           items.push({ item_name: name, quantity, estimated_price: price, subtotal: quantity * price });
         }
+        
+        console.log('✅ 검증 통과, 총 물품:', items);
         
         if (items.length === 0) {
           this.showToast('⚠️ 최소 1개 이상의 물품을 추가하세요', 'error');
