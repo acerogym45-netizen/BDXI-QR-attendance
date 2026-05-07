@@ -371,35 +371,35 @@
   <!-- 모달들 -->
   
   <!-- 사진 뷰어 모달 -->
-  <div id="photo-viewer-modal" class="hidden fixed inset-0 bg-black z-[100]">
+  <div id="photo-viewer-modal" class="hidden fixed inset-0 bg-black z-[100] flex flex-col">
     <!-- 헤더 -->
-    <div class="absolute top-0 left-0 right-0 flex items-center justify-between p-4 bg-gradient-to-b from-black/80 to-transparent z-10">
+    <div class="flex items-center justify-between p-4 md:p-6 bg-gradient-to-b from-black/80 to-transparent z-10">
       <div class="text-white">
-        <div class="font-bold text-lg" id="viewer-photo-count">1 / 1</div>
-        <div class="text-sm text-gray-300" id="viewer-photo-time"></div>
+        <div class="font-bold text-lg md:text-xl" id="viewer-photo-count">1 / 1</div>
+        <div class="text-sm md:text-base text-gray-300" id="viewer-photo-time"></div>
       </div>
-      <button onclick="app.closePhotoViewer()" class="text-white hover:bg-white/20 w-10 h-10 rounded-full flex items-center justify-center transition">
-        <i class="fas fa-times text-2xl"></i>
+      <button onclick="app.closePhotoViewer()" class="text-white hover:bg-white/20 w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center transition">
+        <i class="fas fa-times text-2xl md:text-3xl"></i>
       </button>
     </div>
     
     <!-- 메인 사진 (3/4 높이) -->
-    <div class="absolute top-0 left-0 right-0 flex items-center justify-center" style="height: 75%;">
+    <div class="flex-1 flex items-center justify-center relative" style="min-height: 0; height: 75%;">
       <img id="viewer-main-image" class="max-w-full max-h-full object-contain">
       
       <!-- 좌우 버튼 -->
-      <button onclick="app.viewerPrevPhoto()" class="absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white w-12 h-12 rounded-full flex items-center justify-center transition">
-        <i class="fas fa-chevron-left text-xl"></i>
+      <button onclick="app.viewerPrevPhoto()" class="absolute left-2 md:left-6 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white w-10 h-10 md:w-14 md:h-14 rounded-full flex items-center justify-center transition">
+        <i class="fas fa-chevron-left text-lg md:text-2xl"></i>
       </button>
-      <button onclick="app.viewerNextPhoto()" class="absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white w-12 h-12 rounded-full flex items-center justify-center transition">
-        <i class="fas fa-chevron-right text-xl"></i>
+      <button onclick="app.viewerNextPhoto()" class="absolute right-2 md:right-6 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white w-10 h-10 md:w-14 md:h-14 rounded-full flex items-center justify-center transition">
+        <i class="fas fa-chevron-right text-lg md:text-2xl"></i>
       </button>
     </div>
     
     <!-- 썸네일 영역 (1/4 높이) -->
-    <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent" style="height: 25%;">
-      <div class="h-full overflow-x-auto overflow-y-hidden px-4 py-3">
-        <div id="viewer-thumbnails" class="flex gap-2 h-full">
+    <div class="bg-gradient-to-t from-black/90 to-transparent" style="height: 25%;">
+      <div class="h-full overflow-x-auto overflow-y-hidden px-2 md:px-6 py-2 md:py-4">
+        <div id="viewer-thumbnails" class="flex gap-2 md:gap-3 h-full items-center">
           <!-- Dynamic thumbnails will be inserted here -->
         </div>
       </div>
@@ -1741,10 +1741,22 @@
         this.state.currentPhotoIndex = index;
         document.getElementById('photo-viewer-modal').classList.remove('hidden');
         this.updatePhotoViewer();
+        
+        // PC에서 키보드 네비게이션 지원
+        this.photoViewerKeyHandler = (e) => {
+          if (e.key === 'ArrowLeft') this.viewerPrevPhoto();
+          else if (e.key === 'ArrowRight') this.viewerNextPhoto();
+          else if (e.key === 'Escape') this.closePhotoViewer();
+        };
+        document.addEventListener('keydown', this.photoViewerKeyHandler);
       },
       
       closePhotoViewer() {
         document.getElementById('photo-viewer-modal').classList.add('hidden');
+        if (this.photoViewerKeyHandler) {
+          document.removeEventListener('keydown', this.photoViewerKeyHandler);
+          this.photoViewerKeyHandler = null;
+        }
       },
       
       viewerPrevPhoto() {
@@ -1779,7 +1791,7 @@
         // 썸네일
         const thumbnails = document.getElementById('viewer-thumbnails');
         thumbnails.innerHTML = photos.map((p, i) => `
-          <div onclick="app.openPhotoViewer(${i})" class="flex-shrink-0 h-full aspect-square rounded-lg overflow-hidden cursor-pointer ${i === index ? 'ring-4 ring-blue-500' : 'opacity-60 hover:opacity-100'} transition">
+          <div onclick="app.openPhotoViewer(${i})" class="flex-shrink-0 h-full aspect-square rounded-lg overflow-hidden cursor-pointer ${i === index ? 'ring-4 ring-blue-500 scale-110' : 'opacity-60 hover:opacity-100 hover:scale-105'} transition-all duration-200">
             <img src="${p.photo_url}" class="w-full h-full object-cover">
           </div>
         `).join('');
