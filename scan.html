@@ -1042,7 +1042,95 @@
           btnIcon.className = 'fas fa-spinner fa-spin text-2xl mb-1';
 
           try {
-            // 🚫 출근 시 차단 검증 (출근 타입만)
+            // 🔍 0단계: 직원 정보 검증 (출근 시에만)
+            if (type === '출근') {
+              const { data: empInfo } = await this.sb
+                .from('employees')
+                .select('work_days, work_start_time, work_end_time, contract_start, contract_end')
+                .eq('id', this.state.selectedEmp.id)
+                .single();
+              
+              // 근무요일 미설정 체크
+              if (!empInfo || !empInfo.work_days || empInfo.work_days.length === 0) {
+                btnIcon.className = originalClass;
+                alert('⚠️ 근무요일이 설정되지 않았습니다.\n\n관리자에게 문의하여 근무요일을 등록해주세요.');
+                console.error('❌ 근무요일 미설정:', this.state.selectedEmp.name);
+                return;
+              }
+              
+              // 계약기간 미설정 체크
+              if (!empInfo.contract_start || !empInfo.contract_end) {
+                btnIcon.className = originalClass;
+                alert('⚠️ 계약기간이 설정되지 않았습니다.\n\n관리자에게 문의하여 계약정보를 등록해주세요.');
+                console.error('❌ 계약기간 미설정:', this.state.selectedEmp.name);
+                return;
+              }
+              
+              // 계약기간 만료 체크
+              const today = new Date();
+              const contractEnd = new Date(empInfo.contract_end);
+              if (today > contractEnd) {
+                btnIcon.className = originalClass;
+                alert('⚠️ 계약기간이 만료되었습니다.\n\n관리자에게 문의해주세요.');
+                console.error('❌ 계약만료:', this.state.selectedEmp.name, empInfo.contract_end);
+                return;
+              }
+              
+              // 🔍 1단계: 오늘 이미 출근 기록이 있는지 체크
+              const todayStr = today.toISOString().split('T')[0];
+              const { data: todayRecords } = await this.sb
+                .from('attendance_records')
+                .select('*')
+                .eq('employee_id', this.state.selectedEmp.id)
+                .eq('attendance_type', '출근')
+                .gte('scan_time', todayStr + 'T00:00:00')
+                .lte('scan_time', todayStr + 'T23:59:59');
+              
+              if (todayRecords && todayRecords.length > 0) {
+                // 중복 출근 확인
+                const lastCheckIn = todayRecords[todayRecords.length - 1];
+                const lastCheckInTime = new Date(lastCheckIn.scan_time).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+                
+                const reason = prompt(
+                  `⚠️ 오늘 이미 출근 기록이 있습니다.\n` +
+                  `마지막 출근: ${lastCheckInTime}\n\n` +
+                  `그래도 출근하시겠습니까?\n` +
+                  `사유를 입력해주세요 (취소하려면 빈 칸으로 제출):`,
+                  ''
+                );
+                
+                if (reason === null || reason.trim() === '') {
+                  btnIcon.className = originalClass;
+                  console.log('✅ 사용자가 중복 출근 취소');
+                  return;
+                }
+                
+                // 사유와 함께 기록 (메모에 저장)
+                console.log('📝 중복 출근 사유:', reason);
+              }
+              
+              // 🔍 2단계: 오늘이 근무일인지 체크
+              const dayOfWeek = ['일', '월', '화', '수', '목', '금', '토'][today.getDay()];
+              if (!empInfo.work_days.includes(dayOfWeek)) {
+                const reason = prompt(
+                  `⚠️ 오늘은 근무일(${empInfo.work_days.join(', ')})이 아닙니다.\n` +
+                  `현재: ${dayOfWeek}요일\n\n` +
+                  `그래도 출근하시겠습니까?\n` +
+                  `사유를 입력해주세요 (취소하려면 빈 칸으로 제출):`,
+                  ''
+                );
+                
+                if (reason === null || reason.trim() === '') {
+                  btnIcon.className = originalClass;
+                  console.log('✅ 사용자가 비근무일 출근 취소');
+                  return;
+                }
+                
+                console.log('📝 비근무일 출근 사유:', reason);
+              }
+            }
+            
+            // 🚫 3단계: 출근 시 차단 검증 (미완료 퇴근)
             if (type === '출근') {
               console.log('🔍 차단 검증 시작:', {
                 aptId: this.state.aptId,
