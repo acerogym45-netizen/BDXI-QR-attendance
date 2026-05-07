@@ -1014,6 +1014,61 @@
             </div>
           </div>
 
+          <!-- 공휴일 관리 -->
+          <div class="bg-white p-6 rounded-xl shadow-sm border">
+            <div class="flex justify-between items-center mb-4">
+              <h3 class="font-bold text-gray-800">
+                <i class="fas fa-calendar-day mr-2 text-purple-600"></i>공휴일 관리
+              </h3>
+              <button onclick="app.showAddHolidayModal()" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
+                <i class="fas fa-plus mr-2"></i>공휴일 추가
+              </button>
+            </div>
+            <p class="text-sm text-gray-600 mb-4">국가 공휴일, 대체 공휴일, 임시 휴무일을 관리합니다. 공휴일은 출퇴근 차단에서 자동으로 제외됩니다.</p>
+            
+            <!-- 월별 필터 -->
+            <div class="flex gap-2 mb-4">
+              <select id="holiday-year" onchange="app.loadHolidays()" class="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500">
+                <option value="2024">2024년</option>
+                <option value="2025">2025년</option>
+                <option value="2026" selected>2026년</option>
+                <option value="2027">2027년</option>
+              </select>
+              <select id="holiday-month" onchange="app.loadHolidays()" class="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500">
+                <option value="all">전체</option>
+                <option value="1">1월</option>
+                <option value="2">2월</option>
+                <option value="3">3월</option>
+                <option value="4">4월</option>
+                <option value="5" selected>5월</option>
+                <option value="6">6월</option>
+                <option value="7">7월</option>
+                <option value="8">8월</option>
+                <option value="9">9월</option>
+                <option value="10">10월</option>
+                <option value="11">11월</option>
+                <option value="12">12월</option>
+              </select>
+            </div>
+            
+            <div class="overflow-x-auto">
+              <table class="w-full">
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">날짜</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">공휴일명</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">유형</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">메모</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">관리</th>
+                  </tr>
+                </thead>
+                <tbody id="holiday-list" class="divide-y divide-gray-100">
+                  <!-- JS로 동적 생성 -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
           <!-- 구역 관리 -->
           <div class="bg-white p-6 rounded-xl shadow-sm border">
             <div class="flex justify-between items-center mb-4">
@@ -1392,6 +1447,43 @@
             <textarea id="new-employee-notes" placeholder="기타 메모사항" rows="3" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"></textarea>
           </div>
           <button onclick="app.addEmployee()" class="w-full px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium">
+            <i class="fas fa-plus mr-2"></i>추가
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Holiday Modal -->
+    <div id="holiday-modal" class="fixed inset-0 z-50 bg-black bg-opacity-80 items-center justify-center p-4" style="display: none;">
+      <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl" onclick="event.stopPropagation()">
+        <div class="flex justify-between items-center p-6 border-b">
+          <h3 class="text-xl font-bold text-gray-800">
+            <i class="fas fa-calendar-plus mr-2 text-purple-600"></i>공휴일 추가
+          </h3>
+          <button onclick="app.closeHolidayModal()" class="text-gray-400 hover:text-gray-600 text-2xl">×</button>
+        </div>
+        <div class="p-6 space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">날짜</label>
+            <input type="date" id="new-holiday-date" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">공휴일명</label>
+            <input type="text" id="new-holiday-name" placeholder="예: 설날, 추석, 대체공휴일" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">유형</label>
+            <select id="new-holiday-type" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+              <option value="national">국가 공휴일</option>
+              <option value="substitute">대체 공휴일</option>
+              <option value="temporary">임시 휴무일</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">메모 (선택)</label>
+            <textarea id="new-holiday-note" placeholder="추가 정보" rows="2" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"></textarea>
+          </div>
+          <button onclick="app.addHoliday()" class="w-full px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium">
             <i class="fas fa-plus mr-2"></i>추가
           </button>
         </div>
@@ -2326,6 +2418,7 @@
             this.loadEmployees();
             this.loadLocations();
             this.loadQRCodes();
+            this.loadHolidays(); // 공휴일 로드
             this.checkContractExpirationsInDataTab(); // 계약 만료 섹션 표시
           } else if (tab === 'purchase') {
             console.log('🛒 구매 요청 탭 로드 시작');
@@ -4298,6 +4391,178 @@
           } catch (error) {
             console.error('직원 삭제 실패:', error);
             alert('직원 삭제 실패: ' + error.message);
+          }
+        },
+        
+        // ==================== 공휴일 관리 ====================
+        showAddHolidayModal: function () {
+          ['holiday-modal'].forEach(id => {
+            const m = document.getElementById(id);
+            if (m) {
+              m.style.display = 'flex';
+              m.style.alignItems = 'center';
+              m.style.justifyContent = 'center';
+            }
+          });
+          
+          // 현재 날짜로 초기화
+          const today = new Date().toISOString().split('T')[0];
+          document.getElementById('new-holiday-date').value = today;
+        },
+        
+        closeHolidayModal: function () {
+          const modal = document.getElementById('holiday-modal');
+          if (modal) modal.style.display = 'none';
+        },
+        
+        addHoliday: async function () {
+          const date = document.getElementById('new-holiday-date').value;
+          const name = document.getElementById('new-holiday-name').value.trim();
+          const type = document.getElementById('new-holiday-type').value;
+          const note = document.getElementById('new-holiday-note').value.trim();
+          
+          if (!date) {
+            alert('날짜를 선택해주세요.');
+            return;
+          }
+          
+          if (!name) {
+            alert('공휴일명을 입력해주세요.');
+            return;
+          }
+          
+          try {
+            const { error } = await this.sb.from('holidays').insert([{
+              apartment_id: this.currentApartment ? this.currentApartment.id : null,
+              holiday_date: date,
+              holiday_name: name,
+              holiday_type: type,
+              note: note || null
+            }]);
+            
+            if (error) {
+              if (error.code === '23505') {
+                alert('해당 날짜에 이미 공휴일이 등록되어 있습니다.');
+              } else {
+                throw error;
+              }
+              return;
+            }
+            
+            alert('✅ 공휴일이 추가되었습니다.');
+            this.closeHolidayModal();
+            this.loadHolidays();
+            
+            // 입력 필드 초기화
+            document.getElementById('new-holiday-name').value = '';
+            document.getElementById('new-holiday-note').value = '';
+          } catch (error) {
+            console.error('공휴일 추가 실패:', error);
+            alert('공휴일 추가 실패: ' + error.message);
+          }
+        },
+        
+        loadHolidays: async function () {
+          const list = document.getElementById('holiday-list');
+          if (!list) return;
+          
+          list.innerHTML = '<tr><td colspan="5" class="text-center py-4"><div class="loader"></div></td></tr>';
+          
+          try {
+            const year = document.getElementById('holiday-year').value;
+            const month = document.getElementById('holiday-month').value;
+            
+            let query = this.sb
+              .from('holidays')
+              .select('*')
+              .order('holiday_date', { ascending: true });
+            
+            // 아파트 필터
+            if (this.currentApartment && this.currentApartment.id) {
+              query = query.eq('apartment_id', this.currentApartment.id);
+            }
+            
+            // 연도 필터
+            if (year) {
+              query = query.gte('holiday_date', `${year}-01-01`)
+                           .lte('holiday_date', `${year}-12-31`);
+            }
+            
+            // 월 필터
+            if (month && month !== 'all') {
+              const monthStr = month.padStart(2, '0');
+              query = query.gte('holiday_date', `${year}-${monthStr}-01`)
+                           .lte('holiday_date', `${year}-${monthStr}-31`);
+            }
+            
+            const { data, error } = await query;
+            
+            if (error) throw error;
+            
+            list.innerHTML = '';
+            
+            if (!data || data.length === 0) {
+              list.innerHTML = '<tr><td colspan="5" class="text-center py-10 text-gray-400">등록된 공휴일이 없습니다.</td></tr>';
+              return;
+            }
+            
+            const typeNames = {
+              'national': '국가 공휴일',
+              'substitute': '대체 공휴일',
+              'temporary': '임시 휴무일'
+            };
+            
+            const typeColors = {
+              'national': 'bg-red-100 text-red-800',
+              'substitute': 'bg-blue-100 text-blue-800',
+              'temporary': 'bg-gray-100 text-gray-800'
+            };
+            
+            data.forEach(holiday => {
+              const tr = document.createElement('tr');
+              const date = new Date(holiday.holiday_date);
+              const dayOfWeek = ['일', '월', '화', '수', '목', '금', '토'][date.getDay()];
+              
+              tr.innerHTML = `
+                <td class="px-4 py-3 text-sm">
+                  ${date.toLocaleDateString('ko-KR')} (${dayOfWeek})
+                </td>
+                <td class="px-4 py-3 text-sm font-medium">${holiday.holiday_name}</td>
+                <td class="px-4 py-3">
+                  <span class="px-2 py-1 text-xs rounded-full ${typeColors[holiday.holiday_type] || typeColors.temporary}">
+                    ${typeNames[holiday.holiday_type] || holiday.holiday_type}
+                  </span>
+                </td>
+                <td class="px-4 py-3 text-sm text-gray-600">${holiday.note || '-'}</td>
+                <td class="px-4 py-3 text-sm">
+                  <button onclick="app.deleteHoliday('${holiday.id}')" class="text-red-600 hover:text-red-800" title="삭제">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </td>
+              `;
+              list.appendChild(tr);
+            });
+          } catch (error) {
+            console.error('공휴일 로드 실패:', error);
+            list.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-red-500">로드 실패</td></tr>';
+          }
+        },
+        
+        deleteHoliday: async function (id) {
+          if (!confirm('이 공휴일을 삭제하시겠습니까?')) {
+            return;
+          }
+          
+          try {
+            const { error } = await this.sb.from('holidays').delete().eq('id', id);
+            
+            if (error) throw error;
+            
+            alert('✅ 공휴일이 삭제되었습니다.');
+            this.loadHolidays();
+          } catch (error) {
+            console.error('공휴일 삭제 실패:', error);
+            alert('공휴일 삭제 실패: ' + error.message);
           }
         },
         
@@ -7588,7 +7853,7 @@
         console.log('🚀 DOMContentLoaded 이벤트 발생');
         
         // 모든 모달의 배경 클릭 이벤트
-        ['location-modal', 'location-edit-modal', 'employee-modal', 'edit-employee-modal', 'apartment-modal', 'sales-modal', 'vacation-modal', 'blocked-employees-modal', 'incomplete-today-modal', 'checkout-input-modal', 'new-purchase-modal', 'purchase-detail-modal', 'qr-management-modal'].forEach(id => {
+        ['location-modal', 'location-edit-modal', 'employee-modal', 'edit-employee-modal', 'apartment-modal', 'sales-modal', 'vacation-modal', 'holiday-modal', 'blocked-employees-modal', 'incomplete-today-modal', 'checkout-input-modal', 'new-purchase-modal', 'purchase-detail-modal', 'qr-management-modal'].forEach(id => {
           const modal = document.getElementById(id);
           if (modal) {
             modal.addEventListener('click', (e) => {
