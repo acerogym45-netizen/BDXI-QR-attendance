@@ -3077,6 +3077,13 @@
           alert(`📅 ${dateStr}\n\n${details}`);
         },
         
+        refreshCalendar: function() {
+          this.loadAttendanceCalendar();
+          if (this.selectedEmployeeId) {
+            this.loadEmployeeMonthData();
+          }
+        },
+        
         loadStats: async function () {
           const period = document.getElementById('stats-period').value;
           const now = new Date();
