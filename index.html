@@ -3110,10 +3110,29 @@
                 // 3️⃣ 해당 출근 기록에 매칭되는 특이사항 찾기
                 const scanDate = new Date(row.scan_time);
                 
-                // KST로 변환 (UTC + 9시간)
-                const kstDate = new Date(scanDate.getTime() + (9 * 60 * 60 * 1000));
-                const dateStr = kstDate.toISOString().split('T')[0]; // YYYY-MM-DD (KST)
-                const timeStr = kstDate.toISOString().split('T')[1].substring(0, 5); // HH:MM (KST)
+                // scan_time은 UTC이므로 로컬 시간으로 변환
+                const dateStr = scanDate.toLocaleDateString('ko-KR', {
+                  year: 'numeric',
+                  month: '2-digit',
+                  day: '2-digit',
+                  timeZone: 'Asia/Seoul'
+                }).split('. ').map(s => s.replace('.', '')).join('-').replace(/(\d{4})-(\d{1,2})-(\d{1,2})/, (m, y, mo, d) => {
+                  return `${y}-${mo.padStart(2, '0')}-${d.padStart(2, '0')}`;
+                }); // YYYY-MM-DD (KST)
+                
+                const timeStr = scanDate.toLocaleTimeString('ko-KR', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  hour12: false,
+                  timeZone: 'Asia/Seoul'
+                }); // HH:MM (KST)
+                
+                console.log('🔍 매칭 시도:', {
+                  출근시각: row.scan_time,
+                  변환된날짜: dateStr,
+                  변환된시간: timeStr,
+                  직원명: row.employee_name
+                });
                 
                 // 매칭 로직: 같은 날짜 + 같은 직원명 + 시간 차이 5분 이내
                 const matchedNote = notesData.find(note => {
@@ -3126,8 +3145,20 @@
                   const scanMinutes = parseInt(timeStr.split(':')[0]) * 60 + parseInt(timeStr.split(':')[1]);
                   const diff = Math.abs(noteMinutes - scanMinutes);
                   
+                  console.log('  체크:', {
+                    특이사항시간: noteTime,
+                    noteMinutes,
+                    scanMinutes,
+                    차이: diff,
+                    매칭: diff <= 5
+                  });
+                  
                   return diff <= 5; // 5분 이내
                 });
+                
+                if (matchedNote) {
+                  console.log('✅ 매칭 성공:', matchedNote);
+                }
                 
                 const tr = document.createElement('tr');
                 let color = 'bg-gray-100 text-gray-800';
