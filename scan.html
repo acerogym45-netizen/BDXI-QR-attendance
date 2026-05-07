@@ -1054,7 +1054,7 @@
         },
 
         // --- ACTIONS: ATTENDANCE NOTES ---
-        recordAttendanceNote: async function(noteType, reason, context = {}) {
+        recordAttendanceNote: async function(noteType, reason) {
           if (!this.state.selectedEmp) {
             console.error('❌ 선택된 직원 없음');
             return;
@@ -1086,7 +1086,6 @@
               note_time: noteTime,
               note_type: noteType,
               reason: reason,
-              context: context,
               created_at: now.toISOString()
             };
             
@@ -1198,13 +1197,9 @@
                 
                 console.log('📝 공휴일 출근 사유:', reason);
                 
-                // ✅ 특이사항 기록
-                await this.recordAttendanceNote('holiday_work', reason, {
-                  holiday_name: holiday.holiday_name,
-                  holiday_type: holiday.holiday_type,
-                  holiday_label: typeLabel,
-                  checkin_time: kstDate.toISOString().split('T')[1].substring(0, 5)
-                });
+                // ✅ 특이사항 기록 (상세 정보를 reason에 포함)
+                const detailedReason = `${reason} [${typeLabel}: ${holiday.holiday_name}]`;
+                await this.recordAttendanceNote('holiday_work', detailedReason);
               }
               
               // 1-2. 근무시간 체크
@@ -1299,12 +1294,10 @@
                     
                     console.log('📝 근무시간 외 출근 사유:', reason);
                     
-                    // ✅ 특이사항 기록
-                    await this.recordAttendanceNote('outside_work_hours', reason, {
-                      work_hours: `${empInfo.work_start_time} ~ ${empInfo.work_end_time}`,
-                      checkin_time: `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`,
-                      time_difference: message.includes('일찍') ? `${Math.floor(timeDiff/60)}시간 ${timeDiff%60}분 일찍` : `${Math.floor(timeDiff/60)}시간 ${timeDiff%60}분 늦게`
-                    });
+                    // ✅ 특이사항 기록 (상세 정보를 reason에 포함)
+                    const timeDiffText = message.includes('일찍') ? `${Math.floor(timeDiff/60)}시간 ${timeDiff%60}분 일찍` : `${Math.floor(timeDiff/60)}시간 ${timeDiff%60}분 늦게`;
+                    const detailedReason = `${reason} [근무시간: ${empInfo.work_start_time}~${empInfo.work_end_time}, ${timeDiffText}]`;
+                    await this.recordAttendanceNote('outside_work_hours', detailedReason);
                   }
                 }
                 
@@ -1364,11 +1357,9 @@
                 
                 console.log('📝 중복 출근 사유:', reason);
                 
-                // ✅ 특이사항 기록
-                await this.recordAttendanceNote('duplicate_checkin', reason, {
-                  previous_checkin: lastCheckInTime,
-                  previous_location: lastCheckIn.location || '-'
-                });
+                // ✅ 특이사항 기록 (상세 정보를 reason에 포함)
+                const detailedReason = `${reason} [이전 출근: ${lastCheckInTime} ${lastCheckIn.location || '-'}]`;
+                await this.recordAttendanceNote('duplicate_checkin', detailedReason);
               }
               
               // 🔍 3단계: 오늘이 근무일인지 체크
@@ -1390,12 +1381,9 @@
                 
                 console.log('📝 비근무일 출근 사유:', reason);
                 
-                // ✅ 특이사항 기록
-                await this.recordAttendanceNote('non_work_day', reason, {
-                  work_days: empInfo.work_days.join(', '),
-                  current_day: dayOfWeek + '요일',
-                  checkin_time: kstDate.toISOString().split('T')[1].substring(0, 5)
-                });
+                // ✅ 특이사항 기록 (상세 정보를 reason에 포함)
+                const detailedReason = `${reason} [근무요일: ${empInfo.work_days.join(', ')}, 오늘: ${dayOfWeek}요일]`;
+                await this.recordAttendanceNote('non_work_day', detailedReason);
               }
             }
             
