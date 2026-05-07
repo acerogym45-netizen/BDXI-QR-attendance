@@ -999,6 +999,8 @@
                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">이름</th>
                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">직책</th>
                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">연락처</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">근무요일</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">근무시간</th>
                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">계약기간</th>
                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">상태</th>
                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">등록일</th>
@@ -1332,6 +1334,49 @@
               <option value="inactive">비활성</option>
             </select>
           </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">근무요일</label>
+            <div class="flex gap-2 flex-wrap">
+              <label class="inline-flex items-center px-3 py-2 border rounded-lg cursor-pointer hover:bg-purple-50 transition-colors">
+                <input type="checkbox" value="월" class="work-day-checkbox mr-2 rounded text-purple-600 focus:ring-purple-500">
+                <span class="text-sm">월</span>
+              </label>
+              <label class="inline-flex items-center px-3 py-2 border rounded-lg cursor-pointer hover:bg-purple-50 transition-colors">
+                <input type="checkbox" value="화" class="work-day-checkbox mr-2 rounded text-purple-600 focus:ring-purple-500">
+                <span class="text-sm">화</span>
+              </label>
+              <label class="inline-flex items-center px-3 py-2 border rounded-lg cursor-pointer hover:bg-purple-50 transition-colors">
+                <input type="checkbox" value="수" class="work-day-checkbox mr-2 rounded text-purple-600 focus:ring-purple-500">
+                <span class="text-sm">수</span>
+              </label>
+              <label class="inline-flex items-center px-3 py-2 border rounded-lg cursor-pointer hover:bg-purple-50 transition-colors">
+                <input type="checkbox" value="목" class="work-day-checkbox mr-2 rounded text-purple-600 focus:ring-purple-500">
+                <span class="text-sm">목</span>
+              </label>
+              <label class="inline-flex items-center px-3 py-2 border rounded-lg cursor-pointer hover:bg-purple-50 transition-colors">
+                <input type="checkbox" value="금" class="work-day-checkbox mr-2 rounded text-purple-600 focus:ring-purple-500">
+                <span class="text-sm">금</span>
+              </label>
+              <label class="inline-flex items-center px-3 py-2 border rounded-lg cursor-pointer hover:bg-purple-50 transition-colors">
+                <input type="checkbox" value="토" class="work-day-checkbox mr-2 rounded text-purple-600 focus:ring-purple-500">
+                <span class="text-sm">토</span>
+              </label>
+              <label class="inline-flex items-center px-3 py-2 border rounded-lg cursor-pointer hover:bg-purple-50 transition-colors">
+                <input type="checkbox" value="일" class="work-day-checkbox mr-2 rounded text-purple-600 focus:ring-purple-500">
+                <span class="text-sm">일</span>
+              </label>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">출근 시간</label>
+              <input type="time" id="new-employee-work-start" value="09:00" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">퇴근 시간</label>
+              <input type="time" id="new-employee-work-end" value="18:00" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+            </div>
+          </div>
           <div class="grid grid-cols-2 gap-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">계약 시작일</label>
@@ -1382,6 +1427,50 @@
               <option value="active">활성</option>
               <option value="inactive">비활성</option>
             </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">근무요일</label>
+            <div class="flex gap-2 flex-wrap">
+              <label class="inline-flex items-center px-3 py-2 border rounded-lg cursor-pointer hover:bg-green-50 transition-colors">
+                <input type="checkbox" value="월" class="edit-work-day-checkbox mr-2 rounded text-green-600 focus:ring-green-500">
+                <span class="text-sm">월</span>
+              </label>
+              <label class="inline-flex items-center px-3 py-2 border rounded-lg cursor-pointer hover:bg-green-50 transition-colors">
+                <input type="checkbox" value="화" class="edit-work-day-checkbox mr-2 rounded text-green-600 focus:ring-green-500">
+                <span class="text-sm">화</span>
+              </label>
+              <label class="inline-flex items-center px-3 py-2 border rounded-lg cursor-pointer hover:bg-green-50 transition-colors">
+                <input type="checkbox" value="수" class="edit-work-day-checkbox mr-2 rounded text-green-600 focus:ring-green-500">
+                <span class="text-sm">수</span>
+              </label>
+              <label class="inline-flex items-center px-3 py-2 border rounded-lg cursor-pointer hover:bg-green-50 transition-colors">
+                <input type="checkbox" value="목" class="edit-work-day-checkbox mr-2 rounded text-green-600 focus:ring-green-500">
+                <span class="text-sm">목</span>
+              </label>
+              <label class="inline-flex items-center px-3 py-2 border rounded-lg cursor-pointer hover:bg-green-50 transition-colors">
+                <input type="checkbox" value="금" class="edit-work-day-checkbox mr-2 rounded text-green-600 focus:ring-green-500">
+                <span class="text-sm">금</span>
+              </label>
+              <label class="inline-flex items-center px-3 py-2 border rounded-lg cursor-pointer hover:bg-green-50 transition-colors">
+                <input type="checkbox" value="토" class="edit-work-day-checkbox mr-2 rounded text-green-600 focus:ring-green-500">
+                <span class="text-sm">토</span>
+              </label>
+              <label class="inline-flex items-center px-3 py-2 border rounded-lg cursor-pointer hover:bg-green-50 transition-colors">
+                <input type="checkbox" value="일" class="edit-work-day-checkbox mr-2 rounded text-green-600 focus:ring-green-500">
+                <span class="text-sm">일</span>
+              </label>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">출근 시간</label>
+              <input type="time" id="edit-employee-work-start" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">퇴근 시간</label>
+              <input type="time" id="edit-employee-work-end" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+            </div>
+          </div>
           </div>
           <div class="grid grid-cols-2 gap-4">
             <div>
@@ -3909,10 +3998,37 @@
                 }
               }
               
+              // 근무요일 표시
+              let workDaysDisplay = '-';
+              if (emp.work_days && emp.work_days.length > 0) {
+                workDaysDisplay = emp.work_days.join(', ');
+              }
+              
+              // 근무시간 표시
+              let workHoursDisplay = '-';
+              if (emp.work_start_time && emp.work_end_time) {
+                const formatTime = (timeStr) => {
+                  if (!timeStr) return '';
+                  // HH:MM:SS 또는 HH:MM 형식을 HH:MM으로 변환
+                  return timeStr.substring(0, 5);
+                };
+                workHoursDisplay = `${formatTime(emp.work_start_time)}~${formatTime(emp.work_end_time)}`;
+              }
+              
               tr.innerHTML = `
                 <td class="px-4 py-3 text-sm font-medium">${emp.name}</td>
                 <td class="px-4 py-3 text-sm text-gray-600">${emp.position || '-'}</td>
                 <td class="px-4 py-3 text-sm">${emp.phone || '-'}</td>
+                <td class="px-4 py-3 text-sm">
+                  <span class="inline-flex items-center px-2 py-1 rounded-full bg-blue-50 text-blue-700 text-xs">
+                    ${workDaysDisplay}
+                  </span>
+                </td>
+                <td class="px-4 py-3 text-sm">
+                  <span class="inline-flex items-center px-2 py-1 rounded-full bg-green-50 text-green-700 text-xs">
+                    <i class="fas fa-clock mr-1"></i>${workHoursDisplay}
+                  </span>
+                </td>
                 <td class="px-4 py-3 text-sm ${contractClass}">${contractDisplay}</td>
                 <td class="px-4 py-3"><span class="px-2 py-1 text-xs rounded-full ${statusColor}">${statusText}</span></td>
                 <td class="px-4 py-3 text-sm text-gray-500">${new Date(emp.created_at).toLocaleDateString('ko-KR')}</td>
@@ -4013,6 +4129,15 @@
           document.getElementById('edit-employee-contract-start').value = emp.contract_start || '';
           document.getElementById('edit-employee-contract-end').value = emp.contract_end || '';
           document.getElementById('edit-employee-notes').value = emp.notes || '';
+          
+          // 근무요일 체크박스 설정
+          document.querySelectorAll('.edit-work-day-checkbox').forEach(cb => {
+            cb.checked = emp.work_days && emp.work_days.includes(cb.value);
+          });
+          
+          // 근무시간 설정
+          document.getElementById('edit-employee-work-start').value = emp.work_start_time ? emp.work_start_time.substring(0, 5) : '';
+          document.getElementById('edit-employee-work-end').value = emp.work_end_time ? emp.work_end_time.substring(0, 5) : '';
         },
         
         closeEditEmployeeModal: function () {
@@ -4030,8 +4155,21 @@
           const contractEnd = document.getElementById('edit-employee-contract-end').value;
           const notes = document.getElementById('edit-employee-notes').value.trim();
           
+          // 근무요일 수집
+          const workDays = Array.from(document.querySelectorAll('.edit-work-day-checkbox:checked'))
+            .map(cb => cb.value);
+          
+          // 근무시간 수집
+          const workStart = document.getElementById('edit-employee-work-start').value;
+          const workEnd = document.getElementById('edit-employee-work-end').value;
+          
           if (!name) {
             alert('직원명을 입력하세요.');
+            return;
+          }
+          
+          if (workDays.length === 0) {
+            alert('근무요일을 최소 1개 이상 선택해주세요.');
             return;
           }
           
@@ -4043,14 +4181,19 @@
               status,
               contract_start: contractStart || null,
               contract_end: contractEnd || null,
-              notes: notes || null
+              notes: notes || null,
+              work_days: workDays,
+              work_start_time: workStart || null,
+              work_end_time: workEnd || null
             };
+            
+            console.log('📝 직원 수정 데이터:', updateData);
             
             const { error } = await this.sb.from('employees').update(updateData).eq('id', id);
             
             if (error) throw error;
             
-            alert('직원 정보가 수정되었습니다.');
+            alert('✅ 직원 정보가 수정되었습니다.');
             this.closeEditEmployeeModal();
             this.loadEmployees();
             this.checkContractExpirationsInDataTab(); // 계약 만료 섹션 업데이트
@@ -4071,13 +4214,26 @@
           const contractEnd = document.getElementById('new-employee-contract-end').value;
           const notes = document.getElementById('new-employee-notes').value.trim();
           
+          // 근무요일 수집
+          const workDays = Array.from(document.querySelectorAll('.work-day-checkbox:checked'))
+            .map(cb => cb.value);
+          
+          // 근무시간 수집
+          const workStart = document.getElementById('new-employee-work-start').value;
+          const workEnd = document.getElementById('new-employee-work-end').value;
+          
           if (!name) {
             alert('직원명을 입력하세요.');
             return;
           }
           
+          if (workDays.length === 0) {
+            alert('근무요일을 최소 1개 이상 선택해주세요.');
+            return;
+          }
+          
           try {
-            // 🏢 현재 아파트 ID 포함 + 계약 정보
+            // 🏢 현재 아파트 ID 포함 + 계약 정보 + 근무 패턴
             const employeeData = { 
               name, 
               phone,
@@ -4086,14 +4242,19 @@
               apartment_id: this.currentApartment ? this.currentApartment.id : null,
               contract_start: contractStart || null,
               contract_end: contractEnd || null,
-              notes: notes || null
+              notes: notes || null,
+              work_days: workDays,
+              work_start_time: workStart || null,
+              work_end_time: workEnd || null
             };
+            
+            console.log('📝 직원 등록 데이터:', employeeData);
             
             const { error } = await this.sb.from('employees').insert([employeeData]);
             
             if (error) throw error;
             
-            alert('직원이 추가되었습니다.');
+            alert('✅ 직원이 추가되었습니다.');
             this.closeEmployeeModal();
             this.loadEmployees();
             this.employeeList = []; // Reset cache
