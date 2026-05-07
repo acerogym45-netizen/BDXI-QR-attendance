@@ -2854,10 +2854,22 @@
           const select = document.getElementById('calendar-employee-select');
           if (!select) return;
           
-          const employees = this.employeeList.filter(e => e.status === 'active');
+          // 현재 단지의 활성 직원만 필터링
+          let employees = this.employeeList.filter(e => e.status === 'active');
+          
+          // 단지별 필터링
+          if (this.currentApartment && this.currentApartment.id) {
+            employees = employees.filter(e => e.apartment_id === this.currentApartment.id);
+          }
+          
           select.innerHTML = '<option value="">직원을 선택하세요</option>' +
-            '<option value="ALL">📊 전체 직원</option>' +
+            '<option value="ALL">📊 전체 직원 (현재 단지)</option>' +
             employees.map(emp => `<option value="${emp.id}">${emp.name} (${emp.position || '직원'})</option>`).join('');
+          
+          // 직원 목록이 비어있으면 메시지 표시
+          if (employees.length === 0) {
+            select.innerHTML = '<option value="">이 단지에 등록된 활성 직원이 없습니다</option>';
+          }
         },
         
         loadEmployeeCalendar: async function() {
@@ -2927,6 +2939,11 @@
               .gte('created_at', firstDay.toISOString())
               .lte('created_at', lastDay.toISOString())
               .order('created_at', { ascending: true });
+            
+            // 단지별 필터링 (중요!)
+            if (this.currentApartment && this.currentApartment.id) {
+              query = query.eq('apartment_id', this.currentApartment.id);
+            }
             
             // 개별 직원 또는 전체 직원
             if (this.selectedEmployeeId !== 'ALL') {
