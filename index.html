@@ -2496,6 +2496,7 @@
             this.loadLocations();
             this.loadQRCodes();
             this.loadHolidays(); // 공휴일 로드
+            this.loadAttendanceNotes(); // 특이사항 조회 로드
             this.checkContractExpirationsInDataTab(); // 계약 만료 섹션 표시
           } else if (tab === 'purchase') {
             console.log('🛒 구매 요청 탭 로드 시작');
@@ -8250,6 +8251,184 @@
         alert('QR 코드 다운로드 시작');
       };
       
+      // ==================== 특이사항 조회 기능 ====================
+      
+      // 특이사항 데이터 로드
+      app.loadAttendanceNotes = async function() {
+        if (!this.currentApartment) {
+          console.log('⚠️ 선택된 아파트 없음');
+          return;
+        }
+        
+        try {
+          console.log('📋 특이사항 로드 시작');
+          
+          // 필터 값 가져오기
+          const period = document.getElementById('notes-period')?.value || '7days';
+          const noteType = document.getElementById('notes-type')?.value || 'all';
+          const status = document.getElementById('notes-status')?.value || 'all';
+          
+          // 기간 필터 계산
+          let query = this.sb
+            .from('attendance_notes')
+            .select('*')
+            .eq('apartment_id', this.currentApartment.id)
+            .order('created_at', { ascending: false });
+          
+          // 기간 필터 적용
+          const now = new Date();
+          if (period === 'today') {
+            const today = now.toISOString().split('T')[0];
+            query = query.eq('note_date', today);
+          } else if (period === '7days') {
+            const weekAgo = new Date(now);
+            weekAgo.setDate(weekAgo.getDate() - 7);
+            query = query.gte('note_date', weekAgo.toISOString().split('T')[0]);
+          } else if (period === '30days') {
+            const monthAgo = new Date(now);
+            monthAgo.setDate(monthAgo.getDate() - 30);
+            query = query.gte('note_date', monthAgo.toISOString().split('T')[0]);
+          }
+          // 'all'은 날짜 필터 없음
+          
+          // 유형 필터 적용
+          if (noteType !== 'all') {
+            query = query.eq('note_type', noteType);
+          }
+          
+          // 상태 필터 적용 (향후 확장용)
+          // if (status !== 'all') {
+          //   query = query.eq('status', status);
+          // }
+          
+          const { data, error } = await query;
+          
+          if (error) throw error;
+          
+          console.log(`✅ 특이사항 ${data.length}건 로드 완료`);
+          
+          // UI 업데이트
+          this.updateAttendanceNotesUI(data);
+          this.updateAttendanceNotesStats(data);
+          
+        } catch (err) {
+          console.error('❌ 특이사항 로드 실패:', err);
+          document.getElementById('attendance-notes-list').innerHTML = 
+            '<tr><td colspan="7" class="text-center text-red-500 py-4">특이사항 로드 실패</td></tr>';
+        }
+      };
+      
+      // 특이사항 UI 업데이트
+      app.updateAttendanceNotesUI = function(notes) {
+        const tbody = document.getElementById('attendance-notes-list');
+        if (!tbody) {
+          console.error('❌ attendance-notes-list 요소를 찾을 수 없습니다');
+          return;
+        }
+        
+        if (notes.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="7" class="text-center text-gray-500 py-8">특이사항이 없습니다</td></tr>';
+          return;
+        }
+        
+        // 유형별 뱃지 색상 및 레이블
+        const typeConfig = {
+          'holiday_work': { label: '공휴일 출근', color: 'bg-purple-100 text-purple-800' },
+          'outside_work_hours': { label: '근무시간 외', color: 'bg-orange-100 text-orange-800' },
+          'non_work_day': { label: '비근무일 출근', color: 'bg-blue-100 text-blue-800' },
+          'duplicate_checkin': { label: '중복 출근', color: 'bg-red-100 text-red-800' },
+          'other': { label: '기타', color: 'bg-gray-100 text-gray-800' }
+        };
+        
+        tbody.innerHTML = notes.map(note => {
+          const config = typeConfig[note.note_type] || typeConfig['other'];
+          const dateTime = `${note.note_date} ${note.note_time}`;
+          
+          // context 파싱 (JSON 문자열인 경우)
+          let details = '';
+          if (note.context) {
+            try {
+              const ctx = typeof note.context === 'string' ? JSON.parse(note.context) : note.context;
+              if (ctx.holiday_name) details = `공휴일: ${ctx.holiday_name}`;
+              else if (ctx.work_hours) details = `근무시간: ${ctx.work_hours}`;
+              else if (ctx.work_days) details = `근무요일: ${ctx.work_days}`;
+            } catch (e) {
+              details = note.context;
+            }
+          }
+          
+          return `
+            <tr class="hover:bg-gray-50">
+              <td class="px-4 py-3 text-sm text-gray-600">${dateTime}</td>
+              <td class="px-4 py-3 text-sm font-medium text-gray-800">${note.employee_name || '-'}</td>
+              <td class="px-4 py-3">
+                <span class="px-2 py-1 text-xs font-semibold rounded ${config.color}">
+                  ${config.label}
+                </span>
+              </td>
+              <td class="px-4 py-3 text-sm text-gray-700">${note.reason || '-'}</td>
+              <td class="px-4 py-3 text-xs text-gray-500">${details}</td>
+              <td class="px-4 py-3">
+                <span class="px-2 py-1 text-xs font-medium rounded bg-green-100 text-green-800">
+                  기록됨
+                </span>
+              </td>
+              <td class="px-4 py-3">
+                <button onclick="app.deleteAttendanceNote(${note.id})" 
+                        class="text-red-600 hover:text-red-800 text-sm font-medium">
+                  <i class="fas fa-trash"></i> 삭제
+                </button>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      };
+      
+      // 특이사항 통계 업데이트
+      app.updateAttendanceNotesStats = function(notes) {
+        // 전체 건수
+        const totalEl = document.getElementById('notes-total');
+        if (totalEl) totalEl.textContent = notes.length;
+        
+        // 공휴일 출근
+        const holidayCount = notes.filter(n => n.note_type === 'holiday_work').length;
+        const holidayEl = document.getElementById('notes-holiday');
+        if (holidayEl) holidayEl.textContent = holidayCount;
+        
+        // 근무시간 외
+        const outsideCount = notes.filter(n => n.note_type === 'outside_work_hours').length;
+        const outsideEl = document.getElementById('notes-outside');
+        if (outsideEl) outsideEl.textContent = outsideCount;
+        
+        // 비근무일 출근
+        const nonWorkCount = notes.filter(n => n.note_type === 'non_work_day').length;
+        const nonWorkEl = document.getElementById('notes-nonwork');
+        if (nonWorkEl) nonWorkEl.textContent = nonWorkCount;
+      };
+      
+      // 특이사항 삭제
+      app.deleteAttendanceNote = async function(noteId) {
+        if (!confirm('이 특이사항 기록을 삭제하시겠습니까?')) {
+          return;
+        }
+        
+        try {
+          const { error } = await this.sb
+            .from('attendance_notes')
+            .delete()
+            .eq('id', noteId);
+          
+          if (error) throw error;
+          
+          alert('특이사항이 삭제되었습니다');
+          await this.loadAttendanceNotes(); // 목록 새로고침
+          
+        } catch (err) {
+          console.error('❌ 특이사항 삭제 실패:', err);
+          alert('특이사항 삭제에 실패했습니다');
+        }
+      };
+      
       // ==================== 기존 함수 ====================
       
       // 전역에 app 즉시 노출
@@ -8267,6 +8446,18 @@
             modal.addEventListener('click', (e) => {
               if (e.target === modal) {
                 modal.style.display = 'none';
+              }
+            });
+          }
+        });
+        
+        // 특이사항 필터 이벤트 리스너
+        ['notes-period', 'notes-type', 'notes-status'].forEach(filterId => {
+          const filterEl = document.getElementById(filterId);
+          if (filterEl) {
+            filterEl.addEventListener('change', () => {
+              if (app.currentApartment) {
+                app.loadAttendanceNotes();
               }
             });
           }
