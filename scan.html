@@ -1061,28 +1061,71 @@
               if (validationError) {
                 console.error('❌ 차단 검증 실패:', validationError);
               } else if (validationResult && validationResult.blocked) {
-                // 출근 차단됨!
-                const incompleteCount = validationResult.incomplete_count || 0;
-                const records = validationResult.incomplete_records || [];
+                // 🔧 휴무일 필터링 추가
+                const incompleteRecords = validationResult.incomplete_records || [];
                 
-                let message = `🚫 출근이 차단되었습니다\n\n`;
-                message += `퇴근 기록이 없는 날이 ${incompleteCount}건 있습니다:\n\n`;
+                // 휴무일 조회
+                const { data: vacations } = await this.sb
+                  .from('vacations')
+                  .select('start_date, end_date')
+                  .eq('employee_id', this.state.selectedEmp.id);
                 
-                records.slice(0, 3).forEach(record => {
-                  const date = new Date(record.date).toLocaleDateString('ko-KR');
-                  message += `• ${date} (${record.days_ago}일 전)\n`;
+                console.log('📅 휴무일 목록:', vacations);
+                
+                // 휴무일 제외 필터링
+                const filteredRecords = incompleteRecords.filter(record => {
+                  const recordDate = new Date(record.date);
+                  const isVacation = vacations?.some(v => {
+                    const start = new Date(v.start_date);
+                    const end = new Date(v.end_date);
+                    return recordDate >= start && recordDate <= end;
+                  });
+                  
+                  if (isVacation) {
+                    console.log(`🏖️ ${record.date}는 휴무일 - 차단 제외`);
+                  }
+                  
+                  return !isVacation;
                 });
                 
-                if (records.length > 3) {
-                  message += `• ... 외 ${records.length - 3}건\n`;
+                // 중복 날짜 제거
+                const uniqueDates = new Map();
+                filteredRecords.forEach(record => {
+                  if (!uniqueDates.has(record.date)) {
+                    uniqueDates.set(record.date, record);
+                  }
+                });
+                const uniqueRecords = Array.from(uniqueDates.values());
+                
+                console.log('🔍 필터링 결과:', {
+                  원본: incompleteRecords.length,
+                  휴무제외: filteredRecords.length,
+                  중복제거: uniqueRecords.length
+                });
+                
+                // 차단 기준: 3건 이상의 실제 미완료 퇴근
+                if (uniqueRecords.length >= 3) {
+                  let message = `🚫 출근이 차단되었습니다\n\n`;
+                  message += `퇴근 기록이 없는 날이 ${uniqueRecords.length}건 있습니다:\n\n`;
+                  
+                  uniqueRecords.slice(0, 3).forEach(record => {
+                    const date = new Date(record.date).toLocaleDateString('ko-KR');
+                    message += `• ${date} (${record.days_ago}일 전)\n`;
+                  });
+                  
+                  if (uniqueRecords.length > 3) {
+                    message += `• ... 외 ${uniqueRecords.length - 3}건\n`;
+                  }
+                  
+                  message += `\n센터 관리자에게 문의하여\n퇴근 시간을 등록해주세요.`;
+                  
+                  btnIcon.className = originalClass;
+                  alert(message);
+                  console.log('🚫 출근 차단됨!', { count: uniqueRecords.length, records: uniqueRecords });
+                  return; // 출근 차단!
+                } else {
+                  console.log('✅ 차단 조건 미달 - 정상 처리 (휴무일 제외 후 3건 미만)');
                 }
-                
-                message += `\n센터 관리자에게 문의하여\n퇴근 시간을 등록해주세요.`;
-                
-                btnIcon.className = originalClass;
-                alert(message);
-                console.log('🚫 출근 차단됨!', { incompleteCount, records });
-                return; // 출근 차단!
               } else {
                 console.log('✅ 차단 없음 - 정상 처리');
               }
