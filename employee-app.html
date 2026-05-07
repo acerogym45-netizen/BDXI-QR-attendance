@@ -1999,8 +1999,8 @@
           const records = recordsByDate[dateStr] || [];
           
           // 출근/퇴근 확인
-          const hasCheckIn = records.some(r => r.type === '출근');
-          const hasCheckOut = records.some(r => r.type === '퇴근');
+          const hasCheckIn = records.some(r => r.attendance_type === '출근');
+          const hasCheckOut = records.some(r => r.attendance_type === '퇴근');
           
           let bgColor = 'bg-gray-100';
           let textColor = 'text-gray-400';
@@ -2018,8 +2018,8 @@
           // 근무 시간 계산
           let workHours = '';
           if (hasCheckIn && hasCheckOut) {
-            const checkInRecord = records.find(r => r.type === '출근');
-            const checkOutRecord = records.find(r => r.type === '퇴근');
+            const checkInRecord = records.find(r => r.attendance_type === '출근');
+            const checkOutRecord = records.find(r => r.attendance_type === '퇴근');
             const checkInTime = new Date(checkInRecord.created_at);
             const checkOutTime = new Date(checkOutRecord.created_at);
             const diff = (checkOutTime - checkInTime) / (1000 * 60 * 60);
@@ -2051,7 +2051,7 @@
         // 근무일 수
         const workDays = Object.keys(dayRecords).filter(date => {
           const dayRecs = dayRecords[date];
-          return dayRecs.some(r => r.type === '출근');
+          return dayRecs.some(r => r.attendance_type === '출근');
         }).length;
         
         // 총 근무시간 및 휴게시간
@@ -2059,8 +2059,8 @@
         let totalBreakMinutes = 0;
         
         Object.values(dayRecords).forEach(dayRecs => {
-          const checkIn = dayRecs.find(r => r.type === '출근');
-          const checkOut = dayRecs.find(r => r.type === '퇴근');
+          const checkIn = dayRecs.find(r => r.attendance_type === '출근');
+          const checkOut = dayRecs.find(r => r.attendance_type === '퇴근');
           
           if (checkIn && checkOut) {
             const diff = (new Date(checkOut.created_at) - new Date(checkIn.created_at)) / (1000 * 60 * 60);
@@ -2068,8 +2068,8 @@
           }
           
           // 휴게시간 계산
-          const breakStart = dayRecs.find(r => r.type === '휴게 시작');
-          const breakEnd = dayRecs.find(r => r.type === '휴게 종료');
+          const breakStart = dayRecs.find(r => r.attendance_type === '휴게 시작');
+          const breakEnd = dayRecs.find(r => r.attendance_type === '휴게 종료');
           
           if (breakStart && breakEnd) {
             const breakDiff = (new Date(breakEnd.created_at) - new Date(breakStart.created_at)) / (1000 * 60);
@@ -2103,7 +2103,7 @@
             hour: '2-digit', 
             minute: '2-digit' 
           });
-          return `${r.type}: ${time}`;
+          return `${r.attendance_type}: ${time}`;
         }).join('\n');
         
         alert(`📅 ${dateStr}\n\n${details}`);
