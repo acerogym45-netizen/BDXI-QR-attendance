@@ -1061,20 +1061,51 @@
               if (validationError) {
                 console.error('❌ 차단 검증 실패:', validationError);
               } else if (validationResult && validationResult.blocked) {
-                // 🔧 휴무일 필터링 추가
                 const incompleteRecords = validationResult.incomplete_records || [];
                 
-                // 휴무일 조회
+                // 1단계: 직원 근무 패턴 로드
+                const { data: empData } = await this.sb
+                  .from('employees')
+                  .select('work_days')
+                  .eq('id', this.state.selectedEmp.id)
+                  .single();
+                
+                const workDays = empData?.work_days || [];
+                console.log('📋 직원 근무요일:', workDays);
+                
+                // 2단계: 휴무일 조회 (vacations 테이블)
                 const { data: vacations } = await this.sb
                   .from('vacations')
                   .select('start_date, end_date')
                   .eq('employee_id', this.state.selectedEmp.id);
                 
-                console.log('📅 휴무일 목록:', vacations);
+                console.log('📅 개인 휴무일:', vacations);
                 
-                // 휴무일 제외 필터링
+                // 3단계: 공휴일 조회 (holidays 테이블)
+                const { data: holidays } = await this.sb
+                  .from('holidays')
+                  .select('holiday_date')
+                  .eq('apartment_id', this.state.aptId);
+                
+                console.log('🎌 공휴일 목록:', holidays);
+                
+                // 4단계: 종합 필터링
+                const dayMap = {
+                  0: '일', 1: '월', 2: '화', 3: '수', 
+                  4: '목', 5: '금', 6: '토'
+                };
+                
                 const filteredRecords = incompleteRecords.filter(record => {
                   const recordDate = new Date(record.date);
+                  const dayOfWeek = dayMap[recordDate.getDay()];
+                  
+                  // 4-1. 근무요일 체크
+                  if (workDays.length > 0 && !workDays.includes(dayOfWeek)) {
+                    console.log(`📅 ${record.date}는 ${dayOfWeek}요일 (비근무일) - 차단 제외`);
+                    return false;
+                  }
+                  
+                  // 4-2. 개인 휴무일 체크
                   const isVacation = vacations?.some(v => {
                     const start = new Date(v.start_date);
                     const end = new Date(v.end_date);
@@ -1082,13 +1113,26 @@
                   });
                   
                   if (isVacation) {
-                    console.log(`🏖️ ${record.date}는 휴무일 - 차단 제외`);
+                    console.log(`🏖️ ${record.date}는 개인 휴무일 - 차단 제외`);
+                    return false;
                   }
                   
-                  return !isVacation;
+                  // 4-3. 공휴일 체크
+                  const isHoliday = holidays?.some(h => {
+                    const holidayDate = new Date(h.holiday_date);
+                    return recordDate.toDateString() === holidayDate.toDateString();
+                  });
+                  
+                  if (isHoliday) {
+                    console.log(`🎌 ${record.date}는 공휴일 - 차단 제외`);
+                    return false;
+                  }
+                  
+                  // 모든 필터를 통과한 경우만 포함
+                  return true;
                 });
                 
-                // 중복 날짜 제거
+                // 5단계: 중복 날짜 제거
                 const uniqueDates = new Map();
                 filteredRecords.forEach(record => {
                   if (!uniqueDates.has(record.date)) {
@@ -1099,11 +1143,12 @@
                 
                 console.log('🔍 필터링 결과:', {
                   원본: incompleteRecords.length,
-                  휴무제외: filteredRecords.length,
-                  중복제거: uniqueRecords.length
+                  근무요일_필터: filteredRecords.length,
+                  중복제거: uniqueRecords.length,
+                  근무요일: workDays.join(',')
                 });
                 
-                // 차단 기준: 3건 이상의 실제 미완료 퇴근
+                // 6단계: 차단 기준 (3건 이상)
                 if (uniqueRecords.length >= 3) {
                   let message = `🚫 출근이 차단되었습니다\n\n`;
                   message += `퇴근 기록이 없는 날이 ${uniqueRecords.length}건 있습니다:\n\n`;
@@ -1124,7 +1169,7 @@
                   console.log('🚫 출근 차단됨!', { count: uniqueRecords.length, records: uniqueRecords });
                   return; // 출근 차단!
                 } else {
-                  console.log('✅ 차단 조건 미달 - 정상 처리 (휴무일 제외 후 3건 미만)');
+                  console.log('✅ 차단 조건 미달 - 정상 처리 (필터링 후 3건 미만)');
                 }
               } else {
                 console.log('✅ 차단 없음 - 정상 처리');
