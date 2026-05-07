@@ -3108,24 +3108,16 @@
             if (data && data.length > 0) {
               data.forEach((row) => {
                 // 3️⃣ 해당 출근 기록에 매칭되는 특이사항 찾기
+                // scan_time은 UTC이므로 KST로 변환 (+9시간)
                 const scanDate = new Date(row.scan_time);
+                const kstOffset = 9 * 60 * 60 * 1000;
+                const kstDate = new Date(scanDate.getTime() + kstOffset);
                 
-                // scan_time은 UTC이므로 로컬 시간으로 변환
-                const dateStr = scanDate.toLocaleDateString('ko-KR', {
-                  year: 'numeric',
-                  month: '2-digit',
-                  day: '2-digit',
-                  timeZone: 'Asia/Seoul'
-                }).split('. ').map(s => s.replace('.', '')).join('-').replace(/(\d{4})-(\d{1,2})-(\d{1,2})/, (m, y, mo, d) => {
-                  return `${y}-${mo.padStart(2, '0')}-${d.padStart(2, '0')}`;
-                }); // YYYY-MM-DD (KST)
+                // YYYY-MM-DD 형식으로 변환
+                const dateStr = kstDate.toISOString().split('T')[0];
                 
-                const timeStr = scanDate.toLocaleTimeString('ko-KR', {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                  hour12: false,
-                  timeZone: 'Asia/Seoul'
-                }); // HH:MM (KST)
+                // HH:MM 형식으로 변환
+                const timeStr = kstDate.toISOString().split('T')[1].substring(0, 5);
                 
                 console.log('🔍 매칭 시도:', {
                   출근시각: row.scan_time,
