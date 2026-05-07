@@ -767,22 +767,28 @@
                 </div>
 
                 <!-- 범례 -->
-                <div class="mt-6 pt-4 border-t flex flex-wrap gap-4 justify-center text-xs">
-                  <div class="flex items-center gap-2">
-                    <div class="w-4 h-4 rounded bg-green-500"></div>
-                    <span class="text-gray-600">정상 출퇴근</span>
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <div class="w-4 h-4 rounded bg-orange-500"></div>
-                    <span class="text-gray-600">출근만</span>
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <div class="w-4 h-4 rounded bg-gray-300"></div>
-                    <span class="text-gray-600">기록 없음</span>
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <div class="w-4 h-4 rounded border-2 border-blue-500"></div>
-                    <span class="text-gray-600">오늘</span>
+                <div class="mt-6 pt-4 border-t">
+                  <div id="legend-single" class="flex flex-wrap gap-4 justify-center text-xs">
+                    <div class="flex items-center gap-2">
+                      <div class="w-4 h-4 rounded bg-green-500"></div>
+                      <span class="text-gray-600">정상 출퇴근</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <div class="w-4 h-4 rounded bg-orange-500"></div>
+                      <span class="text-gray-600">출근만</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <div class="w-4 h-4 rounded bg-blue-500"></div>
+                      <span class="text-gray-600">출근 인원 (전체 모드)</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <div class="w-4 h-4 rounded bg-gray-300"></div>
+                      <span class="text-gray-600">기록 없음</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <div class="w-4 h-4 rounded border-2 border-blue-500"></div>
+                      <span class="text-gray-600">오늘</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -2849,7 +2855,8 @@
           if (!select) return;
           
           const employees = this.employeeList.filter(e => e.status === 'active');
-          select.innerHTML = '<option value="">-- 직원을 선택하세요 --</option>' +
+          select.innerHTML = '<option value="">직원을 선택하세요</option>' +
+            '<option value="ALL">📊 전체 직원</option>' +
             employees.map(emp => `<option value="${emp.id}">${emp.name} (${emp.position || '직원'})</option>`).join('');
         },
         
@@ -2861,14 +2868,21 @@
             document.getElementById('admin-calendar-grid').innerHTML = 
               '<div class="text-center text-gray-400 col-span-7 py-8">직원을 선택하세요</div>';
             document.getElementById('employee-monthly-stats').classList.add('hidden');
+            document.getElementById('selected-employee-name').textContent = '-';
             return;
           }
           
           this.selectedEmployeeId = employeeId;
-          const employee = this.employeeList.find(e => e.id === employeeId);
           
-          if (employee) {
-            document.getElementById('selected-employee-name').textContent = employee.name;
+          if (employeeId === 'ALL') {
+            // 전체 직원 모드
+            document.getElementById('selected-employee-name').textContent = '전체 직원';
+          } else {
+            // 개별 직원 모드
+            const employee = this.employeeList.find(e => e.id === employeeId);
+            if (employee) {
+              document.getElementById('selected-employee-name').textContent = employee.name;
+            }
           }
           
           await this.loadEmployeeMonthData();
@@ -2907,13 +2921,19 @@
             const lastDay = new Date(year, month + 1, 0);
             
             // 해당 월의 출퇴근 기록 가져오기
-            const { data, error } = await this.sb
+            let query = this.sb
               .from('attendance_records')
               .select('*')
-              .eq('employee_id', this.selectedEmployeeId)
               .gte('created_at', firstDay.toISOString())
               .lte('created_at', lastDay.toISOString())
               .order('created_at', { ascending: true });
+            
+            // 개별 직원 또는 전체 직원
+            if (this.selectedEmployeeId !== 'ALL') {
+              query = query.eq('employee_id', this.selectedEmployeeId);
+            }
+            
+            const { data, error } = await query;
             
             if (error) throw error;
             
@@ -2936,6 +2956,7 @@
           const month = this.calendarMonth;
           const today = new Date();
           const todayStr = today.toISOString().split('T')[0];
+          const isAllMode = this.selectedEmployeeId === 'ALL';
           
           // 해당 월의 첫날과 마지막날
           const firstDay = new Date(year, month, 1);
@@ -2966,39 +2987,48 @@
             const isToday = dateStr === todayStr;
             const records = recordsByDate[dateStr] || [];
             
-            // 출근/퇴근 확인
-            const hasCheckIn = records.some(r => r.attendance_type === '출근');
-            const hasCheckOut = records.some(r => r.attendance_type === '퇴근');
-            
             let bgColor = 'bg-gray-100';
             let textColor = 'text-gray-400';
+            let displayInfo = '';
             
-            if (hasCheckIn && hasCheckOut) {
-              bgColor = 'bg-green-100';
-              textColor = 'text-green-700';
-            } else if (hasCheckIn) {
-              bgColor = 'bg-orange-100';
-              textColor = 'text-orange-700';
+            if (isAllMode) {
+              // 전체 직원 모드: 출근 인원 수 표시
+              const uniqueEmployees = new Set(records.filter(r => r.attendance_type === '출근').map(r => r.employee_id));
+              const checkInCount = uniqueEmployees.size;
+              
+              if (checkInCount > 0) {
+                bgColor = 'bg-blue-100';
+                textColor = 'text-blue-700';
+                displayInfo = `<div class="text-xs mt-1 font-medium">${checkInCount}명 출근</div>`;
+              }
+            } else {
+              // 개별 직원 모드: 출근/퇴근 상태 표시
+              const hasCheckIn = records.some(r => r.attendance_type === '출근');
+              const hasCheckOut = records.some(r => r.attendance_type === '퇴근');
+              
+              if (hasCheckIn && hasCheckOut) {
+                bgColor = 'bg-green-100';
+                textColor = 'text-green-700';
+                const checkInRecord = records.find(r => r.attendance_type === '출근');
+                const checkOutRecord = records.find(r => r.attendance_type === '퇴근');
+                const checkInTime = new Date(checkInRecord.created_at);
+                const checkOutTime = new Date(checkOutRecord.created_at);
+                const diff = (checkOutTime - checkInTime) / (1000 * 60 * 60);
+                displayInfo = `<div class="text-xs mt-1 font-medium">${diff.toFixed(1)}h</div>`;
+              } else if (hasCheckIn) {
+                bgColor = 'bg-orange-100';
+                textColor = 'text-orange-700';
+                displayInfo = '<div class="text-xs mt-1">출근</div>';
+              }
             }
             
             const borderClass = isToday ? 'ring-2 ring-blue-500' : '';
-            
-            // 근무 시간 계산
-            let workHours = '';
-            if (hasCheckIn && hasCheckOut) {
-              const checkInRecord = records.find(r => r.attendance_type === '출근');
-              const checkOutRecord = records.find(r => r.attendance_type === '퇴근');
-              const checkInTime = new Date(checkInRecord.created_at);
-              const checkOutTime = new Date(checkOutRecord.created_at);
-              const diff = (checkOutTime - checkInTime) / (1000 * 60 * 60);
-              workHours = `<div class="text-xs mt-1 font-medium">${diff.toFixed(1)}h</div>`;
-            }
             
             grid.innerHTML += `
               <div class="${bgColor} ${borderClass} rounded-lg p-2 aspect-square flex flex-col items-center justify-center cursor-pointer hover:opacity-80 transition"
                    onclick="app.showAdminDayDetail('${dateStr}')">
                 <div class="font-bold ${textColor}">${day}</div>
-                ${workHours}
+                ${displayInfo}
                 ${records.length > 0 ? `<div class="text-xs text-gray-500 mt-1">${records.length}건</div>` : ''}
               </div>
             `;
@@ -3065,16 +3095,42 @@
             return;
           }
           
-          // 상세 정보 표시
-          const details = records.map(r => {
-            const time = new Date(r.created_at).toLocaleTimeString('ko-KR', { 
-              hour: '2-digit', 
-              minute: '2-digit' 
-            });
-            return `${r.attendance_type}: ${time}`;
-          }).join('\n');
+          const isAllMode = this.selectedEmployeeId === 'ALL';
           
-          alert(`📅 ${dateStr}\n\n${details}`);
+          if (isAllMode) {
+            // 전체 모드: 직원별로 그룹화
+            const employeeRecords = {};
+            records.forEach(r => {
+              const empName = r.employee_name || '이름 없음';
+              if (!employeeRecords[empName]) employeeRecords[empName] = [];
+              employeeRecords[empName].push(r);
+            });
+            
+            let details = '';
+            Object.keys(employeeRecords).sort().forEach(empName => {
+              details += `\n👤 ${empName}\n`;
+              employeeRecords[empName].forEach(r => {
+                const time = new Date(r.created_at).toLocaleTimeString('ko-KR', { 
+                  hour: '2-digit', 
+                  minute: '2-digit' 
+                });
+                details += `  ${r.attendance_type}: ${time}\n`;
+              });
+            });
+            
+            alert(`📅 ${dateStr}\n${details}`);
+          } else {
+            // 개별 직원 모드: 시간순 표시
+            const details = records.map(r => {
+              const time = new Date(r.created_at).toLocaleTimeString('ko-KR', { 
+                hour: '2-digit', 
+                minute: '2-digit' 
+              });
+              return `${r.attendance_type}: ${time}`;
+            }).join('\n');
+            
+            alert(`📅 ${dateStr}\n\n${details}`);
+          }
         },
         
         refreshCalendar: function() {
