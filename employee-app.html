@@ -236,7 +236,7 @@
               <i class="fas fa-camera text-2xl mr-2"></i>사진 촬영 (단일)
             </button>
             <button id="btn-select-photo" class="btn-touch w-full bg-white border-2 border-blue-500 text-blue-500 py-4 rounded-xl font-bold hover:bg-blue-50 transition">
-              <i class="fas fa-images text-2xl mr-2"></i>갤러리에서 선택 (최대 10장)
+              <i class="fas fa-images text-2xl mr-2"></i>갤러리에서 선택 (최대 30장)
             </button>
             <input type="file" id="file-photo" accept="image/*" capture="environment" class="hidden">
             <input type="file" id="file-gallery" accept="image/*" multiple class="hidden">
@@ -369,6 +369,42 @@
   </div>
   
   <!-- 모달들 -->
+  
+  <!-- 사진 뷰어 모달 -->
+  <div id="photo-viewer-modal" class="hidden fixed inset-0 bg-black z-[100]">
+    <!-- 헤더 -->
+    <div class="absolute top-0 left-0 right-0 flex items-center justify-between p-4 bg-gradient-to-b from-black/80 to-transparent z-10">
+      <div class="text-white">
+        <div class="font-bold text-lg" id="viewer-photo-count">1 / 1</div>
+        <div class="text-sm text-gray-300" id="viewer-photo-time"></div>
+      </div>
+      <button onclick="app.closePhotoViewer()" class="text-white hover:bg-white/20 w-10 h-10 rounded-full flex items-center justify-center transition">
+        <i class="fas fa-times text-2xl"></i>
+      </button>
+    </div>
+    
+    <!-- 메인 사진 (3/4 높이) -->
+    <div class="absolute top-0 left-0 right-0 flex items-center justify-center" style="height: 75%;">
+      <img id="viewer-main-image" class="max-w-full max-h-full object-contain">
+      
+      <!-- 좌우 버튼 -->
+      <button onclick="app.viewerPrevPhoto()" class="absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white w-12 h-12 rounded-full flex items-center justify-center transition">
+        <i class="fas fa-chevron-left text-xl"></i>
+      </button>
+      <button onclick="app.viewerNextPhoto()" class="absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white w-12 h-12 rounded-full flex items-center justify-center transition">
+        <i class="fas fa-chevron-right text-xl"></i>
+      </button>
+    </div>
+    
+    <!-- 썸네일 영역 (1/4 높이) -->
+    <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent" style="height: 25%;">
+      <div class="h-full overflow-x-auto overflow-y-hidden px-4 py-3">
+        <div id="viewer-thumbnails" class="flex gap-2 h-full">
+          <!-- Dynamic thumbnails will be inserted here -->
+        </div>
+      </div>
+    </div>
+  </div>
   
   <!-- 내 구매 요청 모달 -->
   <div id="purchase-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
@@ -562,7 +598,9 @@
         myPurchases: [],
         currentPurchaseTab: 'pending',
         currentInspection: null,
-        newPurchaseItemCounter: 0
+        newPurchaseItemCounter: 0,
+        todayPhotos: [],
+        currentPhotoIndex: 0
       },
       
       // ==================== 초기화 ====================
@@ -1211,6 +1249,39 @@
       },
       
       // ==================== 업무 사진 ====================
+      // 이미지 압축 함수 (업로드 속도 개선)
+      async compressImage(file, maxWidth = 1920, quality = 0.8) {
+        return new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+              const canvas = document.createElement('canvas');
+              let width = img.width;
+              let height = img.height;
+              
+              // 최대 너비 제한
+              if (width > maxWidth) {
+                height = (height * maxWidth) / width;
+                width = maxWidth;
+              }
+              
+              canvas.width = width;
+              canvas.height = height;
+              
+              const ctx = canvas.getContext('2d');
+              ctx.drawImage(img, 0, 0, width, height);
+              
+              canvas.toBlob((blob) => {
+                resolve(new File([blob], file.name, { type: 'image/jpeg', lastModified: file.lastModified }));
+              }, 'image/jpeg', quality);
+            };
+            img.src = e.target.result;
+          };
+          reader.readAsDataURL(file);
+        });
+      },
+      
       async handleSinglePhoto(input) {
         if (!input.files || !input.files[0]) return;
         
@@ -1235,9 +1306,9 @@
         
         const files = Array.from(input.files);
         
-        // 최대 10장 제한
-        if (this.state.selectedPhotos.length + files.length > 10) {
-          this.showToast('⚠️ 최대 10장까지 선택 가능합니다', 'error');
+        // 최대 30장 제한
+        if (this.state.selectedPhotos.length + files.length > 30) {
+          this.showToast('⚠️ 최대 30장까지 선택 가능합니다', 'error');
           input.value = '';
           return;
         }
@@ -1308,49 +1379,76 @@
         const btnText = document.getElementById('btn-upload-text');
         
         btn.disabled = true;
-        btnText.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>업로드 중...';
         spinner.classList.remove('hidden');
         
         try {
           const notes = document.getElementById('inp-notes-single').value || '업무 사진';
           const groupId = String(Date.now());
+          const totalPhotos = this.state.selectedPhotos.length;
           
-          const uploadPromises = this.state.selectedPhotos.map(async (file, index) => {
-            // Upload to storage
-            const ext = file.name.split('.').pop() || 'jpg';
-            const fileName = `${this.state.employee.apartment_id}/${Date.now()}_${index}_${Math.random().toString(36).substr(2, 9)}.${ext}`;
-            
-            const { data: uploadData, error: uploadError } = await this.sb.storage
-              .from('cleaning-photos')
-              .upload(fileName, file);
-            
-            if (uploadError) throw uploadError;
-            
-            const { data: { publicUrl } } = this.sb.storage
-              .from('cleaning-photos')
-              .getPublicUrl(fileName);
-            
-            // Save to database
-            return {
-              employee_name: this.state.employee.name,
-              status: 'completed',
-              location: this.state.workplace.name,
-              apartment_id: this.state.employee.apartment_id,
-              photo_url: publicUrl,
-              notes: notes,
-              group_id: groupId,
-              upload_type: 'single',
-              photo_order: index,
-              created_at: new Date().toISOString(),
-            };
-          });
+          // 진행률 표시
+          let uploaded = 0;
+          const updateProgress = () => {
+            uploaded++;
+            btnText.innerHTML = `<i class="fas fa-spinner fa-spin mr-2"></i>업로드 중... (${uploaded}/${totalPhotos})`;
+          };
           
-          const photoRecords = await Promise.all(uploadPromises);
+          // 이미지 압축 (병렬 처리)
+          btnText.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>이미지 압축 중...';
+          const compressedFiles = await Promise.all(
+            this.state.selectedPhotos.map(file => this.compressImage(file, 1920, 0.85))
+          );
           
+          // 업로드 (병렬 처리, 5개씩 배치)
+          const batchSize = 5;
+          const photoRecords = [];
+          
+          for (let i = 0; i < compressedFiles.length; i += batchSize) {
+            const batch = compressedFiles.slice(i, i + batchSize);
+            const batchResults = await Promise.all(
+              batch.map(async (file, batchIndex) => {
+                const index = i + batchIndex;
+                
+                // Upload to storage
+                const ext = 'jpg'; // 압축 후 jpg로 통일
+                const fileName = `${this.state.employee.apartment_id}/${Date.now()}_${index}_${Math.random().toString(36).substr(2, 9)}.${ext}`;
+                
+                const { data: uploadData, error: uploadError } = await this.sb.storage
+                  .from('cleaning-photos')
+                  .upload(fileName, file);
+                
+                if (uploadError) throw uploadError;
+                
+                const { data: { publicUrl } } = this.sb.storage
+                  .from('cleaning-photos')
+                  .getPublicUrl(fileName);
+                
+                updateProgress();
+                
+                // Return DB record
+                return {
+                  employee_name: this.state.employee.name,
+                  status: 'completed',
+                  location: this.state.workplace.name,
+                  apartment_id: this.state.employee.apartment_id,
+                  photo_url: publicUrl,
+                  notes: notes,
+                  group_id: groupId,
+                  upload_type: 'single',
+                  photo_order: index,
+                  created_at: new Date().toISOString(),
+                };
+              })
+            );
+            photoRecords.push(...batchResults);
+          }
+          
+          // DB 저장
+          btnText.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>저장 중...';
           const { error: dbError } = await this.sb.from('cleaning_tasks').insert(photoRecords);
           if (dbError) throw dbError;
           
-          this.showToast(`✅ ${this.state.selectedPhotos.length}장의 사진이 업로드되었습니다!`, 'success');
+          this.showToast(`✅ ${totalPhotos}장의 사진이 업로드되었습니다!`, 'success');
           
           // Reset
           this.state.selectedPhotos = [];
@@ -1608,6 +1706,9 @@
           return;
         }
         
+        // Store photos for viewer
+        this.state.todayPhotos = data || [];
+        
         const container = document.getElementById('today-photos');
         
         if (!data || data.length === 0) {
@@ -1620,19 +1721,74 @@
           return;
         }
         
-        container.innerHTML = data.map(photo => {
+        container.innerHTML = data.map((photo, index) => {
           const time = new Date(photo.created_at).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
           const badge = photo.before_after === 'before' ? 'Before' : photo.before_after === 'after' ? 'After' : '';
           const badgeColor = photo.before_after === 'before' ? 'bg-blue-500' : 'bg-green-500';
           
           return `
-            <div class="relative aspect-square rounded-lg overflow-hidden shadow-md">
+            <div onclick="app.openPhotoViewer(${index})" class="relative aspect-square rounded-lg overflow-hidden shadow-md cursor-pointer hover:opacity-80 transition">
               <img src="${photo.photo_url}" class="w-full h-full object-cover">
               ${badge ? `<div class="${badgeColor} text-white text-xs font-bold px-2 py-1 absolute top-1 left-1 rounded">${badge}</div>` : ''}
               <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs px-2 py-1">${time}</div>
             </div>
           `;
         }).join('');
+      },
+      
+      // 사진 뷰어
+      openPhotoViewer(index) {
+        this.state.currentPhotoIndex = index;
+        document.getElementById('photo-viewer-modal').classList.remove('hidden');
+        this.updatePhotoViewer();
+      },
+      
+      closePhotoViewer() {
+        document.getElementById('photo-viewer-modal').classList.add('hidden');
+      },
+      
+      viewerPrevPhoto() {
+        if (this.state.currentPhotoIndex > 0) {
+          this.state.currentPhotoIndex--;
+          this.updatePhotoViewer();
+        }
+      },
+      
+      viewerNextPhoto() {
+        if (this.state.currentPhotoIndex < this.state.todayPhotos.length - 1) {
+          this.state.currentPhotoIndex++;
+          this.updatePhotoViewer();
+        }
+      },
+      
+      updatePhotoViewer() {
+        const photos = this.state.todayPhotos;
+        const index = this.state.currentPhotoIndex;
+        const photo = photos[index];
+        
+        // 메인 이미지
+        document.getElementById('viewer-main-image').src = photo.photo_url;
+        
+        // 카운트
+        document.getElementById('viewer-photo-count').textContent = `${index + 1} / ${photos.length}`;
+        
+        // 시간
+        const time = new Date(photo.created_at).toLocaleString('ko-KR');
+        document.getElementById('viewer-photo-time').textContent = time;
+        
+        // 썸네일
+        const thumbnails = document.getElementById('viewer-thumbnails');
+        thumbnails.innerHTML = photos.map((p, i) => `
+          <div onclick="app.openPhotoViewer(${i})" class="flex-shrink-0 h-full aspect-square rounded-lg overflow-hidden cursor-pointer ${i === index ? 'ring-4 ring-blue-500' : 'opacity-60 hover:opacity-100'} transition">
+            <img src="${p.photo_url}" class="w-full h-full object-cover">
+          </div>
+        `).join('');
+        
+        // 현재 썸네일로 스크롤
+        const currentThumbnail = thumbnails.children[index];
+        if (currentThumbnail) {
+          currentThumbnail.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        }
       },
       
       // ==================== 구매 요청 시스템 ====================
