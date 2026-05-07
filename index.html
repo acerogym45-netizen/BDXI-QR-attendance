@@ -901,6 +901,80 @@
                   </table>
                 </div>
               </div>
+
+              <!-- 🕐 초과근무 현황 -->
+              <div class="bg-white rounded-xl shadow-sm border p-4">
+                <div class="flex justify-between items-center mb-3">
+                  <h3 class="font-bold text-gray-800 text-sm">
+                    <i class="fas fa-user-clock mr-2 text-indigo-600"></i>초과근무 현황
+                  </h3>
+                  <span id="overtime-count-badge" class="px-2 py-1 bg-indigo-100 text-indigo-800 text-xs font-bold rounded">0건</span>
+                </div>
+                <div class="overflow-x-auto max-h-64 overflow-y-auto">
+                  <table class="w-full text-xs">
+                    <thead class="bg-gray-50 sticky top-0">
+                      <tr>
+                        <th class="px-2 py-2 text-left text-xs font-medium text-gray-500">직원명</th>
+                        <th class="px-2 py-2 text-center text-xs font-medium text-gray-500">날짜</th>
+                        <th class="px-2 py-2 text-right text-xs font-medium text-gray-500">초과시간</th>
+                      </tr>
+                    </thead>
+                    <tbody id="overtime-table-body" class="divide-y divide-gray-100">
+                      <tr><td colspan="3" class="text-center py-4 text-gray-400">데이터를 불러오는 중...</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- ⚠️ 지각/결근 현황 -->
+              <div class="bg-white rounded-xl shadow-sm border p-4">
+                <div class="flex justify-between items-center mb-3">
+                  <h3 class="font-bold text-gray-800 text-sm">
+                    <i class="fas fa-exclamation-triangle mr-2 text-red-600"></i>지각/결근 현황
+                  </h3>
+                  <span id="tardiness-count-badge" class="px-2 py-1 bg-red-100 text-red-800 text-xs font-bold rounded">0건</span>
+                </div>
+                <div class="overflow-x-auto max-h-64 overflow-y-auto">
+                  <table class="w-full text-xs">
+                    <thead class="bg-gray-50 sticky top-0">
+                      <tr>
+                        <th class="px-2 py-2 text-left text-xs font-medium text-gray-500">직원명</th>
+                        <th class="px-2 py-2 text-center text-xs font-medium text-gray-500">날짜</th>
+                        <th class="px-2 py-2 text-center text-xs font-medium text-gray-500">유형</th>
+                        <th class="px-2 py-2 text-right text-xs font-medium text-gray-500">시간차</th>
+                      </tr>
+                    </thead>
+                    <tbody id="tardiness-table-body" class="divide-y divide-gray-100">
+                      <tr><td colspan="4" class="text-center py-4 text-gray-400">데이터를 불러오는 중...</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- 📝 휴가 승인 대기 -->
+              <div class="bg-white rounded-xl shadow-sm border p-4">
+                <div class="flex justify-between items-center mb-3">
+                  <h3 class="font-bold text-gray-800 text-sm">
+                    <i class="fas fa-inbox mr-2 text-yellow-600"></i>휴가 승인 대기
+                  </h3>
+                  <span id="pending-vacation-badge" class="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-bold rounded">0건</span>
+                </div>
+                <div class="overflow-x-auto max-h-64 overflow-y-auto">
+                  <table class="w-full text-xs">
+                    <thead class="bg-gray-50 sticky top-0">
+                      <tr>
+                        <th class="px-2 py-2 text-left text-xs font-medium text-gray-500">직원명</th>
+                        <th class="px-2 py-2 text-center text-xs font-medium text-gray-500">신청일</th>
+                        <th class="px-2 py-2 text-center text-xs font-medium text-gray-500">휴가 유형</th>
+                        <th class="px-2 py-2 text-center text-xs font-medium text-gray-500">관리</th>
+                      </tr>
+                    </thead>
+                    <tbody id="pending-vacation-body" class="divide-y divide-gray-100">
+                      <tr><td colspan="4" class="text-center py-4 text-gray-400">데이터를 불러오는 중...</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -2410,6 +2484,9 @@
           } else if (tab === 'stats') {
             this.loadStats();
             this.loadAttendanceCalendar(); // 캘린더 초기화
+            this.loadOvertimeRecords(); // 초과근무 로드
+            this.loadTardinessRecords(); // 지각/결근 로드
+            this.loadPendingVacations(); // 휴가 승인 대기 로드
             // Update last-update-time
             const now = new Date();
             document.getElementById('last-update-time').textContent = now.toLocaleString('ko-KR');
@@ -3839,6 +3916,337 @@
           
           const today = new Date().toISOString().split('T')[0];
           XLSX.writeFile(wb, `근로시간_집계_${today}.xlsx`);
+        },
+
+        // 🕐 초과근무 로드
+        loadOvertimeRecords: async function () {
+          const tbody = document.getElementById('overtime-table-body');
+          const badge = document.getElementById('overtime-count-badge');
+          
+          try {
+            // 최근 30일 데이터 조회
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+            const startDate = thirtyDaysAgo.toISOString().split('T')[0];
+            
+            let query = this.sb
+              .from('attendance_records')
+              .select('*')
+              .gte('scan_time', `${startDate}T00:00:00Z`)
+              .order('scan_time', { ascending: false });
+            
+            if (this.currentApartment && this.currentApartment.id) {
+              query = query.eq('apartment_id', this.currentApartment.id);
+            }
+            
+            const { data: records } = await query;
+            
+            if (!records || records.length === 0) {
+              tbody.innerHTML = '<tr><td colspan="3" class="text-center py-4 text-gray-400">초과근무 기록이 없습니다.</td></tr>';
+              badge.textContent = '0건';
+              return;
+            }
+            
+            // 직원별 근무 시간 계산
+            const dailyWork = {};
+            records.forEach(r => {
+              const date = r.scan_time.split('T')[0];
+              const key = `${r.employee_id}|${date}`;
+              if (!dailyWork[key]) {
+                dailyWork[key] = { employee_id: r.employee_id, employee_name: r.employee_name, date };
+              }
+              dailyWork[key][r.attendance_type] = new Date(r.scan_time);
+            });
+            
+            // 초과근무 필터링 (8시간 초과)
+            const overtimeRecords = [];
+            for (const key in dailyWork) {
+              const work = dailyWork[key];
+              if (work['출근'] && work['퇴근']) {
+                const hours = (work['퇴근'] - work['출근']) / (1000 * 60 * 60);
+                if (hours > 8) {
+                  overtimeRecords.push({
+                    employee_name: work.employee_name,
+                    date: work.date,
+                    overtime_hours: (hours - 8).toFixed(1)
+                  });
+                }
+              }
+            }
+            
+            // 최신순 정렬
+            overtimeRecords.sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            // 최대 20건만 표시
+            const displayRecords = overtimeRecords.slice(0, 20);
+            
+            tbody.innerHTML = '';
+            if (displayRecords.length === 0) {
+              tbody.innerHTML = '<tr><td colspan="3" class="text-center py-4 text-gray-400">초과근무 기록이 없습니다.</td></tr>';
+              badge.textContent = '0건';
+            } else {
+              displayRecords.forEach(record => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                  <td class="px-2 py-2 text-left">${record.employee_name}</td>
+                  <td class="px-2 py-2 text-center text-xs text-gray-500">${record.date}</td>
+                  <td class="px-2 py-2 text-right font-bold text-indigo-600">+${record.overtime_hours}h</td>
+                `;
+                tbody.appendChild(tr);
+              });
+              badge.textContent = `${overtimeRecords.length}건`;
+            }
+          } catch (error) {
+            console.error('초과근무 로드 실패:', error);
+            tbody.innerHTML = '<tr><td colspan="3" class="text-center py-4 text-red-500">로드 실패</td></tr>';
+          }
+        },
+
+        // ⚠️ 지각/결근 로드
+        loadTardinessRecords: async function () {
+          const tbody = document.getElementById('tardiness-table-body');
+          const badge = document.getElementById('tardiness-count-badge');
+          
+          try {
+            // 최근 30일 데이터 조회
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+            const startDate = thirtyDaysAgo.toISOString().split('T')[0];
+            
+            // 1. 출퇴근 기록 조회
+            let recordQuery = this.sb
+              .from('attendance_records')
+              .select('*')
+              .gte('scan_time', `${startDate}T00:00:00Z`)
+              .order('scan_time', { ascending: false });
+            
+            // 2. 직원 정보 조회 (근무시간 확인)
+            let empQuery = this.sb
+              .from('employees')
+              .select('id, name, work_start_time, work_days')
+              .eq('status', 'active');
+            
+            if (this.currentApartment && this.currentApartment.id) {
+              recordQuery = recordQuery.eq('apartment_id', this.currentApartment.id);
+              empQuery = empQuery.eq('apartment_id', this.currentApartment.id);
+            }
+            
+            const { data: records } = await recordQuery;
+            const { data: employees } = await empQuery;
+            
+            if (!records || !employees) {
+              tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-gray-400">데이터가 없습니다.</td></tr>';
+              badge.textContent = '0건';
+              return;
+            }
+            
+            // 직원 근무시간 맵 생성
+            const empWorkTimeMap = {};
+            employees.forEach(emp => {
+              empWorkTimeMap[emp.id] = {
+                name: emp.name,
+                work_start_time: emp.work_start_time,
+                work_days: emp.work_days || []
+              };
+            });
+            
+            // 지각/결근 검출
+            const issues = [];
+            const dailyRecords = {};
+            
+            records.forEach(r => {
+              const date = r.scan_time.split('T')[0];
+              const key = `${r.employee_id}|${date}`;
+              if (!dailyRecords[key]) {
+                dailyRecords[key] = { employee_id: r.employee_id, employee_name: r.employee_name, date };
+              }
+              dailyRecords[key][r.attendance_type] = new Date(r.scan_time);
+            });
+            
+            // 지각 검출 (출근 시각 > 근무 시작 시각 + 10분)
+            for (const key in dailyRecords) {
+              const work = dailyRecords[key];
+              const empInfo = empWorkTimeMap[work.employee_id];
+              
+              if (!empInfo || !empInfo.work_start_time) continue;
+              
+              if (work['출근']) {
+                const checkInTime = work['출근'];
+                const [startHour, startMin] = empInfo.work_start_time.split(':');
+                const expectedStart = new Date(checkInTime);
+                expectedStart.setHours(parseInt(startHour), parseInt(startMin) + 10, 0, 0); // 10분 여유
+                
+                if (checkInTime > expectedStart) {
+                  const lateMins = Math.round((checkInTime - expectedStart) / (1000 * 60));
+                  issues.push({
+                    employee_name: work.employee_name,
+                    date: work.date,
+                    type: '지각',
+                    diff: `+${lateMins}분`
+                  });
+                }
+              }
+              
+              // 조퇴 검출 (퇴근 시각 < 근무 종료 시각 - 30분, 근무시간 8시간 미만)
+              if (work['출근'] && work['퇴근']) {
+                const hours = (work['퇴근'] - work['출근']) / (1000 * 60 * 60);
+                if (hours < 7) { // 7시간 미만이면 조퇴로 간주
+                  const shortfall = (8 - hours).toFixed(1);
+                  issues.push({
+                    employee_name: work.employee_name,
+                    date: work.date,
+                    type: '조퇴',
+                    diff: `-${shortfall}h`
+                  });
+                }
+              }
+            }
+            
+            // 최신순 정렬
+            issues.sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            // 최대 20건 표시
+            const displayIssues = issues.slice(0, 20);
+            
+            tbody.innerHTML = '';
+            if (displayIssues.length === 0) {
+              tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-gray-400">지각/조퇴 기록이 없습니다.</td></tr>';
+              badge.textContent = '0건';
+            } else {
+              displayIssues.forEach(issue => {
+                const typeBadge = issue.type === '지각' 
+                  ? '<span class="px-2 py-1 bg-orange-100 text-orange-800 text-xs font-bold rounded">지각</span>'
+                  : '<span class="px-2 py-1 bg-red-100 text-red-800 text-xs font-bold rounded">조퇴</span>';
+                
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                  <td class="px-2 py-2 text-left">${issue.employee_name}</td>
+                  <td class="px-2 py-2 text-center text-xs text-gray-500">${issue.date}</td>
+                  <td class="px-2 py-2 text-center">${typeBadge}</td>
+                  <td class="px-2 py-2 text-right text-red-600 font-semibold">${issue.diff}</td>
+                `;
+                tbody.appendChild(tr);
+              });
+              badge.textContent = `${issues.length}건`;
+            }
+          } catch (error) {
+            console.error('지각/결근 로드 실패:', error);
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-red-500">로드 실패</td></tr>';
+          }
+        },
+
+        // 📝 휴가 승인 대기 로드
+        loadPendingVacations: async function () {
+          const tbody = document.getElementById('pending-vacation-body');
+          const badge = document.getElementById('pending-vacation-badge');
+          
+          try {
+            let query = this.sb
+              .from('vacations')
+              .select('*')
+              .eq('status', 'pending')
+              .order('vacation_date', { ascending: true });
+            
+            if (this.currentApartment && this.currentApartment.id) {
+              query = query.eq('apartment_id', this.currentApartment.id);
+            }
+            
+            const { data: pendingVacations } = await query;
+            
+            tbody.innerHTML = '';
+            if (!pendingVacations || pendingVacations.length === 0) {
+              tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-gray-400">승인 대기 중인 휴가가 없습니다.</td></tr>';
+              badge.textContent = '0건';
+              return;
+            }
+            
+            pendingVacations.forEach(vacation => {
+              const vacationType = vacation.vacation_type || '연차';
+              const typeColors = {
+                '연차': 'bg-blue-100 text-blue-800',
+                '병가': 'bg-red-100 text-red-800',
+                '경조사': 'bg-purple-100 text-purple-800',
+                '기타': 'bg-gray-100 text-gray-800'
+              };
+              const typeColor = typeColors[vacationType] || typeColors['기타'];
+              
+              const tr = document.createElement('tr');
+              tr.innerHTML = `
+                <td class="px-2 py-2 text-left font-medium">${vacation.employee_name}</td>
+                <td class="px-2 py-2 text-center text-xs text-gray-500">${vacation.vacation_date || `${vacation.start_date} ~ ${vacation.end_date}`}</td>
+                <td class="px-2 py-2 text-center">
+                  <span class="px-2 py-1 ${typeColor} text-xs font-bold rounded">${vacationType}</span>
+                </td>
+                <td class="px-2 py-2 text-center">
+                  <button onclick="app.approveVacation('${vacation.id}')" class="px-2 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 mr-1">
+                    <i class="fas fa-check mr-1"></i>승인
+                  </button>
+                  <button onclick="app.rejectVacation('${vacation.id}')" class="px-2 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700">
+                    <i class="fas fa-times mr-1"></i>거부
+                  </button>
+                </td>
+              `;
+              tbody.appendChild(tr);
+            });
+            
+            badge.textContent = `${pendingVacations.length}건`;
+          } catch (error) {
+            console.error('휴가 승인 대기 로드 실패:', error);
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-red-500">로드 실패</td></tr>';
+          }
+        },
+
+        // 휴가 승인
+        approveVacation: async function (vacationId) {
+          if (!confirm('이 휴가를 승인하시겠습니까?')) return;
+          
+          try {
+            const { error } = await this.sb
+              .from('vacations')
+              .update({
+                status: 'approved',
+                approved_at: new Date().toISOString(),
+                approved_by: 'admin' // TODO: 실제 로그인된 관리자 ID 사용
+              })
+              .eq('id', vacationId);
+            
+            if (error) throw error;
+            
+            alert('✅ 휴가가 승인되었습니다.');
+            this.loadPendingVacations(); // 목록 새로고침
+          } catch (error) {
+            console.error('휴가 승인 실패:', error);
+            alert('❌ 휴가 승인에 실패했습니다.');
+          }
+        },
+
+        // 휴가 거부
+        rejectVacation: async function (vacationId) {
+          const reason = prompt('거부 사유를 입력해주세요:', '');
+          if (reason === null || reason.trim() === '') {
+            alert('거부 사유를 입력해주세요.');
+            return;
+          }
+          
+          try {
+            const { error } = await this.sb
+              .from('vacations')
+              .update({
+                status: 'rejected',
+                rejection_reason: reason,
+                approved_at: new Date().toISOString(),
+                approved_by: 'admin' // TODO: 실제 로그인된 관리자 ID 사용
+              })
+              .eq('id', vacationId);
+            
+            if (error) throw error;
+            
+            alert('❌ 휴가가 거부되었습니다.');
+            this.loadPendingVacations(); // 목록 새로고침
+          } catch (error) {
+            console.error('휴가 거부 실패:', error);
+            alert('❌ 휴가 거부에 실패했습니다.');
+          }
         },
 
         // Vacation Management
