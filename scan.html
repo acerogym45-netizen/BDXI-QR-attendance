@@ -1203,7 +1203,7 @@
                   holiday_name: holiday.holiday_name,
                   holiday_type: holiday.holiday_type,
                   holiday_label: typeLabel,
-                  checkin_time: now.toTimeString().split(' ')[0].substring(0, 5)
+                  checkin_time: kstDate.toISOString().split('T')[1].substring(0, 5)
                 });
               }
               
@@ -1394,7 +1394,7 @@
                 await this.recordAttendanceNote('non_work_day', reason, {
                   work_days: empInfo.work_days.join(', '),
                   current_day: dayOfWeek + '요일',
-                  checkin_time: now.toTimeString().split(' ')[0].substring(0, 5)
+                  checkin_time: kstDate.toISOString().split('T')[1].substring(0, 5)
                 });
               }
             }
