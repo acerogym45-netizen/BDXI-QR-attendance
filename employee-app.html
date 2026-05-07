@@ -233,13 +233,36 @@
           
           <div id="single-photo-mode" class="space-y-4">
             <button id="btn-take-photo" class="btn-touch w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-4 rounded-xl font-bold shadow-lg hover:shadow-xl transition">
-              <i class="fas fa-camera text-2xl mr-2"></i>사진 촬영
+              <i class="fas fa-camera text-2xl mr-2"></i>사진 촬영 (단일)
             </button>
             <button id="btn-select-photo" class="btn-touch w-full bg-white border-2 border-blue-500 text-blue-500 py-4 rounded-xl font-bold hover:bg-blue-50 transition">
-              <i class="fas fa-images text-2xl mr-2"></i>갤러리에서 선택
+              <i class="fas fa-images text-2xl mr-2"></i>갤러리에서 선택 (최대 10장)
             </button>
             <input type="file" id="file-photo" accept="image/*" capture="environment" class="hidden">
             <input type="file" id="file-gallery" accept="image/*" multiple class="hidden">
+            
+            <!-- 선택된 사진 미리보기 -->
+            <div id="photo-preview-container" class="hidden">
+              <div class="flex items-center justify-between mb-3">
+                <span class="font-bold text-gray-700">선택한 사진 <span id="photo-count" class="text-blue-600">0</span>장</span>
+                <button id="btn-clear-photos" class="text-sm text-red-500 hover:text-red-700">
+                  <i class="fas fa-times mr-1"></i>전체 삭제
+                </button>
+              </div>
+              <div id="photo-preview-grid" class="grid grid-cols-3 gap-2 mb-4"></div>
+              
+              <!-- 메모 입력 -->
+              <div class="mb-3">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">작업 메모 (선택사항)</label>
+                <textarea id="inp-notes-single" rows="2" placeholder="예: 복도 청소 완료" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"></textarea>
+              </div>
+              
+              <!-- 업로드 버튼 -->
+              <button id="btn-upload-photos" class="btn-touch w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white py-4 rounded-xl font-bold shadow-lg hover:shadow-xl transition">
+                <span id="btn-upload-text"><i class="fas fa-cloud-upload-alt text-2xl mr-2"></i>업로드</span>
+                <i id="spinner-upload" class="fas fa-spinner fa-spin ml-2 hidden"></i>
+              </button>
+            </div>
           </div>
           
           <div id="before-after-mode" class="hidden space-y-4">
@@ -1188,6 +1211,165 @@
       },
       
       // ==================== 업무 사진 ====================
+      async handleSinglePhoto(input) {
+        if (!input.files || !input.files[0]) return;
+        
+        const file = input.files[0];
+        
+        // 12시간 이내 촬영 검증
+        const isValid = await this.validatePhotoTime(file);
+        if (!isValid) {
+          alert('⚠️ 촬영 시간 제한\n\n12시간 이내에 촬영된 사진만 업로드 가능합니다.\n오래된 사진의 재활용을 방지하기 위한 정책입니다.');
+          input.value = '';
+          return;
+        }
+        
+        // 기존 사진에 추가
+        this.state.selectedPhotos.push(file);
+        this.updatePhotoPreview();
+        input.value = '';
+      },
+      
+      async handleMultiplePhotos(input) {
+        if (!input.files || input.files.length === 0) return;
+        
+        const files = Array.from(input.files);
+        
+        // 최대 10장 제한
+        if (this.state.selectedPhotos.length + files.length > 10) {
+          this.showToast('⚠️ 최대 10장까지 선택 가능합니다', 'error');
+          input.value = '';
+          return;
+        }
+        
+        // 12시간 이내 촬영 검증
+        for (let file of files) {
+          const isValid = await this.validatePhotoTime(file);
+          if (!isValid) {
+            alert('⚠️ 촬영 시간 제한\n\n12시간 이내에 촬영된 사진만 업로드 가능합니다.\n일부 사진이 오래되어 제외되었습니다.');
+            continue;
+          }
+          this.state.selectedPhotos.push(file);
+        }
+        
+        this.updatePhotoPreview();
+        input.value = '';
+      },
+      
+      updatePhotoPreview() {
+        const container = document.getElementById('photo-preview-container');
+        const grid = document.getElementById('photo-preview-grid');
+        const count = document.getElementById('photo-count');
+        
+        if (this.state.selectedPhotos.length === 0) {
+          container.classList.add('hidden');
+          return;
+        }
+        
+        container.classList.remove('hidden');
+        count.textContent = this.state.selectedPhotos.length;
+        
+        grid.innerHTML = this.state.selectedPhotos.map((file, index) => {
+          const url = URL.createObjectURL(file);
+          return `
+            <div class="relative aspect-square rounded-lg overflow-hidden border-2 border-gray-300">
+              <img src="${url}" class="w-full h-full object-cover">
+              <button onclick="app.removePhoto(${index})" class="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 transition">
+                <i class="fas fa-times text-xs"></i>
+              </button>
+              <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs px-2 py-1 text-center">
+                ${index + 1}
+              </div>
+            </div>
+          `;
+        }).join('');
+      },
+      
+      removePhoto(index) {
+        this.state.selectedPhotos.splice(index, 1);
+        this.updatePhotoPreview();
+        this.showToast('사진이 제거되었습니다', 'info');
+      },
+      
+      clearSelectedPhotos() {
+        this.state.selectedPhotos = [];
+        this.updatePhotoPreview();
+        this.showToast('모든 사진이 삭제되었습니다', 'info');
+      },
+      
+      async uploadSelectedPhotos() {
+        if (this.state.selectedPhotos.length === 0) {
+          this.showToast('⚠️ 업로드할 사진을 선택하세요', 'error');
+          return;
+        }
+        
+        const btn = document.getElementById('btn-upload-photos');
+        const spinner = document.getElementById('spinner-upload');
+        const btnText = document.getElementById('btn-upload-text');
+        
+        btn.disabled = true;
+        btnText.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>업로드 중...';
+        spinner.classList.remove('hidden');
+        
+        try {
+          const notes = document.getElementById('inp-notes-single').value || '업무 사진';
+          const groupId = String(Date.now());
+          
+          const uploadPromises = this.state.selectedPhotos.map(async (file, index) => {
+            // Upload to storage
+            const ext = file.name.split('.').pop() || 'jpg';
+            const fileName = `${this.state.employee.apartment_id}/${Date.now()}_${index}_${Math.random().toString(36).substr(2, 9)}.${ext}`;
+            
+            const { data: uploadData, error: uploadError } = await this.sb.storage
+              .from('cleaning-photos')
+              .upload(fileName, file);
+            
+            if (uploadError) throw uploadError;
+            
+            const { data: { publicUrl } } = this.sb.storage
+              .from('cleaning-photos')
+              .getPublicUrl(fileName);
+            
+            // Save to database
+            return {
+              employee_name: this.state.employee.name,
+              status: 'completed',
+              location: this.state.workplace.name,
+              apartment_id: this.state.employee.apartment_id,
+              photo_url: publicUrl,
+              notes: notes,
+              group_id: groupId,
+              upload_type: 'single',
+              photo_order: index,
+              created_at: new Date().toISOString(),
+            };
+          });
+          
+          const photoRecords = await Promise.all(uploadPromises);
+          
+          const { error: dbError } = await this.sb.from('cleaning_tasks').insert(photoRecords);
+          if (dbError) throw dbError;
+          
+          this.showToast(`✅ ${this.state.selectedPhotos.length}장의 사진이 업로드되었습니다!`, 'success');
+          
+          // Reset
+          this.state.selectedPhotos = [];
+          this.updatePhotoPreview();
+          document.getElementById('inp-notes-single').value = '';
+          
+          // Reload today's photos
+          await this.loadTodayPhotos();
+          
+        } catch (e) {
+          console.error('업로드 실패:', e);
+          this.showToast('❌ 업로드 실패: ' + e.message, 'error');
+        } finally {
+          btn.disabled = false;
+          btnText.innerHTML = '<i class="fas fa-cloud-upload-alt text-2xl mr-2"></i>업로드';
+          spinner.classList.add('hidden');
+        }
+      },
+      
       toggleBeforeAfterMode() {
         const toggle = document.getElementById('before-after-toggle');
         const singleMode = document.getElementById('single-photo-mode');
@@ -2045,6 +2227,34 @@
         // Before/After 토글
         document.getElementById('before-after-toggle').addEventListener('change', (e) => {
           this.toggleBeforeAfterMode();
+        });
+        
+        // 단일 사진 촬영
+        document.getElementById('btn-take-photo').addEventListener('click', () => {
+          document.getElementById('file-photo').click();
+        });
+        
+        document.getElementById('file-photo').addEventListener('change', (e) => {
+          this.handleSinglePhoto(e.target);
+        });
+        
+        // 갤러리 다중 선택
+        document.getElementById('btn-select-photo').addEventListener('click', () => {
+          document.getElementById('file-gallery').click();
+        });
+        
+        document.getElementById('file-gallery').addEventListener('change', (e) => {
+          this.handleMultiplePhotos(e.target);
+        });
+        
+        // 사진 업로드
+        document.getElementById('btn-upload-photos').addEventListener('click', () => {
+          this.uploadSelectedPhotos();
+        });
+        
+        // 전체 삭제
+        document.getElementById('btn-clear-photos').addEventListener('click', () => {
+          this.clearSelectedPhotos();
         });
         
         // Before/After 사진 촬영
