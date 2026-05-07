@@ -3109,8 +3109,11 @@
               data.forEach((row) => {
                 // 3️⃣ 해당 출근 기록에 매칭되는 특이사항 찾기
                 const scanDate = new Date(row.scan_time);
-                const dateStr = scanDate.toISOString().split('T')[0]; // YYYY-MM-DD
-                const timeStr = scanDate.toTimeString().split(' ')[0].substring(0, 5); // HH:MM
+                
+                // KST로 변환 (UTC + 9시간)
+                const kstDate = new Date(scanDate.getTime() + (9 * 60 * 60 * 1000));
+                const dateStr = kstDate.toISOString().split('T')[0]; // YYYY-MM-DD (KST)
+                const timeStr = kstDate.toISOString().split('T')[1].substring(0, 5); // HH:MM (KST)
                 
                 // 매칭 로직: 같은 날짜 + 같은 직원명 + 시간 차이 5분 이내
                 const matchedNote = notesData.find(note => {
