@@ -203,9 +203,14 @@
         <div class="bg-white rounded-xl shadow-md p-6 animate-fade-in">
           <h3 class="font-bold mb-4 flex items-center justify-between">
             <span><i class="fas fa-history text-blue-500 mr-2"></i>오늘의 기록</span>
-            <button id="btn-refresh-attendance" class="text-sm text-blue-500 hover:text-blue-700">
-              <i class="fas fa-sync-alt mr-1"></i>새로고침
-            </button>
+            <div class="flex gap-2">
+              <button id="btn-open-calendar" class="text-sm text-purple-500 hover:text-purple-700 px-3 py-1 rounded-lg hover:bg-purple-50 transition">
+                <i class="fas fa-calendar-alt mr-1"></i>캘린더
+              </button>
+              <button id="btn-refresh-attendance" class="text-sm text-blue-500 hover:text-blue-700 px-3 py-1 rounded-lg hover:bg-blue-50 transition">
+                <i class="fas fa-sync-alt mr-1"></i>새로고침
+              </button>
+            </div>
           </h3>
           <div id="today-attendance" class="space-y-3">
             <div class="text-center text-gray-400 py-8">
@@ -369,6 +374,92 @@
   </div>
   
   <!-- 모달들 -->
+  
+  <!-- 출퇴근 캘린더 모달 -->
+  <div id="calendar-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-2xl">
+      <!-- Header -->
+      <div class="flex justify-between items-center p-6 border-b bg-gradient-to-r from-purple-500 to-indigo-600">
+        <h3 class="text-xl font-bold text-white flex items-center gap-2">
+          <i class="fas fa-calendar-alt"></i>
+          출퇴근 캘린더
+        </h3>
+        <button onclick="app.closeCalendar()" class="text-white hover:bg-white/20 w-8 h-8 rounded-full flex items-center justify-center transition-colors">
+          <i class="fas fa-times text-xl"></i>
+        </button>
+      </div>
+
+      <!-- 월 선택 -->
+      <div class="p-4 bg-gradient-to-r from-purple-50 to-indigo-50 border-b flex items-center justify-between">
+        <button onclick="app.prevMonth()" class="p-2 hover:bg-white rounded-lg transition">
+          <i class="fas fa-chevron-left text-purple-600"></i>
+        </button>
+        <div class="text-lg font-bold text-gray-800" id="calendar-month-title">2026년 5월</div>
+        <button onclick="app.nextMonth()" class="p-2 hover:bg-white rounded-lg transition">
+          <i class="fas fa-chevron-right text-purple-600"></i>
+        </button>
+      </div>
+
+      <!-- 월간 통계 -->
+      <div class="p-4 bg-gray-50 border-b grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div class="bg-white rounded-lg p-3 text-center">
+          <div class="text-2xl font-bold text-blue-600" id="stat-work-days">0</div>
+          <div class="text-xs text-gray-600 mt-1">근무일</div>
+        </div>
+        <div class="bg-white rounded-lg p-3 text-center">
+          <div class="text-2xl font-bold text-green-600" id="stat-total-hours">0h</div>
+          <div class="text-xs text-gray-600 mt-1">총 근무시간</div>
+        </div>
+        <div class="bg-white rounded-lg p-3 text-center">
+          <div class="text-2xl font-bold text-purple-600" id="stat-avg-hours">0h</div>
+          <div class="text-xs text-gray-600 mt-1">평균 근무시간</div>
+        </div>
+        <div class="bg-white rounded-lg p-3 text-center">
+          <div class="text-2xl font-bold text-orange-600" id="stat-break-hours">0h</div>
+          <div class="text-xs text-gray-600 mt-1">총 휴게시간</div>
+        </div>
+      </div>
+
+      <!-- 캘린더 -->
+      <div class="p-4 md:p-6 overflow-y-auto" style="max-height: 60vh;">
+        <!-- 요일 헤더 -->
+        <div class="grid grid-cols-7 gap-1 md:gap-2 mb-2">
+          <div class="text-center text-sm font-bold text-red-500 py-2">일</div>
+          <div class="text-center text-sm font-bold text-gray-600 py-2">월</div>
+          <div class="text-center text-sm font-bold text-gray-600 py-2">화</div>
+          <div class="text-center text-sm font-bold text-gray-600 py-2">수</div>
+          <div class="text-center text-sm font-bold text-gray-600 py-2">목</div>
+          <div class="text-center text-sm font-bold text-gray-600 py-2">금</div>
+          <div class="text-center text-sm font-bold text-blue-500 py-2">토</div>
+        </div>
+        
+        <!-- 날짜 그리드 -->
+        <div id="calendar-grid" class="grid grid-cols-7 gap-1 md:gap-2">
+          <!-- Dynamic calendar cells will be inserted here -->
+        </div>
+      </div>
+
+      <!-- 범례 -->
+      <div class="p-4 bg-gray-50 border-t flex flex-wrap gap-4 justify-center text-sm">
+        <div class="flex items-center gap-2">
+          <div class="w-4 h-4 rounded bg-green-500"></div>
+          <span class="text-gray-600">정상 출퇴근</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="w-4 h-4 rounded bg-orange-500"></div>
+          <span class="text-gray-600">출근만</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="w-4 h-4 rounded bg-gray-300"></div>
+          <span class="text-gray-600">기록 없음</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="w-4 h-4 rounded border-2 border-blue-500"></div>
+          <span class="text-gray-600">오늘</span>
+        </div>
+      </div>
+    </div>
+  </div>
   
   <!-- 사진 뷰어 모달 -->
   <div id="photo-viewer-modal" class="hidden fixed inset-0 bg-black z-[100] flex flex-col">
@@ -600,7 +691,10 @@
         currentInspection: null,
         newPurchaseItemCounter: 0,
         todayPhotos: [],
-        currentPhotoIndex: 0
+        currentPhotoIndex: 0,
+        calendarYear: new Date().getFullYear(),
+        calendarMonth: new Date().getMonth(), // 0-11
+        attendanceRecords: [] // 전체 출퇴근 기록 캐시
       },
       
       // ==================== 초기화 ====================
@@ -1803,6 +1897,218 @@
         }
       },
       
+      
+      // ==================== 출퇴근 캘린더 시스템 ====================
+      openCalendar() {
+        this.state.calendarYear = new Date().getFullYear();
+        this.state.calendarMonth = new Date().getMonth();
+        document.getElementById('calendar-modal').classList.remove('hidden');
+        this.loadMonthData();
+      },
+      
+      closeCalendar() {
+        document.getElementById('calendar-modal').classList.add('hidden');
+      },
+      
+      prevMonth() {
+        this.state.calendarMonth--;
+        if (this.state.calendarMonth < 0) {
+          this.state.calendarMonth = 11;
+          this.state.calendarYear--;
+        }
+        this.loadMonthData();
+      },
+      
+      nextMonth() {
+        this.state.calendarMonth++;
+        if (this.state.calendarMonth > 11) {
+          this.state.calendarMonth = 0;
+          this.state.calendarYear++;
+        }
+        this.loadMonthData();
+      },
+      
+      async loadMonthData() {
+        try {
+          const year = this.state.calendarYear;
+          const month = this.state.calendarMonth;
+          
+          // 월 제목 업데이트
+          document.getElementById('calendar-month-title').textContent = 
+            `${year}년 ${month + 1}월`;
+          
+          // 해당 월의 첫날과 마지막날
+          const firstDay = new Date(year, month, 1);
+          const lastDay = new Date(year, month + 1, 0);
+          
+          // 해당 월의 출퇴근 기록 가져오기
+          const { data, error } = await this.sb
+            .from('attendance_records')
+            .select('*')
+            .eq('employee_id', this.state.employee.id)
+            .gte('created_at', firstDay.toISOString())
+            .lte('created_at', lastDay.toISOString())
+            .order('created_at', { ascending: true });
+          
+          if (error) throw error;
+          
+          this.state.attendanceRecords = data || [];
+          
+          // 캘린더 렌더링
+          this.renderCalendar();
+          this.calculateMonthStats();
+        } catch (error) {
+          console.error('월별 데이터 로드 실패:', error);
+          this.showToast('캘린더 로드에 실패했습니다', 'error');
+        }
+      },
+      
+      renderCalendar() {
+        const year = this.state.calendarYear;
+        const month = this.state.calendarMonth;
+        const today = new Date();
+        const todayStr = today.toISOString().split('T')[0];
+        
+        // 해당 월의 첫날과 마지막날
+        const firstDay = new Date(year, month, 1);
+        const lastDay = new Date(year, month + 1, 0);
+        const daysInMonth = lastDay.getDate();
+        const firstDayOfWeek = firstDay.getDay(); // 0=일요일
+        
+        // 날짜별 기록 그룹화
+        const recordsByDate = {};
+        this.state.attendanceRecords.forEach(record => {
+          const date = record.created_at.split('T')[0];
+          if (!recordsByDate[date]) recordsByDate[date] = [];
+          recordsByDate[date].push(record);
+        });
+        
+        const grid = document.getElementById('calendar-grid');
+        grid.innerHTML = '';
+        
+        // 빈 셀 추가 (이전 달)
+        for (let i = 0; i < firstDayOfWeek; i++) {
+          grid.innerHTML += '<div class="aspect-square"></div>';
+        }
+        
+        // 날짜 셀 추가
+        for (let day = 1; day <= daysInMonth; day++) {
+          const date = new Date(year, month, day);
+          const dateStr = date.toISOString().split('T')[0];
+          const isToday = dateStr === todayStr;
+          const records = recordsByDate[dateStr] || [];
+          
+          // 출근/퇴근 확인
+          const hasCheckIn = records.some(r => r.type === '출근');
+          const hasCheckOut = records.some(r => r.type === '퇴근');
+          
+          let bgColor = 'bg-gray-100';
+          let textColor = 'text-gray-400';
+          
+          if (hasCheckIn && hasCheckOut) {
+            bgColor = 'bg-green-100';
+            textColor = 'text-green-700';
+          } else if (hasCheckIn) {
+            bgColor = 'bg-orange-100';
+            textColor = 'text-orange-700';
+          }
+          
+          const borderClass = isToday ? 'ring-2 ring-blue-500' : '';
+          
+          // 근무 시간 계산
+          let workHours = '';
+          if (hasCheckIn && hasCheckOut) {
+            const checkInRecord = records.find(r => r.type === '출근');
+            const checkOutRecord = records.find(r => r.type === '퇴근');
+            const checkInTime = new Date(checkInRecord.created_at);
+            const checkOutTime = new Date(checkOutRecord.created_at);
+            const diff = (checkOutTime - checkInTime) / (1000 * 60 * 60);
+            workHours = `<div class="text-xs mt-1">${diff.toFixed(1)}h</div>`;
+          }
+          
+          grid.innerHTML += `
+            <div class="${bgColor} ${borderClass} rounded-lg p-2 aspect-square flex flex-col items-center justify-center cursor-pointer hover:opacity-80 transition"
+                 onclick="app.showDayDetail('${dateStr}')">
+              <div class="font-bold ${textColor}">${day}</div>
+              ${workHours}
+              ${records.length > 0 ? `<div class="text-xs text-gray-500 mt-1">${records.length}건</div>` : ''}
+            </div>
+          `;
+        }
+      },
+      
+      calculateMonthStats() {
+        const records = this.state.attendanceRecords;
+        
+        // 날짜별 그룹화
+        const dayRecords = {};
+        records.forEach(record => {
+          const date = record.created_at.split('T')[0];
+          if (!dayRecords[date]) dayRecords[date] = [];
+          dayRecords[date].push(record);
+        });
+        
+        // 근무일 수
+        const workDays = Object.keys(dayRecords).filter(date => {
+          const dayRecs = dayRecords[date];
+          return dayRecs.some(r => r.type === '출근');
+        }).length;
+        
+        // 총 근무시간 및 휴게시간
+        let totalHours = 0;
+        let totalBreakMinutes = 0;
+        
+        Object.values(dayRecords).forEach(dayRecs => {
+          const checkIn = dayRecs.find(r => r.type === '출근');
+          const checkOut = dayRecs.find(r => r.type === '퇴근');
+          
+          if (checkIn && checkOut) {
+            const diff = (new Date(checkOut.created_at) - new Date(checkIn.created_at)) / (1000 * 60 * 60);
+            totalHours += diff;
+          }
+          
+          // 휴게시간 계산
+          const breakStart = dayRecs.find(r => r.type === '휴게 시작');
+          const breakEnd = dayRecs.find(r => r.type === '휴게 종료');
+          
+          if (breakStart && breakEnd) {
+            const breakDiff = (new Date(breakEnd.created_at) - new Date(breakStart.created_at)) / (1000 * 60);
+            totalBreakMinutes += breakDiff;
+          }
+        });
+        
+        // 평균 근무시간
+        const avgHours = workDays > 0 ? totalHours / workDays : 0;
+        
+        // UI 업데이트
+        document.getElementById('stat-work-days').textContent = workDays;
+        document.getElementById('stat-total-hours').textContent = totalHours.toFixed(1) + 'h';
+        document.getElementById('stat-avg-hours').textContent = avgHours.toFixed(1) + 'h';
+        document.getElementById('stat-break-hours').textContent = (totalBreakMinutes / 60).toFixed(1) + 'h';
+      },
+      
+      showDayDetail(dateStr) {
+        const records = this.state.attendanceRecords.filter(r => 
+          r.created_at.split('T')[0] === dateStr
+        );
+        
+        if (records.length === 0) {
+          this.showToast('해당 날짜에 기록이 없습니다', 'info');
+          return;
+        }
+        
+        // 상세 정보 표시 (간단한 alert, 나중에 모달로 개선 가능)
+        const details = records.map(r => {
+          const time = new Date(r.created_at).toLocaleTimeString('ko-KR', { 
+            hour: '2-digit', 
+            minute: '2-digit' 
+          });
+          return `${r.type}: ${time}`;
+        }).join('\n');
+        
+        alert(`📅 ${dateStr}\n\n${details}`);
+      },
+      
       // ==================== 구매 요청 시스템 ====================
       async loadPurchaseBadge() {
         try {
@@ -2383,6 +2689,9 @@
         
         // 새로고침 버튼
         document.getElementById('btn-refresh-attendance').addEventListener('click', () => this.loadTodayAttendance());
+        
+        // 캘린더 버튼
+        document.getElementById('btn-open-calendar').addEventListener('click', () => this.openCalendar());
         
         // 로그아웃
         document.getElementById('btn-logout').addEventListener('click', () => {
