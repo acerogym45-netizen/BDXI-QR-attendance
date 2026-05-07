@@ -2256,7 +2256,11 @@
         loadMeta: async function () {
           if (this.employeeList.length > 0) return;
           try {
-            const { data } = await this.sb.from('employees').select('name').eq('status', 'active');
+            // 직원 정보 전체를 가져와야 apartment_id 필터링이 가능
+            const { data } = await this.sb
+              .from('employees')
+              .select('id, name, position, apartment_id, status')
+              .eq('status', 'active');
             if (data) this.employeeList = data;
 
             const locRes = await this.sb.from('locations').select('name').eq('status', 'active');
@@ -2270,7 +2274,9 @@
                 select.appendChild(opt);
               });
             }
-          } catch (e) {}
+          } catch (e) {
+            console.error('loadMeta 실패:', e);
+          }
         },
 
         // 로딩 표시
@@ -2854,21 +2860,46 @@
           const select = document.getElementById('calendar-employee-select');
           if (!select) return;
           
-          // 현재 단지의 활성 직원만 필터링
-          let employees = this.employeeList.filter(e => e.status === 'active');
+          console.log('🔍 [캘린더] 디버깅 시작');
+          console.log('  - employeeList 전체:', this.employeeList.length, '명');
+          console.log('  - currentApartment:', this.currentApartment);
           
-          // 단지별 필터링
-          if (this.currentApartment && this.currentApartment.id) {
-            employees = employees.filter(e => e.apartment_id === this.currentApartment.id);
-          }
-          
-          select.innerHTML = '<option value="">직원을 선택하세요</option>' +
-            '<option value="ALL">📊 전체 직원 (현재 단지)</option>' +
-            employees.map(emp => `<option value="${emp.id}">${emp.name} (${emp.position || '직원'})</option>`).join('');
-          
-          // 직원 목록이 비어있으면 메시지 표시
-          if (employees.length === 0) {
-            select.innerHTML = '<option value="">이 단지에 등록된 활성 직원이 없습니다</option>';
+          // 🔧 현재 단지의 활성 직원을 DB에서 직접 로드
+          try {
+            let query = this.sb.from('employees')
+              .select('id, name, position, apartment_id, status')
+              .eq('status', 'active');
+            
+            if (this.currentApartment && this.currentApartment.id) {
+              query = query.eq('apartment_id', this.currentApartment.id);
+            }
+            
+            const { data, error } = await query;
+            
+            if (error) {
+              console.error('❌ [캘린더] 직원 로드 실패:', error);
+              select.innerHTML = '<option value="">직원 로드 실패</option>';
+              return;
+            }
+            
+            const employees = data || [];
+            console.log('  - DB에서 로드한 활성 직원:', employees.length, '명');
+            console.log('  - 직원 목록:', employees.map(e => `${e.name}(${e.apartment_id})`));
+            
+            // employeeList도 업데이트 (다른 곳에서 사용할 수 있음)
+            this.employeeList = employees;
+            
+            select.innerHTML = '<option value="">직원을 선택하세요</option>' +
+              '<option value="ALL">📊 전체 직원 (현재 단지)</option>' +
+              employees.map(emp => `<option value="${emp.id}">${emp.name} (${emp.position || '직원'})</option>`).join('');
+            
+            // 직원 목록이 비어있으면 메시지 표시
+            if (employees.length === 0) {
+              select.innerHTML = '<option value="">이 단지에 등록된 활성 직원이 없습니다</option>';
+            }
+          } catch (e) {
+            console.error('❌ [캘린더] 예외 발생:', e);
+            select.innerHTML = '<option value="">오류 발생</option>';
           }
         },
         
@@ -3838,6 +3869,11 @@
             const { data, error } = await query;
             
             if (error) throw error;
+            
+            // 🔧 employeeList 업데이트 (캘린더에서 사용)
+            if (data) {
+              this.employeeList = data;
+            }
             
             list.innerHTML = '';
             
