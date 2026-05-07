@@ -1106,7 +1106,7 @@
                 .eq('apartment_id', this.state.aptId)
                 .eq('holiday_date', todayStr);
               
-              console.log('🎌 오늘 공휴일 확인:', todayHolidays);
+              console.log('📅 오늘 공휴일 확인:', todayHolidays);
               
               if (todayHolidays && todayHolidays.length > 0) {
                 const holiday = todayHolidays[0];
@@ -1117,7 +1117,7 @@
                 }[holiday.holiday_type] || '공휴일';
                 
                 const reason = prompt(
-                  `🎌 오늘은 ${typeLabel}입니다.\n` +
+                  `⚠️ 오늘은 ${typeLabel}입니다.\n` +
                   `공휴일: ${holiday.holiday_name}\n\n` +
                   `그래도 출근하시겠습니까?\n` +
                   `사유를 입력해주세요 (취소하려면 빈 칸으로 제출):`,
@@ -1144,37 +1144,111 @@
                 const workEnd = endHour * 60 + endMin;
                 
                 console.log('🕐 근무시간 체크:', {
-                  현재시각: `${now.getHours()}:${now.getMinutes()}`,
+                  현재시각: `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`,
                   근무시작: empInfo.work_start_time,
-                  근무종료: empInfo.work_end_time
+                  근무종료: empInfo.work_end_time,
+                  currentTime분: currentTime,
+                  workStart분: workStart,
+                  workEnd분: workEnd
                 });
                 
-                // 근무시간 1시간 전 또는 1시간 후 출근 시 경고
-                const earlyThreshold = workStart - 60; // 1시간 전
-                const lateThreshold = workStart + 30; // 30분 후
+                // 근무시간 범위 체크 (자정 넘어가는 경우 고려)
+                let isWithinWorkTime = false;
                 
-                if (currentTime < earlyThreshold) {
-                  const reason = prompt(
-                    `⏰ 근무 시작 시간보다 1시간 이상 일찍 출근하려고 합니다.\n` +
-                    `근무시간: ${empInfo.work_start_time} ~ ${empInfo.work_end_time}\n` +
-                    `현재시각: ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}\n\n` +
-                    `그래도 출근하시겠습니까?\n` +
-                    `사유를 입력해주세요 (취소하려면 빈 칸으로 제출):`,
-                    ''
-                  );
+                if (workStart < workEnd) {
+                  // 일반적인 경우 (예: 09:00~18:00)
+                  isWithinWorkTime = currentTime >= workStart && currentTime <= workEnd;
+                } else {
+                  // 자정을 넘어가는 경우 (예: 22:00~06:00, 00:00~04:00)
+                  isWithinWorkTime = currentTime >= workStart || currentTime <= workEnd;
+                }
+                
+                console.log('✅ 근무시간 범위 내:', isWithinWorkTime);
+                
+                // 근무시간 범위를 벗어난 경우
+                if (!isWithinWorkTime) {
+                  // 근무 시작 전인지, 후인지 판단
+                  let timeDiff;
+                  let message;
                   
-                  if (reason === null || reason.trim() === '') {
-                    btnIcon.className = originalClass;
-                    console.log('✅ 사용자가 조기 출근 취소');
-                    return;
+                  if (workStart < workEnd) {
+                    // 일반적인 경우
+                    if (currentTime < workStart) {
+                      timeDiff = workStart - currentTime;
+                      const hours = Math.floor(timeDiff / 60);
+                      const mins = timeDiff % 60;
+                      message = `⏰ 근무 시작 시간보다 ${hours > 0 ? hours + '시간 ' : ''}${mins}분 일찍 출근하려고 합니다.\n` +
+                        `근무시간: ${empInfo.work_start_time} ~ ${empInfo.work_end_time}\n` +
+                        `현재시각: ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}\n\n` +
+                        `그래도 출근하시겠습니까?\n` +
+                        `사유를 입력해주세요 (취소하려면 빈 칸으로 제출):`;
+                    } else {
+                      timeDiff = currentTime - workEnd;
+                      const hours = Math.floor(timeDiff / 60);
+                      const mins = timeDiff % 60;
+                      message = `⏰ 근무 종료 시간보다 ${hours > 0 ? hours + '시간 ' : ''}${mins}분 늦게 출근하려고 합니다.\n` +
+                        `근무시간: ${empInfo.work_start_time} ~ ${empInfo.work_end_time}\n` +
+                        `현재시각: ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}\n\n` +
+                        `그래도 출근하시겠습니까?\n` +
+                        `사유를 입력해주세요 (취소하려면 빈 칸으로 제출):`;
+                    }
+                  } else {
+                    // 자정 넘어가는 경우 (00:00~04:00 같은 경우)
+                    // 근무시간 범위: workStart(0분) ~ 1440분(24:00) + 0분 ~ workEnd
+                    if (currentTime > workEnd && currentTime < workStart) {
+                      // 근무시간 범위 밖 (예: 00~04시 근무인데 10:56에 출근)
+                      let timeUntilStart;
+                      if (currentTime < workStart) {
+                        timeUntilStart = workStart - currentTime;
+                      } else {
+                        timeUntilStart = (1440 - currentTime) + workStart;
+                      }
+                      const hours = Math.floor(timeUntilStart / 60);
+                      const mins = timeUntilStart % 60;
+                      message = `⏰ 근무시간이 아닙니다.\n` +
+                        `근무시간: ${empInfo.work_start_time} ~ ${empInfo.work_end_time}\n` +
+                        `현재시각: ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}\n` +
+                        `다음 근무까지 ${hours > 0 ? hours + '시간 ' : ''}${mins}분 남았습니다.\n\n` +
+                        `그래도 출근하시겠습니까?\n` +
+                        `사유를 입력해주세요 (취소하려면 빈 칸으로 제출):`;
+                    }
                   }
                   
-                  console.log('📝 조기 출근 사유:', reason);
-                } else if (currentTime > lateThreshold) {
-                  // 지각 경고 (기록은 하되 차단하지 않음)
-                  const lateMins = Math.floor((currentTime - workStart));
-                  if (lateMins > 0) {
-                    console.warn(`⚠️ 지각: ${lateMins}분 늦음`);
+                  if (message) {
+                    const reason = prompt(message, '');
+                    
+                    if (reason === null || reason.trim() === '') {
+                      btnIcon.className = originalClass;
+                      console.log('✅ 사용자가 근무시간 외 출근 취소');
+                      return;
+                    }
+                    
+                    console.log('📝 근무시간 외 출근 사유:', reason);
+                  }
+                }
+                
+                // 지각 체크 (근무시간 내이지만 시작 시간보다 늦은 경우)
+                if (isWithinWorkTime) {
+                  let lateMinutes = 0;
+                  
+                  if (workStart < workEnd) {
+                    // 일반적인 경우
+                    if (currentTime > workStart) {
+                      lateMinutes = currentTime - workStart;
+                    }
+                  } else {
+                    // 자정 넘어가는 경우
+                    if (currentTime < workEnd) {
+                      // 자정 이후 (예: 01:00에 출근, 00:00 시작)
+                      lateMinutes = currentTime - 0; // workStart가 전날이므로 0시 기준
+                    } else if (currentTime >= workStart) {
+                      // 자정 이전 (예: 22:30에 출근, 22:00 시작)
+                      lateMinutes = currentTime - workStart;
+                    }
+                  }
+                  
+                  if (lateMinutes > 10) {
+                    console.warn(`⚠️ 지각: ${lateMinutes}분 늦음`);
                   }
                 }
               }
