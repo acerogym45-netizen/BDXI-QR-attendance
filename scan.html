@@ -1063,16 +1063,19 @@
           try {
             const now = new Date();
             
-            // 한국 시간(KST) 기준으로 날짜/시간 계산
-            const kstNow = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Seoul' }));
+            // 한국 시간(KST) 기준으로 날짜/시간 계산 (UTC + 9시간)
+            const kstOffset = 9 * 60 * 60 * 1000;
+            const kstNow = new Date(now.getTime() + kstOffset);
             const noteDate = kstNow.toISOString().split('T')[0]; // YYYY-MM-DD (KST)
-            const noteTime = kstNow.toTimeString().split(' ')[0]; // HH:MM:SS (KST)
+            const noteTime = kstNow.toISOString().split('T')[1].split('.')[0]; // HH:MM:SS (KST)
             
             console.log('🕐 시간 정보:', {
-              UTC: now.toISOString(),
-              KST: kstNow.toISOString(),
-              noteDate,
-              noteTime
+              'UTC': now.toISOString(),
+              'UTC_timestamp': now.getTime(),
+              'KST_timestamp': kstNow.getTime(),
+              'KST': kstNow.toISOString(),
+              'noteDate': noteDate,
+              'noteTime': noteTime
             });
             
             const noteData = {
@@ -1149,14 +1152,17 @@
               }
               
               // 🔍 1단계: 공휴일 및 근무시간 체크
-              // 한국 시간(KST) 기준으로 오늘 날짜 계산
-              const kstDate = new Date(today.toLocaleString('en-US', { timeZone: 'Asia/Seoul' }));
+              // 한국 시간(KST) 기준으로 오늘 날짜 계산 (UTC + 9시간)
+              const kstOffset = 9 * 60 * 60 * 1000; // 9시간을 밀리초로
+              const kstDate = new Date(today.getTime() + kstOffset);
               const todayStr = kstDate.toISOString().split('T')[0];
               
               console.log('📅 현재 시간:', {
                 UTC: today.toISOString(),
-                KST: kstDate.toISOString(),
-                오늘날짜: todayStr
+                'UTC_timestamp': today.getTime(),
+                'KST_timestamp': kstDate.getTime(),
+                'KST_ISO': kstDate.toISOString(),
+                '오늘날짜_KST': todayStr
               });
               
               // 1-1. 공휴일 조회
