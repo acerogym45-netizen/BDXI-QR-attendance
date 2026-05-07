@@ -1062,8 +1062,18 @@
           
           try {
             const now = new Date();
-            const noteDate = now.toISOString().split('T')[0]; // YYYY-MM-DD
-            const noteTime = now.toTimeString().split(' ')[0]; // HH:MM:SS
+            
+            // 한국 시간(KST) 기준으로 날짜/시간 계산
+            const kstNow = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Seoul' }));
+            const noteDate = kstNow.toISOString().split('T')[0]; // YYYY-MM-DD (KST)
+            const noteTime = kstNow.toTimeString().split(' ')[0]; // HH:MM:SS (KST)
+            
+            console.log('🕐 시간 정보:', {
+              UTC: now.toISOString(),
+              KST: kstNow.toISOString(),
+              noteDate,
+              noteTime
+            });
             
             const noteData = {
               apartment_id: this.state.aptId,
@@ -1139,7 +1149,15 @@
               }
               
               // 🔍 1단계: 공휴일 및 근무시간 체크
-              const todayStr = today.toISOString().split('T')[0];
+              // 한국 시간(KST) 기준으로 오늘 날짜 계산
+              const kstDate = new Date(today.toLocaleString('en-US', { timeZone: 'Asia/Seoul' }));
+              const todayStr = kstDate.toISOString().split('T')[0];
+              
+              console.log('📅 현재 시간:', {
+                UTC: today.toISOString(),
+                KST: kstDate.toISOString(),
+                오늘날짜: todayStr
+              });
               
               // 1-1. 공휴일 조회
               const { data: todayHolidays } = await this.sb
