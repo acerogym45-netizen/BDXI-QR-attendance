@@ -8231,17 +8231,33 @@
               .getPublicUrl(`${currentPurchaseIdForPhoto}/${safeFileName}`);
             
             // purchase_photos 테이블에 기록 추가
-            const { error: insertError } = await this.sb
-              .from('purchase_photos')
-              .insert({
-                purchase_request_id: currentPurchaseIdForPhoto,
-                photo_url: urlData.publicUrl,
-                uploaded_by: this.currentAdmin?.id || null
-              });
+            // 여러 가능한 컬럼명 시도 (purchase_id, purchase_request_id, request_id)
+            const photoData = {
+              photo_url: urlData.publicUrl,
+              uploaded_by: this.currentAdmin?.id || null
+            };
             
-            if (insertError) {
-              console.error('사진 정보 저장 실패:', insertError);
-              throw new Error('사진 정보 저장 실패: ' + insertError.message);
+            // purchase_id 또는 purchase_request_id 중 테이블에 맞는 컬럼 사용
+            try {
+              // 먼저 purchase_id로 시도
+              photoData.purchase_id = currentPurchaseIdForPhoto;
+              const { error: insertError } = await this.sb
+                .from('purchase_photos')
+                .insert(photoData);
+              
+              if (insertError) {
+                // purchase_id가 실패하면 purchase_request_id로 재시도
+                delete photoData.purchase_id;
+                photoData.purchase_request_id = currentPurchaseIdForPhoto;
+                const { error: retryError } = await this.sb
+                  .from('purchase_photos')
+                  .insert(photoData);
+                
+                if (retryError) throw retryError;
+              }
+            } catch (err) {
+              console.error('사진 정보 저장 실패:', err);
+              throw new Error('사진 정보 저장 실패: ' + err.message);
             }
           }
           
