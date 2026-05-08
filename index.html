@@ -8363,37 +8363,37 @@
       
       // 구매 요청 PDF용 HTML 생성
       app.createPurchasePDFHTML = function(data, statusText) {
-        // 물품-사진 매칭된 아이템들 생성
+        // 물품-사진 매칭된 아이템들 생성 (2열 그리드)
         let itemsHTML = '';
         (data.purchase_photos || []).forEach((photo, idx) => {
           const item = data.purchase_items[idx] || {};
           itemsHTML += `
-            <div style="background: white; border: 2px solid #e0e0e0; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); page-break-inside: avoid;">
-              <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 14px; padding-bottom: 12px; border-bottom: 2px solid #e8f5e9;">
-                <div style="min-width: 32px; height: 32px; background: linear-gradient(135deg, #1a5e3f 0%, #2d7a4f 100%); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 800; box-shadow: 0 2px 6px rgba(26,94,63,0.3);">
+            <div style="background: white; border: 1px solid #e0e0e0; border-radius: 4px; padding: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.04); break-inside: avoid;">
+              <div style="display: flex; align-items: center; gap: 4px; margin-bottom: 4px; padding-bottom: 3px; border-bottom: 1px solid #e8f5e9;">
+                <div style="min-width: 18px; height: 18px; background: linear-gradient(135deg, #1a5e3f 0%, #2d7a4f 100%); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 800;">
                   ${idx + 1}
                 </div>
-                <div style="flex: 1;">
-                  <h3 style="font-size: 16px; font-weight: 700; color: #212121; margin: 0 0 4px 0; line-height: 1.3;">
+                <div style="flex: 1; min-width: 0;">
+                  <h3 style="font-size: 10px; font-weight: 700; color: #212121; margin: 0; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                     ${item.item_name || '물품명 없음'}
                   </h3>
-                  <p style="font-size: 12px; color: #757575; margin: 0; font-weight: 500;">
-                    카테고리: ${item.category || '-'}
+                  <p style="font-size: 8px; color: #757575; margin: 0; font-weight: 500;">
+                    ${item.category || '-'}
                   </p>
                 </div>
               </div>
               
               <!-- 검수 사진 -->
-              <div style="margin: 14px 0; text-align: center;">
-                <img src="${photo.photo_url}" style="width: 100%; max-height: 400px; object-fit: contain; border: 3px solid #e0e0e0; border-radius: 8px;" crossorigin="anonymous">
+              <div style="margin: 4px 0; text-align: center;">
+                <img src="${photo.photo_url}" style="width: 100%; height: 100px; object-fit: cover; border: 1px solid #e0e0e0; border-radius: 3px;" crossorigin="anonymous">
               </div>
               
               <!-- 물품 정보 2줄 -->
-              <div style="margin-top: 14px; padding: 14px; background: #f5f5f5; border-radius: 8px; border-left: 4px solid #1a5e3f;">
-                <p style="font-size: 13px; font-weight: 700; color: #1a5e3f; margin: 0 0 8px 0;">
-                  물품명: ${item.item_name || '-'}
+              <div style="margin-top: 4px; padding: 4px; background: #f5f5f5; border-radius: 3px; border-left: 2px solid #1a5e3f;">
+                <p style="font-size: 8px; font-weight: 700; color: #1a5e3f; margin: 0 0 2px 0;">
+                  ${item.item_name || '-'}
                 </p>
-                <p style="font-size: 12px; font-weight: 600; color: #424242; margin: 0;">
+                <p style="font-size: 7px; font-weight: 600; color: #424242; margin: 0; line-height: 1.3;">
                   수량: ${item.quantity || '-'} | 단가: ${item.unit_price ? '₩' + parseFloat(item.unit_price).toLocaleString('ko-KR') : '-'} | 총액: ${item.quantity && item.unit_price ? '₩' + (item.quantity * parseFloat(item.unit_price)).toLocaleString('ko-KR') : '-'}
                 </p>
               </div>
@@ -8406,65 +8406,65 @@
         (data.purchase_items || []).forEach((item, idx) => {
           itemsTableHTML += `
             <tr style="border-bottom: 1px solid #e0e0e0;">
-              <td style="padding: 10px 8px; font-size: 12px; color: #212121;">${item.item_name}</td>
-              <td style="padding: 10px 8px; font-size: 12px; color: #757575;">${item.category}</td>
-              <td style="padding: 10px 8px; font-size: 12px; color: #212121; text-align: center;">${item.quantity}</td>
-              <td style="padding: 10px 8px; font-size: 12px; color: #212121; text-align: right;">₩${parseFloat(item.unit_price).toLocaleString('ko-KR')}</td>
-              <td style="padding: 10px 8px; font-size: 12px; color: #1a5e3f; text-align: right; font-weight: 700;">₩${(item.quantity * parseFloat(item.unit_price)).toLocaleString('ko-KR')}</td>
+              <td style="padding: 6px 4px; font-size: 10px; color: #212121;">${item.item_name}</td>
+              <td style="padding: 6px 4px; font-size: 10px; color: #757575;">${item.category}</td>
+              <td style="padding: 6px 4px; font-size: 10px; color: #212121; text-align: center;">${item.quantity}</td>
+              <td style="padding: 6px 4px; font-size: 10px; color: #212121; text-align: right;">₩${parseFloat(item.unit_price).toLocaleString('ko-KR')}</td>
+              <td style="padding: 6px 4px; font-size: 10px; color: #1a5e3f; text-align: right; font-weight: 700;">₩${(item.quantity * parseFloat(item.unit_price)).toLocaleString('ko-KR')}</td>
             </tr>
           `;
         });
         
         return `
-          <div style="font-family: 'Paperlogy', 'Noto Sans KR', sans-serif; background: white; padding: 30px;">
+          <div style="font-family: 'Paperlogy', 'Noto Sans KR', sans-serif; background: white; padding: 5mm 8mm;">
             <!-- 제목 -->
-            <div style="text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 3px solid #1a5e3f;">
-              <h1 style="font-size: 40px; font-weight: 800; margin: 0 0 8px 0; color: #1a5e3f; letter-spacing: -1px;">검수 조서</h1>
-              <p style="font-size: 14px; color: #757575; margin: 0; font-weight: 500;">${new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+            <div style="text-align: center; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 2px solid #1a5e3f;">
+              <h1 style="font-size: 40px; font-weight: 800; margin: 0 0 3px 0; color: #1a5e3f; letter-spacing: -1px;">검수 조서</h1>
+              <p style="font-size: 10px; color: #757575; margin: 0; font-weight: 500;">${new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
             </div>
             
             <!-- 기본 정보 -->
-            <div style="background: #f8f9fa; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
-              <h2 style="font-size: 18px; font-weight: 700; color: #1a5e3f; margin: 0 0 14px 0; border-bottom: 2px solid #1a5e3f; padding-bottom: 8px;">기본 정보</h2>
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <div style="background: #f8f9fa; border-radius: 4px; padding: 8px; margin-bottom: 8px;">
+              <h2 style="font-size: 13px; font-weight: 700; color: #1a5e3f; margin: 0 0 6px 0; border-bottom: 2px solid #1a5e3f; padding-bottom: 3px;">기본 정보</h2>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
                 <div>
-                  <span style="font-size: 12px; color: #757575; font-weight: 600;">요청일</span>
-                  <p style="font-size: 13px; color: #212121; margin: 4px 0 0 0; font-weight: 600;">${new Date(data.created_at).toLocaleString('ko-KR')}</p>
+                  <span style="font-size: 10px; color: #757575; font-weight: 600;">요청일</span>
+                  <p style="font-size: 11px; color: #212121; margin: 2px 0 0 0; font-weight: 600;">${new Date(data.created_at).toLocaleString('ko-KR')}</p>
                 </div>
                 <div>
-                  <span style="font-size: 12px; color: #757575; font-weight: 600;">상태</span>
-                  <p style="font-size: 13px; color: #212121; margin: 4px 0 0 0; font-weight: 600;">${statusText}</p>
+                  <span style="font-size: 10px; color: #757575; font-weight: 600;">상태</span>
+                  <p style="font-size: 11px; color: #212121; margin: 2px 0 0 0; font-weight: 600;">${statusText}</p>
                 </div>
                 <div>
-                  <span style="font-size: 12px; color: #757575; font-weight: 600;">요청자</span>
-                  <p style="font-size: 13px; color: #212121; margin: 4px 0 0 0; font-weight: 600;">${data.requester_name} (${data.requester_role})</p>
+                  <span style="font-size: 10px; color: #757575; font-weight: 600;">요청자</span>
+                  <p style="font-size: 11px; color: #212121; margin: 2px 0 0 0; font-weight: 600;">${data.requester_name} (${data.requester_role})</p>
                 </div>
                 <div>
-                  <span style="font-size: 12px; color: #757575; font-weight: 600;">총 금액</span>
-                  <p style="font-size: 15px; color: #1a5e3f; margin: 4px 0 0 0; font-weight: 800;">₩${parseFloat(data.total_amount).toLocaleString('ko-KR')}</p>
+                  <span style="font-size: 10px; color: #757575; font-weight: 600;">총 금액</span>
+                  <p style="font-size: 12px; color: #1a5e3f; margin: 2px 0 0 0; font-weight: 800;">₩${parseFloat(data.total_amount).toLocaleString('ko-KR')}</p>
                 </div>
               </div>
             </div>
             
             <!-- 구매 사유 -->
-            <div style="margin-bottom: 24px;">
-              <h2 style="font-size: 18px; font-weight: 700; color: #1a5e3f; margin: 0 0 12px 0; border-bottom: 2px solid #1a5e3f; padding-bottom: 8px;">구매 사유</h2>
-              <div style="background: #f8f9fa; border-radius: 8px; padding: 16px; border-left: 4px solid #1a5e3f;">
-                <p style="font-size: 13px; color: #212121; margin: 0; line-height: 1.7; white-space: pre-wrap;">${data.reason}</p>
+            <div style="margin-bottom: 8px;">
+              <h2 style="font-size: 13px; font-weight: 700; color: #1a5e3f; margin: 0 0 5px 0; border-bottom: 2px solid #1a5e3f; padding-bottom: 3px;">구매 사유</h2>
+              <div style="background: #f8f9fa; border-radius: 4px; padding: 6px; border-left: 3px solid #1a5e3f;">
+                <p style="font-size: 9px; color: #212121; margin: 0; line-height: 1.4; white-space: pre-wrap;">${data.reason}</p>
               </div>
             </div>
             
             <!-- 물품 목록 -->
-            <div style="margin-bottom: 24px;">
-              <h2 style="font-size: 18px; font-weight: 700; color: #1a5e3f; margin: 0 0 12px 0; border-bottom: 2px solid #1a5e3f; padding-bottom: 8px;">물품 목록</h2>
-              <table style="width: 100%; border-collapse: collapse; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
+            <div style="margin-bottom: 8px;">
+              <h2 style="font-size: 13px; font-weight: 700; color: #1a5e3f; margin: 0 0 5px 0; border-bottom: 2px solid #1a5e3f; padding-bottom: 3px;">물품 목록</h2>
+              <table style="width: 100%; border-collapse: collapse; border: 1px solid #e0e0e0; border-radius: 4px; overflow: hidden;">
                 <thead>
                   <tr style="background: #f8f9fa;">
-                    <th style="padding: 12px 8px; font-size: 12px; font-weight: 700; color: #1a5e3f; text-align: left; border-bottom: 2px solid #1a5e3f;">물품명</th>
-                    <th style="padding: 12px 8px; font-size: 12px; font-weight: 700; color: #1a5e3f; text-align: left; border-bottom: 2px solid #1a5e3f;">카테고리</th>
-                    <th style="padding: 12px 8px; font-size: 12px; font-weight: 700; color: #1a5e3f; text-align: center; border-bottom: 2px solid #1a5e3f;">수량</th>
-                    <th style="padding: 12px 8px; font-size: 12px; font-weight: 700; color: #1a5e3f; text-align: right; border-bottom: 2px solid #1a5e3f;">단가</th>
-                    <th style="padding: 12px 8px; font-size: 12px; font-weight: 700; color: #1a5e3f; text-align: right; border-bottom: 2px solid #1a5e3f;">금액</th>
+                    <th style="padding: 6px 4px; font-size: 10px; font-weight: 700; color: #1a5e3f; text-align: left; border-bottom: 2px solid #1a5e3f;">물품명</th>
+                    <th style="padding: 6px 4px; font-size: 10px; font-weight: 700; color: #1a5e3f; text-align: left; border-bottom: 2px solid #1a5e3f;">카테고리</th>
+                    <th style="padding: 6px 4px; font-size: 10px; font-weight: 700; color: #1a5e3f; text-align: center; border-bottom: 2px solid #1a5e3f;">수량</th>
+                    <th style="padding: 6px 4px; font-size: 10px; font-weight: 700; color: #1a5e3f; text-align: right; border-bottom: 2px solid #1a5e3f;">단가</th>
+                    <th style="padding: 6px 4px; font-size: 10px; font-weight: 700; color: #1a5e3f; text-align: right; border-bottom: 2px solid #1a5e3f;">금액</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -8473,25 +8473,27 @@
               </table>
             </div>
             
-            <!-- 검수 사진 (물품-사진 매칭) -->
+            <!-- 검수 사진 (2열 그리드 레이아웃) -->
             ${(data.purchase_photos || []).length > 0 ? `
-              <div style="margin-bottom: 24px;">
-                <h2 style="font-size: 18px; font-weight: 700; color: #1a5e3f; margin: 0 0 16px 0; border-bottom: 2px solid #1a5e3f; padding-bottom: 8px;">검수 사진</h2>
-                ${itemsHTML}
+              <div style="margin-bottom: 8px;">
+                <h2 style="font-size: 13px; font-weight: 700; color: #1a5e3f; margin: 0 0 6px 0; border-bottom: 2px solid #1a5e3f; padding-bottom: 3px;">검수 사진</h2>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; column-gap: 6px;">
+                  ${itemsHTML}
+                </div>
               </div>
             ` : ''}
             
             <!-- 승인/반려 정보 -->
             ${data.status === 'rejected' ? `
-              <div style="background: #fff3f3; border: 2px solid #ffcdd2; border-radius: 12px; padding: 20px;">
-                <h2 style="font-size: 16px; font-weight: 700; color: #d32f2f; margin: 0 0 12px 0;">반려 사유</h2>
-                <p style="font-size: 13px; color: #c62828; margin: 0; line-height: 1.6; white-space: pre-wrap;">${data.rejection_reason || '없음'}</p>
+              <div style="background: #fff3f3; border: 1px solid #ffcdd2; border-radius: 6px; padding: 10px;">
+                <h2 style="font-size: 12px; font-weight: 700; color: #d32f2f; margin: 0 0 6px 0;">반려 사유</h2>
+                <p style="font-size: 10px; color: #c62828; margin: 0; line-height: 1.4; white-space: pre-wrap;">${data.rejection_reason || '없음'}</p>
               </div>
             ` : data.status === 'approved' && data.approver_name ? `
-              <div style="background: #f1f8f4; border: 2px solid #c8e6c9; border-radius: 12px; padding: 20px;">
-                <h2 style="font-size: 16px; font-weight: 700; color: #2e7d32; margin: 0 0 12px 0;">승인 정보</h2>
-                <p style="font-size: 13px; color: #1b5e20; margin: 0 0 6px 0;"><strong>승인자:</strong> ${data.approver_name}</p>
-                <p style="font-size: 13px; color: #1b5e20; margin: 0;"><strong>승인 시각:</strong> ${new Date(data.approval_time).toLocaleString('ko-KR')}</p>
+              <div style="background: #f1f8f4; border: 1px solid #c8e6c9; border-radius: 6px; padding: 10px;">
+                <h2 style="font-size: 12px; font-weight: 700; color: #2e7d32; margin: 0 0 6px 0;">승인 정보</h2>
+                <p style="font-size: 10px; color: #1b5e20; margin: 0 0 4px 0;"><strong>승인자:</strong> ${data.approver_name}</p>
+                <p style="font-size: 10px; color: #1b5e20; margin: 0;"><strong>승인 시각:</strong> ${new Date(data.approval_time).toLocaleString('ko-KR')}</p>
               </div>
             ` : ''}
           </div>
