@@ -8197,25 +8197,19 @@
           const actualAmount = document.getElementById('actual-amount-input').value;
           
           // 로딩 표시
-          const uploadBtn = event.target;
-          uploadBtn.disabled = true;
-          uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>업로드 중...';
+          const uploadBtn = document.querySelector('#photo-upload-modal button[onclick*="uploadInspectionPhotos"]');
+          if (uploadBtn) {
+            uploadBtn.disabled = true;
+            uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>업로드 중...';
+          }
           
           // 각 파일을 순차적으로 업로드
           for (let i = 0; i < files.length; i++) {
             const file = files[i];
             
-            // 파일을 Base64로 변환
-            const base64 = await new Promise((resolve, reject) => {
-              const reader = new FileReader();
-              reader.onload = (e) => resolve(e.target.result);
-              reader.onerror = reject;
-              reader.readAsDataURL(file);
-            });
-            
             // Supabase Storage에 업로드
             const fileName = `${Date.now()}_${i}_${file.name}`;
-            const { data: uploadData, error: uploadError } = await supabase.storage
+            const { data: uploadData, error: uploadError } = await this.sb.storage
               .from('purchase-photos')
               .upload(`${currentPurchaseIdForPhoto}/${fileName}`, file, {
                 contentType: file.type,
@@ -8224,32 +8218,33 @@
             
             if (uploadError) {
               console.error('파일 업로드 실패:', uploadError);
-              continue;
+              throw new Error('파일 업로드 실패: ' + uploadError.message);
             }
             
             // 공개 URL 가져오기
-            const { data: urlData } = supabase.storage
+            const { data: urlData } = this.sb.storage
               .from('purchase-photos')
               .getPublicUrl(`${currentPurchaseIdForPhoto}/${fileName}`);
             
             // purchase_photos 테이블에 기록 추가
-            const { error: insertError } = await supabase
+            const { error: insertError } = await this.sb
               .from('purchase_photos')
               .insert({
                 purchase_request_id: currentPurchaseIdForPhoto,
                 photo_url: urlData.publicUrl,
-                uploaded_by: currentUser.id
+                uploaded_by: this.currentAdmin?.id || null
               });
             
             if (insertError) {
               console.error('사진 정보 저장 실패:', insertError);
+              throw new Error('사진 정보 저장 실패: ' + insertError.message);
             }
           }
           
           // 실제 구매 금액 업데이트 (입력된 경우)
           if (actualAmount && parseFloat(actualAmount) > 0) {
-            await supabase
-              .from('purchase_requests')
+            await this.sb
+              .from('purchases')
               .update({ actual_amount: parseFloat(actualAmount) })
               .eq('id', currentPurchaseIdForPhoto);
           }
@@ -8279,7 +8274,7 @@
         
         try {
           // 사진 정보 가져오기
-          const { data: photo, error: fetchError } = await supabase
+          const { data: photo, error: fetchError } = await this.sb
             .from('purchase_photos')
             .select('photo_url')
             .eq('id', photoId)
@@ -8292,12 +8287,12 @@
           const fileName = urlParts[urlParts.length - 1];
           const filePath = `${purchaseId}/${fileName}`;
           
-          await supabase.storage
+          await this.sb.storage
             .from('purchase-photos')
             .remove([filePath]);
           
           // 데이터베이스에서 레코드 삭제
-          const { error: deleteError } = await supabase
+          const { error: deleteError } = await this.sb
             .from('purchase_photos')
             .delete()
             .eq('id', photoId);
