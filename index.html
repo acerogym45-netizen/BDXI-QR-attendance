@@ -8044,16 +8044,75 @@
                     </button>
                   </div>
                   ${(data.purchase_photos || []).length > 0 ? `
-                    <div class="grid grid-cols-3 gap-2">
-                      ${(data.purchase_photos || []).map((p, idx) => `
-                        <div class="relative group">
-                          <img src="${p.photo_url}" class="w-full h-32 object-cover rounded-lg cursor-pointer hover:opacity-80" onclick="window.open('${p.photo_url}', '_blank')">
-                          <button onclick="app.deleteInspectionPhoto('${data.id}', '${p.id}')" class="absolute top-1 right-1 w-6 h-6 bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity text-xs">
-                            <i class="fas fa-times"></i>
-                          </button>
-                        </div>
-                      `).join('')}
-                    </div>
+                    ${(() => {
+                      // 물품별로 사진 그룹화
+                      const itemPhotos = {};
+                      const unmatchedPhotos = [];
+                      
+                      (data.purchase_photos || []).forEach(photo => {
+                        if (photo.purchase_item_id) {
+                          if (!itemPhotos[photo.purchase_item_id]) {
+                            itemPhotos[photo.purchase_item_id] = [];
+                          }
+                          itemPhotos[photo.purchase_item_id].push(photo);
+                        } else {
+                          unmatchedPhotos.push(photo);
+                        }
+                      });
+                      
+                      let html = '';
+                      
+                      // 물품별 그룹 표시
+                      (data.purchase_items || []).forEach(item => {
+                        const photos = itemPhotos[item.id] || [];
+                        if (photos.length > 0) {
+                          html += `
+                            <div class="mb-4 bg-blue-50 rounded-lg p-3">
+                              <div class="flex items-center gap-2 mb-2">
+                                <i class="fas fa-box text-blue-600"></i>
+                                <span class="text-sm font-bold text-gray-800">${item.item_name || '(미입력)'}</span>
+                                <span class="text-xs text-gray-600">(${item.quantity || 0}개)</span>
+                                ${item.category ? `<span class="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded">${item.category}</span>` : ''}
+                              </div>
+                              <div class="grid grid-cols-3 gap-2">
+                                ${photos.map(p => `
+                                  <div class="relative group">
+                                    <img src="${p.photo_url}" class="w-full h-32 object-cover rounded-lg cursor-pointer hover:opacity-80 border-2 border-blue-200" onclick="window.open('${p.photo_url}', '_blank')">
+                                    ${p.note ? `<div class="absolute bottom-1 left-1 right-1 bg-black/70 text-white text-xs px-2 py-1 rounded truncate">${p.note}</div>` : ''}
+                                    <button onclick="app.deleteInspectionPhoto('${data.id}', '${p.id}')" class="absolute top-1 right-1 w-6 h-6 bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity text-xs">
+                                      <i class="fas fa-times"></i>
+                                    </button>
+                                  </div>
+                                `).join('')}
+                              </div>
+                            </div>
+                          `;
+                        }
+                      });
+                      
+                      // 매칭되지 않은 사진 표시 (하위 호환성)
+                      if (unmatchedPhotos.length > 0) {
+                        html += `
+                          <div class="mb-4">
+                            <div class="text-xs text-gray-500 mb-2">
+                              <i class="fas fa-question-circle mr-1"></i>물품 미지정 사진
+                            </div>
+                            <div class="grid grid-cols-3 gap-2">
+                              ${unmatchedPhotos.map(p => `
+                                <div class="relative group">
+                                  <img src="${p.photo_url}" class="w-full h-32 object-cover rounded-lg cursor-pointer hover:opacity-80" onclick="window.open('${p.photo_url}', '_blank')">
+                                  <button onclick="app.deleteInspectionPhoto('${data.id}', '${p.id}')" class="absolute top-1 right-1 w-6 h-6 bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity text-xs">
+                                    <i class="fas fa-times"></i>
+                                  </button>
+                                </div>
+                              `).join('')}
+                            </div>
+                          </div>
+                        `;
+                      }
+                      
+                      return html;
+                    })()}
                     ${data.actual_amount ? `
                       <div class="mt-3 text-sm">
                         <span class="text-gray-600">실제 구매 금액:</span>
@@ -8180,8 +8239,20 @@
         container.innerHTML = '';
         notesContainer.classList.remove('hidden');
         
+        // 물품 목록 가져오기
+        const purchase = this.currentPurchase;
+        const items = purchase?.purchase_items || [];
+        
+        // 드롭다운 옵션 생성
+        const itemOptions = items.map(item => {
+          const name = item.item_name || '(미입력)';
+          const qty = item.quantity || 0;
+          const category = item.category || '';
+          return `<option value="${item.id}">${name} (${qty}개)${category ? ' - ' + category : ''}</option>`;
+        }).join('');
+        
         // 메모 컨테이너 초기화
-        let notesHTML = '<div class="space-y-2">';
+        let notesHTML = '<div class="space-y-3">';
         
         for (let i = 0; i < Math.min(files.length, 10); i++) {
           const file = files[i];
@@ -8199,16 +8270,42 @@
           
           reader.readAsDataURL(file);
           
-          // 각 사진별 메모 입력 필드 추가
+          // 각 사진별 드롭다운 + 메모
           notesHTML += `
-            <div class="flex items-center gap-2 p-2 bg-gray-50 rounded">
-              <span class="w-6 h-6 flex items-center justify-center bg-blue-100 text-blue-700 rounded-full text-xs font-bold shrink-0">${i + 1}</span>
-              <input 
-                type="text" 
-                id="photo-note-${i}" 
-                placeholder="예: 김밥 2줄 검수 완료" 
-                class="flex-1 px-3 py-1.5 text-sm border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
+            <div class="bg-white border-2 border-gray-200 rounded-lg p-4 space-y-3">
+              <!-- 헤더 -->
+              <div class="flex items-center gap-2">
+                <span class="w-6 h-6 flex items-center justify-center bg-blue-600 text-white rounded-full text-xs font-bold shrink-0">${i + 1}</span>
+                <span class="text-sm font-bold text-gray-700">사진 ${i + 1}</span>
+              </div>
+              
+              <!-- 물품 선택 드롭다운 -->
+              <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1">
+                  <i class="fas fa-box mr-1"></i>이 사진은 어떤 물품인가요? <span class="text-red-500">*</span>
+                </label>
+                <select 
+                  id="photo-item-${i}" 
+                  class="w-full px-3 py-2 text-sm border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  required
+                >
+                  <option value="">선택하세요</option>
+                  ${itemOptions}
+                </select>
+              </div>
+              
+              <!-- 메모 (선택사항) -->
+              <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1">
+                  <i class="fas fa-sticky-note mr-1"></i>메모 (선택사항)
+                </label>
+                <input 
+                  type="text" 
+                  id="photo-note-${i}" 
+                  placeholder="예: 검수 완료, 상태 양호" 
+                  class="w-full px-3 py-1.5 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+              </div>
             </div>
           `;
         }
@@ -8283,13 +8380,27 @@
             }
           }
           
-          // 5.5. 사진별 메모 수집
+          // 5.5. 사진별 물품 선택 및 메모 수집
+          const photoItems = [];
           const photoNotes = [];
+          let hasUnselectedItem = false;
+          
           for (let i = 0; i < files.length; i++) {
+            const itemSelect = document.getElementById(`photo-item-${i}`);
             const noteInput = document.getElementById(`photo-note-${i}`);
+            
+            const selectedItemId = itemSelect ? itemSelect.value : '';
+            if (!selectedItemId) {
+              hasUnselectedItem = true;
+              alert(`⚠️ 사진 ${i + 1}의 물품을 선택해주세요`);
+              return;
+            }
+            
+            photoItems.push(selectedItemId);
             photoNotes.push(noteInput ? noteInput.value.trim() : '');
           }
           
+          console.log('📦 선택된 물품:', photoItems);
           console.log('📝 사진별 메모:', photoNotes);
           
           // 6. 로딩 표시 시작
@@ -8343,7 +8454,8 @@
                 safe: safeFileName,
                 size: (file.size / 1024).toFixed(2) + 'KB',
                 type: file.type,
-                note: photoNotes[i] || '(메모 없음)' // 메모 표시
+                itemId: photoItems[i], // 선택된 물품 ID
+                note: photoNotes[i] || '(메모 없음)'
               });
               
               // Supabase Storage에 업로드
@@ -8382,10 +8494,16 @@
               
               const photoData = {
                 purchase_id: currentPurchaseIdForPhoto,
+                purchase_item_id: photoItems[i], // 선택된 물품 ID
                 photo_url: urlData.publicUrl,
-                uploaded_by: app.currentAdmin?.id || systemUserId, // ✅ 항상 값 제공
+                uploaded_by: app.currentAdmin?.id || systemUserId,
                 uploaded_at: new Date().toISOString()
               };
+              
+              // 메모가 있으면 추가 (note 컬럼이 있는 경우에만)
+              if (photoNotes[i]) {
+                photoData.note = photoNotes[i];
+              }
               
               console.log('💾 DB 저장 시도:', photoData);
               
