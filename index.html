@@ -8322,17 +8322,16 @@
               console.log('🔗 공개 URL 획득:', urlData.publicUrl);
               
               // purchase_photos 테이블에 기록 추가
-              // uploaded_by는 NOT NULL이므로 기본값 사용하거나 제외
+              // uploaded_by는 NOT NULL 제약이므로 반드시 값이 필요
+              // currentAdmin.id가 없으면 시스템 UUID 사용 (임시 해결책)
+              const systemUserId = '00000000-0000-0000-0000-000000000000'; // 시스템 기본 UUID
+              
               const photoData = {
                 purchase_id: currentPurchaseIdForPhoto,
                 photo_url: urlData.publicUrl,
+                uploaded_by: app.currentAdmin?.id || systemUserId, // ✅ 항상 값 제공
                 uploaded_at: new Date().toISOString()
               };
-              
-              // uploaded_by가 있으면 추가 (없으면 DB 기본값 사용)
-              if (app.currentAdmin?.id) {
-                photoData.uploaded_by = app.currentAdmin.id;
-              }
               
               console.log('💾 DB 저장 시도:', photoData);
               
