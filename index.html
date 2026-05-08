@@ -8370,15 +8370,15 @@
           itemsHTML += `
             <div style="background: white; border: 1px solid #e0e0e0; border-radius: 4px; padding: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.04); break-inside: avoid; display: flex; flex-direction: column; height: 100%;">
               <!-- 헤더: 번호 + 물품명 + 카테고리 -->
-              <div style="display: flex; align-items: flex-start; gap: 6px; margin-bottom: 6px; padding-bottom: 5px; border-bottom: 1px solid #e8f5e9;">
+              <div style="display: flex; align-items: flex-start; gap: 6px; margin-bottom: 6px; padding-bottom: 6px; border-bottom: 1px solid #e8f5e9; min-height: 44px;">
                 <div style="min-width: 22px; height: 22px; background: linear-gradient(135deg, #1a5e3f 0%, #2d7a4f 100%); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; flex-shrink: 0;">
                   ${idx + 1}
                 </div>
-                <div style="flex: 1; min-width: 0; overflow: hidden;">
-                  <h3 style="font-size: 12px; font-weight: 700; color: #212121; margin: 0 0 2px 0; line-height: 1.3; word-wrap: break-word; overflow-wrap: break-word;">
+                <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: flex-start;">
+                  <h3 style="font-size: 12px; font-weight: 700; color: #212121; margin: 0 0 3px 0; line-height: 1.3; word-wrap: break-word; overflow-wrap: break-word; white-space: normal;">
                     ${item.item_name || '물품명 없음'}
                   </h3>
-                  <p style="font-size: 9px; color: #757575; margin: 0; font-weight: 500; line-height: 1.2;">
+                  <p style="font-size: 9px; color: #757575; margin: 0; font-weight: 500; line-height: 1.3; word-wrap: break-word; overflow-wrap: break-word; white-space: normal;">
                     ${item.category || '-'}
                   </p>
                 </div>
