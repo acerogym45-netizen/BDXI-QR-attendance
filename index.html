@@ -8057,6 +8057,12 @@
           }
           
           actionButtons += `
+            <button onclick="app.exportPurchaseToExcel('${data.id}')" class="px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium text-sm">
+              <i class="fas fa-file-excel mr-2"></i>Excel
+            </button>
+            <button onclick="app.exportPurchaseToPDF('${data.id}')" class="px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium text-sm">
+              <i class="fas fa-file-pdf mr-2"></i>PDF
+            </button>
             <button onclick="app.closePurchaseDetailModal()" class="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium">
               닫기
             </button>
@@ -8092,6 +8098,355 @@
       // 구매 요청 상세 모달 닫기
       app.closePurchaseDetailModal = function() {
         document.getElementById('purchase-detail-modal').classList.add('hidden');
+      };
+      
+      // ==================== 구매 요청 추출 (Excel/PDF) ====================
+      
+      // Excel 추출
+      app.exportPurchaseToExcel = async function(purchaseId) {
+        try {
+          if (!this.currentPurchase || this.currentPurchase.id !== purchaseId) {
+            alert('구매 요청 데이터를 먼저 로드해주세요');
+            return;
+          }
+          
+          const data = this.currentPurchase;
+          const statusText = {
+            pending: '승인 대기',
+            approved: '승인됨',
+            rejected: '반려됨',
+            completed: '검수 완료'
+          }[data.status];
+          
+          // 워크북 생성
+          const wb = XLSX.utils.book_new();
+          
+          // 기본 정보 시트
+          const basicInfo = [
+            ['구매 요청서'],
+            [],
+            ['기본 정보'],
+            ['요청일', new Date(data.created_at).toLocaleString('ko-KR')],
+            ['상태', statusText],
+            ['요청자', `${data.requester_name} (${data.requester_role})`],
+            ['총 금액', `₩${parseFloat(data.total_amount).toLocaleString('ko-KR')}`],
+            [],
+            ['구매 사유'],
+            [data.reason],
+            [],
+            ['물품 목록'],
+            ['물품명', '카테고리', '수량', '단가', '금액']
+          ];
+          
+          // 물품 목록 추가
+          (data.purchase_items || []).forEach(item => {
+            basicInfo.push([
+              item.item_name,
+              item.category,
+              item.quantity,
+              parseFloat(item.unit_price),
+              item.quantity * parseFloat(item.unit_price)
+            ]);
+          });
+          
+          // 검수 사진 정보 추가
+          if ((data.purchase_photos || []).length > 0) {
+            basicInfo.push([]);
+            basicInfo.push(['검수 사진']);
+            basicInfo.push(['번호', '물품명', '수량', '단가', '총액', '사진 URL']);
+            
+            (data.purchase_photos || []).forEach((photo, idx) => {
+              const item = data.purchase_items[idx] || {};
+              basicInfo.push([
+                idx + 1,
+                item.item_name || '-',
+                item.quantity || '-',
+                item.unit_price ? `₩${parseFloat(item.unit_price).toLocaleString('ko-KR')}` : '-',
+                item.quantity && item.unit_price ? `₩${(item.quantity * parseFloat(item.unit_price)).toLocaleString('ko-KR')}` : '-',
+                photo.photo_url
+              ]);
+            });
+          }
+          
+          // 승인/반려 정보
+          if (data.status === 'rejected') {
+            basicInfo.push([]);
+            basicInfo.push(['반려 사유']);
+            basicInfo.push([data.rejection_reason || '없음']);
+          } else if (data.status === 'approved' && data.approver_name) {
+            basicInfo.push([]);
+            basicInfo.push(['승인 정보']);
+            basicInfo.push(['승인자', data.approver_name]);
+            basicInfo.push(['승인 시각', new Date(data.approval_time).toLocaleString('ko-KR')]);
+          }
+          
+          const ws = XLSX.utils.aoa_to_sheet(basicInfo);
+          
+          // 컬럼 너비 설정
+          ws['!cols'] = [
+            { wch: 20 },
+            { wch: 15 },
+            { wch: 10 },
+            { wch: 15 },
+            { wch: 15 },
+            { wch: 50 }
+          ];
+          
+          XLSX.utils.book_append_sheet(wb, ws, '구매요청서');
+          
+          // 파일 다운로드
+          const fileName = `구매요청_${data.requester_name}_${new Date().toISOString().split('T')[0]}.xlsx`;
+          XLSX.writeFile(wb, fileName);
+          
+          alert('✅ Excel 파일이 다운로드되었습니다');
+        } catch (err) {
+          console.error('❌ Excel 추출 실패:', err);
+          alert('Excel 추출 중 오류가 발생했습니다');
+        }
+      };
+      
+      // PDF 추출 (이미지-물품 매칭 포함)
+      app.exportPurchaseToPDF = async function(purchaseId) {
+        try {
+          if (!this.currentPurchase || this.currentPurchase.id !== purchaseId) {
+            alert('구매 요청 데이터를 먼저 로드해주세요');
+            return;
+          }
+          
+          const data = this.currentPurchase;
+          const statusText = {
+            pending: '승인 대기',
+            approved: '승인됨',
+            rejected: '반려됨',
+            completed: '검수 완료'
+          }[data.status];
+          
+          // jsPDF 인스턴스 생성
+          const { jsPDF } = window.jspdf;
+          const doc = new jsPDF({
+            orientation: 'portrait',
+            unit: 'mm',
+            format: 'a4'
+          });
+          
+          // 한글 폰트 설정 (Noto Sans KR 웹폰트 사용)
+          let yPos = 20;
+          const lineHeight = 7;
+          const pageWidth = doc.internal.pageSize.getWidth();
+          const pageHeight = doc.internal.pageSize.getHeight();
+          const margin = 15;
+          
+          // 제목
+          doc.setFontSize(20);
+          doc.setFont('helvetica', 'bold');
+          doc.text('구매 요청서', pageWidth / 2, yPos, { align: 'center' });
+          yPos += 15;
+          
+          // 기본 정보
+          doc.setFontSize(14);
+          doc.setFont('helvetica', 'bold');
+          doc.text('기본 정보', margin, yPos);
+          yPos += 8;
+          
+          doc.setFontSize(10);
+          doc.setFont('helvetica', 'normal');
+          doc.text(`요청일: ${new Date(data.created_at).toLocaleString('ko-KR')}`, margin + 5, yPos);
+          yPos += lineHeight;
+          doc.text(`상태: ${statusText}`, margin + 5, yPos);
+          yPos += lineHeight;
+          doc.text(`요청자: ${data.requester_name} (${data.requester_role})`, margin + 5, yPos);
+          yPos += lineHeight;
+          doc.text(`총 금액: ₩${parseFloat(data.total_amount).toLocaleString('ko-KR')}`, margin + 5, yPos);
+          yPos += 10;
+          
+          // 구매 사유
+          doc.setFontSize(14);
+          doc.setFont('helvetica', 'bold');
+          doc.text('구매 사유', margin, yPos);
+          yPos += 8;
+          
+          doc.setFontSize(10);
+          doc.setFont('helvetica', 'normal');
+          const reasonLines = doc.splitTextToSize(data.reason, pageWidth - margin * 2 - 10);
+          reasonLines.forEach(line => {
+            if (yPos > pageHeight - 30) {
+              doc.addPage();
+              yPos = 20;
+            }
+            doc.text(line, margin + 5, yPos);
+            yPos += lineHeight;
+          });
+          yPos += 5;
+          
+          // 물품 목록
+          if (yPos > pageHeight - 60) {
+            doc.addPage();
+            yPos = 20;
+          }
+          
+          doc.setFontSize(14);
+          doc.setFont('helvetica', 'bold');
+          doc.text('물품 목록', margin, yPos);
+          yPos += 8;
+          
+          // 테이블 헤더
+          doc.setFontSize(9);
+          doc.setFont('helvetica', 'bold');
+          doc.text('물품명', margin + 5, yPos);
+          doc.text('카테고리', margin + 60, yPos);
+          doc.text('수량', margin + 100, yPos);
+          doc.text('단가', margin + 120, yPos);
+          doc.text('금액', margin + 150, yPos);
+          yPos += 6;
+          
+          // 테이블 내용
+          doc.setFont('helvetica', 'normal');
+          (data.purchase_items || []).forEach(item => {
+            if (yPos > pageHeight - 30) {
+              doc.addPage();
+              yPos = 20;
+            }
+            
+            const itemName = doc.splitTextToSize(item.item_name, 50)[0];
+            doc.text(itemName, margin + 5, yPos);
+            doc.text(item.category, margin + 60, yPos);
+            doc.text(String(item.quantity), margin + 100, yPos);
+            doc.text(`₩${parseFloat(item.unit_price).toLocaleString('ko-KR')}`, margin + 120, yPos);
+            doc.text(`₩${(item.quantity * parseFloat(item.unit_price)).toLocaleString('ko-KR')}`, margin + 150, yPos);
+            yPos += lineHeight;
+          });
+          yPos += 10;
+          
+          // 검수 사진 (이미지-물품 매칭)
+          if ((data.purchase_photos || []).length > 0) {
+            doc.addPage();
+            yPos = 20;
+            
+            doc.setFontSize(14);
+            doc.setFont('helvetica', 'bold');
+            doc.text('검수 사진', margin, yPos);
+            yPos += 10;
+            
+            // 이미지를 base64로 변환하여 추가
+            for (let i = 0; i < data.purchase_photos.length; i++) {
+              const photo = data.purchase_photos[i];
+              const item = data.purchase_items[i] || {};
+              
+              try {
+                // 이미지 로드 및 추가
+                const img = await this.loadImageAsBase64(photo.photo_url);
+                
+                // 페이지 넘김 체크
+                if (yPos > pageHeight - 120) {
+                  doc.addPage();
+                  yPos = 20;
+                }
+                
+                // 이미지 추가 (최대 너비 180mm, 높이 100mm)
+                const imgWidth = 180;
+                const imgHeight = 100;
+                doc.addImage(img, 'JPEG', margin, yPos, imgWidth, imgHeight);
+                yPos += imgHeight + 5;
+                
+                // 물품 정보 2줄로 표시
+                doc.setFontSize(9);
+                doc.setFont('helvetica', 'bold');
+                
+                // 1줄: 물품명
+                const itemNameText = `물품명: ${item.item_name || '-'}`;
+                doc.text(itemNameText, margin, yPos);
+                yPos += 5;
+                
+                // 2줄: 수량 | 단가 | 총액
+                const detailText = `수량: ${item.quantity || '-'} | 단가: ${item.unit_price ? '₩' + parseFloat(item.unit_price).toLocaleString('ko-KR') : '-'} | 총액: ${item.quantity && item.unit_price ? '₩' + (item.quantity * parseFloat(item.unit_price)).toLocaleString('ko-KR') : '-'}`;
+                doc.text(detailText, margin, yPos);
+                yPos += 10;
+                
+              } catch (imgErr) {
+                console.error('이미지 로드 실패:', imgErr);
+                doc.setFontSize(9);
+                doc.text(`[이미지 로드 실패: ${photo.photo_url}]`, margin, yPos);
+                yPos += 10;
+              }
+            }
+          }
+          
+          // 승인/반려 정보
+          if (data.status === 'rejected') {
+            if (yPos > pageHeight - 40) {
+              doc.addPage();
+              yPos = 20;
+            }
+            
+            doc.setFontSize(14);
+            doc.setFont('helvetica', 'bold');
+            doc.text('반려 사유', margin, yPos);
+            yPos += 8;
+            
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'normal');
+            const rejectionLines = doc.splitTextToSize(data.rejection_reason || '없음', pageWidth - margin * 2 - 10);
+            rejectionLines.forEach(line => {
+              doc.text(line, margin + 5, yPos);
+              yPos += lineHeight;
+            });
+          } else if (data.status === 'approved' && data.approver_name) {
+            if (yPos > pageHeight - 40) {
+              doc.addPage();
+              yPos = 20;
+            }
+            
+            doc.setFontSize(14);
+            doc.setFont('helvetica', 'bold');
+            doc.text('승인 정보', margin, yPos);
+            yPos += 8;
+            
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'normal');
+            doc.text(`승인자: ${data.approver_name}`, margin + 5, yPos);
+            yPos += lineHeight;
+            doc.text(`승인 시각: ${new Date(data.approval_time).toLocaleString('ko-KR')}`, margin + 5, yPos);
+          }
+          
+          // 파일 다운로드
+          const fileName = `구매요청_${data.requester_name}_${new Date().toISOString().split('T')[0]}.pdf`;
+          doc.save(fileName);
+          
+          alert('✅ PDF 파일이 다운로드되었습니다');
+        } catch (err) {
+          console.error('❌ PDF 추출 실패:', err);
+          alert('PDF 추출 중 오류가 발생했습니다: ' + err.message);
+        }
+      };
+      
+      // 이미지를 Base64로 변환하는 헬퍼 함수
+      app.loadImageAsBase64 = function(url) {
+        return new Promise((resolve, reject) => {
+          const img = new Image();
+          img.crossOrigin = 'Anonymous';
+          
+          img.onload = function() {
+            try {
+              const canvas = document.createElement('canvas');
+              canvas.width = img.width;
+              canvas.height = img.height;
+              
+              const ctx = canvas.getContext('2d');
+              ctx.drawImage(img, 0, 0);
+              
+              const dataURL = canvas.toDataURL('image/jpeg', 0.8);
+              resolve(dataURL);
+            } catch (err) {
+              reject(err);
+            }
+          };
+          
+          img.onerror = function() {
+            reject(new Error('이미지 로드 실패: ' + url));
+          };
+          
+          img.src = url;
+        });
       };
       
       // ==================== 특이사항 상세 모달 ====================
