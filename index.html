@@ -8207,11 +8207,15 @@
           for (let i = 0; i < files.length; i++) {
             const file = files[i];
             
+            // 파일 확장자 추출
+            const fileExt = file.name.split('.').pop().toLowerCase();
+            // 안전한 파일명 생성 (타임스탬프 + 인덱스 + 랜덤문자열 + 확장자)
+            const safeFileName = `${Date.now()}_${i}_${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
+            
             // Supabase Storage에 업로드
-            const fileName = `${Date.now()}_${i}_${file.name}`;
             const { data: uploadData, error: uploadError } = await this.sb.storage
               .from('purchase-photos')
-              .upload(`${currentPurchaseIdForPhoto}/${fileName}`, file, {
+              .upload(`${currentPurchaseIdForPhoto}/${safeFileName}`, file, {
                 contentType: file.type,
                 upsert: false
               });
@@ -8224,7 +8228,7 @@
             // 공개 URL 가져오기
             const { data: urlData } = this.sb.storage
               .from('purchase-photos')
-              .getPublicUrl(`${currentPurchaseIdForPhoto}/${fileName}`);
+              .getPublicUrl(`${currentPurchaseIdForPhoto}/${safeFileName}`);
             
             // purchase_photos 테이블에 기록 추가
             const { error: insertError } = await this.sb
