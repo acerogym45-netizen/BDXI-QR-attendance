@@ -2006,6 +2006,11 @@
       },
       
       async updateVacationBadge() {
+        if (!this.state.employee || !this.state.employee.id) {
+          console.log('⚠️ 직원 정보 없음, 휴가 뱃지 업데이트 스킵');
+          return;
+        }
+        
         try {
           const { data, error } = await this.sb
             .from('vacations')
