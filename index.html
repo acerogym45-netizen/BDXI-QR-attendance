@@ -4249,7 +4249,7 @@
               .from('vacations')
               .select('*')
               .eq('status', 'pending')
-              .order('vacation_date', { ascending: true });
+              .order('start_date', { ascending: true });
             
             if (this.currentApartment && this.currentApartment.id) {
               query = query.eq('apartment_id', this.currentApartment.id);
@@ -4265,11 +4265,22 @@
             }
             
             pendingVacations.forEach(vacation => {
-              const vacationType = vacation.vacation_type || '연차';
+              // 휴가 유형 매핑
+              const typeLabels = {
+                'annual': '연차',
+                'half_day': '반차',
+                'sick': '병가',
+                'personal': '개인사유',
+                'other': '기타'
+              };
+              const vacationType = typeLabels[vacation.vacation_type] || vacation.vacation_type || '기타';
+              
               const typeColors = {
                 '연차': 'bg-blue-100 text-blue-800',
+                '반차': 'bg-cyan-100 text-cyan-800',
                 '병가': 'bg-red-100 text-red-800',
-                '경조사': 'bg-purple-100 text-purple-800',
+                '개인사유': 'bg-purple-100 text-purple-800',
+                '경조사': 'bg-pink-100 text-pink-800',
                 '기타': 'bg-gray-100 text-gray-800'
               };
               const typeColor = typeColors[vacationType] || typeColors['기타'];
@@ -4277,7 +4288,7 @@
               const tr = document.createElement('tr');
               tr.innerHTML = `
                 <td class="px-2 py-2 text-left font-medium">${vacation.employee_name}</td>
-                <td class="px-2 py-2 text-center text-xs text-gray-500">${vacation.vacation_date || `${vacation.start_date} ~ ${vacation.end_date}`}</td>
+                <td class="px-2 py-2 text-center text-xs text-gray-500">${vacation.start_date} ~ ${vacation.end_date}</td>
                 <td class="px-2 py-2 text-center">
                   <span class="px-2 py-1 ${typeColor} text-xs font-bold rounded">${vacationType}</span>
                 </td>
@@ -4337,7 +4348,7 @@
               .from('vacations')
               .update({
                 status: 'rejected',
-                rejection_reason: reason,
+                admin_comment: reason,
                 approved_at: new Date().toISOString(),
                 approved_by: 'admin' // TODO: 실제 로그인된 관리자 ID 사용
               })
