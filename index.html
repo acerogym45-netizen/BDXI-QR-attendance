@@ -8133,6 +8133,27 @@
         document.getElementById('actual-amount-input').value = '';
         document.getElementById('photo-preview-container').classList.add('hidden');
         document.getElementById('photo-preview-container').innerHTML = '';
+        document.getElementById('photo-notes-container').classList.add('hidden');
+        document.getElementById('photo-notes-container').innerHTML = '';
+        
+        // 물품 목록 표시
+        const purchase = this.currentPurchase;
+        const itemsListEl = document.getElementById('photo-modal-items-list');
+        
+        if (purchase && purchase.purchase_items && purchase.purchase_items.length > 0) {
+          itemsListEl.innerHTML = purchase.purchase_items.map((item, idx) => `
+            <div class="flex items-center justify-between p-2 bg-white rounded border">
+              <div class="flex items-center gap-2">
+                <span class="w-6 h-6 flex items-center justify-center bg-blue-100 text-blue-700 rounded-full text-xs font-bold">${idx + 1}</span>
+                <span class="font-medium">${item.item_name || '(미입력)'}</span>
+                <span class="text-xs text-gray-500">x${item.quantity || 0}</span>
+              </div>
+              <span class="text-sm text-gray-600">${item.category || ''}</span>
+            </div>
+          `).join('');
+        } else {
+          itemsListEl.innerHTML = '<p class="text-sm text-gray-500 text-center py-2">물품 정보가 없습니다</p>';
+        }
       };
       
       // 사진 업로드 모달 닫기
@@ -8145,15 +8166,22 @@
       app.previewPhotos = function(event) {
         const files = event.target.files;
         const container = document.getElementById('photo-preview-container');
+        const notesContainer = document.getElementById('photo-notes-container');
         
         if (files.length === 0) {
           container.classList.add('hidden');
           container.innerHTML = '';
+          notesContainer.classList.add('hidden');
+          notesContainer.innerHTML = '';
           return;
         }
         
         container.classList.remove('hidden');
         container.innerHTML = '';
+        notesContainer.classList.remove('hidden');
+        
+        // 메모 컨테이너 초기화
+        let notesHTML = '<div class="space-y-2">';
         
         for (let i = 0; i < Math.min(files.length, 10); i++) {
           const file = files[i];
@@ -8170,7 +8198,23 @@
           };
           
           reader.readAsDataURL(file);
+          
+          // 각 사진별 메모 입력 필드 추가
+          notesHTML += `
+            <div class="flex items-center gap-2 p-2 bg-gray-50 rounded">
+              <span class="w-6 h-6 flex items-center justify-center bg-blue-100 text-blue-700 rounded-full text-xs font-bold shrink-0">${i + 1}</span>
+              <input 
+                type="text" 
+                id="photo-note-${i}" 
+                placeholder="예: 김밥 2줄 검수 완료" 
+                class="flex-1 px-3 py-1.5 text-sm border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+            </div>
+          `;
         }
+        
+        notesHTML += '</div>';
+        notesContainer.innerHTML = notesHTML;
       };
       
       // 검수 사진 업로드 (모든 시나리오 처리)
@@ -8239,6 +8283,15 @@
             }
           }
           
+          // 5.5. 사진별 메모 수집
+          const photoNotes = [];
+          for (let i = 0; i < files.length; i++) {
+            const noteInput = document.getElementById(`photo-note-${i}`);
+            photoNotes.push(noteInput ? noteInput.value.trim() : '');
+          }
+          
+          console.log('📝 사진별 메모:', photoNotes);
+          
           // 6. 로딩 표시 시작
           if (uploadBtn) {
             uploadBtn.disabled = true;
@@ -8289,7 +8342,8 @@
                 original: file.name,
                 safe: safeFileName,
                 size: (file.size / 1024).toFixed(2) + 'KB',
-                type: file.type
+                type: file.type,
+                note: photoNotes[i] || '(메모 없음)' // 메모 표시
               });
               
               // Supabase Storage에 업로드
@@ -9296,8 +9350,8 @@
 
     <!-- 검수 사진 업로드 모달 -->
     <div id="photo-upload-modal" class="fixed inset-0 z-50 hidden bg-black/50 flex items-center justify-center p-4">
-      <div class="bg-white rounded-2xl max-w-2xl w-full shadow-2xl">
-        <div class="flex justify-between items-center p-6 border-b">
+      <div class="bg-white rounded-2xl max-w-3xl w-full shadow-2xl max-h-[90vh] overflow-y-auto">
+        <div class="flex justify-between items-center p-6 border-b sticky top-0 bg-white z-10">
           <h3 class="text-xl font-bold text-gray-800">
             <i class="fas fa-camera mr-2 text-blue-600"></i>검수 사진 추가
           </h3>
@@ -9305,23 +9359,49 @@
         </div>
         
         <div class="p-6 space-y-4">
+          <!-- 물품 목록 표시 (참고용) -->
+          <div class="bg-blue-50 rounded-lg p-4 border border-blue-200">
+            <h4 class="text-sm font-bold text-gray-700 mb-3 flex items-center">
+              <i class="fas fa-list mr-2 text-blue-600"></i>구매 물품 목록 (참고)
+            </h4>
+            <div id="photo-modal-items-list" class="space-y-2 text-sm">
+              <!-- 물품 목록이 여기에 동적으로 로드됩니다 -->
+            </div>
+          </div>
+          
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">검수 사진</label>
-            <input type="file" id="inspection-photo-input" accept="image/*" multiple onchange="app.previewPhotos(event)" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-            <p class="text-xs text-gray-500 mt-1">최대 10장까지 업로드 가능합니다</p>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              <i class="fas fa-images mr-1"></i>검수 사진
+            </label>
+            <input type="file" id="inspection-photo-input" accept="image/jpeg,image/jpg,image/png,image/gif,image/webp" multiple onchange="app.previewPhotos(event)" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+            <p class="text-xs text-gray-500 mt-1">
+              <i class="fas fa-info-circle mr-1"></i>최대 10장, 각 5MB 이하 (JPG, PNG, GIF, WEBP)
+            </p>
           </div>
           
           <div id="photo-preview-container" class="grid grid-cols-3 gap-2 hidden">
             <!-- 사진 미리보기가 여기에 표시됩니다 -->
           </div>
           
+          <!-- 사진별 메모 입력 -->
+          <div id="photo-notes-container" class="hidden space-y-3">
+            <label class="block text-sm font-medium text-gray-700">
+              <i class="fas fa-sticky-note mr-1"></i>사진별 메모 (선택사항)
+            </label>
+            <p class="text-xs text-gray-500">각 사진이 어떤 물품인지 메모를 남겨주세요</p>
+            <!-- 사진별 메모 입력 필드가 여기에 동적으로 생성됩니다 -->
+          </div>
+          
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">실제 구매 금액 (선택)</label>
-            <input type="number" id="actual-amount-input" placeholder="₩0" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              <i class="fas fa-won-sign mr-1"></i>실제 구매 금액 (선택)
+            </label>
+            <input type="number" id="actual-amount-input" placeholder="₩0" min="0" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+            <p class="text-xs text-gray-500 mt-1">예상 금액과 다를 경우 입력하세요</p>
           </div>
         </div>
 
-        <div class="flex gap-3 p-6 border-t bg-gray-50">
+        <div class="flex gap-3 p-6 border-t bg-gray-50 sticky bottom-0">
           <button onclick="app.uploadInspectionPhotos()" class="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
             <i class="fas fa-upload mr-2"></i>업로드
           </button>
