@@ -8034,42 +8034,41 @@
                 </div>
               ` : ''}
               
-              ${data.status === 'approved' && data.inspection_qr ? `
-                <div class="bg-green-50 p-4 rounded-lg">
-                  <h4 class="text-sm font-bold text-green-700 mb-3">검수 QR 코드</h4>
-                  <div class="flex items-center gap-4">
-                    <div class="bg-white p-3 rounded-lg border-2 border-green-300">
-                      <div id="inspection-qr-${data.id}" class="w-32 h-32"></div>
-                    </div>
-                    <div class="flex-1 space-y-2">
-                      <p class="text-sm text-gray-600">물품 수령 시 이 QR 코드를 스캔하여 검수를 진행하세요.</p>
-                      <div class="flex gap-2">
-                        <button onclick="app.downloadInspectionQR('${data.id}', '${data.inspection_qr}')" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium">
-                          <i class="fas fa-download mr-2"></i>QR 다운로드
-                        </button>
-                        <button onclick="app.copyInspectionLink('${data.inspection_qr}')" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
-                          <i class="fas fa-link mr-2"></i>링크 복사
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ` : ''}
-              
-              ${(data.purchase_photos || []).length > 0 ? `
+              <!-- 검수 사진 섹션 (승인된 요청에만 표시) -->
+              ${data.status === 'approved' ? `
                 <div>
-                  <h4 class="text-sm font-bold text-gray-700 mb-2">검수 사진</h4>
-                  <div class="grid grid-cols-3 gap-2">
-                    ${(data.purchase_photos || []).map(p => `
-                      <img src="${p.photo_url}" class="w-full h-32 object-cover rounded-lg cursor-pointer hover:opacity-80" onclick="window.open('${p.photo_url}', '_blank')">
-                    `).join('')}
+                  <div class="flex items-center justify-between mb-3">
+                    <h4 class="text-sm font-bold text-gray-700">검수 사진</h4>
+                    <button onclick="app.openPhotoUploadModal('${data.id}')" class="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-xs font-medium">
+                      <i class="fas fa-plus mr-1"></i>사진 추가
+                    </button>
                   </div>
-                  ${data.actual_amount ? `
-                    <div class="mt-3 text-sm">
-                      <span class="text-gray-600">실제 구매 금액:</span>
-                      <span class="ml-2 font-bold text-green-600">₩${parseFloat(data.actual_amount).toLocaleString('ko-KR')}</span>
+                  ${(data.purchase_photos || []).length > 0 ? `
+                    <div class="grid grid-cols-3 gap-2">
+                      ${(data.purchase_photos || []).map((p, idx) => `
+                        <div class="relative group">
+                          <img src="${p.photo_url}" class="w-full h-32 object-cover rounded-lg cursor-pointer hover:opacity-80" onclick="window.open('${p.photo_url}', '_blank')">
+                          <button onclick="app.deleteInspectionPhoto('${data.id}', '${p.id}')" class="absolute top-1 right-1 w-6 h-6 bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity text-xs">
+                            <i class="fas fa-times"></i>
+                          </button>
+                        </div>
+                      `).join('')}
                     </div>
-                  ` : ''}
+                    ${data.actual_amount ? `
+                      <div class="mt-3 text-sm">
+                        <span class="text-gray-600">실제 구매 금액:</span>
+                        <span class="ml-2 font-bold text-green-600">₩${parseFloat(data.actual_amount).toLocaleString('ko-KR')}</span>
+                      </div>
+                    ` : ''}
+                  ` : `
+                    <div class="bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                      <i class="fas fa-images text-gray-400 text-3xl mb-2"></i>
+                      <p class="text-sm text-gray-500 mb-3">검수 사진이 없습니다</p>
+                      <button onclick="app.openPhotoUploadModal('${data.id}')" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
+                        <i class="fas fa-camera mr-2"></i>검수 사진 추가
+                      </button>
+                    </div>
+                  `}
                 </div>
               ` : ''}
             </div>
@@ -8091,7 +8090,7 @@
           } else if (data.status === 'approved') {
             actionButtons = `
               <div class="flex-1 text-center text-sm text-gray-600">
-                <i class="fas fa-hourglass-half mr-2"></i>검수 대기 중 (물품 수령 후 QR 스캔 필요)
+                <i class="fas fa-check-circle mr-2"></i>승인 완료 (검수 사진 추가 가능)
               </div>
             `;
           }
@@ -8111,24 +8110,6 @@
           actions.innerHTML = actionButtons;
           
           document.getElementById('purchase-detail-modal').classList.remove('hidden');
-          
-          // QR 코드 렌더링
-          if (data.status === 'approved' && data.inspection_qr) {
-            setTimeout(() => {
-              const qrContainer = document.getElementById(`inspection-qr-${data.id}`);
-              if (qrContainer && window.QRCode) {
-                qrContainer.innerHTML = '';
-                new QRCode(qrContainer, {
-                  text: `${window.location.origin}/purchase-inspection.html?qr=${data.inspection_qr}`,
-                  width: 128,
-                  height: 128,
-                  colorDark: '#059669',
-                  colorLight: '#ffffff',
-                  correctLevel: QRCode.CorrectLevel.H
-                });
-              }
-            }, 100);
-          }
         } catch (err) {
           console.error('❌ 구매 요청 상세 로드 실패:', err);
           alert('구매 요청 상세 로드 실패');
@@ -8138,6 +8119,168 @@
       // 구매 요청 상세 모달 닫기
       app.closePurchaseDetailModal = function() {
         document.getElementById('purchase-detail-modal').classList.add('hidden');
+      };
+      
+      // ==================== 검수 사진 업로드 ====================
+      
+      let currentPurchaseIdForPhoto = null;
+      
+      // 사진 업로드 모달 열기
+      app.openPhotoUploadModal = function(purchaseId) {
+        currentPurchaseIdForPhoto = purchaseId;
+        document.getElementById('photo-upload-modal').classList.remove('hidden');
+        document.getElementById('inspection-photo-input').value = '';
+        document.getElementById('actual-amount-input').value = '';
+        document.getElementById('photo-preview-container').classList.add('hidden');
+        document.getElementById('photo-preview-container').innerHTML = '';
+      };
+      
+      // 사진 업로드 모달 닫기
+      app.closePhotoUploadModal = function() {
+        document.getElementById('photo-upload-modal').classList.add('hidden');
+        currentPurchaseIdForPhoto = null;
+      };
+      
+      // 검수 사진 업로드
+      app.uploadInspectionPhotos = async function() {
+        try {
+          if (!currentPurchaseIdForPhoto) {
+            alert('구매 요청 ID가 없습니다');
+            return;
+          }
+          
+          const fileInput = document.getElementById('inspection-photo-input');
+          const files = fileInput.files;
+          
+          if (files.length === 0) {
+            alert('사진을 선택해주세요');
+            return;
+          }
+          
+          if (files.length > 10) {
+            alert('최대 10장까지 업로드 가능합니다');
+            return;
+          }
+          
+          const actualAmount = document.getElementById('actual-amount-input').value;
+          
+          // 로딩 표시
+          const uploadBtn = event.target;
+          uploadBtn.disabled = true;
+          uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>업로드 중...';
+          
+          // 각 파일을 순차적으로 업로드
+          for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            
+            // 파일을 Base64로 변환
+            const base64 = await new Promise((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onload = (e) => resolve(e.target.result);
+              reader.onerror = reject;
+              reader.readAsDataURL(file);
+            });
+            
+            // Supabase Storage에 업로드
+            const fileName = `${Date.now()}_${i}_${file.name}`;
+            const { data: uploadData, error: uploadError } = await supabase.storage
+              .from('purchase-photos')
+              .upload(`${currentPurchaseIdForPhoto}/${fileName}`, file, {
+                contentType: file.type,
+                upsert: false
+              });
+            
+            if (uploadError) {
+              console.error('파일 업로드 실패:', uploadError);
+              continue;
+            }
+            
+            // 공개 URL 가져오기
+            const { data: urlData } = supabase.storage
+              .from('purchase-photos')
+              .getPublicUrl(`${currentPurchaseIdForPhoto}/${fileName}`);
+            
+            // purchase_photos 테이블에 기록 추가
+            const { error: insertError } = await supabase
+              .from('purchase_photos')
+              .insert({
+                purchase_request_id: currentPurchaseIdForPhoto,
+                photo_url: urlData.publicUrl,
+                uploaded_by: currentUser.id
+              });
+            
+            if (insertError) {
+              console.error('사진 정보 저장 실패:', insertError);
+            }
+          }
+          
+          // 실제 구매 금액 업데이트 (입력된 경우)
+          if (actualAmount && parseFloat(actualAmount) > 0) {
+            await supabase
+              .from('purchase_requests')
+              .update({ actual_amount: parseFloat(actualAmount) })
+              .eq('id', currentPurchaseIdForPhoto);
+          }
+          
+          alert('✅ 검수 사진이 성공적으로 업로드되었습니다');
+          
+          // 모달 닫기 및 상세 페이지 새로고침
+          this.closePhotoUploadModal();
+          await this.showPurchaseDetail(currentPurchaseIdForPhoto);
+          
+        } catch (err) {
+          console.error('❌ 사진 업로드 실패:', err);
+          alert('사진 업로드 중 오류가 발생했습니다: ' + err.message);
+        } finally {
+          // 버튼 원상복구
+          const uploadBtn = document.querySelector('#photo-upload-modal button[onclick*="uploadInspectionPhotos"]');
+          if (uploadBtn) {
+            uploadBtn.disabled = false;
+            uploadBtn.innerHTML = '<i class="fas fa-upload mr-2"></i>업로드';
+          }
+        }
+      };
+      
+      // 검수 사진 삭제
+      app.deleteInspectionPhoto = async function(purchaseId, photoId) {
+        if (!confirm('이 사진을 삭제하시겠습니까?')) return;
+        
+        try {
+          // 사진 정보 가져오기
+          const { data: photo, error: fetchError } = await supabase
+            .from('purchase_photos')
+            .select('photo_url')
+            .eq('id', photoId)
+            .single();
+          
+          if (fetchError) throw fetchError;
+          
+          // Storage에서 파일 삭제
+          const urlParts = photo.photo_url.split('/');
+          const fileName = urlParts[urlParts.length - 1];
+          const filePath = `${purchaseId}/${fileName}`;
+          
+          await supabase.storage
+            .from('purchase-photos')
+            .remove([filePath]);
+          
+          // 데이터베이스에서 레코드 삭제
+          const { error: deleteError } = await supabase
+            .from('purchase_photos')
+            .delete()
+            .eq('id', photoId);
+          
+          if (deleteError) throw deleteError;
+          
+          alert('✅ 사진이 삭제되었습니다');
+          
+          // 상세 페이지 새로고침
+          await this.showPurchaseDetail(purchaseId);
+          
+        } catch (err) {
+          console.error('❌ 사진 삭제 실패:', err);
+          alert('사진 삭제 중 오류가 발생했습니다: ' + err.message);
+        }
       };
       
       // ==================== 구매 요청 추출 (Excel/PDF) ====================
@@ -8626,96 +8769,23 @@
       
       // ==================== 구매 요청 ====================
       
-      // QR 코드 다운로드
-      app.downloadInspectionQR = function(purchaseId, qrCode) {
-        try {
-          const qrContainer = document.getElementById(`inspection-qr-${purchaseId}`);
-          if (!qrContainer) {
-            alert('QR 코드를 찾을 수 없습니다');
-            return;
-          }
-          
-          const canvas = qrContainer.querySelector('canvas');
-          if (!canvas) {
-            alert('QR 코드가 아직 생성되지 않았습니다');
-            return;
-          }
-          
-          canvas.toBlob(blob => {
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `구매요청_검수QR_${qrCode}.png`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            alert('✅ QR 코드가 다운로드되었습니다');
-          });
-        } catch (err) {
-          console.error('❌ QR 다운로드 실패:', err);
-          alert('QR 코드 다운로드 실패');
-        }
-      };
-      
-      // 검수 링크 복사
-      app.copyInspectionLink = function(qrCode) {
-        const link = `${window.location.origin}/purchase-inspection.html?qr=${qrCode}`;
-        
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-          navigator.clipboard.writeText(link)
-            .then(() => {
-              alert('✅ 검수 링크가 복사되었습니다!\n\n' + link);
-            })
-            .catch(err => {
-              console.error('❌ 링크 복사 실패:', err);
-              this.fallbackCopyLink(link);
-            });
-        } else {
-          this.fallbackCopyLink(link);
-        }
-      };
-      
-      // 링크 복사 fallback
-      app.fallbackCopyLink = function(link) {
-        const textarea = document.createElement('textarea');
-        textarea.value = link;
-        textarea.style.position = 'fixed';
-        textarea.style.opacity = '0';
-        document.body.appendChild(textarea);
-        textarea.select();
-        
-        try {
-          document.execCommand('copy');
-          alert('✅ 검수 링크가 복사되었습니다!\n\n' + link);
-        } catch (err) {
-          alert('링크 복사 실패. 수동으로 복사하세요:\n\n' + link);
-        }
-        
-        document.body.removeChild(textarea);
-      };
-      
       // 구매 요청 승인
       app.approvePurchase = async function(purchaseId) {
         if (!confirm('이 구매 요청을 승인하시겠습니까?')) return;
         
         try {
-          // 검수 전용 QR 코드 생성 (UUID)
-          const inspectionQR = 'INS-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
-          
           const { error } = await this.sb
             .from('purchases')
             .update({
               status: 'approved',
               approver_name: this.currentAdmin.name || '관리자',
-              approval_time: new Date().toISOString(),
-              inspection_qr: inspectionQR
+              approval_time: new Date().toISOString()
             })
             .eq('id', purchaseId);
           
           if (error) throw error;
           
-          alert('✅ 구매 요청이 승인되었습니다.\n물품 도착 시 검수 QR을 사용하세요.');
+          alert('✅ 구매 요청이 승인되었습니다.\n검수 사진을 추가해주세요.');
           this.closePurchaseDetailModal();
           this.loadPurchases();
           this.loadPurchaseDashboard();
@@ -9003,6 +9073,44 @@
 
         <div id="purchase-detail-actions" class="flex gap-3 p-6 border-t bg-gray-50">
           <!-- 액션 버튼들이 여기에 동적으로 로드됩니다 -->
+        </div>
+      </div>
+    </div>
+
+    <!-- 검수 사진 업로드 모달 -->
+    <div id="photo-upload-modal" class="fixed inset-0 z-50 hidden bg-black/50 flex items-center justify-center p-4">
+      <div class="bg-white rounded-2xl max-w-2xl w-full shadow-2xl">
+        <div class="flex justify-between items-center p-6 border-b">
+          <h3 class="text-xl font-bold text-gray-800">
+            <i class="fas fa-camera mr-2 text-blue-600"></i>검수 사진 추가
+          </h3>
+          <button onclick="app.closePhotoUploadModal()" class="text-gray-400 hover:text-gray-600 text-2xl">×</button>
+        </div>
+        
+        <div class="p-6 space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">검수 사진</label>
+            <input type="file" id="inspection-photo-input" accept="image/*" multiple class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+            <p class="text-xs text-gray-500 mt-1">최대 10장까지 업로드 가능합니다</p>
+          </div>
+          
+          <div id="photo-preview-container" class="grid grid-cols-3 gap-2 hidden">
+            <!-- 사진 미리보기가 여기에 표시됩니다 -->
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">실제 구매 금액 (선택)</label>
+            <input type="number" id="actual-amount-input" placeholder="₩0" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+          </div>
+        </div>
+
+        <div class="flex gap-3 p-6 border-t bg-gray-50">
+          <button onclick="app.uploadInspectionPhotos()" class="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
+            <i class="fas fa-upload mr-2"></i>업로드
+          </button>
+          <button onclick="app.closePhotoUploadModal()" class="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium">
+            취소
+          </button>
         </div>
       </div>
     </div>
