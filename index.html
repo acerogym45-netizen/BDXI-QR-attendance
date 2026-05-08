@@ -8368,32 +8368,33 @@
         (data.purchase_photos || []).forEach((photo, idx) => {
           const item = data.purchase_items[idx] || {};
           itemsHTML += `
-            <div style="background: white; border: 1px solid #e0e0e0; border-radius: 4px; padding: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.04); break-inside: avoid;">
-              <div style="display: flex; align-items: center; gap: 4px; margin-bottom: 4px; padding-bottom: 3px; border-bottom: 1px solid #e8f5e9;">
-                <div style="min-width: 18px; height: 18px; background: linear-gradient(135deg, #1a5e3f 0%, #2d7a4f 100%); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 800;">
+            <div style="background: white; border: 1px solid #e0e0e0; border-radius: 4px; padding: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.04); break-inside: avoid; display: flex; flex-direction: column; height: 100%;">
+              <!-- 헤더: 번호 + 물품명 + 카테고리 -->
+              <div style="display: flex; align-items: flex-start; gap: 6px; margin-bottom: 6px; padding-bottom: 5px; border-bottom: 1px solid #e8f5e9;">
+                <div style="min-width: 22px; height: 22px; background: linear-gradient(135deg, #1a5e3f 0%, #2d7a4f 100%); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; flex-shrink: 0;">
                   ${idx + 1}
                 </div>
-                <div style="flex: 1; min-width: 0;">
-                  <h3 style="font-size: 10px; font-weight: 700; color: #212121; margin: 0; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                <div style="flex: 1; min-width: 0; overflow: hidden;">
+                  <h3 style="font-size: 12px; font-weight: 700; color: #212121; margin: 0 0 2px 0; line-height: 1.3; word-wrap: break-word; overflow-wrap: break-word;">
                     ${item.item_name || '물품명 없음'}
                   </h3>
-                  <p style="font-size: 8px; color: #757575; margin: 0; font-weight: 500;">
+                  <p style="font-size: 9px; color: #757575; margin: 0; font-weight: 500; line-height: 1.2;">
                     ${item.category || '-'}
                   </p>
                 </div>
               </div>
               
-              <!-- 검수 사진 -->
-              <div style="margin: 4px 0; text-align: center;">
-                <img src="${photo.photo_url}" style="width: 100%; height: 100px; object-fit: cover; border: 1px solid #e0e0e0; border-radius: 3px;" crossorigin="anonymous">
+              <!-- 검수 사진 (중단, 높이 확대) -->
+              <div style="flex: 1; display: flex; align-items: center; justify-content: center; margin: 6px 0; overflow: hidden;">
+                <img src="${photo.photo_url}" style="width: 100%; height: 140px; object-fit: cover; border: 1px solid #e0e0e0; border-radius: 3px;" crossorigin="anonymous">
               </div>
               
-              <!-- 물품 정보 2줄 -->
-              <div style="margin-top: 4px; padding: 4px; background: #f5f5f5; border-radius: 3px; border-left: 2px solid #1a5e3f;">
-                <p style="font-size: 8px; font-weight: 700; color: #1a5e3f; margin: 0 0 2px 0;">
+              <!-- 물품 정보 (하단, 폰트 확대) -->
+              <div style="margin-top: 6px; padding: 6px; background: #f5f5f5; border-radius: 3px; border-left: 2px solid #1a5e3f;">
+                <p style="font-size: 10px; font-weight: 700; color: #1a5e3f; margin: 0 0 3px 0; line-height: 1.3;">
                   ${item.item_name || '-'}
                 </p>
-                <p style="font-size: 7px; font-weight: 600; color: #424242; margin: 0; line-height: 1.3;">
+                <p style="font-size: 9px; font-weight: 600; color: #424242; margin: 0; line-height: 1.4;">
                   수량: ${item.quantity || '-'} | 단가: ${item.unit_price ? '₩' + parseFloat(item.unit_price).toLocaleString('ko-KR') : '-'} | 총액: ${item.quantity && item.unit_price ? '₩' + (item.quantity * parseFloat(item.unit_price)).toLocaleString('ko-KR') : '-'}
                 </p>
               </div>
