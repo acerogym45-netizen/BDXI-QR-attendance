@@ -8163,7 +8163,7 @@
           
           // 기본 정보 시트
           const basicInfo = [
-            ['구매 요청서'],
+            ['검수 조서'],
             [],
             ['기본 정보'],
             ['요청일', new Date(data.created_at).toLocaleString('ko-KR')],
@@ -8232,10 +8232,10 @@
             { wch: 50 }
           ];
           
-          XLSX.utils.book_append_sheet(wb, ws, '구매요청서');
+          XLSX.utils.book_append_sheet(wb, ws, '검수조서');
           
           // 파일 다운로드
-          const fileName = `구매요청_${data.requester_name}_${new Date().toISOString().split('T')[0]}.xlsx`;
+          const fileName = `검수조서_${data.requester_name}_${new Date().toISOString().split('T')[0]}.xlsx`;
           XLSX.writeFile(wb, fileName);
           
           alert('✅ Excel 파일이 다운로드되었습니다');
@@ -8349,7 +8349,7 @@
           document.body.removeChild(loadingMsg);
           
           // PDF 저장
-          const fileName = `구매요청_${data.requester_name}_${new Date().toISOString().split('T')[0]}.pdf`;
+          const fileName = `검수조서_${data.requester_name}_${new Date().toISOString().split('T')[0]}.pdf`;
           pdf.save(fileName);
           
           alert('✅ PDF 파일이 다운로드되었습니다');
@@ -8419,7 +8419,7 @@
           <div style="font-family: 'Paperlogy', 'Noto Sans KR', sans-serif; background: white; padding: 30px;">
             <!-- 제목 -->
             <div style="text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 3px solid #1a5e3f;">
-              <h1 style="font-size: 32px; font-weight: 800; margin: 0 0 8px 0; color: #1a5e3f; letter-spacing: -1px;">구매 요청서</h1>
+              <h1 style="font-size: 40px; font-weight: 800; margin: 0 0 8px 0; color: #1a5e3f; letter-spacing: -1px;">검수 조서</h1>
               <p style="font-size: 14px; color: #757575; margin: 0; font-weight: 500;">${new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
             </div>
             
