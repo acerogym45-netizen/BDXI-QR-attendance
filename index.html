@@ -9678,7 +9678,15 @@
                   'fa-calculator': '🧮',
                   'fa-headset': '🎧',
                   'fa-clipboard-check': '✅',
-                  'fa-folder': '📁'
+                  'fa-folder': '📁',
+                  'fa-shield-alt': '🛡️',
+                  'fa-tools': '🔧',
+                  'fa-gavel': '⚖️',
+                  'fa-users': '👥',
+                  'fa-graduation-cap': '🎓',
+                  'fa-file-invoice-dollar': '💰',
+                  'fa-handshake': '🤝',
+                  'fa-certificate': '🏆'
                 };
                 const icon = iconMap[cat.icon] || '📁';
                 return `<option value="${cat.id}">${icon} ${cat.name}</option>`;
@@ -10238,22 +10246,75 @@
       // 카테고리 목록 렌더링
       app.renderCategoryList = function() {
         const container = document.getElementById('category-list');
-        container.innerHTML = this.documents.categories.map(cat => `
-          <div class="bg-white border rounded-lg p-4 flex items-center justify-between">
-            <div class="flex items-center gap-3">
-              <i class="fas ${cat.icon} text-2xl" style="color: ${this.getCategoryColor(cat.color)}"></i>
-              <div>
-                <h4 class="font-bold text-gray-800">${cat.name}</h4>
-                <p class="text-sm text-gray-600">${cat.description || ''}</p>
+        
+        if (!this.documents.categories || this.documents.categories.length === 0) {
+          container.innerHTML = `
+            <div class="bg-white border-2 border-dashed border-gray-300 rounded-lg p-8 text-center text-gray-500">
+              <i class="fas fa-tags text-4xl mb-3 text-gray-400"></i>
+              <p class="text-lg mb-2">등록된 카테고리가 없습니다</p>
+              <p class="text-sm">위의 "새 카테고리 추가" 버튼을 클릭하여 카테고리를 추가하세요.</p>
+            </div>
+          `;
+          return;
+        }
+        
+        // 이모지 매핑
+        const iconEmojiMap = {
+          'fa-folder': '📁',
+          'fa-file-contract': '📄',
+          'fa-bullhorn': '📢',
+          'fa-calculator': '🧮',
+          'fa-headset': '🎧',
+          'fa-clipboard-check': '✅',
+          'fa-shield-alt': '🛡️',
+          'fa-tools': '🔧',
+          'fa-gavel': '⚖️',
+          'fa-users': '👥',
+          'fa-graduation-cap': '🎓',
+          'fa-file-invoice-dollar': '💰',
+          'fa-handshake': '🤝',
+          'fa-certificate': '🏆'
+        };
+        
+        container.innerHTML = this.documents.categories.map(cat => {
+          const docCount = this.documents.list.filter(d => d.category_id === cat.id).length;
+          const emoji = iconEmojiMap[cat.icon] || '📁';
+          
+          return `
+          <div class="bg-white border rounded-lg p-4 hover:shadow-md transition-shadow">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3 flex-1">
+                <div class="text-3xl">${emoji}</div>
+                <div class="flex-1">
+                  <div class="flex items-center gap-2">
+                    <h4 class="font-bold text-gray-800">${cat.name}</h4>
+                    <span class="text-xs px-2 py-1 rounded-full" style="background-color: ${this.getCategoryColor(cat.color)}20; color: ${this.getCategoryColor(cat.color)}">
+                      <i class="fas fa-circle mr-1" style="font-size: 6px"></i>${cat.color}
+                    </span>
+                  </div>
+                  <p class="text-sm text-gray-600 mt-1">${cat.description || '설명 없음'}</p>
+                  <p class="text-xs text-gray-400 mt-1">
+                    <i class="fas fa-sort mr-1"></i>순서: ${cat.display_order} 
+                    <span class="ml-3"><i class="fas fa-file mr-1"></i>${docCount}건</span>
+                  </p>
+                </div>
+              </div>
+              <div class="flex gap-2 ml-4">
+                <button onclick="app.editCategory('${cat.id}')" 
+                  class="px-3 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors text-sm font-medium"
+                  title="수정">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button onclick="app.deleteCategory('${cat.id}', '${cat.name}', ${docCount})" 
+                  class="px-3 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors text-sm font-medium"
+                  title="삭제">
+                  <i class="fas fa-trash"></i>
+                </button>
               </div>
             </div>
-            <div class="flex gap-2">
-              <span class="text-sm px-3 py-1 bg-gray-100 text-gray-700 rounded">
-                ${this.documents.list.filter(d => d.category_id === cat.id).length}건
-              </span>
-            </div>
           </div>
-        `).join('');
+        `;
+        }).join('');
       };
       
       // 카테고리 색상
@@ -10264,6 +10325,9 @@
           yellow: '#f59e0b',
           red: '#ef4444',
           purple: '#a855f7',
+          indigo: '#6366f1',
+          pink: '#ec4899',
+          orange: '#f97316',
           gray: '#6b7280'
         };
         return colorMap[color] || colorMap.gray;
@@ -10272,23 +10336,163 @@
       // ==================== Phase 5-18: 추가 기능 ====================
       
       // Phase 5: 카테고리 CRUD 완성
-      app.renderCategoryList = function() {
-        const container = document.getElementById('category-list');
-        container.innerHTML = this.documents.categories.map(cat => `
-          <div class="bg-white border-2 rounded-lg p-4 flex items-center justify-between hover:shadow-md transition-shadow">
-            <div class="flex items-center gap-3">
-              <i class="fas ${cat.icon} text-3xl" style="color: ${this.getCategoryColor(cat.color)}"></i>
-              <div>
-                <h4 class="font-bold text-gray-800 text-lg">${cat.name}</h4>
-                <p class="text-sm text-gray-600">${cat.description || '설명 없음'}</p>
-                <span class="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded mt-1 inline-block">
-                  ${this.documents.list.filter(d => d.category_id === cat.id).length}건의 서류
-                </span>
-              </div>
-            </div>
-          </div>
-        `).join('');
+      
+      // 카테고리 폼 토글
+      app.toggleCategoryForm = function() {
+        const formContainer = document.getElementById('category-form-container');
+        const isHidden = formContainer.classList.contains('hidden');
+        
+        if (isHidden) {
+          // 폼 초기화 및 표시
+          this.resetCategoryForm();
+          formContainer.classList.remove('hidden');
+          document.getElementById('form-title').textContent = '새 카테고리 추가';
+          document.getElementById('new-category-btn').innerHTML = '<i class="fas fa-times mr-2"></i>취소';
+        } else {
+          // 폼 숨기기
+          formContainer.classList.add('hidden');
+          document.getElementById('new-category-btn').innerHTML = '<i class="fas fa-plus mr-2"></i>새 카테고리 추가';
+        }
       };
+      
+      // 카테고리 폼 초기화
+      app.resetCategoryForm = function() {
+        document.getElementById('edit-category-id').value = '';
+        document.getElementById('category-name').value = '';
+        document.getElementById('category-description').value = '';
+        document.getElementById('category-icon').value = 'fa-folder';
+        document.getElementById('category-color').value = 'blue';
+        document.getElementById('category-order').value = '0';
+      };
+      
+      // 카테고리 폼 취소
+      app.cancelCategoryForm = function() {
+        const formContainer = document.getElementById('category-form-container');
+        formContainer.classList.add('hidden');
+        document.getElementById('new-category-btn').innerHTML = '<i class="fas fa-plus mr-2"></i>새 카테고리 추가';
+        this.resetCategoryForm();
+      };
+      
+      // 카테고리 폼 제출
+      app.submitCategoryForm = async function(event) {
+        event.preventDefault();
+        
+        const editId = document.getElementById('edit-category-id').value;
+        const name = document.getElementById('category-name').value.trim();
+        const description = document.getElementById('category-description').value.trim();
+        const icon = document.getElementById('category-icon').value;
+        const color = document.getElementById('category-color').value;
+        const displayOrder = parseInt(document.getElementById('category-order').value) || 0;
+        
+        if (!name) {
+          alert('카테고리 이름을 입력하세요.');
+          return;
+        }
+        
+        try {
+          const categoryData = {
+            name,
+            description,
+            icon,
+            color,
+            display_order: displayOrder,
+            is_active: true
+          };
+          
+          if (editId) {
+            // 수정
+            const { error } = await this.sb
+              .from('document_categories')
+              .update(categoryData)
+              .eq('id', editId);
+            
+            if (error) throw error;
+            console.log('✅ 카테고리 수정 완료');
+            alert('카테고리가 수정되었습니다.');
+          } else {
+            // 생성
+            const { error } = await this.sb
+              .from('document_categories')
+              .insert([categoryData]);
+            
+            if (error) throw error;
+            console.log('✅ 카테고리 생성 완료');
+            alert('카테고리가 추가되었습니다.');
+          }
+          
+          // 목록 새로고침
+          await this.loadDocumentCategories();
+          this.renderCategoryList();
+          this.cancelCategoryForm();
+          
+        } catch (err) {
+          console.error('❌ 카테고리 저장 실패:', err);
+          alert('카테고리 저장에 실패했습니다: ' + err.message);
+        }
+      };
+      
+      // 카테고리 수정
+      app.editCategory = function(categoryId) {
+        const category = this.documents.categories.find(cat => cat.id === categoryId);
+        if (!category) return;
+        
+        // 폼 표시 및 데이터 채우기
+        const formContainer = document.getElementById('category-form-container');
+        formContainer.classList.remove('hidden');
+        document.getElementById('form-title').textContent = '카테고리 수정';
+        document.getElementById('new-category-btn').innerHTML = '<i class="fas fa-times mr-2"></i>취소';
+        
+        document.getElementById('edit-category-id').value = category.id;
+        document.getElementById('category-name').value = category.name;
+        document.getElementById('category-description').value = category.description || '';
+        document.getElementById('category-icon').value = category.icon;
+        document.getElementById('category-color').value = category.color;
+        document.getElementById('category-order').value = category.display_order;
+        
+        // 폼으로 스크롤
+        formContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      };
+      
+      // 카테고리 삭제
+      app.deleteCategory = async function(categoryId, categoryName, docCount) {
+        if (docCount > 0) {
+          alert(`이 카테고리에 ${docCount}건의 서류가 있습니다.\n먼저 서류를 다른 카테고리로 이동하거나 삭제한 후 카테고리를 삭제할 수 있습니다.`);
+          return;
+        }
+        
+        const confirmed = confirm(`"${categoryName}" 카테고리를 삭제하시겠습니까?`);
+        if (!confirmed) return;
+        
+        try {
+          const { error } = await this.sb
+            .from('document_categories')
+            .delete()
+            .eq('id', categoryId);
+          
+          if (error) throw error;
+          
+          console.log('✅ 카테고리 삭제 완료');
+          alert('카테고리가 삭제되었습니다.');
+          
+          // 목록 새로고침
+          await this.loadDocumentCategories();
+          this.renderCategoryList();
+          
+        } catch (err) {
+          console.error('❌ 카테고리 삭제 실패:', err);
+          alert('카테고리 삭제에 실패했습니다: ' + err.message);
+        }
+      };
+      
+      // 폼 제출 이벤트 리스너
+      document.addEventListener('DOMContentLoaded', function() {
+        const categoryForm = document.getElementById('category-form');
+        if (categoryForm) {
+          categoryForm.addEventListener('submit', function(e) {
+            app.submitCategoryForm(e);
+          });
+        }
+      });
       
       // Phase 9: 즐겨찾기 토글
       app.toggleFavorite = async function(documentId) {
@@ -10896,6 +11100,104 @@
         </div>
 
         <div class="p-6">
+          <!-- 새 카테고리 추가 버튼 -->
+          <div class="mb-4">
+            <button onclick="app.toggleCategoryForm()" id="new-category-btn" class="w-full px-4 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all font-medium shadow-lg">
+              <i class="fas fa-plus mr-2"></i>새 카테고리 추가
+            </button>
+          </div>
+
+          <!-- 카테고리 생성/수정 폼 -->
+          <div id="category-form-container" class="hidden mb-6 bg-gradient-to-br from-purple-50 to-indigo-50 p-6 rounded-xl border-2 border-purple-200">
+            <h4 class="text-lg font-bold text-gray-800 mb-4">
+              <i class="fas fa-edit mr-2 text-purple-600"></i>
+              <span id="form-title">새 카테고리 추가</span>
+            </h4>
+            <form id="category-form" class="space-y-4">
+              <input type="hidden" id="edit-category-id" value="">
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                  <i class="fas fa-tag mr-1"></i>카테고리 이름 <span class="text-red-500">*</span>
+                </label>
+                <input type="text" id="category-name" required 
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" 
+                  placeholder="예: 안전관리">
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                  <i class="fas fa-align-left mr-1"></i>설명
+                </label>
+                <textarea id="category-description" rows="2" 
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" 
+                  placeholder="카테고리에 대한 간단한 설명"></textarea>
+              </div>
+
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">
+                    <i class="fas fa-icons mr-1"></i>아이콘
+                  </label>
+                  <select id="category-icon" 
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                    <option value="fa-folder">📁 폴더</option>
+                    <option value="fa-file-contract">📄 계약서</option>
+                    <option value="fa-bullhorn">📢 공지</option>
+                    <option value="fa-calculator">🧮 회계</option>
+                    <option value="fa-headset">🎧 민원</option>
+                    <option value="fa-clipboard-check">✅ 점검</option>
+                    <option value="fa-shield-alt">🛡️ 안전</option>
+                    <option value="fa-tools">🔧 시설</option>
+                    <option value="fa-gavel">⚖️ 법률</option>
+                    <option value="fa-users">👥 인사</option>
+                    <option value="fa-graduation-cap">🎓 교육</option>
+                    <option value="fa-file-invoice-dollar">💰 재무</option>
+                    <option value="fa-handshake">🤝 협력</option>
+                    <option value="fa-certificate">🏆 인증</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">
+                    <i class="fas fa-palette mr-1"></i>색상
+                  </label>
+                  <select id="category-color" 
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                    <option value="blue" style="color: #3b82f6">🔵 파랑</option>
+                    <option value="green" style="color: #10b981">🟢 초록</option>
+                    <option value="yellow" style="color: #f59e0b">🟡 노랑</option>
+                    <option value="red" style="color: #ef4444">🔴 빨강</option>
+                    <option value="purple" style="color: #a855f7">🟣 보라</option>
+                    <option value="indigo" style="color: #6366f1">🔵 남색</option>
+                    <option value="pink" style="color: #ec4899">🩷 분홍</option>
+                    <option value="orange" style="color: #f97316">🟠 주황</option>
+                    <option value="gray" style="color: #6b7280">⚫ 회색</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                  <i class="fas fa-sort-numeric-up mr-1"></i>정렬 순서
+                </label>
+                <input type="number" id="category-order" value="0" min="0" 
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" 
+                  placeholder="작은 숫자가 먼저 표시됩니다">
+              </div>
+
+              <div class="flex gap-3 pt-2">
+                <button type="submit" class="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium">
+                  <i class="fas fa-save mr-2"></i>저장
+                </button>
+                <button type="button" onclick="app.cancelCategoryForm()" class="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium">
+                  <i class="fas fa-times mr-2"></i>취소
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- 카테고리 목록 -->
           <div id="category-list" class="space-y-3">
             <!-- 동적으로 생성됩니다 -->
           </div>
