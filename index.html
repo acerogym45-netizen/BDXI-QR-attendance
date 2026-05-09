@@ -9519,14 +9519,12 @@
           console.log('📄 서류 목록 로드 중...');
           
           const { data, error } = await this.sb
-            .from('document_templates')
+            .from('documents')
             .select(`
               *,
               document_categories(name, icon, color)
             `)
             .eq('is_active', true)
-            .eq('is_latest', true)
-            .order('is_pinned', { ascending: false })
             .order('created_at', { ascending: false });
           
           if (error) throw error;
@@ -10000,23 +9998,15 @@
             title,
             description: description || null,
             category_id: categoryId,
-            tags: tags.length > 0 ? tags : null,
             file_url: urlData.publicUrl,
             file_name: file.name,
             file_size: file.size,
             file_type: fileExt,
-            mime_type: file.type,
-            version,
-            version_notes: versionNotes,
-            parent_document_id: parentId,
-            is_pinned: isPinned,
-            is_featured: isFeatured,
-            notify_on_update: notifyOnUpdate,
-            uploaded_by: this.currentEmployee?.id
+            uploaded_by: this.currentEmployee?.name || 'Anonymous'
           };
           
           const { data: dbData, error: dbError } = await this.sb
-            .from('document_templates')
+            .from('documents')
             .insert([docData])
             .select()
             .single();
@@ -10212,7 +10202,7 @@
           
           // 1. DB에서 삭제 (is_active = false)
           const { error } = await this.sb
-            .from('document_templates')
+            .from('documents')
             .update({ is_active: false })
             .eq('id', documentId);
           
@@ -10502,8 +10492,7 @@
             .from('document_favorites')
             .select('id')
             .eq('document_id', documentId)
-            .eq('apartment_id', this.currentApartment.id)
-            .eq('employee_id', this.currentEmployee?.id)
+            .eq('user_id', this.currentEmployee?.id || 'anonymous')
             .single();
           
           if (existing) {
@@ -10519,8 +10508,7 @@
               .from('document_favorites')
               .insert([{
                 document_id: documentId,
-                apartment_id: this.currentApartment.id,
-                employee_id: this.currentEmployee?.id
+                user_id: this.currentEmployee?.id || 'anonymous'
               }]);
             console.log('✅ 즐겨찾기 추가');
           }
@@ -10536,10 +10524,10 @@
       app.showVersionHistory = async function(documentId) {
         try {
           const { data, error } = await this.sb
-            .from('document_templates')
+            .from('document_versions')
             .select('*')
-            .or(`id.eq.${documentId},parent_document_id.eq.${documentId}`)
-            .order('created_at', { ascending: false });
+            .eq('document_id', documentId)
+            .order('version_number', { ascending: false });
           
           if (error) throw error;
           
