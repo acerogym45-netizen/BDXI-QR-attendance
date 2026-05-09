@@ -9621,11 +9621,9 @@
                         <button onclick="event.stopPropagation(); app.downloadDocument('${doc.id}')" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium whitespace-nowrap">
                           <i class="fas fa-download mr-1"></i>다운로드
                         </button>
-                        ${this.currentEmployee?.position === 'MASTER' ? `
                         <button onclick="event.stopPropagation(); app.deleteDocument('${doc.id}')" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium whitespace-nowrap">
                           <i class="fas fa-trash mr-1"></i>삭제
                         </button>
-                        ` : ''}
                       </div>
                     </div>
                   </div>
@@ -10256,9 +10254,8 @@
           document.getElementById('detail-download-btn').onclick = () => this.downloadDocument(documentId);
           document.getElementById('detail-delete-btn').onclick = () => this.deleteDocument(documentId);
           
-          // 관리자만 삭제 버튼 표시
-          const isAdmin = this.currentEmployee?.position === 'MASTER';
-          document.getElementById('detail-delete-btn').style.display = isAdmin ? 'inline-flex' : 'none';
+          // 삭제 버튼은 모든 사용자에게 표시 (클릭 시 마스터 비밀번호 확인)
+          document.getElementById('detail-delete-btn').style.display = 'inline-flex';
           
         } catch (err) {
           console.error('❌ 문서 상세 표시 실패:', err);
@@ -10287,9 +10284,35 @@
         alert('서류 수정 기능은 다음 업데이트에서 제공됩니다.');
       };
       
+      // 마스터 비밀번호 확인
+      app.verifyMasterPassword = function() {
+        const password = prompt('🔐 마스터 관리자 비밀번호를 입력하세요:\n\n※ 문서 삭제는 마스터 권한이 필요합니다');
+        
+        if (!password) {
+          return false; // 취소
+        }
+        
+        // 마스터 비밀번호 확인 (Supabase에서 가져오기)
+        const MASTER_PASSWORD = 'kw1234'; // TODO: 실제로는 환경변수나 DB에서 가져와야 함
+        
+        if (password === MASTER_PASSWORD) {
+          console.log('✅ 마스터 비밀번호 확인 성공');
+          return true;
+        } else {
+          alert('❌ 비밀번호가 틀렸습니다.\n마스터 관리자만 문서를 삭제할 수 있습니다.');
+          return false;
+        }
+      };
+      
       // 서류 삭제
       app.deleteDocument = async function(documentId) {
+        // 1단계: 삭제 의사 확인
         if (!confirm('정말로 이 서류를 삭제하시겠습니까?\n삭제된 서류는 복구할 수 없습니다.')) {
+          return;
+        }
+        
+        // 2단계: 마스터 비밀번호 확인
+        if (!this.verifyMasterPassword()) {
           return;
         }
         
@@ -10297,7 +10320,9 @@
           const doc = this.documents.list.find(d => d.id === documentId);
           if (!doc) return;
           
-          // 1. DB에서 삭제 (is_active = false)
+          console.log('🗑️ 문서 삭제 시작:', doc.title);
+          
+          // 3단계: DB에서 삭제 (is_active = false)
           const { error } = await this.sb
             .from('documents')
             .update({ is_active: false })
@@ -10305,13 +10330,14 @@
           
           if (error) throw error;
           
-          alert('서류가 삭제되었습니다.');
+          console.log('✅ 문서 삭제 성공');
+          alert('✅ 서류가 삭제되었습니다.');
           this.closeDocumentDetailModal();
           await this.loadDocuments();
           
         } catch (err) {
           console.error('❌ 서류 삭제 실패:', err);
-          alert(`서류 삭제 실패: ${err.message}`);
+          alert(`❌ 서류 삭제 실패: ${err.message}`);
         }
       };
       
