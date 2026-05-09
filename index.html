@@ -9621,9 +9621,11 @@
                         <button onclick="event.stopPropagation(); app.downloadDocument('${doc.id}')" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium whitespace-nowrap">
                           <i class="fas fa-download mr-1"></i>다운로드
                         </button>
-                        <button onclick="event.stopPropagation(); app.editDocument('${doc.id}')" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium whitespace-nowrap">
-                          <i class="fas fa-edit mr-1"></i>수정
+                        ${this.currentEmployee?.position === 'MASTER' ? `
+                        <button onclick="event.stopPropagation(); app.deleteDocument('${doc.id}')" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium whitespace-nowrap">
+                          <i class="fas fa-trash mr-1"></i>삭제
                         </button>
+                        ` : ''}
                       </div>
                     </div>
                   </div>
@@ -10193,6 +10195,93 @@
         modal.classList.remove('flex');
       };
       
+      // 서류 상세 모달 표시
+      app.showDocumentDetail = async function(documentId) {
+        try {
+          const doc = this.documents.list.find(d => d.id === documentId);
+          if (!doc) {
+            console.error('문서를 찾을 수 없습니다:', documentId);
+            return;
+          }
+          
+          console.log('📄 문서 상세 표시:', doc.title);
+          
+          // 조회수 증가
+          await this.sb
+            .from('document_views')
+            .insert([{
+              document_id: documentId,
+              user_id: this.currentEmployee?.id || 'anonymous'
+            }]);
+          
+          // 모달 열기
+          const modal = document.getElementById('document-detail-modal');
+          modal.classList.remove('hidden');
+          modal.classList.add('flex');
+          
+          // 정보 표시
+          document.getElementById('detail-title').textContent = doc.title;
+          document.getElementById('detail-description').textContent = doc.description || '설명 없음';
+          document.getElementById('detail-category').textContent = doc.document_categories?.name || '미분류';
+          document.getElementById('detail-uploaded-by').textContent = doc.uploaded_by || 'Unknown';
+          document.getElementById('detail-created-at').textContent = new Date(doc.created_at).toLocaleString('ko-KR');
+          document.getElementById('detail-file-name').textContent = doc.file_name;
+          document.getElementById('detail-file-size').textContent = this.formatFileSize(doc.file_size);
+          document.getElementById('detail-downloads').textContent = doc.download_count || 0;
+          document.getElementById('detail-views').textContent = (doc.view_count || 0) + 1;
+          
+          // 미리보기 표시
+          const previewContainer = document.getElementById('detail-preview');
+          const fileExt = doc.file_type?.toLowerCase();
+          
+          if (fileExt === 'pdf') {
+            previewContainer.innerHTML = `
+              <iframe src="${doc.file_url}" class="w-full h-96 border rounded-lg"></iframe>
+            `;
+          } else if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExt)) {
+            previewContainer.innerHTML = `
+              <img src="${doc.file_url}" alt="${doc.title}" class="max-w-full h-auto mx-auto rounded-lg">
+            `;
+          } else {
+            previewContainer.innerHTML = `
+              <div class="text-center py-12 bg-gray-50 rounded-lg">
+                <i class="fas fa-file text-6xl text-gray-400 mb-4"></i>
+                <p class="text-gray-600">미리보기를 지원하지 않는 파일 형식입니다</p>
+                <p class="text-sm text-gray-500 mt-2">다운로드하여 확인해주세요</p>
+              </div>
+            `;
+          }
+          
+          // 버튼 설정
+          document.getElementById('detail-download-btn').onclick = () => this.downloadDocument(documentId);
+          document.getElementById('detail-delete-btn').onclick = () => this.deleteDocument(documentId);
+          
+          // 관리자만 삭제 버튼 표시
+          const isAdmin = this.currentEmployee?.position === 'MASTER';
+          document.getElementById('detail-delete-btn').style.display = isAdmin ? 'inline-flex' : 'none';
+          
+        } catch (err) {
+          console.error('❌ 문서 상세 표시 실패:', err);
+          alert(`문서를 불러오는데 실패했습니다: ${err.message}`);
+        }
+      };
+      
+      // 서류 상세 모달 닫기
+      app.closeDocumentDetailModal = function() {
+        const modal = document.getElementById('document-detail-modal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      };
+      
+      // 파일 크기 포맷
+      app.formatFileSize = function(bytes) {
+        if (!bytes) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+      };
+      
       // 서류 수정
       app.editDocument = function(documentId) {
         alert('서류 수정 기능은 다음 업데이트에서 제공됩니다.');
@@ -10218,7 +10307,7 @@
           
           alert('서류가 삭제되었습니다.');
           this.closeDocumentDetailModal();
-          this.refreshDocumentList();
+          await this.loadDocuments();
           
         } catch (err) {
           console.error('❌ 서류 삭제 실패:', err);
@@ -11071,11 +11160,56 @@
           </div>
         </div>
 
-        <div id="document-detail-content" class="p-6">
-          <!-- 동적으로 생성됩니다 -->
+        <div class="p-6 space-y-6">
+          <!-- 문서 미리보기 -->
+          <div id="detail-preview" class="bg-gray-50 rounded-lg p-4">
+            <!-- 미리보기가 여기에 표시됩니다 -->
+          </div>
+
+          <!-- 문서 정보 -->
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-600 mb-1">설명</label>
+              <p id="detail-description" class="text-gray-800">-</p>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-600 mb-1">카테고리</label>
+              <p id="detail-category" class="text-gray-800">-</p>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-600 mb-1">업로드한 사람</label>
+              <p id="detail-uploaded-by" class="text-gray-800">-</p>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-600 mb-1">업로드 날짜</label>
+              <p id="detail-created-at" class="text-gray-800">-</p>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-600 mb-1">파일명</label>
+              <p id="detail-file-name" class="text-gray-800 text-sm break-all">-</p>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-600 mb-1">파일 크기</label>
+              <p id="detail-file-size" class="text-gray-800">-</p>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-600 mb-1">다운로드 횟수</label>
+              <p id="detail-downloads" class="text-gray-800">0회</p>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-600 mb-1">조회 횟수</label>
+              <p id="detail-views" class="text-gray-800">0회</p>
+            </div>
+          </div>
         </div>
 
         <div class="sticky bottom-0 bg-gray-50 p-6 border-t rounded-b-2xl flex gap-3">
+          <button id="detail-download-btn" class="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
+            <i class="fas fa-download mr-2"></i>다운로드
+          </button>
+          <button id="detail-delete-btn" class="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium" style="display: none;">
+            <i class="fas fa-trash mr-2"></i>삭제
+          </button>
           <button onclick="app.closeDocumentDetailModal()" class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium">
             <i class="fas fa-times mr-2"></i>닫기
           </button>
