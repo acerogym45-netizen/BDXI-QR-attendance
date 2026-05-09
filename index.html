@@ -9670,9 +9670,19 @@
             const select = document.getElementById(selectId);
             if (select) {
               const currentValue = select.value;
-              const options = data.map(cat => 
-                `<option value="${cat.id}">${cat.icon ? `${cat.icon} ` : ''}${cat.name}</option>`
-              ).join('');
+              const options = data.map(cat => {
+                // Font Awesome 아이콘을 이모지로 변환
+                const iconMap = {
+                  'fa-file-contract': '📄',
+                  'fa-bullhorn': '📢',
+                  'fa-calculator': '🧮',
+                  'fa-headset': '🎧',
+                  'fa-clipboard-check': '✅',
+                  'fa-folder': '📁'
+                };
+                const icon = iconMap[cat.icon] || '📁';
+                return `<option value="${cat.id}">${icon} ${cat.name}</option>`;
+              }).join('');
               
               if (selectId === 'docs-filter-category') {
                 select.innerHTML = '<option value="all">전체 카테고리</option>' + options;
