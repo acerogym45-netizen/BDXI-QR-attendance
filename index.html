@@ -414,6 +414,9 @@
             <button onclick="app.switchTab('report')" class="nav-tab py-4 px-2 text-sm font-medium transition-all tab-inactive">
               <i class="fas fa-file-alt mr-2"></i>업무 일지
             </button>
+            <button onclick="app.switchTab('documents')" class="nav-tab py-4 px-2 text-sm font-medium transition-all tab-inactive">
+              <i class="fas fa-folder-open mr-2"></i>서류 관리
+            </button>
           </div>
         </div>
       </nav>
@@ -1475,6 +1478,115 @@
       
       <!-- 업무 항목 리스트 (숨김, 데이터만 저장) -->
       <div id="report-work-items" class="hidden"></div>
+    </div>
+
+    <!-- TAB: Documents Management (서류 관리) -->
+    <div id="tab-documents" class="tab-content hidden px-4 pt-4 pb-4">
+      <!-- 상단 통계 대시보드 -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div class="bg-gradient-to-br from-blue-50 to-indigo-50 p-4 rounded-xl shadow-sm border-2 border-blue-200">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm text-gray-600 mb-1">전체 서류</p>
+              <p class="text-3xl font-bold text-blue-600" id="docs-total-count">0</p>
+              <p class="text-xs text-gray-500 mt-1">건</p>
+            </div>
+            <div class="text-blue-400 text-4xl">
+              <i class="fas fa-file-alt"></i>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-gradient-to-br from-green-50 to-emerald-50 p-4 rounded-xl shadow-sm border-2 border-green-200">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm text-gray-600 mb-1">이번 달 업로드</p>
+              <p class="text-3xl font-bold text-green-600" id="docs-month-count">0</p>
+              <p class="text-xs text-gray-500 mt-1">건</p>
+            </div>
+            <div class="text-green-400 text-4xl">
+              <i class="fas fa-cloud-upload-alt"></i>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-gradient-to-br from-purple-50 to-pink-50 p-4 rounded-xl shadow-sm border-2 border-purple-200">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm text-gray-600 mb-1">총 다운로드</p>
+              <p class="text-3xl font-bold text-purple-600" id="docs-download-count">0</p>
+              <p class="text-xs text-gray-500 mt-1">회</p>
+            </div>
+            <div class="text-purple-400 text-4xl">
+              <i class="fas fa-download"></i>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-gradient-to-br from-orange-50 to-red-50 p-4 rounded-xl shadow-sm border-2 border-orange-200">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm text-gray-600 mb-1">카테고리</p>
+              <p class="text-3xl font-bold text-orange-600" id="docs-category-count">6</p>
+              <p class="text-xs text-gray-500 mt-1">개</p>
+            </div>
+            <div class="text-orange-400 text-4xl">
+              <i class="fas fa-folder"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 액션 버튼 -->
+      <div class="flex gap-3 mb-4">
+        <button onclick="app.openDocumentUploadModal()" class="px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg hover:from-blue-600 hover:to-indigo-700 transition-all shadow-md font-medium">
+          <i class="fas fa-cloud-upload-alt mr-2"></i>서류 업로드
+        </button>
+        <button onclick="app.refreshDocumentList()" class="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium">
+          <i class="fas fa-sync-alt mr-2"></i>새로고침
+        </button>
+        <button onclick="app.openCategoryManageModal()" class="px-6 py-3 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors font-medium">
+          <i class="fas fa-tags mr-2"></i>카테고리 관리
+        </button>
+      </div>
+
+      <!-- 검색 및 필터 -->
+      <div class="bg-white p-4 rounded-xl shadow-sm border mb-4">
+        <div class="flex flex-wrap gap-3">
+          <div class="flex-1 min-w-[200px]">
+            <input type="text" id="docs-search" placeholder="서류 제목, 설명, 태그 검색..." class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" onkeyup="app.searchDocuments()">
+          </div>
+          <select id="docs-filter-category" onchange="app.filterDocuments()" class="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+            <option value="all">전체 카테고리</option>
+            <!-- 동적 생성 -->
+          </select>
+          <select id="docs-filter-sort" onchange="app.filterDocuments()" class="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+            <option value="latest">최신순</option>
+            <option value="popular">인기순 (다운로드)</option>
+            <option value="views">조회순</option>
+            <option value="name">이름순</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- 서류 목록 -->
+      <div id="documents-list" class="space-y-4">
+        <!-- 로딩 상태 -->
+        <div id="docs-loading" class="text-center py-20">
+          <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          <p class="mt-4 text-gray-600">서류 목록을 불러오는 중...</p>
+        </div>
+      </div>
+
+      <!-- 빈 상태 -->
+      <div id="docs-empty" class="hidden bg-gray-50 border-2 border-dashed border-gray-300 rounded-xl p-12 text-center">
+        <i class="fas fa-folder-open text-gray-400 text-6xl mb-4"></i>
+        <h3 class="text-xl font-bold text-gray-700 mb-2">등록된 서류가 없습니다</h3>
+        <p class="text-gray-500 mb-6">새 서류를 업로드하여 관리를 시작하세요</p>
+        <button onclick="app.openDocumentUploadModal()" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
+          <i class="fas fa-plus mr-2"></i>첫 서류 업로드
+        </button>
+      </div>
     </div>
 
     <!-- Employee Modal -->
@@ -2550,6 +2662,11 @@
             weekAgo.setDate(today.getDate() - 6);
             document.getElementById('report-start-date').value = weekAgo.toISOString().split('T')[0];
             document.getElementById('report-end-date').value = today.toISOString().split('T')[0];
+          } else if (tab === 'documents') {
+            console.log('📄 서류 관리 탭 로드 시작');
+            this.loadDocuments();
+            this.loadDocumentCategories();
+            this.loadDocumentStats();
           }
         },
 
@@ -9385,6 +9502,762 @@
         alert('QR 코드 다운로드 시작');
       };
       
+      // ==================== 서류 관리 시스템 ====================
+      
+      // 서류 관리 상태
+      app.documents = {
+        list: [],
+        categories: [],
+        currentFile: null,
+        filteredList: []
+      };
+      
+      // 서류 목록 로드
+      app.loadDocuments = async function() {
+        try {
+          console.log('📄 서류 목록 로드 중...');
+          
+          const { data, error } = await this.sb
+            .from('document_templates')
+            .select(`
+              *,
+              document_categories(name, icon, color)
+            `)
+            .eq('is_active', true)
+            .eq('is_latest', true)
+            .order('is_pinned', { ascending: false })
+            .order('created_at', { ascending: false });
+          
+          if (error) throw error;
+          
+          this.documents.list = data || [];
+          this.documents.filteredList = [...this.documents.list];
+          
+          console.log(`✅ 서류 ${data?.length || 0}건 로드 완료`);
+          
+          this.renderDocuments();
+          
+        } catch (err) {
+          console.error('❌ 서류 목록 로드 실패:', err);
+          document.getElementById('docs-loading').innerHTML = `
+            <div class="text-center py-20">
+              <i class="fas fa-exclamation-triangle text-red-600 text-5xl mb-4"></i>
+              <p class="text-red-600 font-medium">서류 목록을 불러오는데 실패했습니다</p>
+              <p class="text-sm text-gray-600 mt-2">${err.message}</p>
+              <button onclick="app.loadDocuments()" class="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                다시 시도
+              </button>
+            </div>
+          `;
+        }
+      };
+      
+      // 서류 렌더링
+      app.renderDocuments = function() {
+        const container = document.getElementById('documents-list');
+        const loading = document.getElementById('docs-loading');
+        const empty = document.getElementById('docs-empty');
+        
+        loading.classList.add('hidden');
+        
+        if (this.documents.filteredList.length === 0) {
+          empty.classList.remove('hidden');
+          container.innerHTML = '';
+          return;
+        }
+        
+        empty.classList.add('hidden');
+        
+        // 카테고리별로 그룹화
+        const byCategory = {};
+        this.documents.filteredList.forEach(doc => {
+          const categoryName = doc.document_categories?.name || '미분류';
+          if (!byCategory[categoryName]) {
+            byCategory[categoryName] = [];
+          }
+          byCategory[categoryName].push(doc);
+        });
+        
+        let html = '';
+        
+        Object.keys(byCategory).forEach(categoryName => {
+          const docs = byCategory[categoryName];
+          const category = docs[0]?.document_categories;
+          const iconClass = category?.icon || 'fa-folder';
+          const colorClass = this.getCategoryColorClass(category?.color || 'gray');
+          
+          html += `
+            <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
+              <div class="bg-gradient-to-r ${colorClass} text-white p-4 flex items-center justify-between">
+                <h3 class="text-lg font-bold">
+                  <i class="fas ${iconClass} mr-2"></i>${categoryName}
+                </h3>
+                <span class="text-sm bg-white/20 px-3 py-1 rounded-full">${docs.length}건</span>
+              </div>
+              <div class="divide-y">
+                ${docs.map(doc => `
+                  <div class="p-4 hover:bg-gray-50 transition-colors cursor-pointer" onclick="app.showDocumentDetail('${doc.id}')">
+                    <div class="flex items-start justify-between">
+                      <div class="flex-1">
+                        <div class="flex items-center gap-2 mb-1">
+                          ${doc.is_pinned ? '<i class="fas fa-thumbtack text-red-600"></i>' : ''}
+                          ${doc.is_featured ? '<i class="fas fa-star text-yellow-500"></i>' : ''}
+                          <h4 class="text-lg font-bold text-gray-800">${doc.title}</h4>
+                          <span class="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded">${doc.version}</span>
+                        </div>
+                        ${doc.description ? `<p class="text-sm text-gray-600 mb-2">${doc.description}</p>` : ''}
+                        <div class="flex flex-wrap gap-2 mb-2">
+                          ${(doc.tags || []).map(tag => `
+                            <span class="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded">#${tag}</span>
+                          `).join('')}
+                        </div>
+                        <div class="flex items-center gap-4 text-xs text-gray-500">
+                          <span><i class="fas fa-calendar mr-1"></i>${new Date(doc.created_at).toLocaleDateString('ko-KR')}</span>
+                          <span><i class="fas fa-download mr-1"></i>${doc.download_count || 0}회</span>
+                          <span><i class="fas fa-eye mr-1"></i>${doc.view_count || 0}회</span>
+                          <span><i class="fas fa-heart mr-1"></i>${doc.favorite_count || 0}</span>
+                        </div>
+                      </div>
+                      <div class="flex flex-col gap-2 ml-4">
+                        <button onclick="event.stopPropagation(); app.downloadDocument('${doc.id}')" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium whitespace-nowrap">
+                          <i class="fas fa-download mr-1"></i>다운로드
+                        </button>
+                        <button onclick="event.stopPropagation(); app.editDocument('${doc.id}')" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium whitespace-nowrap">
+                          <i class="fas fa-edit mr-1"></i>수정
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          `;
+        });
+        
+        container.innerHTML = html;
+      };
+      
+      // 카테고리별 색상 클래스
+      app.getCategoryColorClass = function(color) {
+        const colorMap = {
+          blue: 'from-blue-500 to-blue-600',
+          green: 'from-green-500 to-green-600',
+          yellow: 'from-yellow-500 to-yellow-600',
+          red: 'from-red-500 to-red-600',
+          purple: 'from-purple-500 to-purple-600',
+          gray: 'from-gray-500 to-gray-600'
+        };
+        return colorMap[color] || colorMap.gray;
+      };
+      
+      // 카테고리 로드
+      app.loadDocumentCategories = async function() {
+        try {
+          const { data, error } = await this.sb
+            .from('document_categories')
+            .select('*')
+            .eq('is_active', true)
+            .order('display_order');
+          
+          if (error) throw error;
+          
+          this.documents.categories = data || [];
+          
+          // 카테고리 드롭다운 업데이트
+          const selects = ['doc-category', 'docs-filter-category'];
+          selects.forEach(selectId => {
+            const select = document.getElementById(selectId);
+            if (select) {
+              const currentValue = select.value;
+              const options = data.map(cat => 
+                `<option value="${cat.id}">${cat.icon ? `${cat.icon} ` : ''}${cat.name}</option>`
+              ).join('');
+              
+              if (selectId === 'docs-filter-category') {
+                select.innerHTML = '<option value="all">전체 카테고리</option>' + options;
+              } else {
+                select.innerHTML = '<option value="">선택하세요</option>' + options;
+              }
+              
+              if (currentValue) select.value = currentValue;
+            }
+          });
+          
+        } catch (err) {
+          console.error('❌ 카테고리 로드 실패:', err);
+        }
+      };
+      
+      // 통계 로드
+      app.loadDocumentStats = async function() {
+        try {
+          // 전체 서류 수
+          const totalCount = this.documents.list.length;
+          document.getElementById('docs-total-count').textContent = totalCount;
+          
+          // 이번 달 업로드 수
+          const now = new Date();
+          const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+          const monthCount = this.documents.list.filter(doc => 
+            new Date(doc.created_at) >= firstDay
+          ).length;
+          document.getElementById('docs-month-count').textContent = monthCount;
+          
+          // 총 다운로드 수
+          const totalDownloads = this.documents.list.reduce((sum, doc) => 
+            sum + (doc.download_count || 0), 0
+          );
+          document.getElementById('docs-download-count').textContent = totalDownloads;
+          
+          // 카테고리 수
+          document.getElementById('docs-category-count').textContent = this.documents.categories.length;
+          
+        } catch (err) {
+          console.error('❌ 통계 로드 실패:', err);
+        }
+      };
+      
+      // 서류 검색
+      app.searchDocuments = function() {
+        const query = document.getElementById('docs-search').value.toLowerCase();
+        
+        if (!query) {
+          this.documents.filteredList = [...this.documents.list];
+        } else {
+          this.documents.filteredList = this.documents.list.filter(doc => {
+            const titleMatch = doc.title.toLowerCase().includes(query);
+            const descMatch = (doc.description || '').toLowerCase().includes(query);
+            const tagMatch = (doc.tags || []).some(tag => tag.toLowerCase().includes(query));
+            return titleMatch || descMatch || tagMatch;
+          });
+        }
+        
+        this.renderDocuments();
+      };
+      
+      // 서류 필터링
+      app.filterDocuments = function() {
+        const category = document.getElementById('docs-filter-category').value;
+        const sort = document.getElementById('docs-filter-sort').value;
+        
+        let filtered = [...this.documents.list];
+        
+        // 카테고리 필터
+        if (category !== 'all') {
+          filtered = filtered.filter(doc => doc.category_id === category);
+        }
+        
+        // 정렬
+        switch(sort) {
+          case 'latest':
+            filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+            break;
+          case 'popular':
+            filtered.sort((a, b) => (b.download_count || 0) - (a.download_count || 0));
+            break;
+          case 'views':
+            filtered.sort((a, b) => (b.view_count || 0) - (a.view_count || 0));
+            break;
+          case 'name':
+            filtered.sort((a, b) => a.title.localeCompare(b.title));
+            break;
+        }
+        
+        this.documents.filteredList = filtered;
+        this.renderDocuments();
+      };
+      
+      // 서류 새로고침
+      app.refreshDocumentList = async function() {
+        document.getElementById('docs-loading').classList.remove('hidden');
+        document.getElementById('documents-list').innerHTML = '';
+        await this.loadDocuments();
+        await this.loadDocumentStats();
+      };
+      
+      // 업로드 모달 열기
+      app.openDocumentUploadModal = function() {
+        const modal = document.getElementById('document-upload-modal');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        
+        // 폼 초기화
+        document.getElementById('doc-title').value = '';
+        document.getElementById('doc-description').value = '';
+        document.getElementById('doc-category').value = '';
+        document.getElementById('doc-tags').value = '';
+        document.getElementById('doc-is-new-version').checked = false;
+        document.getElementById('version-fields').classList.add('hidden');
+        document.getElementById('doc-is-pinned').checked = false;
+        document.getElementById('doc-is-featured').checked = false;
+        document.getElementById('doc-notify-on-update').checked = true;
+        this.clearDocFile();
+        
+        // 카테고리 로드
+        this.loadDocumentCategories();
+      };
+      
+      // 업로드 모달 닫기
+      app.closeDocumentUploadModal = function() {
+        const modal = document.getElementById('document-upload-modal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      };
+      
+      // 버전 필드 토글
+      app.toggleVersionFields = function() {
+        const isChecked = document.getElementById('doc-is-new-version').checked;
+        const fields = document.getElementById('version-fields');
+        
+        if (isChecked) {
+          fields.classList.remove('hidden');
+          // 이전 버전 목록 로드
+          const select = document.getElementById('doc-parent-id');
+          select.innerHTML = '<option value="">선택하세요</option>' + 
+            this.documents.list.map(doc => 
+              `<option value="${doc.id}">${doc.title} (v${doc.version})</option>`
+            ).join('');
+        } else {
+          fields.classList.add('hidden');
+        }
+      };
+      
+      // 파일 드래그 오버
+      app.handleDocDragOver = function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        document.getElementById('doc-drop-zone').classList.add('border-blue-500', 'bg-blue-50');
+      };
+      
+      // 파일 드래그 떠남
+      app.handleDocDragLeave = function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        document.getElementById('doc-drop-zone').classList.remove('border-blue-500', 'bg-blue-50');
+      };
+      
+      // 파일 드롭
+      app.handleDocDrop = function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        document.getElementById('doc-drop-zone').classList.remove('border-blue-500', 'bg-blue-50');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+          this.documents.currentFile = files[0];
+          this.showDocFilePreview();
+        }
+      };
+      
+      // 파일 선택
+      app.handleDocFileSelect = function(e) {
+        const files = e.target.files;
+        if (files.length > 0) {
+          this.documents.currentFile = files[0];
+          this.showDocFilePreview();
+        }
+      };
+      
+      // 파일 미리보기 표시
+      app.showDocFilePreview = function() {
+        const file = this.documents.currentFile;
+        if (!file) return;
+        
+        // 파일 크기 검증
+        const maxSize = 50 * 1024 * 1024; // 50MB
+        if (file.size > maxSize) {
+          alert('파일 크기는 50MB를 초과할 수 없습니다.');
+          this.clearDocFile();
+          return;
+        }
+        
+        // MIME 타입 검증
+        const allowedTypes = [
+          'application/pdf',
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+          'application/msword',
+          'application/vnd.ms-excel',
+          'image/png',
+          'image/jpeg'
+        ];
+        
+        if (!allowedTypes.includes(file.type)) {
+          alert('지원하지 않는 파일 형식입니다.');
+          this.clearDocFile();
+          return;
+        }
+        
+        // 아이콘 결정
+        let iconClass = 'fa-file';
+        if (file.type.includes('pdf')) iconClass = 'fa-file-pdf';
+        else if (file.type.includes('word')) iconClass = 'fa-file-word';
+        else if (file.type.includes('sheet')) iconClass = 'fa-file-excel';
+        else if (file.type.includes('presentation')) iconClass = 'fa-file-powerpoint';
+        else if (file.type.includes('image')) iconClass = 'fa-file-image';
+        
+        // 파일 크기 포맷
+        const sizeInMB = (file.size / (1024 * 1024)).toFixed(2);
+        
+        document.getElementById('doc-file-icon').className = `fas ${iconClass} text-blue-600 text-2xl`;
+        document.getElementById('doc-file-name').textContent = file.name;
+        document.getElementById('doc-file-size').textContent = `${sizeInMB} MB`;
+        document.getElementById('doc-file-preview').classList.remove('hidden');
+      };
+      
+      // 파일 선택 초기화
+      app.clearDocFile = function() {
+        this.documents.currentFile = null;
+        document.getElementById('doc-file-input').value = '';
+        document.getElementById('doc-file-preview').classList.add('hidden');
+      };
+      
+      // 서류 업로드 제출
+      app.submitDocumentUpload = async function() {
+        try {
+          // 유효성 검사
+          const title = document.getElementById('doc-title').value.trim();
+          const categoryId = document.getElementById('doc-category').value;
+          const file = this.documents.currentFile;
+          
+          if (!title) {
+            alert('제목을 입력하세요.');
+            document.getElementById('doc-title').focus();
+            return;
+          }
+          
+          if (!categoryId) {
+            alert('카테고리를 선택하세요.');
+            document.getElementById('doc-category').focus();
+            return;
+          }
+          
+          if (!file) {
+            alert('파일을 선택하세요.');
+            return;
+          }
+          
+          const btn = event.target;
+          btn.disabled = true;
+          btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>업로드 중...';
+          
+          // 1. 파일 업로드 (Supabase Storage)
+          const fileExt = file.name.split('.').pop();
+          const fileName = `documents/${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`;
+          
+          const { data: storageData, error: storageError } = await this.sb.storage
+            .from('document-templates')
+            .upload(fileName, file, {
+              cacheControl: '3600',
+              upsert: false,
+              contentType: file.type
+            });
+          
+          if (storageError) throw storageError;
+          
+          // 2. 공개 URL 가져오기
+          const { data: urlData } = this.sb.storage
+            .from('document-templates')
+            .getPublicUrl(fileName);
+          
+          // 3. DB에 메타데이터 저장
+          const description = document.getElementById('doc-description').value.trim();
+          const tags = document.getElementById('doc-tags').value
+            .split(',')
+            .map(t => t.trim())
+            .filter(t => t);
+          
+          const isNewVersion = document.getElementById('doc-is-new-version').checked;
+          const parentId = isNewVersion ? document.getElementById('doc-parent-id').value : null;
+          const version = isNewVersion ? document.getElementById('doc-version').value.trim() : '1.0';
+          const versionNotes = isNewVersion ? document.getElementById('doc-version-notes').value.trim() : null;
+          
+          const isPinned = document.getElementById('doc-is-pinned').checked;
+          const isFeatured = document.getElementById('doc-is-featured').checked;
+          const notifyOnUpdate = document.getElementById('doc-notify-on-update').checked;
+          
+          const docData = {
+            title,
+            description: description || null,
+            category_id: categoryId,
+            tags: tags.length > 0 ? tags : null,
+            file_url: urlData.publicUrl,
+            file_name: file.name,
+            file_size: file.size,
+            file_type: fileExt,
+            mime_type: file.type,
+            version,
+            version_notes: versionNotes,
+            parent_document_id: parentId,
+            is_pinned: isPinned,
+            is_featured: isFeatured,
+            notify_on_update: notifyOnUpdate,
+            uploaded_by: this.currentEmployee?.id
+          };
+          
+          const { data: dbData, error: dbError } = await this.sb
+            .from('document_templates')
+            .insert([docData])
+            .select()
+            .single();
+          
+          if (dbError) {
+            // DB 저장 실패 시 업로드된 파일 삭제
+            await this.sb.storage
+              .from('document-templates')
+              .remove([fileName]);
+            throw dbError;
+          }
+          
+          console.log('✅ 서류 업로드 성공:', dbData);
+          
+          alert('서류가 성공적으로 업로드되었습니다.');
+          this.closeDocumentUploadModal();
+          this.refreshDocumentList();
+          
+        } catch (err) {
+          console.error('❌ 서류 업로드 실패:', err);
+          alert(`서류 업로드 실패: ${err.message}`);
+        } finally {
+          const btn = event.target;
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fas fa-cloud-upload-alt mr-2"></i>업로드';
+        }
+      };
+      
+      // 서류 다운로드
+      app.downloadDocument = async function(documentId) {
+        try {
+          const doc = this.documents.list.find(d => d.id === documentId);
+          if (!doc) return;
+          
+          // 다운로드 이력 기록
+          await this.sb
+            .from('document_downloads')
+            .insert([{
+              document_id: documentId,
+              apartment_id: this.currentApartment.id,
+              downloaded_by: this.currentEmployee?.id
+            }]);
+          
+          // 파일 다운로드
+          window.open(doc.file_url, '_blank');
+          
+          // 다운로드 카운트 갱신
+          doc.download_count = (doc.download_count || 0) + 1;
+          this.renderDocuments();
+          
+        } catch (err) {
+          console.error('❌ 다운로드 실패:', err);
+          alert(`다운로드 실패: ${err.message}`);
+        }
+      };
+      
+      // 서류 상세 보기
+      app.showDocumentDetail = async function(documentId) {
+        try {
+          const doc = this.documents.list.find(d => d.id === documentId);
+          if (!doc) return;
+          
+          // 조회 이력 기록
+          await this.sb
+            .from('document_views')
+            .upsert({
+              document_id: documentId,
+              apartment_id: this.currentApartment.id,
+              viewed_by: this.currentEmployee?.id,
+              last_viewed_at: new Date().toISOString(),
+              view_count: (doc.view_count || 0) + 1
+            }, {
+              onConflict: 'document_id,apartment_id,viewed_by'
+            });
+          
+          // 모달 표시
+          const modal = document.getElementById('document-detail-modal');
+          document.getElementById('detail-title').textContent = doc.title;
+          
+          const category = doc.document_categories;
+          const colorClass = this.getCategoryColorClass(category?.color || 'gray');
+          
+          document.getElementById('document-detail-content').innerHTML = `
+            <div class="space-y-4">
+              <!-- 기본 정보 -->
+              <div class="bg-gray-50 p-4 rounded-lg">
+                <h4 class="text-sm font-bold text-gray-700 mb-3">기본 정보</h4>
+                <div class="grid grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <span class="text-gray-600">카테고리:</span>
+                    <span class="ml-2 font-medium">${category?.name || '미분류'}</span>
+                  </div>
+                  <div>
+                    <span class="text-gray-600">버전:</span>
+                    <span class="ml-2 font-medium">${doc.version}</span>
+                  </div>
+                  <div>
+                    <span class="text-gray-600">업로드 날짜:</span>
+                    <span class="ml-2 font-medium">${new Date(doc.created_at).toLocaleDateString('ko-KR')}</span>
+                  </div>
+                  <div>
+                    <span class="text-gray-600">파일 크기:</span>
+                    <span class="ml-2 font-medium">${(doc.file_size / (1024 * 1024)).toFixed(2)} MB</span>
+                  </div>
+                </div>
+              </div>
+              
+              ${doc.description ? `
+                <div>
+                  <h4 class="text-sm font-bold text-gray-700 mb-2">설명</h4>
+                  <p class="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">${doc.description}</p>
+                </div>
+              ` : ''}
+              
+              ${doc.tags && doc.tags.length > 0 ? `
+                <div>
+                  <h4 class="text-sm font-bold text-gray-700 mb-2">태그</h4>
+                  <div class="flex flex-wrap gap-2">
+                    ${doc.tags.map(tag => `
+                      <span class="text-sm px-3 py-1 bg-blue-100 text-blue-700 rounded-full">#${tag}</span>
+                    `).join('')}
+                  </div>
+                </div>
+              ` : ''}
+              
+              <!-- 통계 -->
+              <div class="bg-gradient-to-r ${colorClass} text-white p-4 rounded-lg">
+                <h4 class="text-sm font-bold mb-3">통계</h4>
+                <div class="grid grid-cols-3 gap-3 text-center">
+                  <div>
+                    <i class="fas fa-download text-2xl mb-1"></i>
+                    <p class="text-xs">다운로드</p>
+                    <p class="text-lg font-bold">${doc.download_count || 0}</p>
+                  </div>
+                  <div>
+                    <i class="fas fa-eye text-2xl mb-1"></i>
+                    <p class="text-xs">조회</p>
+                    <p class="text-lg font-bold">${doc.view_count || 0}</p>
+                  </div>
+                  <div>
+                    <i class="fas fa-heart text-2xl mb-1"></i>
+                    <p class="text-xs">즐겨찾기</p>
+                    <p class="text-lg font-bold">${doc.favorite_count || 0}</p>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- 액션 버튼 -->
+              <div class="flex gap-3">
+                <button onclick="app.downloadDocument('${doc.id}')" class="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                  <i class="fas fa-download mr-2"></i>다운로드
+                </button>
+                <button onclick="app.editDocument('${doc.id}')" class="flex-1 px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium">
+                  <i class="fas fa-edit mr-2"></i>수정
+                </button>
+                <button onclick="app.deleteDocument('${doc.id}')" class="flex-1 px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium">
+                  <i class="fas fa-trash mr-2"></i>삭제
+                </button>
+              </div>
+            </div>
+          `;
+          
+          modal.classList.remove('hidden');
+          modal.classList.add('flex');
+          
+        } catch (err) {
+          console.error('❌ 서류 상세 로드 실패:', err);
+          alert(`서류 상세 정보 로드 실패: ${err.message}`);
+        }
+      };
+      
+      // 서류 상세 모달 닫기
+      app.closeDocumentDetailModal = function() {
+        const modal = document.getElementById('document-detail-modal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      };
+      
+      // 서류 수정
+      app.editDocument = function(documentId) {
+        alert('서류 수정 기능은 다음 업데이트에서 제공됩니다.');
+      };
+      
+      // 서류 삭제
+      app.deleteDocument = async function(documentId) {
+        if (!confirm('정말로 이 서류를 삭제하시겠습니까?\n삭제된 서류는 복구할 수 없습니다.')) {
+          return;
+        }
+        
+        try {
+          const doc = this.documents.list.find(d => d.id === documentId);
+          if (!doc) return;
+          
+          // 1. DB에서 삭제 (is_active = false)
+          const { error } = await this.sb
+            .from('document_templates')
+            .update({ is_active: false })
+            .eq('id', documentId);
+          
+          if (error) throw error;
+          
+          alert('서류가 삭제되었습니다.');
+          this.closeDocumentDetailModal();
+          this.refreshDocumentList();
+          
+        } catch (err) {
+          console.error('❌ 서류 삭제 실패:', err);
+          alert(`서류 삭제 실패: ${err.message}`);
+        }
+      };
+      
+      // 카테고리 관리 모달 열기
+      app.openCategoryManageModal = function() {
+        const modal = document.getElementById('category-manage-modal');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        this.renderCategoryList();
+      };
+      
+      // 카테고리 관리 모달 닫기
+      app.closeCategoryManageModal = function() {
+        const modal = document.getElementById('category-manage-modal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      };
+      
+      // 카테고리 목록 렌더링
+      app.renderCategoryList = function() {
+        const container = document.getElementById('category-list');
+        container.innerHTML = this.documents.categories.map(cat => `
+          <div class="bg-white border rounded-lg p-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <i class="fas ${cat.icon} text-2xl" style="color: ${this.getCategoryColor(cat.color)}"></i>
+              <div>
+                <h4 class="font-bold text-gray-800">${cat.name}</h4>
+                <p class="text-sm text-gray-600">${cat.description || ''}</p>
+              </div>
+            </div>
+            <div class="flex gap-2">
+              <span class="text-sm px-3 py-1 bg-gray-100 text-gray-700 rounded">
+                ${this.documents.list.filter(d => d.category_id === cat.id).length}건
+              </span>
+            </div>
+          </div>
+        `).join('');
+      };
+      
+      // 카테고리 색상
+      app.getCategoryColor = function(color) {
+        const colorMap = {
+          blue: '#3b82f6',
+          green: '#10b981',
+          yellow: '#f59e0b',
+          red: '#ef4444',
+          purple: '#a855f7',
+          gray: '#6b7280'
+        };
+        return colorMap[color] || colorMap.gray;
+      };
+      
       // ==================== 기존 함수 ====================
       
       // 전역에 app 즉시 노출
@@ -9396,7 +10269,7 @@
         console.log('🚀 DOMContentLoaded 이벤트 발생');
         
         // 모든 모달의 배경 클릭 이벤트
-        ['location-modal', 'location-edit-modal', 'employee-modal', 'edit-employee-modal', 'apartment-modal', 'sales-modal', 'vacation-modal', 'holiday-modal', 'blocked-employees-modal', 'incomplete-today-modal', 'checkout-input-modal', 'new-purchase-modal', 'purchase-detail-modal', 'qr-management-modal', 'attendance-note-detail-modal'].forEach(id => {
+        ['location-modal', 'location-edit-modal', 'employee-modal', 'edit-employee-modal', 'apartment-modal', 'sales-modal', 'vacation-modal', 'holiday-modal', 'blocked-employees-modal', 'incomplete-today-modal', 'checkout-input-modal', 'new-purchase-modal', 'purchase-detail-modal', 'qr-management-modal', 'attendance-note-detail-modal', 'document-upload-modal', 'document-detail-modal', 'category-manage-modal'].forEach(id => {
           const modal = document.getElementById(id);
           if (modal) {
             modal.addEventListener('click', (e) => {
@@ -9625,6 +10498,195 @@
     </div>
 
     <!-- 검수 사진 업로드 모달 -->
+
+    <!-- 서류 업로드 모달 -->
+    <div id="document-upload-modal" class="fixed inset-0 z-50 bg-black bg-opacity-80 hidden items-center justify-center p-4">
+      <div class="bg-white rounded-2xl max-w-3xl w-full shadow-2xl max-h-[90vh] overflow-y-auto" onclick="event.stopPropagation()">
+        <div class="sticky top-0 bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6 rounded-t-2xl z-10">
+          <div class="flex justify-between items-center">
+            <h3 class="text-2xl font-bold">
+              <i class="fas fa-cloud-upload-alt mr-2"></i>서류 업로드
+            </h3>
+            <button onclick="app.closeDocumentUploadModal()" class="text-white hover:text-gray-200 text-3xl font-bold">×</button>
+          </div>
+        </div>
+
+        <div class="p-6 space-y-4">
+          <!-- 제목 -->
+          <div>
+            <label class="block text-sm font-bold text-gray-700 mb-2">
+              <i class="fas fa-heading text-blue-600 mr-2"></i>제목 <span class="text-red-600">*</span>
+            </label>
+            <input type="text" id="doc-title" placeholder="예: 입주자 표준 계약서" class="w-full px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
+          </div>
+
+          <!-- 설명 -->
+          <div>
+            <label class="block text-sm font-bold text-gray-700 mb-2">
+              <i class="fas fa-align-left text-blue-600 mr-2"></i>설명
+            </label>
+            <textarea id="doc-description" rows="3" placeholder="서류에 대한 간단한 설명을 입력하세요..." class="w-full px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all resize-none"></textarea>
+          </div>
+
+          <!-- 카테고리 & 태그 -->
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-bold text-gray-700 mb-2">
+                <i class="fas fa-folder text-blue-600 mr-2"></i>카테고리 <span class="text-red-600">*</span>
+              </label>
+              <select id="doc-category" class="w-full px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
+                <option value="">선택하세요</option>
+                <!-- 동적 생성 -->
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-bold text-gray-700 mb-2">
+                <i class="fas fa-tags text-blue-600 mr-2"></i>태그
+              </label>
+              <input type="text" id="doc-tags" placeholder="입주자, 계약, 필수 (쉼표로 구분)" class="w-full px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
+            </div>
+          </div>
+
+          <!-- 버전 관리 -->
+          <div class="bg-purple-50 border-2 border-purple-200 rounded-lg p-4">
+            <div class="flex items-center mb-3">
+              <input type="checkbox" id="doc-is-new-version" class="w-5 h-5 text-blue-600 rounded focus:ring-blue-500" onchange="app.toggleVersionFields()">
+              <label for="doc-is-new-version" class="ml-2 text-sm font-bold text-gray-700">
+                <i class="fas fa-code-branch mr-1"></i>기존 서류의 새 버전입니다
+              </label>
+            </div>
+            <div id="version-fields" class="hidden space-y-3">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">이전 버전 선택</label>
+                <select id="doc-parent-id" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                  <option value="">선택하세요</option>
+                  <!-- 동적 생성 -->
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">버전 번호</label>
+                <input type="text" id="doc-version" placeholder="예: 2.0, 2.1" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">변경 사항</label>
+                <textarea id="doc-version-notes" rows="2" placeholder="이번 버전에서 변경된 내용을 입력하세요..." class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- 파일 업로드 -->
+          <div>
+            <label class="block text-sm font-bold text-gray-700 mb-2">
+              <i class="fas fa-file-upload text-blue-600 mr-2"></i>파일 선택 <span class="text-red-600">*</span>
+            </label>
+            <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-500 transition-all cursor-pointer" id="doc-drop-zone" ondrop="app.handleDocDrop(event)" ondragover="app.handleDocDragOver(event)" ondragleave="app.handleDocDragLeave(event)" onclick="document.getElementById('doc-file-input').click()">
+              <i class="fas fa-cloud-upload-alt text-gray-400 text-5xl mb-3"></i>
+              <p class="text-gray-600 mb-2">
+                <span class="text-blue-600 font-semibold">파일을 선택</span>하거나 여기에 드래그하세요
+              </p>
+              <p class="text-sm text-gray-500">
+                지원 형식: PDF, DOCX, XLSX, PPTX, PNG, JPG (최대 50MB)
+              </p>
+              <input type="file" id="doc-file-input" class="hidden" accept=".pdf,.docx,.xlsx,.pptx,.doc,.xls,.ppt,.png,.jpg,.jpeg" onchange="app.handleDocFileSelect(event)">
+            </div>
+            <div id="doc-file-preview" class="hidden mt-3 p-4 bg-blue-50 border-2 border-blue-200 rounded-lg">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <i id="doc-file-icon" class="fas fa-file text-blue-600 text-2xl"></i>
+                  <div>
+                    <p id="doc-file-name" class="font-medium text-gray-800"></p>
+                    <p id="doc-file-size" class="text-sm text-gray-600"></p>
+                  </div>
+                </div>
+                <button onclick="app.clearDocFile()" class="text-red-600 hover:text-red-700">
+                  <i class="fas fa-times text-xl"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 고급 옵션 -->
+          <div class="bg-gray-50 border rounded-lg p-4">
+            <h4 class="text-sm font-bold text-gray-700 mb-3">
+              <i class="fas fa-cog mr-2"></i>고급 옵션
+            </h4>
+            <div class="space-y-3">
+              <label class="flex items-center">
+                <input type="checkbox" id="doc-is-pinned" class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500">
+                <span class="ml-2 text-sm text-gray-700">상단 고정</span>
+              </label>
+              <label class="flex items-center">
+                <input type="checkbox" id="doc-is-featured" class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500">
+                <span class="ml-2 text-sm text-gray-700">추천 서류로 표시</span>
+              </label>
+              <label class="flex items-center">
+                <input type="checkbox" id="doc-notify-on-update" class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500" checked>
+                <span class="ml-2 text-sm text-gray-700">업로드 시 알림 발송</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="sticky bottom-0 bg-gray-50 p-6 border-t rounded-b-2xl flex gap-3">
+          <button onclick="app.closeDocumentUploadModal()" class="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium">
+            <i class="fas fa-times mr-2"></i>취소
+          </button>
+          <button onclick="app.submitDocumentUpload()" class="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all shadow-md font-medium">
+            <i class="fas fa-cloud-upload-alt mr-2"></i>업로드
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 서류 상세 모달 -->
+    <div id="document-detail-modal" class="fixed inset-0 z-50 bg-black bg-opacity-80 hidden items-center justify-center p-4">
+      <div class="bg-white rounded-2xl max-w-4xl w-full shadow-2xl max-h-[90vh] overflow-y-auto" onclick="event.stopPropagation()">
+        <div class="sticky top-0 bg-gradient-to-r from-purple-600 to-pink-600 text-white p-6 rounded-t-2xl z-10">
+          <div class="flex justify-between items-center">
+            <h3 class="text-2xl font-bold">
+              <i class="fas fa-file-alt mr-2"></i><span id="detail-title">서류 상세</span>
+            </h3>
+            <button onclick="app.closeDocumentDetailModal()" class="text-white hover:text-gray-200 text-3xl font-bold">×</button>
+          </div>
+        </div>
+
+        <div id="document-detail-content" class="p-6">
+          <!-- 동적으로 생성됩니다 -->
+        </div>
+
+        <div class="sticky bottom-0 bg-gray-50 p-6 border-t rounded-b-2xl flex gap-3">
+          <button onclick="app.closeDocumentDetailModal()" class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium">
+            <i class="fas fa-times mr-2"></i>닫기
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 카테고리 관리 모달 -->
+    <div id="category-manage-modal" class="fixed inset-0 z-50 bg-black bg-opacity-80 hidden items-center justify-center p-4">
+      <div class="bg-white rounded-2xl max-w-2xl w-full shadow-2xl max-h-[90vh] overflow-y-auto" onclick="event.stopPropagation()">
+        <div class="sticky top-0 bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-6 rounded-t-2xl z-10">
+          <div class="flex justify-between items-center">
+            <h3 class="text-2xl font-bold">
+              <i class="fas fa-tags mr-2"></i>카테고리 관리
+            </h3>
+            <button onclick="app.closeCategoryManageModal()" class="text-white hover:text-gray-200 text-3xl font-bold">×</button>
+          </div>
+        </div>
+
+        <div class="p-6">
+          <div id="category-list" class="space-y-3">
+            <!-- 동적으로 생성됩니다 -->
+          </div>
+        </div>
+
+        <div class="sticky bottom-0 bg-gray-50 p-6 border-t rounded-b-2xl flex gap-3">
+          <button onclick="app.closeCategoryManageModal()" class="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium">
+            <i class="fas fa-times mr-2"></i>닫기
+          </button>
+        </div>
+      </div>
+    </div>
 
 </body>
 </html>
