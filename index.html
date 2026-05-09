@@ -2240,6 +2240,7 @@
       const SUPABASE_ANON_KEY =
         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFncHFodHV5bnhobWdhd2FranhlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcyOTQyNTEsImV4cCI6MjA4Mjg3MDI1MX0.WNljQIKDbeZCDlXe8fpBdZs58XRFfujGt7lBGfq_pVg';
       const LOGIN_PIN = 'bdxi2026';
+      const MASTER_PIN = 'master2026'; // 총괄 관리자 비밀번호 (로그인 & 문서 삭제)
       
       console.log('🟢 상수 정의 완료');
 
@@ -2468,8 +2469,7 @@
         
         loginMaster: function () {
           const pin = document.getElementById('inp-pin').value;
-          const MASTER_PIN = 'master2026'; // 마스터 계정 PIN
-          
+          // 총괄 관리자 비밀번호 사용 (전역 상수)
           if (pin === MASTER_PIN) {
             // 마스터 대시보드로 리다이렉트
             window.location.href = 'master_dashboard.html';
@@ -10286,20 +10286,18 @@
       
       // 마스터 비밀번호 확인
       app.verifyMasterPassword = function() {
-        const password = prompt('🔐 마스터 관리자 비밀번호를 입력하세요:\n\n※ 문서 삭제는 마스터 권한이 필요합니다');
+        const password = prompt('🔐 총괄 관리자 비밀번호를 입력하세요:\n\n※ 문서 삭제는 총괄 관리자 권한이 필요합니다');
         
         if (!password) {
           return false; // 취소
         }
         
-        // 마스터 비밀번호 확인 (Supabase에서 가져오기)
-        const MASTER_PASSWORD = 'kw1234'; // TODO: 실제로는 환경변수나 DB에서 가져와야 함
-        
-        if (password === MASTER_PASSWORD) {
-          console.log('✅ 마스터 비밀번호 확인 성공');
+        // 총괄 관리자 비밀번호 확인 (로그인 화면과 동일)
+        if (password === MASTER_PIN) {
+          console.log('✅ 총괄 관리자 인증 성공');
           return true;
         } else {
-          alert('❌ 비밀번호가 틀렸습니다.\n마스터 관리자만 문서를 삭제할 수 있습니다.');
+          alert('❌ 비밀번호가 틀렸습니다.\n총괄 관리자만 문서를 삭제할 수 있습니다.');
           return false;
         }
       };
