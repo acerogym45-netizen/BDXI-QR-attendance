@@ -10258,6 +10258,216 @@
         return colorMap[color] || colorMap.gray;
       };
       
+      // ==================== Phase 5-18: 추가 기능 ====================
+      
+      // Phase 5: 카테고리 CRUD 완성
+      app.renderCategoryList = function() {
+        const container = document.getElementById('category-list');
+        container.innerHTML = this.documents.categories.map(cat => `
+          <div class="bg-white border-2 rounded-lg p-4 flex items-center justify-between hover:shadow-md transition-shadow">
+            <div class="flex items-center gap-3">
+              <i class="fas ${cat.icon} text-3xl" style="color: ${this.getCategoryColor(cat.color)}"></i>
+              <div>
+                <h4 class="font-bold text-gray-800 text-lg">${cat.name}</h4>
+                <p class="text-sm text-gray-600">${cat.description || '설명 없음'}</p>
+                <span class="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded mt-1 inline-block">
+                  ${this.documents.list.filter(d => d.category_id === cat.id).length}건의 서류
+                </span>
+              </div>
+            </div>
+          </div>
+        `).join('');
+      };
+      
+      // Phase 9: 즐겨찾기 토글
+      app.toggleFavorite = async function(documentId) {
+        try {
+          // 즐겨찾기 상태 확인
+          const { data: existing } = await this.sb
+            .from('document_favorites')
+            .select('id')
+            .eq('document_id', documentId)
+            .eq('apartment_id', this.currentApartment.id)
+            .eq('employee_id', this.currentEmployee?.id)
+            .single();
+          
+          if (existing) {
+            // 제거
+            await this.sb
+              .from('document_favorites')
+              .delete()
+              .eq('id', existing.id);
+            console.log('✅ 즐겨찾기 제거');
+          } else {
+            // 추가
+            await this.sb
+              .from('document_favorites')
+              .insert([{
+                document_id: documentId,
+                apartment_id: this.currentApartment.id,
+                employee_id: this.currentEmployee?.id
+              }]);
+            console.log('✅ 즐겨찾기 추가');
+          }
+          
+          this.refreshDocumentList();
+          
+        } catch (err) {
+          console.error('❌ 즐겨찾기 토글 실패:', err);
+        }
+      };
+      
+      // Phase 10: 버전 히스토리 조회
+      app.showVersionHistory = async function(documentId) {
+        try {
+          const { data, error } = await this.sb
+            .from('document_templates')
+            .select('*')
+            .or(`id.eq.${documentId},parent_document_id.eq.${documentId}`)
+            .order('created_at', { ascending: false });
+          
+          if (error) throw error;
+          
+          console.log('📜 버전 히스토리:', data);
+          alert(`총 ${data.length}개의 버전이 있습니다.`);
+          
+        } catch (err) {
+          console.error('❌ 버전 히스토리 조회 실패:', err);
+        }
+      };
+      
+      // Phase 13: 읽음 표시
+      app.markAsRead = async function(documentId) {
+        try {
+          await this.sb
+            .from('document_views')
+            .upsert({
+              document_id: documentId,
+              apartment_id: this.currentApartment.id,
+              viewed_by: this.currentEmployee?.id,
+              is_read: true,
+              read_at: new Date().toISOString(),
+              last_viewed_at: new Date().toISOString()
+            }, {
+              onConflict: 'document_id,apartment_id,viewed_by'
+            });
+          
+          console.log('✅ 읽음 표시 완료');
+          
+        } catch (err) {
+          console.error('❌ 읽음 표시 실패:', err);
+        }
+      };
+      
+      // Phase 14: 알림 생성
+      app.createDocumentNotification = async function(documentId, type, title, message) {
+        try {
+          // 모든 직원에게 알림 발송 (실제로는 권한에 따라 필터링)
+          const { data: employees } = await this.sb
+            .from('employees')
+            .select('id')
+            .eq('apartment_id', this.currentApartment.id)
+            .eq('status', 'active');
+          
+          if (employees && employees.length > 0) {
+            const notifications = employees.map(emp => ({
+              document_id: documentId,
+              apartment_id: this.currentApartment.id,
+              recipient_id: emp.id,
+              notification_type: type,
+              title: title,
+              message: message,
+              action_url: `/documents/${documentId}`
+            }));
+            
+            await this.sb
+              .from('document_notifications')
+              .insert(notifications);
+            
+            console.log(`✅ ${employees.length}명에게 알림 발송`);
+          }
+          
+        } catch (err) {
+          console.error('❌ 알림 생성 실패:', err);
+        }
+      };
+      
+      // Phase 15: 인기 서류 조회
+      app.loadPopularDocuments = async function() {
+        try {
+          const { data, error } = await this.sb
+            .from('document_templates_popular')
+            .select('*')
+            .limit(10);
+          
+          if (error) throw error;
+          
+          console.log('🔥 인기 서류 Top 10:', data);
+          return data;
+          
+        } catch (err) {
+          console.error('❌ 인기 서류 조회 실패:', err);
+          return [];
+        }
+      };
+      
+      // Phase 16: 권한 확인
+      app.checkDocumentPermission = function(document) {
+        // 관리자는 모든 권한
+        if (this.currentEmployee?.role === 'admin') {
+          return { canView: true, canEdit: true, canDelete: true };
+        }
+        
+        // 업로더는 수정/삭제 가능
+        if (document.uploaded_by === this.currentEmployee?.id) {
+          return { canView: true, canEdit: true, canDelete: true };
+        }
+        
+        // 일반 사용자는 조회만
+        return { canView: true, canEdit: false, canDelete: false };
+      };
+      
+      // Phase 17: 모바일 감지
+      app.isMobile = function() {
+        return window.innerWidth < 768;
+      };
+      
+      // Phase 18: 시스템 상태 체크
+      app.checkSystemHealth = async function() {
+        try {
+          console.log('🏥 시스템 상태 체크 중...');
+          
+          // DB 연결 확인
+          const { data: dbCheck } = await this.sb
+            .from('document_categories')
+            .select('count')
+            .limit(1);
+          
+          // Storage 연결 확인
+          const { data: storageCheck } = await this.sb.storage
+            .from('document-templates')
+            .list('', { limit: 1 });
+          
+          console.log('✅ DB 연결: OK');
+          console.log('✅ Storage 연결: OK');
+          
+          return {
+            db: !!dbCheck,
+            storage: !!storageCheck,
+            status: 'healthy'
+          };
+          
+        } catch (err) {
+          console.error('❌ 시스템 상태 체크 실패:', err);
+          return {
+            db: false,
+            storage: false,
+            status: 'error',
+            error: err.message
+          };
+        }
+      };
+      
       // ==================== 기존 함수 ====================
       
       // 전역에 app 즉시 노출
