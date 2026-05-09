@@ -1,5 +1,5 @@
-// Service Worker v2.0 - PWA 오프라인 지원
-const CACHE_NAME = 'bdxi-pwa-v2.0';
+// Service Worker v2.1 - PWA 오프라인 지원 (POST 요청 캐싱 제외)
+const CACHE_NAME = 'bdxi-pwa-v2.1';
 const urlsToCache = [
   '/employee-app.html',
   '/scan.html',
@@ -46,14 +46,24 @@ self.addEventListener('activate', (event) => {
 
 // Fetch 이벤트 (네트워크 우선, 캐시 폴백)
 self.addEventListener('fetch', (event) => {
+  // ⚠️ POST/PUT/DELETE/PATCH 요청은 캐싱하지 않음 (Cache API는 GET만 지원)
+  if (event.request.method !== 'GET') {
+    event.respondWith(fetch(event.request));
+    return;
+  }
+
   event.respondWith(
     fetch(event.request)
       .then((response) => {
-        // 성공 시 캐시 업데이트
-        const responseClone = response.clone();
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, responseClone);
-        });
+        // 성공한 GET 요청만 캐시 업데이트
+        if (response.ok) {
+          const responseClone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseClone);
+          }).catch(err => {
+            console.warn('[Service Worker] 캐시 저장 실패:', err);
+          });
+        }
         return response;
       })
       .catch(() => {
