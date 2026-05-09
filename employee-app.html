@@ -3603,7 +3603,11 @@
                 photoData.note = photoNotes[i];
               }
               
-              console.log('💾 DB 저장 시도:', photoData);
+              console.log('💾 DB 저장 시도:', {
+                ...photoData,
+                currentTime: new Date().toISOString(),
+                localTime: new Date().toLocaleString('ko-KR')
+              });
               
               const { data: insertData, error: insertError } = await this.sb
                 .from('purchase_photos')
@@ -3635,6 +3639,8 @@
           }
           
           console.log('📊 업로드 완료:', {
+            timestamp: new Date().toISOString(),
+            localTime: new Date().toLocaleString('ko-KR'),
             total: files.length,
             success: successCount,
             failed: errors.length
