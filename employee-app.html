@@ -654,18 +654,34 @@
 
       <!-- Inspection Form -->
       <div class="p-6 space-y-4 overflow-y-auto" style="max-height: 50vh;">
+        <!-- 물품 목록 표시 -->
+        <div id="inspection-items-list" class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+          <h4 class="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
+            <i class="fas fa-list text-blue-600"></i>
+            구매 물품 목록
+          </h4>
+          <div id="inspection-items-content" class="space-y-2">
+            <!-- 동적으로 물품 목록이 표시됩니다 -->
+          </div>
+        </div>
+
         <!-- Photos -->
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-2">
-            <i class="fas fa-images mr-1 text-green-600"></i>물품 사진 (최대 5장) *
+            <i class="fas fa-images mr-1 text-green-600"></i>물품 사진 (최대 10장) *
           </label>
-          <input type="file" id="inspection-photos" accept="image/*" multiple capture="environment" class="hidden">
-          <button onclick="document.getElementById('inspection-photos').click()" class="w-full px-6 py-8 border-2 border-dashed border-gray-300 rounded-lg hover:border-green-500 transition-colors text-gray-500 hover:text-green-500">
-            <i class="fas fa-camera text-4xl mb-2"></i>
-            <p class="text-sm font-medium">사진 촬영 / 선택</p>
-            <p class="text-xs mt-1">물품, 영수증 등을 촬영해주세요</p>
-          </button>
-          <div id="inspection-photo-preview" class="grid grid-cols-3 gap-2 mt-3"></div>
+          <input type="file" id="inspection-photos" accept="image/jpeg,image/jpg,image/png,image/gif,image/webp" multiple capture="environment" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+          <p class="text-xs text-gray-500 mt-1">
+            <i class="fas fa-info-circle mr-1"></i>최대 10장, 각 5MB 이하 (JPG, PNG, GIF, WEBP)
+          </p>
+          
+          <!-- 사진 미리보기 -->
+          <div id="inspection-photo-preview" class="grid grid-cols-3 gap-2 mt-3 hidden"></div>
+          
+          <!-- 사진별 물품 선택 및 메모 -->
+          <div id="inspection-photo-notes" class="hidden space-y-3 mt-4">
+            <!-- 동적으로 생성됩니다 -->
+          </div>
         </div>
 
         <!-- Actual Amount -->
@@ -3061,25 +3077,110 @@
             </div>
           `;
           
+          // 물품 목록 표시
+          const itemsContent = document.getElementById('inspection-items-content');
+          if (purchase.purchase_items && purchase.purchase_items.length > 0) {
+            itemsContent.innerHTML = purchase.purchase_items.map((item, idx) => `
+              <div class="flex items-center gap-2 text-sm">
+                <span class="w-6 h-6 flex items-center justify-center bg-blue-600 text-white rounded-full text-xs font-bold shrink-0">${idx + 1}</span>
+                <span class="font-medium text-gray-800">${item.item_name || '(미입력)'}</span>
+                <span class="text-gray-600">(${item.quantity || 0}개)</span>
+                ${item.category ? `<span class="text-xs px-2 py-0.5 bg-gray-200 rounded">${item.category}</span>` : ''}
+              </div>
+            `).join('');
+          } else {
+            itemsContent.innerHTML = '<p class="text-sm text-gray-500">등록된 물품이 없습니다</p>';
+          }
+          
           document.getElementById('inspection-photos').value = '';
           document.getElementById('inspection-photo-preview').innerHTML = '';
+          document.getElementById('inspection-photo-notes').innerHTML = '';
+          document.getElementById('inspection-photo-preview').classList.add('hidden');
+          document.getElementById('inspection-photo-notes').classList.add('hidden');
           document.getElementById('inspection-actual-amount').value = '';
           document.getElementById('inspection-notes').value = '';
           
+          // 사진 선택 시 미리보기 + 드롭다운 생성
           document.getElementById('inspection-photos').onchange = (e) => {
-            const files = Array.from(e.target.files).slice(0, 5);
+            const files = Array.from(e.target.files).slice(0, 10);
             const preview = document.getElementById('inspection-photo-preview');
-            preview.innerHTML = '';
+            const notesContainer = document.getElementById('inspection-photo-notes');
             
-            files.forEach(file => {
+            if (files.length === 0) {
+              preview.classList.add('hidden');
+              notesContainer.classList.add('hidden');
+              preview.innerHTML = '';
+              notesContainer.innerHTML = '';
+              return;
+            }
+            
+            preview.classList.remove('hidden');
+            preview.innerHTML = '';
+            notesContainer.classList.remove('hidden');
+            
+            // 드롭다운 옵션 생성
+            const items = purchase.purchase_items || [];
+            const itemOptions = items.map(item => {
+              const name = item.item_name || '(미입력)';
+              const qty = item.quantity || 0;
+              const category = item.category || '';
+              return `<option value="${item.id}">${name} (${qty}개)${category ? ' - ' + category : ''}</option>`;
+            }).join('');
+            
+            let notesHTML = '<div class="space-y-3">';
+            
+            files.forEach((file, i) => {
               const reader = new FileReader();
               reader.onload = (e) => {
-                preview.insertAdjacentHTML('beforeend', `
-                  <img src="${e.target.result}" class="w-full h-24 object-cover rounded-lg border-2 border-green-300">
-                `);
+                const div = document.createElement('div');
+                div.className = 'relative';
+                div.innerHTML = `
+                  <img src="${e.target.result}" class="w-full h-24 object-cover rounded-lg border">
+                  <div class="absolute bottom-1 right-1 bg-black/60 text-white text-xs px-2 py-0.5 rounded">${i + 1}</div>
+                `;
+                preview.appendChild(div);
               };
               reader.readAsDataURL(file);
+              
+              // 각 사진별 드롭다운 + 메모
+              notesHTML += `
+                <div class="bg-white border-2 border-gray-200 rounded-lg p-4 space-y-3">
+                  <div class="flex items-center gap-2">
+                    <span class="w-6 h-6 flex items-center justify-center bg-green-600 text-white rounded-full text-xs font-bold shrink-0">${i + 1}</span>
+                    <span class="text-sm font-bold text-gray-700">사진 ${i + 1}</span>
+                  </div>
+                  
+                  <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">
+                      <i class="fas fa-box mr-1"></i>이 사진은 어떤 물품인가요? <span class="text-red-500">*</span>
+                    </label>
+                    <select 
+                      id="inspection-photo-item-${i}" 
+                      class="w-full px-3 py-2 text-sm border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                      required
+                    >
+                      <option value="">선택하세요</option>
+                      ${itemOptions}
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">
+                      <i class="fas fa-sticky-note mr-1"></i>메모 (선택사항)
+                    </label>
+                    <input 
+                      type="text" 
+                      id="inspection-photo-note-${i}" 
+                      placeholder="예: 검수 완료, 상태 양호" 
+                      class="w-full px-3 py-1.5 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                    >
+                  </div>
+                </div>
+              `;
             });
+            
+            notesHTML += '</div>';
+            notesContainer.innerHTML = notesHTML;
           };
           
           document.getElementById('inspection-modal').classList.remove('hidden');
@@ -3098,75 +3199,202 @@
         const actualAmount = parseFloat(document.getElementById('inspection-actual-amount').value);
         const notes = document.getElementById('inspection-notes').value;
         
-        if (files.length === 0) {
-          this.showToast('⚠️ 사진을 업로드하세요', 'error');
+        // 1. 파일 선택 검증
+        if (!files || files.length === 0) {
+          this.showToast('⚠️ 사진을 선택해주세요', 'error');
           return;
         }
         
+        if (files.length > 10) {
+          this.showToast(`⚠️ 최대 10장까지 업로드 가능합니다 (현재: ${files.length}장)`, 'error');
+          return;
+        }
+        
+        // 2. 실제 금액 검증
         if (!actualAmount || actualAmount <= 0) {
           this.showToast('⚠️ 실제 금액을 입력하세요', 'error');
           return;
         }
         
+        // 3. 사진별 물품 선택 검증
+        const photoItems = [];
+        const photoNotes = [];
+        
+        for (let i = 0; i < files.length; i++) {
+          const itemSelect = document.getElementById(`inspection-photo-item-${i}`);
+          const noteInput = document.getElementById(`inspection-photo-note-${i}`);
+          
+          const selectedItemId = itemSelect ? itemSelect.value : '';
+          if (!selectedItemId) {
+            this.showToast(`⚠️ 사진 ${i + 1}의 물품을 선택해주세요`, 'error');
+            return;
+          }
+          
+          photoItems.push(selectedItemId);
+          photoNotes.push(noteInput ? noteInput.value.trim() : '');
+        }
+        
+        console.log('📦 선택된 물품:', photoItems);
+        console.log('📝 사진별 메모:', photoNotes);
+        
         try {
           this.showToast('📤 검수 정보를 업로드하는 중...', 'info');
           
-          const photoUrls = [];
+          let successCount = 0;
+          const errors = [];
+          const systemUserId = '00000000-0000-0000-0000-000000000000';
+          
+          // 4. 각 파일 순차 업로드
           for (let i = 0; i < files.length; i++) {
             const file = files[i];
-            const fileName = `${this.state.currentInspection.id}_${Date.now()}_${i}.jpg`;
             
-            const { data, error } = await this.sb.storage
-              .from('purchase-photos')
-              .upload(fileName, file);
-            
-            if (error) throw error;
-            
-            const { data: urlData } = this.sb.storage
-              .from('purchase-photos')
-              .getPublicUrl(fileName);
-            
-            photoUrls.push(urlData.publicUrl);
+            try {
+              // 파일 확장자 추출
+              let fileExt = 'jpg';
+              if (file.name && file.name.includes('.')) {
+                fileExt = file.name.split('.').pop().toLowerCase();
+              } else if (file.type) {
+                const mimeMap = {
+                  'image/jpeg': 'jpg',
+                  'image/png': 'png',
+                  'image/gif': 'gif',
+                  'image/webp': 'webp'
+                };
+                fileExt = mimeMap[file.type.toLowerCase()] || 'jpg';
+              }
+              
+              // 안전한 파일명 생성
+              const timestamp = Date.now();
+              const random = Math.random().toString(36).substring(2, 11);
+              const safeFileName = `${timestamp}_${i}_${random}.${fileExt}`;
+              const storagePath = `${this.state.currentInspection.id}/${safeFileName}`;
+              
+              console.log(`📁 파일 ${i + 1} 업로드 시작:`, {
+                original: file.name,
+                safe: safeFileName,
+                size: (file.size / 1024).toFixed(2) + 'KB',
+                type: file.type,
+                itemId: photoItems[i],
+                note: photoNotes[i] || '(메모 없음)'
+              });
+              
+              // Storage 업로드
+              const { data: uploadData, error: uploadError } = await this.sb.storage
+                .from('purchase-photos')
+                .upload(storagePath, file, {
+                  contentType: file.type || 'image/jpeg',
+                  upsert: false
+                });
+              
+              if (uploadError) {
+                console.error('❌ 스토리지 업로드 실패:', uploadError);
+                errors.push(`${file.name}: ${uploadError.message}`);
+                continue;
+              }
+              
+              console.log('✅ 스토리지 업로드 성공:', uploadData);
+              
+              // 공개 URL 가져오기
+              const { data: urlData } = this.sb.storage
+                .from('purchase-photos')
+                .getPublicUrl(storagePath);
+              
+              if (!urlData || !urlData.publicUrl) {
+                console.error('❌ 공개 URL 가져오기 실패');
+                errors.push(`${file.name}: URL 가져오기 실패`);
+                continue;
+              }
+              
+              console.log('🔗 공개 URL 획득:', urlData.publicUrl);
+              
+              // DB 저장
+              const photoData = {
+                purchase_id: this.state.currentInspection.id,
+                purchase_item_id: photoItems[i],
+                photo_url: urlData.publicUrl,
+                uploaded_by: this.state.employee?.id || systemUserId,
+                uploaded_at: new Date().toISOString()
+              };
+              
+              if (photoNotes[i]) {
+                photoData.note = photoNotes[i];
+              }
+              
+              console.log('💾 DB 저장 시도:', photoData);
+              
+              const { data: insertData, error: insertError } = await this.sb
+                .from('purchase_photos')
+                .insert(photoData)
+                .select();
+              
+              if (insertError) {
+                console.error('❌ DB 저장 실패:', insertError);
+                // 스토리지 롤백
+                try {
+                  await this.sb.storage
+                    .from('purchase-photos')
+                    .remove([storagePath]);
+                  console.log('🗑️ 스토리지 롤백 완료');
+                } catch (deleteErr) {
+                  console.error('⚠️ 스토리지 롤백 실패:', deleteErr);
+                }
+                errors.push(`${file.name}: DB 저장 실패 - ${insertError.message}`);
+                continue;
+              }
+              
+              console.log('✅ DB 저장 성공:', insertData);
+              successCount++;
+              
+            } catch (fileError) {
+              console.error(`❌ 파일 ${i + 1} 처리 중 오류:`, fileError);
+              errors.push(`${file.name}: ${fileError.message || '알 수 없는 오류'}`);
+            }
           }
           
-          const photoRecords = photoUrls.map(url => ({
-            purchase_id: this.state.currentInspection.id,
-            photo_url: url,
-            uploaded_by: this.state.employee.name
-          }));
+          console.log('📊 업로드 완료:', {
+            total: files.length,
+            success: successCount,
+            failed: errors.length
+          });
           
-          const { error: e1 } = await this.sb
-            .from('purchase_photos')
-            .insert(photoRecords);
-          
-          if (e1) throw e1;
-          
-          const { error: e2 } = await this.sb
+          // 5. 구매 정보 업데이트
+          const { error: updateError } = await this.sb
             .from('purchases')
             .update({
               status: 'completed',
               completion_time: new Date().toISOString(),
               actual_amount: actualAmount,
-              inspected_by: this.state.employee.name,
+              inspected_by: this.state.employee?.name || '직원',
               inspected_at: new Date().toISOString(),
               inspection_notes: notes || null
             })
             .eq('id', this.state.currentInspection.id);
           
-          if (e2) throw e2;
+          if (updateError) {
+            console.error('⚠️ 구매 정보 업데이트 실패:', updateError);
+          }
           
-          this.showToast('✅ 검수가 완료되었습니다!', 'success');
+          // 6. 결과 알림
+          if (successCount === files.length) {
+            this.showToast(`✅ 검수가 완료되었습니다! (${successCount}장)`, 'success');
+          } else if (successCount > 0) {
+            this.showToast(`⚠️ ${successCount}/${files.length}장이 업로드되었습니다\n\n실패: ${errors.join(', ')}`, 'warning');
+          } else {
+            this.showToast(`❌ 업로드 실패\n\n${errors.join('\n')}`, 'error');
+            return;
+          }
+          
           this.closeInspectionModal();
-          
           await this.loadPurchaseBadge();
           
           const purchaseModal = document.getElementById('purchase-modal');
           if (purchaseModal && !purchaseModal.classList.contains('hidden')) {
             await this.loadMyPurchases();
           }
+          
         } catch (err) {
           console.error('❌ 검수 완료 처리 실패:', err);
-          this.showToast('❌ 검수 처리 중 오류가 발생했습니다', 'error');
+          this.showToast('❌ 검수 처리 중 오류가 발생했습니다: ' + (err.message || '알 수 없는 오류'), 'error');
         }
       },
 
