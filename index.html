@@ -1482,6 +1482,19 @@
 
     <!-- TAB: Documents Management (서류 관리) -->
     <div id="tab-documents" class="tab-content hidden px-4 pt-4 pb-4">
+      <!-- 액션 버튼 -->
+      <div class="flex gap-3 mb-4">
+        <button onclick="app.openDocumentUploadModal()" class="px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg hover:from-blue-600 hover:to-indigo-700 transition-all shadow-md font-medium">
+          <i class="fas fa-cloud-upload-alt mr-2"></i>서류 업로드
+        </button>
+        <button onclick="app.refreshDocumentList()" class="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium">
+          <i class="fas fa-sync-alt mr-2"></i>새로고침
+        </button>
+        <button onclick="app.openCategoryManageModal()" class="px-6 py-3 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors font-medium">
+          <i class="fas fa-tags mr-2"></i>카테고리 관리
+        </button>
+      </div>
+
       <!-- 상단 통계 대시보드 -->
       <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <div class="bg-gradient-to-br from-blue-50 to-indigo-50 p-4 rounded-xl shadow-sm border-2 border-blue-200">
@@ -1535,19 +1548,6 @@
             </div>
           </div>
         </div>
-      </div>
-
-      <!-- 액션 버튼 -->
-      <div class="flex gap-3 mb-4">
-        <button onclick="app.openDocumentUploadModal()" class="px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg hover:from-blue-600 hover:to-indigo-700 transition-all shadow-md font-medium">
-          <i class="fas fa-cloud-upload-alt mr-2"></i>서류 업로드
-        </button>
-        <button onclick="app.refreshDocumentList()" class="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium">
-          <i class="fas fa-sync-alt mr-2"></i>새로고침
-        </button>
-        <button onclick="app.openCategoryManageModal()" class="px-6 py-3 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors font-medium">
-          <i class="fas fa-tags mr-2"></i>카테고리 관리
-        </button>
       </div>
 
       <!-- 검색 및 필터 -->
