@@ -1022,6 +1022,262 @@
             </div>
           </div>
 
+          <!-- ============================================ -->
+          <!-- 휴가 관리 섹션 (근태 관리 탭 내부 서브 카테고리) -->
+          <!-- ============================================ -->
+          <div class="mt-8 border-t-4 border-purple-200 pt-6">
+            <div class="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl p-6 mb-6">
+              <h2 class="text-2xl font-bold text-gray-800 mb-2 flex items-center">
+                <i class="fas fa-umbrella-beach text-purple-600 mr-3"></i>
+                휴가 관리
+              </h2>
+              <p class="text-sm text-gray-600">
+                직원들의 휴가 신청 내역, 잔여 휴가일수, 휴가 정책 및 사용 현황을 관리합니다.
+              </p>
+            </div>
+
+            <!-- 휴가 관리 메인 레이아웃 -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              
+              <!-- 왼쪽: 휴가 통계 대시보드 (2컬럼) -->
+              <div class="lg:col-span-2 space-y-6">
+                
+                <!-- 전체 휴가 통계 카드 -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <!-- 총 휴가 일수 -->
+                  <div class="bg-white rounded-xl shadow-sm border p-4">
+                    <div class="flex items-center justify-between">
+                      <div>
+                        <p class="text-xs text-gray-500 mb-1">총 사용 휴가</p>
+                        <p class="text-2xl font-bold text-purple-600"><span id="total-vacation-used">0</span>일</p>
+                      </div>
+                      <div class="bg-purple-100 rounded-full p-3">
+                        <i class="fas fa-calendar-day text-purple-600 text-xl"></i>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- 승인율 -->
+                  <div class="bg-white rounded-xl shadow-sm border p-4">
+                    <div class="flex items-center justify-between">
+                      <div>
+                        <p class="text-xs text-gray-500 mb-1">휴가 승인율</p>
+                        <p class="text-2xl font-bold text-green-600"><span id="vacation-approval-rate">0</span>%</p>
+                      </div>
+                      <div class="bg-green-100 rounded-full p-3">
+                        <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- 대기중 -->
+                  <div class="bg-white rounded-xl shadow-sm border p-4">
+                    <div class="flex items-center justify-between">
+                      <div>
+                        <p class="text-xs text-gray-500 mb-1">승인 대기</p>
+                        <p class="text-2xl font-bold text-yellow-600"><span id="vacation-pending-count">0</span>건</p>
+                      </div>
+                      <div class="bg-yellow-100 rounded-full p-3">
+                        <i class="fas fa-clock text-yellow-600 text-xl"></i>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- 이번달 휴가 -->
+                  <div class="bg-white rounded-xl shadow-sm border p-4">
+                    <div class="flex items-center justify-between">
+                      <div>
+                        <p class="text-xs text-gray-500 mb-1">이번달 휴가</p>
+                        <p class="text-2xl font-bold text-blue-600"><span id="vacation-this-month">0</span>일</p>
+                      </div>
+                      <div class="bg-blue-100 rounded-full p-3">
+                        <i class="fas fa-calendar-alt text-blue-600 text-xl"></i>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 휴가 사용 내역 테이블 -->
+                <div class="bg-white rounded-xl shadow-sm border p-6">
+                  <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-bold text-gray-800 flex items-center">
+                      <i class="fas fa-list-ul text-indigo-600 mr-2"></i>
+                      휴가 사용 내역
+                    </h3>
+                    <div class="flex gap-2">
+                      <button onclick="app.refreshVacationHistory()" class="px-3 py-1.5 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 transition-colors">
+                        <i class="fas fa-sync-alt mr-1"></i>새로고침
+                      </button>
+                      <button onclick="app.exportVacationToExcel()" class="px-3 py-1.5 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors">
+                        <i class="fas fa-file-excel mr-1"></i>Excel 다운로드
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- 필터 -->
+                  <div class="flex gap-3 mb-4">
+                    <select id="vacation-filter-employee" onchange="app.filterVacationHistory()" class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                      <option value="">전체 직원</option>
+                    </select>
+                    <select id="vacation-filter-status" onchange="app.filterVacationHistory()" class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                      <option value="">전체 상태</option>
+                      <option value="approved">승인됨</option>
+                      <option value="pending">대기중</option>
+                      <option value="rejected">거부됨</option>
+                    </select>
+                    <select id="vacation-filter-period" onchange="app.filterVacationHistory()" class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                      <option value="all">전체 기간</option>
+                      <option value="thisMonth">이번 달</option>
+                      <option value="lastMonth">지난 달</option>
+                      <option value="thisYear">올해</option>
+                    </select>
+                  </div>
+
+                  <!-- 테이블 -->
+                  <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                      <thead class="bg-gray-50">
+                        <tr>
+                          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">직원명</th>
+                          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">휴가 유형</th>
+                          <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">시작일</th>
+                          <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">종료일</th>
+                          <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">일수</th>
+                          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">사유</th>
+                          <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">상태</th>
+                          <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">관리</th>
+                        </tr>
+                      </thead>
+                      <tbody id="vacation-history-body" class="bg-white divide-y divide-gray-200">
+                        <tr>
+                          <td colspan="8" class="px-4 py-8 text-center text-gray-400">
+                            <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
+                            <p>데이터를 불러오는 중...</p>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <!-- 월별 휴가 차트 -->
+                <div class="bg-white rounded-xl shadow-sm border p-6">
+                  <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                    <i class="fas fa-chart-bar text-blue-600 mr-2"></i>
+                    월별 휴가 사용 추이
+                  </h3>
+                  <div class="h-64 flex items-center justify-center bg-gray-50 rounded-lg">
+                    <canvas id="vacation-monthly-chart"></canvas>
+                  </div>
+                </div>
+
+              </div>
+
+              <!-- 오른쪽: 사이드바 (1컬럼) -->
+              <div class="space-y-6">
+                
+                <!-- 직원별 잔여 휴가 -->
+                <div class="bg-white rounded-xl shadow-sm border p-4">
+                  <h3 class="font-bold text-gray-800 mb-4 flex items-center">
+                    <i class="fas fa-user-clock text-orange-600 mr-2"></i>
+                    직원별 잔여 휴가
+                  </h3>
+                  <div class="overflow-y-auto max-h-96 space-y-2">
+                    <div id="employee-vacation-balance-list">
+                      <div class="text-center py-4 text-gray-400">
+                        <i class="fas fa-spinner fa-spin text-xl mb-2"></i>
+                        <p class="text-sm">데이터를 불러오는 중...</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 휴가 정책 안내 -->
+                <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl shadow-sm border border-blue-200 p-4">
+                  <h3 class="font-bold text-gray-800 mb-3 flex items-center">
+                    <i class="fas fa-info-circle text-blue-600 mr-2"></i>
+                    휴가 정책 안내
+                  </h3>
+                  <div class="space-y-3 text-sm">
+                    <div class="bg-white rounded-lg p-3">
+                      <div class="font-semibold text-gray-700 mb-1 flex items-center">
+                        <i class="fas fa-calendar text-purple-600 mr-2"></i>
+                        연차 휴가
+                      </div>
+                      <p class="text-xs text-gray-600">• 입사 1년 후: 15일</p>
+                      <p class="text-xs text-gray-600">• 입사 3년 후: 16일</p>
+                      <p class="text-xs text-gray-600">• 이후 2년마다 1일 가산 (최대 25일)</p>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg p-3">
+                      <div class="font-semibold text-gray-700 mb-1 flex items-center">
+                        <i class="fas fa-heartbeat text-red-600 mr-2"></i>
+                        병가
+                      </div>
+                      <p class="text-xs text-gray-600">• 진단서 제출 시 인정</p>
+                      <p class="text-xs text-gray-600">• 연간 최대 10일</p>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg p-3">
+                      <div class="font-semibold text-gray-700 mb-1 flex items-center">
+                        <i class="fas fa-home text-green-600 mr-2"></i>
+                        경조사 휴가
+                      </div>
+                      <p class="text-xs text-gray-600">• 본인 결혼: 5일</p>
+                      <p class="text-xs text-gray-600">• 직계 존비속 사망: 5일</p>
+                      <p class="text-xs text-gray-600">• 형제/자매 결혼: 1일</p>
+                    </div>
+
+                    <div class="bg-white rounded-lg p-3">
+                      <div class="font-semibold text-gray-700 mb-1 flex items-center">
+                        <i class="fas fa-exclamation-circle text-orange-600 mr-2"></i>
+                        기타 사항
+                      </div>
+                      <p class="text-xs text-gray-600">• 휴가 신청은 3일 전까지</p>
+                      <p class="text-xs text-gray-600">• 긴급 휴가는 당일 연락 필수</p>
+                      <p class="text-xs text-gray-600">• 미사용 연차는 다음 해 소멸</p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 휴가 신청 가이드 -->
+                <div class="bg-white rounded-xl shadow-sm border p-4">
+                  <h3 class="font-bold text-gray-800 mb-3 flex items-center">
+                    <i class="fas fa-book text-green-600 mr-2"></i>
+                    휴가 신청 방법
+                  </h3>
+                  <ol class="space-y-2 text-xs text-gray-600">
+                    <li class="flex items-start">
+                      <span class="bg-green-100 text-green-700 font-bold rounded-full w-5 h-5 flex items-center justify-center mr-2 flex-shrink-0">1</span>
+                      <span>직원 앱에서 '휴가 신청' 메뉴 선택</span>
+                    </li>
+                    <li class="flex items-start">
+                      <span class="bg-green-100 text-green-700 font-bold rounded-full w-5 h-5 flex items-center justify-center mr-2 flex-shrink-0">2</span>
+                      <span>휴가 유형, 날짜, 사유 입력</span>
+                    </li>
+                    <li class="flex items-start">
+                      <span class="bg-green-100 text-green-700 font-bold rounded-full w-5 h-5 flex items-center justify-center mr-2 flex-shrink-0">3</span>
+                      <span>관리자 승인 대기</span>
+                    </li>
+                    <li class="flex items-start">
+                      <span class="bg-green-100 text-green-700 font-bold rounded-full w-5 h-5 flex items-center justify-center mr-2 flex-shrink-0">4</span>
+                      <span>승인 시 자동으로 근태에 반영</span>
+                    </li>
+                  </ol>
+                  <div class="mt-3 p-2 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <p class="text-xs text-yellow-800">
+                      <i class="fas fa-lightbulb mr-1"></i>
+                      <strong>TIP:</strong> 연차는 3일 전까지 신청해야 합니다!
+                    </p>
+                  </div>
+                </div>
+
+              </div>
+
+            </div>
+          </div>
+          <!-- 휴가 관리 섹션 끝 -->
+
         </div>
 
         <!-- TAB 4: Data -->
@@ -2641,6 +2897,10 @@
             this.loadOvertimeRecords(); // 초과근무 로드
             this.loadTardinessRecords(); // 지각/결근 로드
             this.loadPendingVacations(); // 휴가 승인 대기 로드
+            // 휴가 관리 대시보드 로드
+            this.loadVacationStats(); // 휴가 통계
+            this.loadVacationHistory(); // 휴가 사용 내역
+            this.loadEmployeeVacationBalance(); // 직원별 잔여 휴가
             // Update last-update-time
             const now = new Date();
             document.getElementById('last-update-time').textContent = now.toLocaleString('ko-KR');
@@ -4487,6 +4747,10 @@
             
             alert('✅ 휴가가 승인되었습니다.');
             this.loadPendingVacations(); // 목록 새로고침
+            // 휴가 대시보드도 새로고침
+            this.loadVacationStats();
+            this.loadVacationHistory();
+            this.loadEmployeeVacationBalance();
           } catch (error) {
             console.error('휴가 승인 실패:', error);
             alert('❌ 휴가 승인에 실패했습니다.');
@@ -4516,6 +4780,10 @@
             
             alert('❌ 휴가가 거부되었습니다.');
             this.loadPendingVacations(); // 목록 새로고침
+            // 휴가 대시보드도 새로고침
+            this.loadVacationStats();
+            this.loadVacationHistory();
+            this.loadEmployeeVacationBalance();
           } catch (error) {
             console.error('휴가 거부 실패:', error);
             alert('❌ 휴가 거부에 실패했습니다.');
@@ -4713,6 +4981,421 @@
           } catch (e) {
             console.error('❌ 휴가 삭제 실패:', e);
             alert('휴가 삭제에 실패했습니다: ' + e.message);
+          }
+        },
+
+        // ============================================
+        // 휴가 관리 대시보드 함수들 (근태 관리 탭 내부)
+        // ============================================
+
+        // 휴가 통계 로드
+        loadVacationStats: async function () {
+          try {
+            const { data: vacations, error } = await this.sb
+              .from('vacations')
+              .select('*')
+              .eq('status', 'approved');
+
+            if (error) throw error;
+
+            // 총 사용 휴가
+            const totalUsed = vacations.length;
+            document.getElementById('total-vacation-used').textContent = totalUsed;
+
+            // 승인율 계산
+            const { data: allVacations } = await this.sb
+              .from('vacations')
+              .select('*');
+            
+            const approvalRate = allVacations.length > 0 
+              ? Math.round((vacations.length / allVacations.length) * 100) 
+              : 0;
+            document.getElementById('vacation-approval-rate').textContent = approvalRate;
+
+            // 대기중 건수
+            const { data: pending } = await this.sb
+              .from('vacations')
+              .select('*')
+              .eq('status', 'pending');
+            
+            document.getElementById('vacation-pending-count').textContent = pending?.length || 0;
+
+            // 이번달 휴가
+            const now = new Date();
+            const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+            const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+            
+            const { data: thisMonth } = await this.sb
+              .from('vacations')
+              .select('*')
+              .eq('status', 'approved')
+              .gte('start_date', firstDay)
+              .lte('start_date', lastDay);
+            
+            document.getElementById('vacation-this-month').textContent = thisMonth?.length || 0;
+
+          } catch (error) {
+            console.error('휴가 통계 로드 실패:', error);
+          }
+        },
+
+        // 휴가 내역 새로고침
+        refreshVacationHistory: async function () {
+          await this.loadVacationHistory();
+          await this.loadVacationStats();
+          await this.loadEmployeeVacationBalance();
+          alert('✅ 휴가 데이터가 새로고침되었습니다.');
+        },
+
+        // 휴가 사용 내역 로드
+        loadVacationHistory: async function () {
+          const tbody = document.getElementById('vacation-history-body');
+          tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4"><i class="fas fa-spinner fa-spin"></i> 로딩중...</td></tr>';
+
+          try {
+            let query = this.sb
+              .from('vacations')
+              .select(`
+                *,
+                employees (name)
+              `)
+              .order('created_at', { ascending: false });
+
+            // 아파트 필터
+            if (this.currentApartment?.id) {
+              query = query.eq('apartment_id', this.currentApartment.id);
+            }
+
+            const { data: vacations, error } = await query;
+            if (error) throw error;
+
+            if (!vacations || vacations.length === 0) {
+              tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-gray-400">휴가 기록이 없습니다.</td></tr>';
+              return;
+            }
+
+            // 직원 선택 드롭다운 채우기
+            const employeeFilter = document.getElementById('vacation-filter-employee');
+            const uniqueEmployees = [...new Set(vacations.map(v => v.employee_name))];
+            employeeFilter.innerHTML = '<option value="">전체 직원</option>';
+            uniqueEmployees.forEach(name => {
+              employeeFilter.innerHTML += `<option value="${name}">${name}</option>`;
+            });
+
+            // 테이블 렌더링
+            tbody.innerHTML = vacations.map(vac => {
+              const statusBadge = this.getVacationStatusBadge(vac.status);
+              const startDate = vac.start_date || vac.vacation_date || '-';
+              const endDate = vac.end_date || vac.vacation_date || '-';
+              const days = this.calculateVacationDays(startDate, endDate);
+              
+              return `
+                <tr class="hover:bg-gray-50">
+                  <td class="px-4 py-3 text-sm font-medium text-gray-900">${vac.employee_name || vac.employees?.name || '-'}</td>
+                  <td class="px-4 py-3 text-sm text-gray-600">${vac.vacation_type || vac.type || '연차'}</td>
+                  <td class="px-4 py-3 text-sm text-gray-600 text-center">${startDate}</td>
+                  <td class="px-4 py-3 text-sm text-gray-600 text-center">${endDate}</td>
+                  <td class="px-4 py-3 text-sm text-gray-600 text-center font-semibold">${days}일</td>
+                  <td class="px-4 py-3 text-sm text-gray-600">${vac.reason || vac.note || '-'}</td>
+                  <td class="px-4 py-3 text-center">${statusBadge}</td>
+                  <td class="px-4 py-3 text-center">
+                    ${vac.status === 'pending' ? `
+                      <button onclick="app.approveVacation('${vac.id}')" class="px-2 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 mr-1" title="승인">
+                        <i class="fas fa-check"></i>
+                      </button>
+                      <button onclick="app.rejectVacation('${vac.id}')" class="px-2 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700" title="거부">
+                        <i class="fas fa-times"></i>
+                      </button>
+                    ` : `
+                      <span class="text-gray-400 text-xs">-</span>
+                    `}
+                  </td>
+                </tr>
+              `;
+            }).join('');
+
+          } catch (error) {
+            console.error('휴가 내역 로드 실패:', error);
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-red-500">로드 실패</td></tr>';
+          }
+        },
+
+        // 휴가 상태 뱃지
+        getVacationStatusBadge: function (status) {
+          const badges = {
+            'approved': '<span class="px-2 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">승인됨</span>',
+            'pending': '<span class="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-semibold rounded-full">대기중</span>',
+            'rejected': '<span class="px-2 py-1 bg-red-100 text-red-800 text-xs font-semibold rounded-full">거부됨</span>'
+          };
+          return badges[status] || '<span class="px-2 py-1 bg-gray-100 text-gray-800 text-xs font-semibold rounded-full">알 수 없음</span>';
+        },
+
+        // 휴가 일수 계산
+        calculateVacationDays: function (startDate, endDate) {
+          try {
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            const diffTime = Math.abs(end - start);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 to include both start and end days
+            return diffDays;
+          } catch (e) {
+            return 1; // 기본값
+          }
+        },
+
+        // 휴가 내역 필터
+        filterVacationHistory: async function () {
+          const employeeFilter = document.getElementById('vacation-filter-employee').value;
+          const statusFilter = document.getElementById('vacation-filter-status').value;
+          const periodFilter = document.getElementById('vacation-filter-period').value;
+
+          const tbody = document.getElementById('vacation-history-body');
+          tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4"><i class="fas fa-spinner fa-spin"></i> 필터링중...</td></tr>';
+
+          try {
+            let query = this.sb
+              .from('vacations')
+              .select(`
+                *,
+                employees (name)
+              `)
+              .order('created_at', { ascending: false });
+
+            // 아파트 필터
+            if (this.currentApartment?.id) {
+              query = query.eq('apartment_id', this.currentApartment.id);
+            }
+
+            // 직원 필터
+            if (employeeFilter) {
+              query = query.eq('employee_name', employeeFilter);
+            }
+
+            // 상태 필터
+            if (statusFilter) {
+              query = query.eq('status', statusFilter);
+            }
+
+            // 기간 필터
+            if (periodFilter !== 'all') {
+              const now = new Date();
+              let startDate, endDate;
+
+              if (periodFilter === 'thisMonth') {
+                startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+                endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+              } else if (periodFilter === 'lastMonth') {
+                startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                endDate = new Date(now.getFullYear(), now.getMonth(), 0);
+              } else if (periodFilter === 'thisYear') {
+                startDate = new Date(now.getFullYear(), 0, 1);
+                endDate = new Date(now.getFullYear(), 11, 31);
+              }
+
+              if (startDate && endDate) {
+                query = query
+                  .gte('start_date', startDate.toISOString().split('T')[0])
+                  .lte('start_date', endDate.toISOString().split('T')[0]);
+              }
+            }
+
+            const { data: vacations, error } = await query;
+            if (error) throw error;
+
+            if (!vacations || vacations.length === 0) {
+              tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-gray-400">필터 조건에 맞는 휴가 기록이 없습니다.</td></tr>';
+              return;
+            }
+
+            // 테이블 렌더링 (동일한 로직)
+            tbody.innerHTML = vacations.map(vac => {
+              const statusBadge = this.getVacationStatusBadge(vac.status);
+              const startDate = vac.start_date || vac.vacation_date || '-';
+              const endDate = vac.end_date || vac.vacation_date || '-';
+              const days = this.calculateVacationDays(startDate, endDate);
+              
+              return `
+                <tr class="hover:bg-gray-50">
+                  <td class="px-4 py-3 text-sm font-medium text-gray-900">${vac.employee_name || vac.employees?.name || '-'}</td>
+                  <td class="px-4 py-3 text-sm text-gray-600">${vac.vacation_type || vac.type || '연차'}</td>
+                  <td class="px-4 py-3 text-sm text-gray-600 text-center">${startDate}</td>
+                  <td class="px-4 py-3 text-sm text-gray-600 text-center">${endDate}</td>
+                  <td class="px-4 py-3 text-sm text-gray-600 text-center font-semibold">${days}일</td>
+                  <td class="px-4 py-3 text-sm text-gray-600">${vac.reason || vac.note || '-'}</td>
+                  <td class="px-4 py-3 text-center">${statusBadge}</td>
+                  <td class="px-4 py-3 text-center">
+                    ${vac.status === 'pending' ? `
+                      <button onclick="app.approveVacation('${vac.id}')" class="px-2 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 mr-1" title="승인">
+                        <i class="fas fa-check"></i>
+                      </button>
+                      <button onclick="app.rejectVacation('${vac.id}')" class="px-2 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700" title="거부">
+                        <i class="fas fa-times"></i>
+                      </button>
+                    ` : `
+                      <span class="text-gray-400 text-xs">-</span>
+                    `}
+                  </td>
+                </tr>
+              `;
+            }).join('');
+
+          } catch (error) {
+            console.error('휴가 내역 필터링 실패:', error);
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-red-500">필터링 실패</td></tr>';
+          }
+        },
+
+        // 직원별 잔여 휴가 로드
+        loadEmployeeVacationBalance: async function () {
+          const container = document.getElementById('employee-vacation-balance-list');
+          container.innerHTML = '<div class="text-center py-4"><i class="fas fa-spinner fa-spin"></i> 로딩중...</div>';
+
+          try {
+            // 활성 직원 목록
+            let empQuery = this.sb
+              .from('employees')
+              .select('id, name, hire_date')
+              .eq('status', 'active')
+              .order('name');
+
+            if (this.currentApartment?.id) {
+              empQuery = empQuery.eq('apartment_id', this.currentApartment.id);
+            }
+
+            const { data: employees, error: empError } = await empQuery;
+            if (empError) throw empError;
+
+            if (!employees || employees.length === 0) {
+              container.innerHTML = '<div class="text-center py-4 text-gray-400">활성 직원이 없습니다.</div>';
+              return;
+            }
+
+            // 각 직원의 사용 휴가 계산
+            const balances = await Promise.all(employees.map(async (emp) => {
+              const { data: vacations } = await this.sb
+                .from('vacations')
+                .select('*')
+                .eq('employee_id', emp.id)
+                .eq('status', 'approved');
+
+              const usedDays = vacations?.length || 0;
+              const totalDays = this.calculateTotalVacationDays(emp.hire_date);
+              const remainingDays = totalDays - usedDays;
+
+              return {
+                name: emp.name,
+                totalDays,
+                usedDays,
+                remainingDays
+              };
+            }));
+
+            // 렌더링
+            container.innerHTML = balances.map(bal => {
+              const percentage = (bal.usedDays / bal.totalDays) * 100;
+              const barColor = percentage > 80 ? 'bg-red-500' : percentage > 50 ? 'bg-yellow-500' : 'bg-green-500';
+              
+              return `
+                <div class="bg-gray-50 rounded-lg p-3">
+                  <div class="flex justify-between items-center mb-2">
+                    <span class="font-semibold text-gray-800">${bal.name}</span>
+                    <span class="text-sm text-gray-600">${bal.remainingDays}/${bal.totalDays}일</span>
+                  </div>
+                  <div class="w-full bg-gray-200 rounded-full h-2">
+                    <div class="${barColor} h-2 rounded-full transition-all" style="width: ${percentage}%"></div>
+                  </div>
+                  <div class="flex justify-between text-xs text-gray-500 mt-1">
+                    <span>사용: ${bal.usedDays}일</span>
+                    <span>잔여: ${bal.remainingDays}일</span>
+                  </div>
+                </div>
+              `;
+            }).join('');
+
+          } catch (error) {
+            console.error('잔여 휴가 로드 실패:', error);
+            container.innerHTML = '<div class="text-center py-4 text-red-500">로드 실패</div>';
+          }
+        },
+
+        // 총 휴가 일수 계산 (근속년수 기반)
+        calculateTotalVacationDays: function (hireDate) {
+          if (!hireDate) return 15; // 기본값
+          
+          const hire = new Date(hireDate);
+          const now = new Date();
+          const yearsWorked = Math.floor((now - hire) / (1000 * 60 * 60 * 24 * 365));
+
+          if (yearsWorked < 1) return 11; // 1년 미만: 11일
+          if (yearsWorked < 3) return 15; // 1-3년: 15일
+          
+          // 3년 이후 매 2년마다 1일 추가 (최대 25일)
+          const additionalDays = Math.floor((yearsWorked - 3) / 2) + 1;
+          return Math.min(15 + additionalDays, 25);
+        },
+
+        // Excel 다운로드
+        exportVacationToExcel: async function () {
+          try {
+            let query = this.sb
+              .from('vacations')
+              .select(`
+                *,
+                employees (name)
+              `)
+              .order('created_at', { ascending: false });
+
+            if (this.currentApartment?.id) {
+              query = query.eq('apartment_id', this.currentApartment.id);
+            }
+
+            const { data: vacations, error } = await query;
+            if (error) throw error;
+
+            if (!vacations || vacations.length === 0) {
+              alert('다운로드할 데이터가 없습니다.');
+              return;
+            }
+
+            // CSV 생성
+            const headers = ['직원명', '휴가 유형', '시작일', '종료일', '일수', '사유', '상태', '신청일'];
+            const rows = vacations.map(vac => {
+              const startDate = vac.start_date || vac.vacation_date || '-';
+              const endDate = vac.end_date || vac.vacation_date || '-';
+              const days = this.calculateVacationDays(startDate, endDate);
+              
+              return [
+                vac.employee_name || vac.employees?.name || '-',
+                vac.vacation_type || vac.type || '연차',
+                startDate,
+                endDate,
+                days,
+                vac.reason || vac.note || '-',
+                vac.status === 'approved' ? '승인됨' : vac.status === 'pending' ? '대기중' : '거부됨',
+                new Date(vac.created_at).toLocaleDateString('ko-KR')
+              ];
+            });
+
+            const csvContent = [
+              headers.join(','),
+              ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+            ].join('\n');
+
+            // BOM 추가 (한글 깨짐 방지)
+            const BOM = '\uFEFF';
+            const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `휴가관리_${new Date().toISOString().split('T')[0]}.csv`;
+            link.click();
+            URL.revokeObjectURL(url);
+
+            alert('✅ Excel 파일이 다운로드되었습니다.');
+
+          } catch (error) {
+            console.error('Excel 다운로드 실패:', error);
+            alert('❌ Excel 다운로드에 실패했습니다.');
           }
         },
         
