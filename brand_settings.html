@@ -393,7 +393,11 @@
                 fileInput.value = '';
                 
                 console.log('✅ 로고 업로드 완료:', publicUrl);
-                alert('✅ 로고 이미지가 업로드되었습니다!');
+                
+                // 자동으로 데이터베이스에 저장
+                await saveBrandSettings();
+                
+                alert('✅ 로고 이미지가 업로드되고 저장되었습니다!\n\n페이지를 새로고침하여 변경사항을 확인하세요.');
                 
             } catch (error) {
                 console.error('❌ 로고 업로드 실패:', error);
