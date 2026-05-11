@@ -258,13 +258,21 @@
 
                 if (data) {
                     currentBrandId = data.id;
+                    console.log('📥 로드된 데이터:', data);
+                    
                     document.getElementById('companyName').value = data.company_name || '';
                     document.getElementById('companyNameEn').value = data.company_name_en || '';
                     document.getElementById('logoUrl').value = data.logo_url || '';
                     
                     // 로고 미리보기 표시
                     if (data.logo_url) {
+                        console.log('🖼️ 로고 URL 발견:', data.logo_url);
                         showCurrentLogo(data.logo_url);
+                        console.log('✅ showCurrentLogo() 호출 완료');
+                    } else {
+                        console.log('⚠️ 로고 URL이 없습니다');
+                        // 로고 미리보기 숨김
+                        document.getElementById('currentLogoPreview').classList.add('hidden');
                     }
                     
                     document.getElementById('primaryColor').value = data.primary_color || '#C5A35F';
@@ -277,6 +285,7 @@
                     console.log('✅ 브랜드 설정 로드 완료');
                 } else {
                     console.log('⚠️ 저장된 브랜드 설정이 없습니다. 기본값을 사용합니다.');
+                    document.getElementById('currentLogoPreview').classList.add('hidden');
                 }
             } catch (error) {
                 console.error('❌ 브랜드 설정 로드 실패:', error);
@@ -430,13 +439,28 @@
         
         // 현재 로고 표시
         function showCurrentLogo(url, filename) {
+            console.log('🎨 showCurrentLogo 호출됨:', { url, filename });
+            
             const preview = document.getElementById('currentLogoPreview');
             const image = document.getElementById('currentLogoImage');
             const name = document.getElementById('currentLogoName');
             
+            console.log('📦 DOM 요소 확인:', {
+                preview: preview ? '존재' : '없음',
+                image: image ? '존재' : '없음',
+                name: name ? '존재' : '없음'
+            });
+            
+            if (!preview || !image || !name) {
+                console.error('❌ DOM 요소를 찾을 수 없습니다!');
+                return;
+            }
+            
             image.src = url;
             name.textContent = filename || url.split('/').pop();
             preview.classList.remove('hidden');
+            
+            console.log('✅ 로고 미리보기 표시 완료');
         }
         
         // 로고 파일 제거
