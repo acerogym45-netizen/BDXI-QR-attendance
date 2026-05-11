@@ -284,7 +284,7 @@
             }
         }
 
-        async function saveBrandSettings() {
+        async function saveBrandSettings(silent = false) {
             try {
                 const settings = {
                     company_name: document.getElementById('companyName').value || '마스터플랜리소스(유)',
@@ -297,6 +297,8 @@
                     is_active: true,
                     updated_at: new Date().toISOString()
                 };
+
+                console.log('💾 저장할 설정:', settings);
 
                 let result;
                 if (currentBrandId) {
@@ -320,11 +322,17 @@
 
                 if (result.error) throw result.error;
 
-                alert('✅ 브랜드 설정이 저장되었습니다!\n\n변경사항을 적용하려면 페이지를 새로고침하세요.');
+                if (!silent) {
+                    alert('✅ 브랜드 설정이 저장되었습니다!\n\n변경사항을 적용하려면 페이지를 새로고침하세요.');
+                }
                 console.log('✅ 브랜드 설정 저장 완료');
+                return true;
             } catch (error) {
                 console.error('❌ 브랜드 설정 저장 실패:', error);
-                alert('설정 저장에 실패했습니다: ' + error.message);
+                if (!silent) {
+                    alert('설정 저장에 실패했습니다: ' + error.message);
+                }
+                throw error;
             }
         }
 
@@ -394,10 +402,15 @@
                 
                 console.log('✅ 로고 업로드 완료:', publicUrl);
                 
-                // 자동으로 데이터베이스에 저장
-                await saveBrandSettings();
-                
-                alert('✅ 로고 이미지가 업로드되고 저장되었습니다!\n\n페이지를 새로고침하여 변경사항을 확인하세요.');
+                // 자동으로 데이터베이스에 저장 (silent 모드)
+                try {
+                    await saveBrandSettings(true); // silent = true
+                    console.log('✅ 데이터베이스 자동 저장 완료');
+                    alert('✅ 로고 이미지가 업로드되고 저장되었습니다!');
+                } catch (saveError) {
+                    console.error('❌ 데이터베이스 저장 실패:', saveError);
+                    alert('⚠️ 로고 업로드는 성공했지만 자동 저장에 실패했습니다.\n\n수동으로 "설정 저장" 버튼을 클릭해주세요.\n\n에러: ' + saveError.message);
+                }
                 
             } catch (error) {
                 console.error('❌ 로고 업로드 실패:', error);
