@@ -2971,6 +2971,41 @@
           if (el) el.textContent = time;
         },
 
+        // Toast 알림 함수
+        showToast: function(message, type = 'info') {
+          console.log(`[Toast ${type}]:`, message);
+          
+          // 기존 토스트 제거
+          const existingToast = document.getElementById('app-toast');
+          if (existingToast) {
+            existingToast.remove();
+          }
+          
+          // 토스트 생성
+          const toast = document.createElement('div');
+          toast.id = 'app-toast';
+          toast.className = 'fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg transition-all duration-300';
+          
+          // 타입별 스타일
+          const styles = {
+            success: 'bg-green-600 text-white',
+            error: 'bg-red-600 text-white',
+            warning: 'bg-yellow-600 text-white',
+            info: 'bg-blue-600 text-white'
+          };
+          
+          toast.className += ' ' + (styles[type] || styles.info);
+          toast.textContent = message;
+          
+          document.body.appendChild(toast);
+          
+          // 3초 후 자동 제거
+          setTimeout(() => {
+            toast.style.opacity = '0';
+            setTimeout(() => toast.remove(), 300);
+          }, 3000);
+        },
+
         login: function () {
           const pin = document.getElementById('inp-pin').value;
           const apartmentId = document.getElementById('inp-apartment').value;
