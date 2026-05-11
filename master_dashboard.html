@@ -116,8 +116,8 @@
             </div>
         </div>
 
-        <!-- Tab Navigation -->
-        <div class="glass-card p-0 mb-6 overflow-hidden">
+        <!-- Tab Navigation (Always Visible) -->
+        <div class="glass-card p-0 mb-6 overflow-hidden" id="master-tab-navigation">
             <div class="flex border-b">
                 <button onclick="switchMasterTab('dashboard')" id="tab-dashboard" class="flex-1 px-6 py-4 font-medium text-white brand-bg border-b-4 border-green-600 transition">
                     <i class="fas fa-chart-line mr-2"></i>
@@ -235,15 +235,21 @@
                     </div>
                 </div>
 
-                <!-- 4. 출근율 저조 -->
-                <div class="stat-card" style="background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);">
+                <!-- 4. 정산서 제출 현황 -->
+                <div class="stat-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);" 
+                     onclick="switchMasterTab('settlement')" 
+                     style="cursor: pointer;">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-sm opacity-90">이번 달 출근율</p>
-                            <h3 class="text-4xl font-bold mt-2" id="todayAttendanceRate">0%</h3>
-                            <p class="text-xs opacity-75 mt-1">전체 평균</p>
+                            <p class="text-sm opacity-90">이번 달 정산서</p>
+                            <h3 class="text-4xl font-bold mt-2">
+                                <span id="settlementsSubmitted">0</span>
+                                <span class="text-xl"> / </span>
+                                <span id="settlementsTotal" class="text-2xl">0</span>
+                            </h3>
+                            <p class="text-xs opacity-75 mt-1">제출 / 전체</p>
                         </div>
-                        <i class="fas fa-chart-line text-5xl opacity-30"></i>
+                        <i class="fas fa-file-invoice-dollar text-5xl opacity-30"></i>
                     </div>
                 </div>
             </div>
@@ -856,6 +862,9 @@
 
                 // Load recent activities
                 await loadRecentActivities();
+                
+                // Load settlement submission status
+                await loadSettlementSubmissionStatus();
 
                 // Hide loading, show dashboard
                 document.getElementById('loading').style.display = 'none';
@@ -1032,6 +1041,21 @@
                     전월대비: salesChange + '%'
                 });
 
+                // 📋 정산서 제출 여부 확인 (이번 달)
+                const yearMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+                const { data: settlement } = await supabaseClient
+                    .from('monthly_settlements')
+                    .select('id, status')
+                    .eq('apartment_id', apt.id)
+                    .eq('year_month', yearMonth)
+                    .in('status', ['submitted', 'under_review', 'approved'])
+                    .single();
+                
+                const settlementSubmitted = !!settlement;
+                
+                // apt 객체에 정산서 제출 여부 추가
+                apt.settlement_submitted = settlementSubmitted;
+
 
                 // Determine status (더 세밀한 기준)
                 let status = 'normal';
@@ -1084,19 +1108,25 @@
                                 <span class="status-badge status-${status}">${statusText}</span>
                             </div>
 
-                            <!-- 통계 그리드 3칸 -->
-                            <div class="grid grid-cols-3 gap-3 mb-4">
-                                <div class="text-center p-3 bg-gray-50 rounded-lg">
+                            <!-- 통계 그리드 4칸 -->
+                            <div class="grid grid-cols-4 gap-2 mb-4">
+                                <div class="text-center p-2 bg-gray-50 rounded-lg">
                                     <p class="text-xs text-gray-600 mb-1">직원</p>
-                                    <p class="text-xl font-bold brand-color">${employeeCount}</p>
+                                    <p class="text-lg font-bold brand-color">${employeeCount}</p>
                                 </div>
-                                <div class="text-center p-3 bg-blue-50 rounded-lg">
+                                <div class="text-center p-2 bg-blue-50 rounded-lg">
                                     <p class="text-xs text-gray-600 mb-1">출근율</p>
-                                    <p class="text-xl font-bold text-blue-600">${attendanceRate}%</p>
+                                    <p class="text-lg font-bold text-blue-600">${attendanceRate}%</p>
                                 </div>
-                                <div class="text-center p-3 bg-red-50 rounded-lg">
-                                    <p class="text-xs text-gray-600 mb-1">민원 미처리</p>
-                                    <p class="text-xl font-bold text-red-600">${complaintCount}</p>
+                                <div class="text-center p-2 bg-red-50 rounded-lg">
+                                    <p class="text-xs text-gray-600 mb-1">민원</p>
+                                    <p class="text-lg font-bold text-red-600">${complaintCount}</p>
+                                </div>
+                                <div class="text-center p-2 ${apt.settlement_submitted ? 'bg-green-50' : 'bg-orange-50'} rounded-lg">
+                                    <p class="text-xs text-gray-600 mb-1">정산서</p>
+                                    <p class="text-lg font-bold ${apt.settlement_submitted ? 'text-green-600' : 'text-orange-600'}">
+                                        ${apt.settlement_submitted ? '✓' : '✗'}
+                                    </p>
                                 </div>
                             </div>
 
@@ -1677,6 +1707,47 @@
             loadDashboard();
         }, 5 * 60 * 1000);
         
+        // ==================== 정산서 제출 현황 로드 함수 ====================
+        async function loadSettlementSubmissionStatus() {
+            console.log('📊 정산서 제출 현황 로드 중...');
+            
+            try {
+                // 현재 연월 (YYYY-MM)
+                const now = new Date();
+                const yearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+                
+                // 전체 아파트 수
+                const { data: apartments, error: aptError } = await supabaseClient
+                    .from('apartments')
+                    .select('id');
+                
+                if (aptError) throw aptError;
+                
+                const totalApartments = apartments?.length || 0;
+                
+                // 이번 달 정산서 제출된 아파트 수
+                const { data: settlements, error: settError } = await supabaseClient
+                    .from('monthly_settlements')
+                    .select('apartment_id')
+                    .eq('year_month', yearMonth)
+                    .in('status', ['submitted', 'under_review', 'approved']);
+                
+                if (settError) throw settError;
+                
+                const submittedCount = settlements?.length || 0;
+                
+                // UI 업데이트
+                document.getElementById('settlementsSubmitted').textContent = submittedCount;
+                document.getElementById('settlementsTotal').textContent = totalApartments;
+                
+                console.log(`✅ 정산서 제출 현황: ${submittedCount}/${totalApartments}`);
+                
+            } catch (error) {
+                console.error('❌ 정산서 제출 현황 로드 실패:', error);
+                document.getElementById('settlementsSubmitted').textContent = '0';
+                document.getElementById('settlementsTotal').textContent = '0';
+            }
+        }
         
         // ==================== 탭 전환 함수 ====================
         let currentMasterTab = 'dashboard';
