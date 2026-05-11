@@ -992,12 +992,8 @@
           document.getElementById('loading-screen').classList.add('hidden');
           document.getElementById('main-container').classList.remove('hidden');
           
-          // 급여명세서 세션에서 온 경우 급여 탭으로 자동 전환
-          const sessionEmployeeId = sessionStorage.getItem('payroll_employee_id');
-          if (sessionEmployeeId) {
-            console.log('💰 급여명세서 로그인 감지 - 급여 탭으로 전환');
-            this.switchTab('payroll');
-          }
+          // 기본 근태 탭 표시 (사용 빈도가 가장 높음)
+          // 급여는 월 1회만 확인하므로 자동 전환하지 않음
           
           console.log('✅ 앱 초기화 완료!');
           this.showToast('환영합니다! 👋', 'success');
