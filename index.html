@@ -417,8 +417,8 @@
             <button onclick="app.switchTab('documents')" class="nav-tab py-4 px-2 text-sm font-medium transition-all tab-inactive">
               <i class="fas fa-folder-open mr-2"></i>서류 관리
             </button>
-            <button onclick="app.switchTab('payroll')" class="nav-tab py-4 px-2 text-sm font-medium transition-all tab-inactive">
-              <i class="fas fa-money-bill-wave mr-2"></i>💰 급여 관리
+            <button onclick="app.switchTab('settlement')" class="nav-tab py-4 px-2 text-sm font-medium transition-all tab-inactive">
+              <i class="fas fa-file-invoice-dollar mr-2"></i>📊 정산서 관리
             </button>
           </div>
         </div>
@@ -1615,31 +1615,31 @@
           </div>
         </div>
 
-        <!-- ==================== 💰 급여 관리 TAB ==================== -->
-        <div id="tab-payroll" class="tab-content hidden space-y-6 px-4">
+        <!-- ==================== 📊 정산서 관리 TAB ==================== -->
+        <div id="tab-settlement" class="tab-content hidden space-y-6 px-4">
           <!-- 상단 통계 대시보드 -->
           <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-3">
-            <div class="bg-gradient-to-br from-green-50 to-emerald-50 p-4 rounded-xl shadow-sm border-2 border-green-200">
+            <div class="bg-gradient-to-br from-blue-50 to-indigo-50 p-4 rounded-xl shadow-sm border-2 border-blue-200">
               <div class="flex items-center justify-between">
                 <div>
-                  <p class="text-sm text-gray-600 mb-1">이번 달 발급</p>
-                  <p class="text-3xl font-bold text-green-600" id="payroll-current-month-count">0</p>
-                  <p class="text-xs text-gray-500 mt-1">명</p>
+                  <p class="text-sm text-gray-600 mb-1">이번 달 정산</p>
+                  <p class="text-3xl font-bold text-blue-600" id="settlement-current-status">미작성</p>
+                  <p class="text-xs text-gray-500 mt-1">상태</p>
                 </div>
-                <div class="text-green-400 text-4xl">
+                <div class="text-blue-400 text-4xl">
                   <i class="fas fa-calendar-check"></i>
                 </div>
               </div>
             </div>
 
-            <div class="bg-gradient-to-br from-blue-50 to-indigo-50 p-4 rounded-xl shadow-sm border-2 border-blue-200">
+            <div class="bg-gradient-to-br from-green-50 to-emerald-50 p-4 rounded-xl shadow-sm border-2 border-green-200">
               <div class="flex items-center justify-between">
                 <div>
                   <p class="text-sm text-gray-600 mb-1">전체 직원</p>
-                  <p class="text-3xl font-bold text-blue-600" id="payroll-total-employees">0</p>
+                  <p class="text-3xl font-bold text-green-600" id="settlement-total-employees">0</p>
                   <p class="text-xs text-gray-500 mt-1">명</p>
                 </div>
-                <div class="text-blue-400 text-4xl">
+                <div class="text-green-400 text-4xl">
                   <i class="fas fa-users"></i>
                 </div>
               </div>
@@ -1648,12 +1648,12 @@
             <div class="bg-gradient-to-br from-purple-50 to-pink-50 p-4 rounded-xl shadow-sm border-2 border-purple-200">
               <div class="flex items-center justify-between">
                 <div>
-                  <p class="text-sm text-gray-600 mb-1">미조회 명세서</p>
-                  <p class="text-3xl font-bold text-purple-600" id="payroll-pending-count">0</p>
-                  <p class="text-xs text-gray-500 mt-1">건</p>
+                  <p class="text-sm text-gray-600 mb-1">총 근무시간</p>
+                  <p class="text-3xl font-bold text-purple-600" id="settlement-total-hours">0</p>
+                  <p class="text-xs text-gray-500 mt-1">시간</p>
                 </div>
                 <div class="text-purple-400 text-4xl">
-                  <i class="fas fa-envelope"></i>
+                  <i class="fas fa-clock"></i>
                 </div>
               </div>
             </div>
@@ -1661,87 +1661,130 @@
             <div class="bg-gradient-to-br from-orange-50 to-red-50 p-4 rounded-xl shadow-sm border-2 border-orange-200">
               <div class="flex items-center justify-between">
                 <div>
-                  <p class="text-sm text-gray-600 mb-1">총 발급 건수</p>
-                  <p class="text-3xl font-bold text-orange-600" id="payroll-total-count">0</p>
+                  <p class="text-sm text-gray-600 mb-1">제출 건수</p>
+                  <p class="text-3xl font-bold text-orange-600" id="settlement-submit-count">0</p>
                   <p class="text-xs text-gray-500 mt-1">건</p>
                 </div>
                 <div class="text-orange-400 text-4xl">
-                  <i class="fas fa-file-invoice-dollar"></i>
+                  <i class="fas fa-file-invoice"></i>
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- 액션 버튼 -->
-          <div class="flex gap-3 mb-3">
-            <button onclick="app.openPayrollUploadModal()" class="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:from-green-600 hover:to-emerald-700 transition-all shadow-md font-medium">
-              <i class="fas fa-file-upload mr-2"></i>급여명세서 업로드
-            </button>
-            <button onclick="app.refreshPayrollList()" class="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium">
-              <i class="fas fa-sync-alt mr-2"></i>새로고침
-            </button>
-            <button onclick="app.exportPayrollReport()" class="px-6 py-3 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors font-medium">
-              <i class="fas fa-file-excel mr-2"></i>엑셀 내보내기
-            </button>
+          <!-- 이번 달 정산서 섹션 -->
+          <div class="bg-white p-6 rounded-xl shadow-md border">
+            <div class="flex justify-between items-center mb-4">
+              <h3 class="font-bold text-xl text-gray-800">
+                <i class="fas fa-file-invoice-dollar mr-2 text-blue-600"></i>
+                <span id="settlement-current-month-title">2026년 5월 정산서</span>
+              </h3>
+              <span id="settlement-current-badge" class="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-sm font-medium">
+                미작성
+              </span>
+            </div>
+
+            <!-- 자동 집계 통계 -->
+            <div id="settlement-stats-container" class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+              <div class="bg-blue-50 p-3 rounded-lg">
+                <div class="text-xs text-gray-600 mb-1">근무 일수</div>
+                <div class="text-xl font-bold text-blue-600" id="stat-work-days">0일</div>
+              </div>
+              <div class="bg-green-50 p-3 rounded-lg">
+                <div class="text-xs text-gray-600 mb-1">초과 근무</div>
+                <div class="text-xl font-bold text-green-600" id="stat-overtime">0h</div>
+              </div>
+              <div class="bg-yellow-50 p-3 rounded-lg">
+                <div class="text-xs text-gray-600 mb-1">지각/결근</div>
+                <div class="text-xl font-bold text-yellow-600" id="stat-late-absent">0건</div>
+              </div>
+              <div class="bg-purple-50 p-3 rounded-lg">
+                <div class="text-xs text-gray-600 mb-1">구매 요청</div>
+                <div class="text-xl font-bold text-purple-600" id="stat-purchase">0건</div>
+              </div>
+            </div>
+
+            <!-- 액션 버튼 -->
+            <div class="flex gap-3">
+              <button onclick="app.generateSettlementExcel()" class="flex-1 px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg hover:from-blue-600 hover:to-indigo-700 transition-all shadow-md font-medium">
+                <i class="fas fa-file-excel mr-2"></i>정산서 생성
+              </button>
+              <button onclick="app.submitSettlementToHQ()" id="btn-submit-settlement" class="flex-1 px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:from-green-600 hover:to-emerald-700 transition-all shadow-md font-medium disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                <i class="fas fa-paper-plane mr-2"></i>본사에 제출
+              </button>
+            </div>
+
+            <!-- 제출 후 피드백 -->
+            <div id="settlement-feedback" class="hidden mt-4 p-4 rounded-lg">
+              <!-- 승인 완료 -->
+              <div id="feedback-approved" class="hidden bg-green-50 border border-green-200">
+                <div class="flex items-start gap-3">
+                  <i class="fas fa-check-circle text-green-600 text-2xl mt-1"></i>
+                  <div class="flex-1">
+                    <p class="font-bold text-green-800">승인 완료</p>
+                    <p class="text-sm text-green-600 mt-1" id="feedback-approved-comment"></p>
+                    <p class="text-xs text-gray-500 mt-2" id="feedback-approved-time"></p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 반려 -->
+              <div id="feedback-rejected" class="hidden bg-red-50 border border-red-200">
+                <div class="flex items-start gap-3">
+                  <i class="fas fa-times-circle text-red-600 text-2xl mt-1"></i>
+                  <div class="flex-1">
+                    <p class="font-bold text-red-800">반려됨</p>
+                    <p class="text-sm text-red-600 mt-1" id="feedback-rejected-comment"></p>
+                    <p class="text-xs text-gray-500 mt-2" id="feedback-rejected-time"></p>
+                    <button onclick="app.reviseSettlement()" class="mt-3 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-sm">
+                      <i class="fas fa-edit mr-1"></i>수정 후 재제출
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <!-- 필터 -->
-          <div class="bg-white p-3 rounded-xl shadow-sm border mb-3">
-            <div class="flex flex-wrap gap-3">
-              <input type="text" id="payroll-search" placeholder="직원 이름, 부서 검색..." class="flex-1 min-w-[200px] px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500" onkeyup="app.searchPayroll()">
-              
-              <select id="payroll-filter-year" onchange="app.filterPayroll()" class="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500">
+          <!-- 제출 이력 -->
+          <div class="bg-white p-6 rounded-xl shadow-md border">
+            <div class="flex justify-between items-center mb-4">
+              <h3 class="font-bold text-xl text-gray-800">
+                <i class="fas fa-history mr-2 text-purple-600"></i>제출 이력
+              </h3>
+              <button onclick="app.loadSettlementHistory()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition text-sm">
+                <i class="fas fa-sync mr-1"></i>새로고침
+              </button>
+            </div>
+
+            <!-- 필터 -->
+            <div class="flex gap-3 mb-4">
+              <select id="settlement-filter-year" onchange="app.filterSettlementHistory()" class="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
                 <option value="">전체 연도</option>
                 <!-- 동적 생성 -->
               </select>
-              
-              <select id="payroll-filter-month" onchange="app.filterPayroll()" class="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500">
-                <option value="">전체 월</option>
-                <option value="01">1월</option>
-                <option value="02">2월</option>
-                <option value="03">3월</option>
-                <option value="04">4월</option>
-                <option value="05">5월</option>
-                <option value="06">6월</option>
-                <option value="07">7월</option>
-                <option value="08">8월</option>
-                <option value="09">9월</option>
-                <option value="10">10월</option>
-                <option value="11">11월</option>
-                <option value="12">12월</option>
-              </select>
-              
-              <select id="payroll-filter-department" onchange="app.filterPayroll()" class="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500">
-                <option value="">전체 부서</option>
-                <!-- 동적 생성 -->
-              </select>
-              
-              <select id="payroll-filter-status" onchange="app.filterPayroll()" class="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500">
+              <select id="settlement-filter-status" onchange="app.filterSettlementHistory()" class="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
                 <option value="">전체 상태</option>
-                <option value="pending">대기</option>
-                <option value="viewed">조회</option>
-                <option value="downloaded">다운로드</option>
+                <option value="draft">초안</option>
+                <option value="submitted">제출</option>
+                <option value="approved">승인</option>
+                <option value="rejected">반려</option>
               </select>
             </div>
-          </div>
 
-          <!-- 급여명세서 목록 -->
-          <div id="payroll-list" class="space-y-3">
-            <!-- 로딩 상태 -->
-            <div id="payroll-loading" class="text-center py-20">
-              <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
-              <p class="mt-4 text-gray-600">급여명세서 목록을 불러오는 중...</p>
+            <!-- 이력 목록 -->
+            <div id="settlement-history-list" class="space-y-3">
+              <!-- 로딩 상태 -->
+              <div id="settlement-history-loading" class="text-center py-12">
+                <div class="inline-block animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
+                <p class="mt-3 text-gray-600 text-sm">이력을 불러오는 중...</p>
+              </div>
             </div>
-          </div>
 
-          <!-- 빈 상태 -->
-          <div id="payroll-empty" class="hidden bg-gray-50 border-2 border-dashed border-gray-300 rounded-xl p-12 text-center">
-            <i class="fas fa-file-invoice-dollar text-gray-400 text-6xl mb-4"></i>
-            <h3 class="text-xl font-bold text-gray-700 mb-2">발급된 급여명세서가 없습니다</h3>
-            <p class="text-gray-500 mb-6">새 급여명세서를 업로드하여 직원들에게 배포하세요</p>
-            <button onclick="app.openPayrollUploadModal()" class="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium">
-              <i class="fas fa-plus mr-2"></i>첫 급여명세서 업로드
-            </button>
+            <!-- 빈 상태 -->
+            <div id="settlement-history-empty" class="hidden text-center py-12">
+              <i class="fas fa-inbox text-gray-300 text-5xl mb-3"></i>
+              <p class="text-gray-500">제출 이력이 없습니다</p>
+            </div>
           </div>
         </div>
       </main>
@@ -2438,163 +2481,6 @@
             </button>
             <button onclick="app.updateLocation()" class="flex-1 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium">
               <i class="fas fa-save mr-2"></i>저장
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 💰 급여명세서 업로드 모달 -->
-    <div id="payroll-upload-modal" class="fixed inset-0 z-50 bg-black bg-opacity-80 items-center justify-center p-4" style="display: none;">
-      <div class="bg-white rounded-2xl max-w-2xl w-full shadow-2xl overflow-y-auto max-h-[90vh]" onclick="event.stopPropagation()">
-        <div class="flex justify-between items-center p-6 border-b sticky top-0 bg-white z-10">
-          <h3 class="text-xl font-bold text-gray-800">
-            <i class="fas fa-file-upload mr-2 text-green-600"></i>급여명세서 업로드
-          </h3>
-          <button onclick="app.closePayrollUploadModal()" class="text-gray-400 hover:text-gray-600 text-2xl">×</button>
-        </div>
-        
-        <div class="p-6 space-y-4">
-          <!-- 연월 선택 -->
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">
-                <i class="fas fa-calendar mr-1 text-green-600"></i>연도
-              </label>
-              <select id="payroll-upload-year" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500">
-                <!-- 동적 생성 -->
-              </select>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">
-                <i class="fas fa-calendar-day mr-1 text-green-600"></i>월
-              </label>
-              <select id="payroll-upload-month" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500">
-                <option value="01">1월</option>
-                <option value="02">2월</option>
-                <option value="03">3월</option>
-                <option value="04">4월</option>
-                <option value="05">5월</option>
-                <option value="06">6월</option>
-                <option value="07">7월</option>
-                <option value="08">8월</option>
-                <option value="09">9월</option>
-                <option value="10">10월</option>
-                <option value="11">11월</option>
-                <option value="12">12월</option>
-              </select>
-            </div>
-          </div>
-
-          <!-- 직원 선택 방법 -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">
-              <i class="fas fa-users mr-1 text-green-600"></i>직원 선택 방법
-            </label>
-            <div class="flex gap-3">
-              <button onclick="app.selectPayrollMethod('single')" id="payroll-method-single" class="flex-1 px-4 py-3 border-2 border-green-500 bg-green-50 text-green-700 rounded-lg font-medium transition">
-                <i class="fas fa-user mr-2"></i>개별 선택
-              </button>
-              <button onclick="app.selectPayrollMethod('department')" id="payroll-method-department" class="flex-1 px-4 py-3 border-2 border-gray-300 bg-white text-gray-700 rounded-lg font-medium transition hover:border-green-500">
-                <i class="fas fa-building mr-2"></i>부서별
-              </button>
-              <button onclick="app.selectPayrollMethod('all')" id="payroll-method-all" class="flex-1 px-4 py-3 border-2 border-gray-300 bg-white text-gray-700 rounded-lg font-medium transition hover:border-green-500">
-                <i class="fas fa-users mr-2"></i>전체
-              </button>
-            </div>
-          </div>
-
-          <!-- 개별 직원 선택 -->
-          <div id="payroll-single-select" class="space-y-3">
-            <label class="block text-sm font-medium text-gray-700">
-              <i class="fas fa-user-check mr-1 text-green-600"></i>직원 선택
-            </label>
-            <div class="border rounded-lg p-4 max-h-60 overflow-y-auto space-y-2">
-              <div id="payroll-employee-list">
-                <!-- 동적 생성 -->
-              </div>
-            </div>
-            <p class="text-xs text-gray-500">
-              <i class="fas fa-info-circle mr-1"></i>선택된 직원: <span id="payroll-selected-count" class="font-bold text-green-600">0</span>명
-            </p>
-          </div>
-
-          <!-- 부서별 선택 -->
-          <div id="payroll-department-select" class="hidden">
-            <label class="block text-sm font-medium text-gray-700 mb-2">
-              <i class="fas fa-building mr-1 text-green-600"></i>부서 선택
-            </label>
-            <select id="payroll-department-selector" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500">
-              <option value="">부서를 선택하세요</option>
-              <!-- 동적 생성 -->
-            </select>
-          </div>
-
-          <!-- 전체 선택 안내 -->
-          <div id="payroll-all-select" class="hidden bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <div class="flex items-start gap-3">
-              <i class="fas fa-info-circle text-blue-600 text-xl mt-1"></i>
-              <div>
-                <p class="font-medium text-blue-800">전체 직원에게 발급</p>
-                <p class="text-sm text-blue-600 mt-1">활성화된 모든 직원에게 급여명세서가 발급됩니다.</p>
-                <p class="text-sm text-blue-600">총 <span id="payroll-all-count" class="font-bold">0</span>명</p>
-              </div>
-            </div>
-          </div>
-
-          <!-- 파일 업로드 -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">
-              <i class="fas fa-file-pdf mr-1 text-red-600"></i>PDF 파일 업로드
-            </label>
-            <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-green-500 transition cursor-pointer" onclick="document.getElementById('payroll-file-input').click()">
-              <input type="file" id="payroll-file-input" accept=".pdf" class="hidden" onchange="app.handlePayrollFileSelect(event)">
-              <div id="payroll-file-placeholder">
-                <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-2"></i>
-                <p class="text-gray-600 font-medium">클릭하여 PDF 파일 선택</p>
-                <p class="text-xs text-gray-500 mt-1">또는 파일을 드래그 앤 드롭하세요</p>
-                <p class="text-xs text-gray-500">최대 10MB</p>
-              </div>
-              <div id="payroll-file-info" class="hidden">
-                <i class="fas fa-file-pdf text-4xl text-red-500 mb-2"></i>
-                <p class="text-gray-800 font-medium" id="payroll-file-name"></p>
-                <p class="text-xs text-gray-500 mt-1" id="payroll-file-size"></p>
-                <button type="button" onclick="app.clearPayrollFile(); event.stopPropagation();" class="mt-2 text-sm text-red-600 hover:text-red-800">
-                  <i class="fas fa-times mr-1"></i>파일 제거
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- 업로드 진행 상태 -->
-          <div id="payroll-upload-progress" class="hidden">
-            <div class="bg-gray-200 rounded-full h-2 overflow-hidden">
-              <div id="payroll-upload-progress-bar" class="bg-green-600 h-full transition-all duration-300" style="width: 0%"></div>
-            </div>
-            <p class="text-sm text-gray-600 mt-2 text-center">
-              <span id="payroll-upload-progress-text">업로드 중...</span>
-              <span id="payroll-upload-progress-percent" class="font-bold text-green-600">0%</span>
-            </p>
-          </div>
-
-          <!-- 알림 옵션 (선택사항) -->
-          <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
-            <label class="flex items-center gap-2">
-              <input type="checkbox" id="payroll-send-notification" class="w-4 h-4 text-green-600 rounded focus:ring-green-500">
-              <span class="text-sm text-gray-700">
-                <i class="fas fa-bell mr-1 text-yellow-500"></i>업로드 후 직원에게 알림 발송 (선택사항)
-              </span>
-            </label>
-            <p class="text-xs text-gray-500 mt-2 ml-6">* 알림 기능은 추후 구현 예정입니다</p>
-          </div>
-
-          <!-- 액션 버튼 -->
-          <div class="flex gap-3 pt-4 border-t">
-            <button onclick="app.closePayrollUploadModal()" class="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium">
-              <i class="fas fa-times mr-2"></i>취소
-            </button>
-            <button onclick="app.uploadPayrollStatements()" id="payroll-upload-btn" class="flex-1 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium disabled:bg-gray-400 disabled:cursor-not-allowed">
-              <i class="fas fa-upload mr-2"></i>업로드 시작
             </button>
           </div>
         </div>
@@ -3328,10 +3214,10 @@
             this.loadDocuments();
             this.loadDocumentCategories();
             this.loadDocumentStats();
-          } else if (tab === 'payroll') {
-            console.log('💰 급여 관리 탭 로드 시작');
-            this.loadPayrollList();
-            this.loadPayrollStatistics();
+          } else if (tab === 'settlement') {
+            console.log('📊 정산서 관리 탭 로드 시작');
+            this.loadCurrentSettlement();
+            this.loadSettlementHistory();
           }
         },
 
@@ -12093,10 +11979,668 @@
         }
       };
       
-      // ==================== 💰 급여명세서 관리 함수 ====================
+      // ==================== 📊 정산서 관리 함수 ====================
       
-      app.loadPayrollList = async function() {
-        console.log('💰 급여명세서 목록 로드 시작');
+      // 현재 정산서 상태 로드
+      app.loadCurrentSettlement = async function() {
+        console.log('📊 이번 달 정산서 로드');
+        
+        try {
+          const now = new Date();
+          const year = now.getFullYear();
+          const month = String(now.getMonth() + 1).padStart(2, '0');
+          const yearMonth = `${year}-${month}`;
+          
+          // 현재 월 제목 업데이트
+          document.getElementById('settlement-current-month-title').textContent = 
+            `${year}년 ${month}월 정산서`;
+          
+          // 기존 정산서 조회
+          const { data: settlement, error } = await this.sb
+            .from('monthly_settlements')
+            .select('*')
+            .eq('apartment_id', this.currentApartment)
+            .eq('year_month', yearMonth)
+            .single();
+          
+          if (error && error.code !== 'PGRST116') { // PGRST116 = no rows
+            throw error;
+          }
+          
+          if (settlement) {
+            // 기존 정산서 있음
+            this.currentSettlementData = settlement;
+            this.updateSettlementUI(settlement);
+          } else {
+            // 정산서 없음 - 자동 집계 시작
+            this.currentSettlementData = null;
+            await this.calculateSettlementStats(yearMonth);
+          }
+          
+          // 전체 통계 업데이트
+          await this.updateDashboardStats();
+          
+        } catch (error) {
+          console.error('❌ 정산서 로드 실패:', error);
+          this.showToast('정산서 로드 중 오류가 발생했습니다', 'error');
+        }
+      };
+      
+      // 정산서 UI 업데이트
+      app.updateSettlementUI = function(settlement) {
+        const statusBadge = document.getElementById('settlement-current-badge');
+        const feedbackDiv = document.getElementById('settlement-feedback');
+        const submitBtn = document.getElementById('btn-submit-settlement');
+        
+        // 상태 배지 업데이트
+        const statusMap = {
+          'draft': { text: '초안', class: 'bg-gray-100 text-gray-600' },
+          'submitted': { text: '제출 완료', class: 'bg-blue-100 text-blue-600' },
+          'under_review': { text: '검토 중', class: 'bg-yellow-100 text-yellow-600' },
+          'approved': { text: '승인 완료', class: 'bg-green-100 text-green-600' },
+          'rejected': { text: '반려', class: 'bg-red-100 text-red-600' }
+        };
+        
+        const status = statusMap[settlement.status] || statusMap['draft'];
+        statusBadge.textContent = status.text;
+        statusBadge.className = `px-3 py-1 rounded-full text-sm font-medium ${status.class}`;
+        
+        // 통계 표시
+        document.getElementById('stat-work-days').textContent = 
+          `${settlement.total_work_days || 0}일`;
+        document.getElementById('stat-overtime').textContent = 
+          `${(settlement.total_overtime_hours || 0).toFixed(1)}h`;
+        document.getElementById('stat-late-absent').textContent = 
+          `${(settlement.total_late_count || 0) + (settlement.total_absent_count || 0)}건`;
+        
+        // 제출 버튼 상태
+        if (settlement.status === 'draft') {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>본사에 제출';
+        } else if (settlement.status === 'rejected') {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '<i class="fas fa-edit mr-2"></i>수정 후 재제출';
+        } else {
+          submitBtn.disabled = true;
+          submitBtn.innerHTML = '<i class="fas fa-check mr-2"></i>제출됨';
+        }
+        
+        // 피드백 표시
+        feedbackDiv.classList.remove('hidden');
+        
+        if (settlement.status === 'approved') {
+          document.getElementById('feedback-approved').classList.remove('hidden');
+          document.getElementById('feedback-rejected').classList.add('hidden');
+          document.getElementById('feedback-approved-comment').textContent = 
+            settlement.review_comment || '정산서가 승인되었습니다.';
+          document.getElementById('feedback-approved-time').textContent = 
+            `승인 일시: ${new Date(settlement.reviewed_at).toLocaleString('ko-KR')}`;
+        } else if (settlement.status === 'rejected') {
+          document.getElementById('feedback-approved').classList.add('hidden');
+          document.getElementById('feedback-rejected').classList.remove('hidden');
+          document.getElementById('feedback-rejected-comment').textContent = 
+            settlement.review_comment || '정산서가 반려되었습니다.';
+          document.getElementById('feedback-rejected-time').textContent = 
+            `반려 일시: ${new Date(settlement.reviewed_at).toLocaleString('ko-KR')}`;
+        } else {
+          feedbackDiv.classList.add('hidden');
+        }
+      };
+      
+      // 자동 집계 통계 계산
+      app.calculateSettlementStats = async function(yearMonth) {
+        console.log('📊 자동 집계 시작:', yearMonth);
+        
+        try {
+          const [year, month] = yearMonth.split('-');
+          const startDate = `${year}-${month}-01`;
+          const endDate = new Date(year, parseInt(month), 0).toISOString().split('T')[0];
+          
+          // 근태 데이터 집계
+          const { data: attendance } = await this.sb
+            .from('attendance')
+            .select('*')
+            .gte('check_in_time', startDate)
+            .lte('check_in_time', endDate + 'T23:59:59')
+            .eq('apartment_id', this.currentApartment);
+          
+          // 직원 수
+          const { data: employees } = await this.sb
+            .from('employees')
+            .select('id')
+            .eq('apartment_id', this.currentApartment)
+            .eq('is_active', true);
+          
+          // 구매 요청
+          const { data: purchases } = await this.sb
+            .from('purchase_requests')
+            .select('id')
+            .gte('request_date', startDate)
+            .lte('request_date', endDate)
+            .eq('apartment_id', this.currentApartment);
+          
+          // 통계 계산
+          const uniqueDays = [...new Set(attendance?.map(a => 
+            new Date(a.check_in_time).toISOString().split('T')[0]
+          ))].length;
+          
+          const totalOvertime = attendance?.reduce((sum, a) => 
+            sum + (a.overtime_hours || 0), 0) || 0;
+          
+          const lateCount = attendance?.filter(a => a.status === 'late').length || 0;
+          const absentCount = attendance?.filter(a => a.status === 'absent').length || 0;
+          
+          // UI 업데이트
+          document.getElementById('settlement-total-employees').textContent = employees?.length || 0;
+          document.getElementById('settlement-total-hours').textContent = 
+            Math.round(uniqueDays * 8 * (employees?.length || 0));
+          
+          document.getElementById('stat-work-days').textContent = `${uniqueDays}일`;
+          document.getElementById('stat-overtime').textContent = `${totalOvertime.toFixed(1)}h`;
+          document.getElementById('stat-late-absent').textContent = `${lateCount + absentCount}건`;
+          document.getElementById('stat-purchase').textContent = `${purchases?.length || 0}건`;
+          
+          // 제출 버튼 활성화
+          document.getElementById('btn-submit-settlement').disabled = false;
+          
+        } catch (error) {
+          console.error('❌ 통계 계산 실패:', error);
+        }
+      };
+      
+      // 대시보드 통계 업데이트
+      app.updateDashboardStats = async function() {
+        try {
+          // 제출 건수
+          const { data: settlements, error } = await this.sb
+            .from('monthly_settlements')
+            .select('*')
+            .eq('apartment_id', this.currentApartment);
+          
+          if (error) throw error;
+          
+          document.getElementById('settlement-submit-count').textContent = 
+            settlements?.length || 0;
+          
+          // 현재 상태
+          const now = new Date();
+          const yearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+          const current = settlements?.find(s => s.year_month === yearMonth);
+          
+          const statusText = current ? 
+            (current.status === 'draft' ? '초안' :
+             current.status === 'submitted' ? '제출완료' :
+             current.status === 'approved' ? '승인완료' : '반려') : '미작성';
+          
+          document.getElementById('settlement-current-status').textContent = statusText;
+          
+        } catch (error) {
+          console.error('❌ 대시보드 통계 업데이트 실패:', error);
+        }
+      };
+      
+      // Excel 정산서 생성
+      app.generateSettlementExcel = async function() {
+        console.log('📊 정산서 Excel 생성 시작');
+        
+        try {
+          const now = new Date();
+          const year = now.getFullYear();
+          const month = String(now.getMonth() + 1).padStart(2, '0');
+          const yearMonth = `${year}-${month}`;
+          const startDate = `${year}-${month}-01`;
+          const endDate = new Date(year, parseInt(month), 0).toISOString().split('T')[0];
+          
+          this.showToast('정산서를 생성하는 중...', 'info');
+          
+          // 데이터 수집
+          const [employeesRes, attendanceRes, purchasesRes, vacationsRes] = await Promise.all([
+            this.sb.from('employees').select('*').eq('apartment_id', this.currentApartment).eq('is_active', true),
+            this.sb.from('attendance').select('*').gte('check_in_time', startDate).lte('check_in_time', endDate + 'T23:59:59'),
+            this.sb.from('purchase_requests').select('*').gte('request_date', startDate).lte('request_date', endDate),
+            this.sb.from('vacation_requests').select('*').gte('start_date', startDate).lte('start_date', endDate)
+          ]);
+          
+          const employees = employeesRes.data || [];
+          const attendance = attendanceRes.data || [];
+          const purchases = purchasesRes.data || [];
+          const vacations = vacationsRes.data || [];
+          
+          // Excel 생성
+          const wb = XLSX.utils.book_new();
+          
+          // Sheet 1: 요약 정보
+          const summaryData = [
+            ['월간 정산서'],
+            [],
+            ['단지명', this.currentApartmentName || '-'],
+            ['정산 기간', `${year}년 ${month}월 (${startDate} ~ ${endDate})`],
+            ['제출일', new Date().toLocaleDateString('ko-KR')],
+            ['제출자', '단지 관리자'],
+            ['상태', '초안'],
+            [],
+            ['총 직원 수', employees.length + '명'],
+            ['근무 일수', [...new Set(attendance.map(a => new Date(a.check_in_time).toISOString().split('T')[0]))].length + '일'],
+            ['총 근무 시간', attendance.length * 8 + '시간'],
+            ['총 급여 합계', '별도 계산 필요']
+          ];
+          const wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
+          XLSX.utils.book_append_sheet(wb, wsSummary, '요약');
+          
+          // Sheet 2: 직원별 근태 현황
+          const attendanceByEmployee = {};
+          employees.forEach(emp => {
+            const empAttendance = attendance.filter(a => a.employee_id === emp.id);
+            const workDays = [...new Set(empAttendance.map(a => 
+              new Date(a.check_in_time).toISOString().split('T')[0]
+            ))].length;
+            const lateCount = empAttendance.filter(a => a.status === 'late').length;
+            const absentCount = empAttendance.filter(a => a.status === 'absent').length;
+            const overtimeHours = empAttendance.reduce((sum, a) => sum + (a.overtime_hours || 0), 0);
+            
+            attendanceByEmployee[emp.id] = {
+              name: emp.name,
+              employee_number: emp.employee_number || '-',
+              department: emp.department || '-',
+              position: emp.position || '-',
+              workDays,
+              lateCount,
+              absentCount,
+              overtimeHours
+            };
+          });
+          
+          const attendanceRows = [
+            ['No', '사번', '이름', '부서', '직급', '출근일', '지각', '결근', '초과근무(h)']
+          ];
+          
+          Object.values(attendanceByEmployee).forEach((emp, idx) => {
+            attendanceRows.push([
+              idx + 1,
+              emp.employee_number,
+              emp.name,
+              emp.department,
+              emp.position,
+              emp.workDays,
+              emp.lateCount,
+              emp.absentCount,
+              emp.overtimeHours.toFixed(1)
+            ]);
+          });
+          
+          const wsAttendance = XLSX.utils.aoa_to_sheet(attendanceRows);
+          XLSX.utils.book_append_sheet(wb, wsAttendance, '직원별 근태');
+          
+          // Sheet 3: 일별 출퇴근 기록
+          const dailyRows = [['날짜', '이름', '출근', '퇴근', '근무시간', '상태', '비고']];
+          
+          attendance.forEach(a => {
+            const emp = employees.find(e => e.id === a.employee_id);
+            if (!emp) return;
+            
+            const checkIn = new Date(a.check_in_time);
+            const checkOut = a.check_out_time ? new Date(a.check_out_time) : null;
+            const workHours = checkOut ? 
+              ((checkOut - checkIn) / (1000 * 60 * 60)).toFixed(1) : '-';
+            
+            dailyRows.push([
+              checkIn.toLocaleDateString('ko-KR'),
+              emp.name,
+              checkIn.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
+              checkOut ? checkOut.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }) : '-',
+              workHours + 'h',
+              a.status === 'late' ? '지각' : a.status === 'absent' ? '결근' : '정상',
+              a.notes || ''
+            ]);
+          });
+          
+          const wsDaily = XLSX.utils.aoa_to_sheet(dailyRows);
+          XLSX.utils.book_append_sheet(wb, wsDaily, '출퇴근 기록');
+          
+          // Sheet 4: 구매 요청 내역
+          const purchaseRows = [['No', '신청자', '품목', '수량', '금액', '상태', '비고']];
+          
+          purchases.forEach((p, idx) => {
+            const emp = employees.find(e => e.id === p.requester_id);
+            purchaseRows.push([
+              idx + 1,
+              emp?.name || '-',
+              p.item_name,
+              p.quantity,
+              p.estimated_price,
+              p.status === 'approved' ? '승인' : p.status === 'rejected' ? '반려' : '대기',
+              p.notes || ''
+            ]);
+          });
+          
+          const wsPurchase = XLSX.utils.aoa_to_sheet(purchaseRows);
+          XLSX.utils.book_append_sheet(wb, wsPurchase, '구매 요청');
+          
+          // Sheet 5: 휴가 사용 내역
+          const vacationRows = [['No', '이름', '시작일', '종료일', '일수', '유형', '상태']];
+          
+          vacations.forEach((v, idx) => {
+            const emp = employees.find(e => e.id === v.employee_id);
+            vacationRows.push([
+              idx + 1,
+              emp?.name || '-',
+              v.start_date,
+              v.end_date,
+              v.days,
+              v.type,
+              v.status === 'approved' ? '승인' : '대기'
+            ]);
+          });
+          
+          const wsVacation = XLSX.utils.aoa_to_sheet(vacationRows);
+          XLSX.utils.book_append_sheet(wb, wsVacation, '휴가 사용');
+          
+          // 파일 저장
+          const fileName = `정산서_${this.currentApartmentName}_${year}년${month}월.xlsx`;
+          XLSX.writeFile(wb, fileName);
+          
+          this.showToast('✅ 정산서가 생성되었습니다!', 'success');
+          
+          // DB에 저장 (초안 상태)
+          await this.saveSettlementDraft(yearMonth);
+          
+        } catch (error) {
+          console.error('❌ 정산서 생성 실패:', error);
+          this.showToast('정산서 생성 중 오류가 발생했습니다', 'error');
+        }
+      };
+      
+      // 정산서 초안 저장
+      app.saveSettlementDraft = async function(yearMonth) {
+        try {
+          const [year, month] = yearMonth.split('-');
+          const startDate = `${year}-${month}-01`;
+          const endDate = new Date(year, parseInt(month), 0).toISOString().split('T')[0];
+          
+          // 통계 계산
+          const stats = await this.calculateFinalStats(yearMonth);
+          
+          const { data, error } = await this.sb
+            .from('monthly_settlements')
+            .upsert({
+              apartment_id: this.currentApartment,
+              apartment_name: this.currentApartmentName,
+              year_month: yearMonth,
+              start_date: startDate,
+              end_date: endDate,
+              status: 'draft',
+              ...stats
+            }, {
+              onConflict: 'apartment_id,year_month'
+            })
+            .select()
+            .single();
+          
+          if (error) throw error;
+          
+          this.currentSettlementData = data;
+          this.updateSettlementUI(data);
+          
+        } catch (error) {
+          console.error('❌ 초안 저장 실패:', error);
+        }
+      };
+      
+      // 최종 통계 계산
+      app.calculateFinalStats = async function(yearMonth) {
+        const [year, month] = yearMonth.split('-');
+        const startDate = `${year}-${month}-01`;
+        const endDate = new Date(year, parseInt(month), 0).toISOString().split('T')[0];
+        
+        const [employeesRes, attendanceRes] = await Promise.all([
+          this.sb.from('employees').select('id').eq('apartment_id', this.currentApartment).eq('is_active', true),
+          this.sb.from('attendance').select('*').gte('check_in_time', startDate).lte('check_in_time', endDate + 'T23:59:59')
+        ]);
+        
+        const employees = employeesRes.data || [];
+        const attendance = attendanceRes.data || [];
+        
+        const workDays = [...new Set(attendance.map(a => 
+          new Date(a.check_in_time).toISOString().split('T')[0]
+        ))].length;
+        
+        const totalHours = attendance.reduce((sum, a) => {
+          if (!a.check_out_time) return sum;
+          const hours = (new Date(a.check_out_time) - new Date(a.check_in_time)) / (1000 * 60 * 60);
+          return sum + hours;
+        }, 0);
+        
+        const overtimeHours = attendance.reduce((sum, a) => sum + (a.overtime_hours || 0), 0);
+        const lateCount = attendance.filter(a => a.status === 'late').length;
+        const absentCount = attendance.filter(a => a.status === 'absent').length;
+        
+        return {
+          total_employees: employees.length,
+          total_work_days: workDays,
+          total_work_hours: totalHours.toFixed(2),
+          total_overtime_hours: overtimeHours.toFixed(2),
+          total_late_count: lateCount,
+          total_absent_count: absentCount
+        };
+      };
+      
+      // 본사에 제출
+      app.submitSettlementToHQ = async function() {
+        if (!this.currentSettlementData) {
+          this.showToast('⚠️ 먼저 정산서를 생성해주세요', 'warning');
+          return;
+        }
+        
+        const confirm = window.confirm(
+          '정산서를 본사에 제출하시겠습니까?\n제출 후에는 수정할 수 없습니다.'
+        );
+        
+        if (!confirm) return;
+        
+        try {
+          const { error } = await this.sb
+            .from('monthly_settlements')
+            .update({
+              status: 'submitted',
+              submitted_at: new Date().toISOString(),
+              submitted_by_name: '단지 관리자'
+            })
+            .eq('id', this.currentSettlementData.id);
+          
+          if (error) throw error;
+          
+          this.showToast('✅ 정산서가 제출되었습니다', 'success');
+          await this.loadCurrentSettlement();
+          await this.loadSettlementHistory();
+          
+        } catch (error) {
+          console.error('❌ 제출 실패:', error);
+          this.showToast('제출 중 오류가 발생했습니다', 'error');
+        }
+      };
+      
+      // 정산서 수정 후 재제출
+      app.reviseSettlement = async function() {
+        if (!this.currentSettlementData) return;
+        
+        try {
+          const { error } = await this.sb
+            .from('monthly_settlements')
+            .update({ status: 'draft' })
+            .eq('id', this.currentSettlementData.id);
+          
+          if (error) throw error;
+          
+          this.showToast('초안으로 전환되었습니다. 수정 후 다시 제출해주세요.', 'success');
+          await this.loadCurrentSettlement();
+          
+        } catch (error) {
+          console.error('❌ 수정 모드 전환 실패:', error);
+          this.showToast('오류가 발생했습니다', 'error');
+        }
+      };
+      
+      // 제출 이력 로드
+      app.loadSettlementHistory = async function() {
+        console.log('📚 제출 이력 로드');
+        
+        const loadingEl = document.getElementById('settlement-history-loading');
+        const listEl = document.getElementById('settlement-history-list');
+        const emptyEl = document.getElementById('settlement-history-empty');
+        
+        loadingEl.classList.remove('hidden');
+        emptyEl.classList.add('hidden');
+        
+        try {
+          let query = this.sb
+            .from('monthly_settlements')
+            .select('*')
+            .eq('apartment_id', this.currentApartment)
+            .order('year_month', { ascending: false });
+          
+          // 필터 적용
+          const filterYear = document.getElementById('settlement-filter-year')?.value;
+          const filterStatus = document.getElementById('settlement-filter-status')?.value;
+          
+          if (filterYear) {
+            query = query.ilike('year_month', `${filterYear}%`);
+          }
+          
+          if (filterStatus) {
+            query = query.eq('status', filterStatus);
+          }
+          
+          const { data, error } = await query;
+          
+          if (error) throw error;
+          
+          loadingEl.classList.add('hidden');
+          
+          if (!data || data.length === 0) {
+            emptyEl.classList.remove('hidden');
+            listEl.innerHTML = '';
+            return;
+          }
+          
+          // 연도 필터 옵션 생성
+          const years = [...new Set(data.map(s => s.year_month.split('-')[0]))];
+          const yearFilter = document.getElementById('settlement-filter-year');
+          if (yearFilter && years.length > 0) {
+            yearFilter.innerHTML = '<option value="">전체 연도</option>';
+            years.forEach(year => {
+              const opt = document.createElement('option');
+              opt.value = year;
+              opt.textContent = `${year}년`;
+              yearFilter.appendChild(opt);
+            });
+          }
+          
+          // 카드 렌더링
+          listEl.innerHTML = '';
+          data.forEach(settlement => {
+            const card = this.createSettlementHistoryCard(settlement);
+            listEl.appendChild(card);
+          });
+          
+        } catch (error) {
+          console.error('❌ 이력 로드 실패:', error);
+          loadingEl.classList.add('hidden');
+          this.showToast('이력 로드 중 오류가 발생했습니다', 'error');
+        }
+      };
+      
+      // 이력 카드 생성
+      app.createSettlementHistoryCard = function(settlement) {
+        const div = document.createElement('div');
+        div.className = 'bg-white border rounded-xl p-4 hover:shadow-md transition';
+        
+        const [year, month] = settlement.year_month.split('-');
+        const yearMonthText = `${year}년 ${month}월`;
+        
+        const statusMap = {
+          'draft': { text: '초안', class: 'bg-gray-100 text-gray-700', icon: '📝' },
+          'submitted': { text: '제출', class: 'bg-blue-100 text-blue-700', icon: '📤' },
+          'under_review': { text: '검토중', class: 'bg-yellow-100 text-yellow-700', icon: '👀' },
+          'approved': { text: '승인', class: 'bg-green-100 text-green-700', icon: '✅' },
+          'rejected': { text: '반려', class: 'bg-red-100 text-red-700', icon: '❌' }
+        };
+        
+        const status = statusMap[settlement.status] || statusMap['draft'];
+        
+        div.innerHTML = `
+          <div class="flex justify-between items-start mb-3">
+            <div>
+              <h4 class="font-bold text-lg">${yearMonthText}</h4>
+              <p class="text-sm text-gray-500 mt-1">
+                직원 ${settlement.total_employees}명 · 
+                근무 ${settlement.total_work_days}일
+              </p>
+            </div>
+            <span class="${status.class} px-3 py-1 rounded-full text-xs font-medium">
+              ${status.icon} ${status.text}
+            </span>
+          </div>
+          
+          <div class="grid grid-cols-3 gap-2 text-sm mb-3">
+            <div class="bg-gray-50 p-2 rounded">
+              <div class="text-xs text-gray-500">총 근무시간</div>
+              <div class="font-bold">${settlement.total_work_hours || 0}h</div>
+            </div>
+            <div class="bg-gray-50 p-2 rounded">
+              <div class="text-xs text-gray-500">초과근무</div>
+              <div class="font-bold">${settlement.total_overtime_hours || 0}h</div>
+            </div>
+            <div class="bg-gray-50 p-2 rounded">
+              <div class="text-xs text-gray-500">지각/결근</div>
+              <div class="font-bold">${(settlement.total_late_count || 0) + (settlement.total_absent_count || 0)}건</div>
+            </div>
+          </div>
+          
+          ${settlement.submitted_at ? `
+            <p class="text-xs text-gray-500 mb-2">
+              <i class="fas fa-calendar mr-1"></i>
+              제출: ${new Date(settlement.submitted_at).toLocaleDateString('ko-KR')}
+            </p>
+          ` : ''}
+          
+          ${settlement.review_comment ? `
+            <div class="bg-${settlement.status === 'approved' ? 'green' : 'red'}-50 border border-${settlement.status === 'approved' ? 'green' : 'red'}-200 rounded p-2 text-sm mb-2">
+              <p class="text-${settlement.status === 'approved' ? 'green' : 'red'}-800 font-medium">
+                ${settlement.status === 'approved' ? '승인 의견' : '반려 사유'}
+              </p>
+              <p class="text-${settlement.status === 'approved' ? 'green' : 'red'}-700 mt-1">
+                ${settlement.review_comment}
+              </p>
+            </div>
+          ` : ''}
+          
+          <div class="flex gap-2">
+            ${settlement.excel_file_url ? `
+              <button onclick="window.open('${settlement.excel_file_url}', '_blank')" class="flex-1 px-3 py-2 bg-green-100 text-green-700 rounded hover:bg-green-200 transition text-sm">
+                <i class="fas fa-download mr-1"></i>다운로드
+              </button>
+            ` : ''}
+            <button onclick="app.viewSettlementDetail('${settlement.id}')" class="flex-1 px-3 py-2 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition text-sm">
+              <i class="fas fa-eye mr-1"></i>상세보기
+            </button>
+          </div>
+        `;
+        
+        return div;
+      };
+      
+      // 상세보기
+      app.viewSettlementDetail = function(settlementId) {
+        this.showToast('상세보기 기능은 추후 구현 예정입니다', 'info');
+      };
+      
+      // 필터 적용
+      app.filterSettlementHistory = function() {
+        this.loadSettlementHistory();
+      };
+      
+      // ==================== 기존 함수 ====================
+      
         const loadingEl = document.getElementById('payroll-loading');
         const listEl = document.getElementById('payroll-list');
         const emptyEl = document.getElementById('payroll-empty');
@@ -12785,7 +13329,7 @@
         console.log('🚀 DOMContentLoaded 이벤트 발생');
         
         // 모든 모달의 배경 클릭 이벤트
-        ['location-modal', 'location-edit-modal', 'employee-modal', 'edit-employee-modal', 'apartment-modal', 'sales-modal', 'vacation-modal', 'holiday-modal', 'blocked-employees-modal', 'incomplete-today-modal', 'checkout-input-modal', 'new-purchase-modal', 'purchase-detail-modal', 'qr-management-modal', 'attendance-note-detail-modal', 'document-upload-modal', 'document-detail-modal', 'category-manage-modal', 'payroll-upload-modal'].forEach(id => {
+        ['location-modal', 'location-edit-modal', 'employee-modal', 'edit-employee-modal', 'apartment-modal', 'sales-modal', 'vacation-modal', 'holiday-modal', 'blocked-employees-modal', 'incomplete-today-modal', 'checkout-input-modal', 'new-purchase-modal', 'purchase-detail-modal', 'qr-management-modal', 'attendance-note-detail-modal', 'document-upload-modal', 'document-detail-modal', 'category-manage-modal'].forEach(id => {
           const modal = document.getElementById(id);
           if (modal) {
             modal.addEventListener('click', (e) => {
