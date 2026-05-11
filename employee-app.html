@@ -156,14 +156,17 @@
     <!-- 탭 네비게이션 -->
     <div class="bg-white shadow-md sticky top-0 z-40">
       <div class="flex">
-        <button class="tab-btn flex-1 py-4 font-bold border-b-2 border-blue-500 text-blue-500" data-tab="attendance">
-          <i class="fas fa-clock mr-2"></i>근태
+        <button class="tab-btn flex-1 py-3 font-bold border-b-2 border-blue-500 text-blue-500 text-sm" data-tab="attendance">
+          <i class="fas fa-clock mr-1"></i>근태
         </button>
-        <button class="tab-btn flex-1 py-4 font-bold border-b-2 border-transparent text-gray-500" data-tab="work">
-          <i class="fas fa-camera mr-2"></i>업무
+        <button class="tab-btn flex-1 py-3 font-bold border-b-2 border-transparent text-gray-500 text-sm" data-tab="work">
+          <i class="fas fa-camera mr-1"></i>업무
         </button>
-        <button class="tab-btn flex-1 py-4 font-bold border-b-2 border-transparent text-gray-500" data-tab="purchase">
-          <i class="fas fa-shopping-cart mr-2"></i>구매
+        <button class="tab-btn flex-1 py-3 font-bold border-b-2 border-transparent text-gray-500 text-sm" data-tab="purchase">
+          <i class="fas fa-shopping-cart mr-1"></i>구매
+        </button>
+        <button class="tab-btn flex-1 py-3 font-bold border-b-2 border-transparent text-gray-500 text-sm" data-tab="payroll">
+          <i class="fas fa-file-invoice-dollar mr-1"></i>급여
         </button>
       </div>
     </div>
@@ -374,6 +377,72 @@
               <i class="fas fa-clipboard-check text-4xl mb-2"></i>
               <div>검수 대기 항목이 없습니다</div>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 💰 급여 탭 -->
+      <div id="tab-payroll" class="tab-content hidden">
+        <!-- 통계 카드 -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+          <div class="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-xl p-4 shadow-lg">
+            <div class="text-xs opacity-90 mb-1">전체 명세서</div>
+            <div class="text-2xl font-bold" id="payroll-total-count">0</div>
+          </div>
+          <div class="bg-gradient-to-br from-orange-500 to-red-600 text-white rounded-xl p-4 shadow-lg">
+            <div class="text-xs opacity-90 mb-1">미확인</div>
+            <div class="text-2xl font-bold" id="payroll-pending-count">0</div>
+          </div>
+          <div class="bg-gradient-to-br from-green-500 to-emerald-600 text-white rounded-xl p-4 shadow-lg">
+            <div class="text-xs opacity-90 mb-1">확인 완료</div>
+            <div class="text-2xl font-bold" id="payroll-viewed-count">0</div>
+          </div>
+          <div class="bg-gradient-to-br from-purple-500 to-indigo-600 text-white rounded-xl p-4 shadow-lg">
+            <div class="text-xs opacity-90 mb-1">최근 명세서</div>
+            <div class="text-sm font-bold" id="payroll-latest-month">-</div>
+          </div>
+        </div>
+
+        <!-- 필터 -->
+        <div class="bg-white rounded-xl shadow-md p-4 mb-6">
+          <div class="flex gap-3 flex-wrap">
+            <select id="payroll-filter-year" class="flex-1 min-w-[120px] px-3 py-2 border-2 border-gray-200 rounded-lg focus:border-purple-500 focus:outline-none">
+              <option value="">전체 년도</option>
+              <option value="2026">2026년</option>
+              <option value="2025">2025년</option>
+              <option value="2024">2024년</option>
+            </select>
+            <select id="payroll-filter-status" class="flex-1 min-w-[120px] px-3 py-2 border-2 border-gray-200 rounded-lg focus:border-purple-500 focus:outline-none">
+              <option value="">전체 상태</option>
+              <option value="pending">미확인</option>
+              <option value="viewed">확인함</option>
+              <option value="downloaded">다운로드함</option>
+            </select>
+            <button onclick="app.loadPayrollList()" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
+              <i class="fas fa-sync-alt mr-2"></i>새로고침
+            </button>
+          </div>
+        </div>
+
+        <!-- 급여명세서 목록 -->
+        <div class="bg-white rounded-xl shadow-md p-6">
+          <h3 class="font-bold mb-4 flex items-center">
+            <i class="fas fa-file-invoice-dollar text-purple-600 mr-2"></i>급여명세서 목록
+          </h3>
+          
+          <div id="payroll-list" class="space-y-4">
+            <!-- 로딩 -->
+            <div class="text-center py-10">
+              <i class="fas fa-spinner fa-spin text-2xl text-purple-600 mb-2"></i>
+              <p class="text-gray-600">급여명세서를 불러오는 중...</p>
+            </div>
+          </div>
+
+          <!-- 빈 상태 -->
+          <div id="payroll-empty-state" class="hidden text-center py-10">
+            <i class="fas fa-inbox text-6xl text-gray-300 mb-4"></i>
+            <p class="text-lg text-gray-500 mb-2">등록된 급여명세서가 없습니다</p>
+            <p class="text-sm text-gray-400">명세서가 등록되면 여기에 표시됩니다</p>
           </div>
         </div>
       </div>
@@ -3609,6 +3678,218 @@
         }
       },
 
+      // ==================== 💰 급여명세서 관리 ====================
+      
+      async loadPayrollList() {
+        const listContainer = document.getElementById('payroll-list');
+        const emptyState = document.getElementById('payroll-empty-state');
+        
+        listContainer.innerHTML = '<div class="text-center py-10"><i class="fas fa-spinner fa-spin text-2xl text-purple-600"></i></div>';
+        emptyState.classList.add('hidden');
+
+        try {
+          let query = this.sb
+            .from('payroll_statements')
+            .select('*')
+            .eq('employee_id', this.state.employee.id)
+            .order('year_month', { ascending: false });
+
+          // 필터 적용
+          const filterYear = document.getElementById('payroll-filter-year').value;
+          const filterStatus = document.getElementById('payroll-filter-status').value;
+          
+          if (filterYear) {
+            query = query.ilike('year_month', `${filterYear}%`);
+          }
+          if (filterStatus) {
+            query = query.eq('status', filterStatus);
+          }
+
+          const { data, error } = await query;
+
+          if (error) {
+            console.error('명세서 로드 실패:', error);
+            listContainer.innerHTML = '<div class="text-center py-10 text-red-500">로드 실패</div>';
+            return;
+          }
+
+          // 통계 업데이트
+          this.updatePayrollStatistics(data);
+
+          if (!data || data.length === 0) {
+            listContainer.innerHTML = '';
+            emptyState.classList.remove('hidden');
+            return;
+          }
+
+          // 카드 렌더링
+          listContainer.innerHTML = '';
+          data.forEach(payroll => {
+            const card = this.createPayrollCard(payroll);
+            listContainer.appendChild(card);
+          });
+
+        } catch (err) {
+          console.error('명세서 로드 오류:', err);
+          listContainer.innerHTML = '<div class="text-center py-10 text-red-500">오류 발생</div>';
+        }
+      },
+
+      updatePayrollStatistics(data) {
+        const total = data.length;
+        const pending = data.filter(p => p.status === 'pending').length;
+        const viewed = data.filter(p => p.status !== 'pending').length;
+        const latest = data.length > 0 ? data[0].year_month : '-';
+
+        document.getElementById('payroll-total-count').textContent = total;
+        document.getElementById('payroll-pending-count').textContent = pending;
+        document.getElementById('payroll-viewed-count').textContent = viewed;
+        document.getElementById('payroll-latest-month').textContent = this.formatYearMonth(latest);
+      },
+
+      createPayrollCard(payroll) {
+        const div = document.createElement('div');
+        div.className = 'border-2 border-gray-100 rounded-xl p-4 hover:border-purple-500 hover:shadow-lg transition-all';
+        
+        // 상태 배지
+        let statusBadge = '';
+        let statusClass = '';
+        if (payroll.status === 'pending') {
+          statusBadge = '🔔 미확인';
+          statusClass = 'bg-orange-100 text-orange-800';
+        } else if (payroll.status === 'viewed') {
+          statusBadge = '✅ 확인함';
+          statusClass = 'bg-green-100 text-green-800';
+        } else if (payroll.status === 'downloaded') {
+          statusBadge = '⬇️ 다운로드함';
+          statusClass = 'bg-blue-100 text-blue-800';
+        }
+
+        div.innerHTML = `
+          <div class="flex justify-between items-start mb-3">
+            <div>
+              <h4 class="text-lg font-bold text-gray-800">
+                <i class="fas fa-calendar-alt text-purple-600 mr-2"></i>
+                ${this.formatYearMonth(payroll.year_month)}
+              </h4>
+              <p class="text-sm text-gray-500">
+                등록일: ${new Date(payroll.uploaded_at).toLocaleDateString('ko-KR')}
+              </p>
+            </div>
+            <span class="px-3 py-1 rounded-full text-xs font-medium ${statusClass}">
+              ${statusBadge}
+            </span>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3 mb-3 text-sm">
+            <div>
+              <span class="text-gray-600">조회:</span>
+              <span class="font-semibold text-gray-800">${payroll.view_count}회</span>
+            </div>
+            <div>
+              <span class="text-gray-600">다운로드:</span>
+              <span class="font-semibold text-gray-800">${payroll.download_count}회</span>
+            </div>
+            ${payroll.first_viewed_at ? `
+            <div class="col-span-2">
+              <span class="text-gray-600">최초 확인:</span>
+              <span class="font-semibold text-gray-800">${new Date(payroll.first_viewed_at).toLocaleString('ko-KR')}</span>
+            </div>
+            ` : ''}
+          </div>
+
+          <div class="flex gap-2">
+            <button onclick="app.viewPayroll('${payroll.id}')" class="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium">
+              <i class="fas fa-eye mr-2"></i>조회
+            </button>
+            <button onclick="app.downloadPayroll('${payroll.id}', '${payroll.file_url}')" class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
+              <i class="fas fa-download mr-2"></i>다운로드
+            </button>
+          </div>
+        `;
+
+        return div;
+      },
+
+      formatYearMonth(yearMonth) {
+        if (!yearMonth || yearMonth === '-') return '-';
+        const [year, month] = yearMonth.split('-');
+        return `${year}년 ${parseInt(month)}월`;
+      },
+
+      async viewPayroll(payrollId) {
+        try {
+          // 조회 기록 업데이트
+          const { error } = await this.sb
+            .from('payroll_statements')
+            .update({
+              last_viewed_at: new Date().toISOString()
+            })
+            .eq('id', payrollId);
+
+          if (error) {
+            console.error('조회 기록 업데이트 실패:', error);
+          }
+
+          // 파일 URL 가져오기
+          const { data: payroll } = await this.sb
+            .from('payroll_statements')
+            .select('file_url')
+            .eq('id', payrollId)
+            .single();
+
+          if (payroll && payroll.file_url) {
+            window.open(payroll.file_url, '_blank');
+            
+            // 목록 새로고침
+            setTimeout(() => this.loadPayrollList(), 1000);
+          }
+
+        } catch (err) {
+          console.error('명세서 조회 오류:', err);
+          this.showToast('❌ 명세서 조회 중 오류가 발생했습니다', 'error');
+        }
+      },
+
+      async downloadPayroll(payrollId, fileUrl) {
+        try {
+          // 다운로드 횟수 증가
+          const { data: current } = await this.sb
+            .from('payroll_statements')
+            .select('download_count, status')
+            .eq('id', payrollId)
+            .single();
+
+          await this.sb
+            .from('payroll_statements')
+            .update({
+              download_count: (current.download_count || 0) + 1,
+              status: 'downloaded',
+              last_viewed_at: new Date().toISOString()
+            })
+            .eq('id', payrollId);
+
+          // 다운로드 실행
+          const link = document.createElement('a');
+          link.href = fileUrl;
+          link.download = '';
+          link.target = '_blank';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+
+          this.showToast('✅ 다운로드를 시작했습니다', 'success');
+
+          // 목록 새로고침
+          setTimeout(() => this.loadPayrollList(), 1000);
+
+        } catch (err) {
+          console.error('다운로드 오류:', err);
+          this.showToast('❌ 다운로드 중 오류가 발생했습니다', 'error');
+        }
+      },
+
+
 
       async submitInspection() {
         const files = document.getElementById('inspection-photos').files;
@@ -4055,6 +4336,14 @@
           this.openPasswordModal();
         });
         
+        // 💰 급여명세서 필터
+        document.getElementById('payroll-filter-year').addEventListener('change', () => {
+          this.loadPayrollList();
+        });
+        document.getElementById('payroll-filter-status').addEventListener('change', () => {
+          this.loadPayrollList();
+        });
+        
         // Before/After 토글
         document.getElementById('before-after-toggle').addEventListener('change', (e) => {
           this.toggleBeforeAfterMode();
@@ -4146,6 +4435,11 @@
         document.getElementById(`tab-${tab}`).classList.remove('hidden');
         
         this.state.currentTab = tab;
+        
+        // 급여 탭으로 전환 시 데이터 로드
+        if (tab === 'payroll') {
+          this.loadPayrollList();
+        }
       },
       
       // ==================== Toast 알림 ====================
