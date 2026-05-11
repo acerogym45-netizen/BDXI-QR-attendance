@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>브랜드 설정 관리 - 마스터플랜리소스</title>
+    
+    <!-- CDNs -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <style>
+        body {
+            font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="min-h-screen py-8">
+        <div class="max-w-4xl mx-auto px-4">
+            <!-- Header -->
+            <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-3xl font-bold text-gray-800">
+                            <i class="fas fa-palette text-purple-600 mr-3"></i>
+                            브랜드 설정 관리
+                        </h1>
+                        <p class="text-gray-600 mt-2">로고, 회사명, 색상 등을 설정하여 시스템을 커스터마이징하세요</p>
+                    </div>
+                    <button onclick="window.location.href='master_dashboard.html'" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">
+                        <i class="fas fa-arrow-left mr-2"></i>돌아가기
+                    </button>
+                </div>
+            </div>
+
+            <!-- 설정 폼 -->
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <form id="brandForm" class="space-y-6">
+                    
+                    <!-- 회사명 -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-building mr-2 text-blue-600"></i>회사명 (한글)
+                            </label>
+                            <input type="text" id="companyName" placeholder="마스터플랜리소스(유)" 
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-globe mr-2 text-blue-600"></i>회사명 (영문)
+                            </label>
+                            <input type="text" id="companyNameEn" placeholder="MasterPlanResource Co.,Ltd." 
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                        </div>
+                    </div>
+
+                    <!-- 로고 URL -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-image mr-2 text-green-600"></i>로고 이미지 URL
+                        </label>
+                        <input type="url" id="logoUrl" placeholder="https://example.com/logo.png" 
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                        <p class="text-xs text-gray-500 mt-1">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            Supabase Storage에 업로드한 이미지의 Public URL을 입력하세요. (비워두면 회사명 텍스트로 표시됩니다)
+                        </p>
+                    </div>
+
+                    <!-- 브랜드 색상 -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-palette mr-2 text-purple-600"></i>주 색상 (Primary Color)
+                            </label>
+                            <div class="flex gap-2">
+                                <input type="color" id="primaryColor" value="#C5A35F" 
+                                       class="w-20 h-10 border border-gray-300 rounded cursor-pointer">
+                                <input type="text" id="primaryColorText" value="#C5A35F" placeholder="#C5A35F" 
+                                       class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-palette mr-2 text-indigo-600"></i>보조 색상 (Secondary Color)
+                            </label>
+                            <div class="flex gap-2">
+                                <input type="color" id="secondaryColor" value="#D4AF37" 
+                                       class="w-20 h-10 border border-gray-300 rounded cursor-pointer">
+                                <input type="text" id="secondaryColorText" value="#D4AF37" placeholder="#D4AF37" 
+                                       class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 텍스트 설정 -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-heading mr-2 text-orange-600"></i>로그인 화면 부제목
+                            </label>
+                            <input type="text" id="loginSubtitle" placeholder="직원 업무 관리 시스템" 
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-crown mr-2 text-yellow-600"></i>총괄 관리자 타이틀
+                            </label>
+                            <input type="text" id="masterTitle" placeholder="총괄 관리자" 
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                        </div>
+                    </div>
+
+                    <!-- 버튼 -->
+                    <div class="flex gap-4">
+                        <button type="button" onclick="saveBrandSettings()" 
+                                class="flex-1 bg-purple-600 text-white py-3 rounded-lg hover:bg-purple-700 transition-colors font-medium">
+                            <i class="fas fa-save mr-2"></i>설정 저장
+                        </button>
+                        <button type="button" onclick="loadBrandSettings()" 
+                                class="px-6 bg-gray-200 text-gray-700 py-3 rounded-lg hover:bg-gray-300 transition-colors font-medium">
+                            <i class="fas fa-sync-alt mr-2"></i>새로고침
+                        </button>
+                    </div>
+                </form>
+
+                <!-- 미리보기 -->
+                <div class="mt-8 pt-8 border-t">
+                    <h3 class="text-lg font-bold text-gray-800 mb-4">
+                        <i class="fas fa-eye mr-2 text-blue-600"></i>미리보기
+                    </h3>
+                    <div class="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-6 space-y-4">
+                        <div class="bg-white rounded-lg shadow-sm p-6 text-center">
+                            <div id="previewLogo" class="text-3xl font-bold mb-2" style="color: #C5A35F;">마스터플랜리소스</div>
+                            <p class="text-gray-600 text-sm">로그인 화면 예시</p>
+                        </div>
+                        <div class="bg-white rounded-lg shadow-sm p-4">
+                            <div class="flex items-center gap-3">
+                                <div id="previewIcon" class="w-10 h-10 rounded-full flex items-center justify-center text-white" style="background-color: #C5A35F;">
+                                    <i class="fas fa-crown"></i>
+                                </div>
+                                <div id="previewTitle" class="text-xl font-bold" style="color: #C5A35F;">마스터플랜리소스(유) 총괄 관리자</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://qgpqhtuynxhmgawakjxe.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFncHFodHV5bnhobWdhd2FranhlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcyOTQyNTEsImV4cCI6MjA4Mjg3MDI1MX0.WNljQIKDbeZCDlXe8fpBdZs58XRFfujGt7lBGfq_pVg';
+        
+        const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        let currentBrandId = null;
+
+        // 색상 입력 동기화
+        document.getElementById('primaryColor').addEventListener('input', (e) => {
+            document.getElementById('primaryColorText').value = e.target.value;
+            updatePreview();
+        });
+        document.getElementById('primaryColorText').addEventListener('input', (e) => {
+            document.getElementById('primaryColor').value = e.target.value;
+            updatePreview();
+        });
+        document.getElementById('secondaryColor').addEventListener('input', (e) => {
+            document.getElementById('secondaryColorText').value = e.target.value;
+            updatePreview();
+        });
+        document.getElementById('secondaryColorText').addEventListener('input', (e) => {
+            document.getElementById('secondaryColor').value = e.target.value;
+            updatePreview();
+        });
+
+        // 실시간 미리보기 업데이트
+        ['companyName', 'companyNameEn', 'logoUrl', 'masterTitle'].forEach(id => {
+            document.getElementById(id).addEventListener('input', updatePreview);
+        });
+
+        function updatePreview() {
+            const companyName = document.getElementById('companyName').value || '마스터플랜리소스(유)';
+            const logoUrl = document.getElementById('logoUrl').value;
+            const primaryColor = document.getElementById('primaryColor').value;
+            const masterTitle = document.getElementById('masterTitle').value || '총괄 관리자';
+
+            // 로고 미리보기
+            const previewLogo = document.getElementById('previewLogo');
+            if (logoUrl) {
+                previewLogo.innerHTML = `<img src="${logoUrl}" alt="Logo" class="h-12 mx-auto">`;
+            } else {
+                previewLogo.textContent = companyName.replace('(유)', '');
+                previewLogo.style.color = primaryColor;
+            }
+
+            // 아이콘 색상
+            document.getElementById('previewIcon').style.backgroundColor = primaryColor;
+            
+            // 타이틀 미리보기
+            document.getElementById('previewTitle').textContent = `${companyName} ${masterTitle}`;
+            document.getElementById('previewTitle').style.color = primaryColor;
+        }
+
+        async function loadBrandSettings() {
+            try {
+                const { data, error } = await sb
+                    .from('brand_settings')
+                    .select('*')
+                    .eq('is_active', true)
+                    .order('created_at', { ascending: false })
+                    .limit(1)
+                    .single();
+
+                if (error && error.code !== 'PGRST116') { // PGRST116 = no rows
+                    throw error;
+                }
+
+                if (data) {
+                    currentBrandId = data.id;
+                    document.getElementById('companyName').value = data.company_name || '';
+                    document.getElementById('companyNameEn').value = data.company_name_en || '';
+                    document.getElementById('logoUrl').value = data.logo_url || '';
+                    document.getElementById('primaryColor').value = data.primary_color || '#C5A35F';
+                    document.getElementById('primaryColorText').value = data.primary_color || '#C5A35F';
+                    document.getElementById('secondaryColor').value = data.secondary_color || '#D4AF37';
+                    document.getElementById('secondaryColorText').value = data.secondary_color || '#D4AF37';
+                    document.getElementById('loginSubtitle').value = data.login_subtitle || '';
+                    document.getElementById('masterTitle').value = data.master_dashboard_title || '';
+                    updatePreview();
+                    console.log('✅ 브랜드 설정 로드 완료');
+                } else {
+                    console.log('⚠️ 저장된 브랜드 설정이 없습니다. 기본값을 사용합니다.');
+                }
+            } catch (error) {
+                console.error('❌ 브랜드 설정 로드 실패:', error);
+                alert('설정을 불러오는데 실패했습니다: ' + error.message);
+            }
+        }
+
+        async function saveBrandSettings() {
+            try {
+                const settings = {
+                    company_name: document.getElementById('companyName').value || '마스터플랜리소스(유)',
+                    company_name_en: document.getElementById('companyNameEn').value || 'MasterPlanResource Co.,Ltd.',
+                    logo_url: document.getElementById('logoUrl').value || null,
+                    primary_color: document.getElementById('primaryColor').value,
+                    secondary_color: document.getElementById('secondaryColor').value,
+                    login_subtitle: document.getElementById('loginSubtitle').value || '직원 업무 관리 시스템',
+                    master_dashboard_title: document.getElementById('masterTitle').value || '총괄 관리자',
+                    is_active: true,
+                    updated_at: new Date().toISOString()
+                };
+
+                let result;
+                if (currentBrandId) {
+                    // 업데이트
+                    result = await sb
+                        .from('brand_settings')
+                        .update(settings)
+                        .eq('id', currentBrandId);
+                } else {
+                    // 새로 생성
+                    result = await sb
+                        .from('brand_settings')
+                        .insert([settings])
+                        .select()
+                        .single();
+                    
+                    if (result.data) {
+                        currentBrandId = result.data.id;
+                    }
+                }
+
+                if (result.error) throw result.error;
+
+                alert('✅ 브랜드 설정이 저장되었습니다!\n\n변경사항을 적용하려면 페이지를 새로고침하세요.');
+                console.log('✅ 브랜드 설정 저장 완료');
+            } catch (error) {
+                console.error('❌ 브랜드 설정 저장 실패:', error);
+                alert('설정 저장에 실패했습니다: ' + error.message);
+            }
+        }
+
+        // 페이지 로드 시 설정 불러오기
+        window.addEventListener('DOMContentLoaded', () => {
+            loadBrandSettings();
+        });
+    </script>
+</body>
+</html>
