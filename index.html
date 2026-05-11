@@ -417,6 +417,9 @@
             <button onclick="app.switchTab('documents')" class="nav-tab py-4 px-2 text-sm font-medium transition-all tab-inactive">
               <i class="fas fa-folder-open mr-2"></i>서류 관리
             </button>
+            <button onclick="app.switchTab('payroll')" class="nav-tab py-4 px-2 text-sm font-medium transition-all tab-inactive">
+              <i class="fas fa-money-bill-wave mr-2"></i>💰 급여 관리
+            </button>
           </div>
         </div>
       </nav>
@@ -1611,6 +1614,136 @@
             </button>
           </div>
         </div>
+
+        <!-- ==================== 💰 급여 관리 TAB ==================== -->
+        <div id="tab-payroll" class="tab-content hidden space-y-6 px-4">
+          <!-- 상단 통계 대시보드 -->
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-3">
+            <div class="bg-gradient-to-br from-green-50 to-emerald-50 p-4 rounded-xl shadow-sm border-2 border-green-200">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-sm text-gray-600 mb-1">이번 달 발급</p>
+                  <p class="text-3xl font-bold text-green-600" id="payroll-current-month-count">0</p>
+                  <p class="text-xs text-gray-500 mt-1">명</p>
+                </div>
+                <div class="text-green-400 text-4xl">
+                  <i class="fas fa-calendar-check"></i>
+                </div>
+              </div>
+            </div>
+
+            <div class="bg-gradient-to-br from-blue-50 to-indigo-50 p-4 rounded-xl shadow-sm border-2 border-blue-200">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-sm text-gray-600 mb-1">전체 직원</p>
+                  <p class="text-3xl font-bold text-blue-600" id="payroll-total-employees">0</p>
+                  <p class="text-xs text-gray-500 mt-1">명</p>
+                </div>
+                <div class="text-blue-400 text-4xl">
+                  <i class="fas fa-users"></i>
+                </div>
+              </div>
+            </div>
+
+            <div class="bg-gradient-to-br from-purple-50 to-pink-50 p-4 rounded-xl shadow-sm border-2 border-purple-200">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-sm text-gray-600 mb-1">미조회 명세서</p>
+                  <p class="text-3xl font-bold text-purple-600" id="payroll-pending-count">0</p>
+                  <p class="text-xs text-gray-500 mt-1">건</p>
+                </div>
+                <div class="text-purple-400 text-4xl">
+                  <i class="fas fa-envelope"></i>
+                </div>
+              </div>
+            </div>
+
+            <div class="bg-gradient-to-br from-orange-50 to-red-50 p-4 rounded-xl shadow-sm border-2 border-orange-200">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-sm text-gray-600 mb-1">총 발급 건수</p>
+                  <p class="text-3xl font-bold text-orange-600" id="payroll-total-count">0</p>
+                  <p class="text-xs text-gray-500 mt-1">건</p>
+                </div>
+                <div class="text-orange-400 text-4xl">
+                  <i class="fas fa-file-invoice-dollar"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 액션 버튼 -->
+          <div class="flex gap-3 mb-3">
+            <button onclick="app.openPayrollUploadModal()" class="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:from-green-600 hover:to-emerald-700 transition-all shadow-md font-medium">
+              <i class="fas fa-file-upload mr-2"></i>급여명세서 업로드
+            </button>
+            <button onclick="app.refreshPayrollList()" class="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium">
+              <i class="fas fa-sync-alt mr-2"></i>새로고침
+            </button>
+            <button onclick="app.exportPayrollReport()" class="px-6 py-3 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors font-medium">
+              <i class="fas fa-file-excel mr-2"></i>엑셀 내보내기
+            </button>
+          </div>
+
+          <!-- 필터 -->
+          <div class="bg-white p-3 rounded-xl shadow-sm border mb-3">
+            <div class="flex flex-wrap gap-3">
+              <input type="text" id="payroll-search" placeholder="직원 이름, 부서 검색..." class="flex-1 min-w-[200px] px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500" onkeyup="app.searchPayroll()">
+              
+              <select id="payroll-filter-year" onchange="app.filterPayroll()" class="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500">
+                <option value="">전체 연도</option>
+                <!-- 동적 생성 -->
+              </select>
+              
+              <select id="payroll-filter-month" onchange="app.filterPayroll()" class="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500">
+                <option value="">전체 월</option>
+                <option value="01">1월</option>
+                <option value="02">2월</option>
+                <option value="03">3월</option>
+                <option value="04">4월</option>
+                <option value="05">5월</option>
+                <option value="06">6월</option>
+                <option value="07">7월</option>
+                <option value="08">8월</option>
+                <option value="09">9월</option>
+                <option value="10">10월</option>
+                <option value="11">11월</option>
+                <option value="12">12월</option>
+              </select>
+              
+              <select id="payroll-filter-department" onchange="app.filterPayroll()" class="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500">
+                <option value="">전체 부서</option>
+                <!-- 동적 생성 -->
+              </select>
+              
+              <select id="payroll-filter-status" onchange="app.filterPayroll()" class="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500">
+                <option value="">전체 상태</option>
+                <option value="pending">대기</option>
+                <option value="viewed">조회</option>
+                <option value="downloaded">다운로드</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- 급여명세서 목록 -->
+          <div id="payroll-list" class="space-y-3">
+            <!-- 로딩 상태 -->
+            <div id="payroll-loading" class="text-center py-20">
+              <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+              <p class="mt-4 text-gray-600">급여명세서 목록을 불러오는 중...</p>
+            </div>
+          </div>
+
+          <!-- 빈 상태 -->
+          <div id="payroll-empty" class="hidden bg-gray-50 border-2 border-dashed border-gray-300 rounded-xl p-12 text-center">
+            <i class="fas fa-file-invoice-dollar text-gray-400 text-6xl mb-4"></i>
+            <h3 class="text-xl font-bold text-gray-700 mb-2">발급된 급여명세서가 없습니다</h3>
+            <p class="text-gray-500 mb-6">새 급여명세서를 업로드하여 직원들에게 배포하세요</p>
+            <button onclick="app.openPayrollUploadModal()" class="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium">
+              <i class="fas fa-plus mr-2"></i>첫 급여명세서 업로드
+            </button>
+          </div>
+        </div>
       </main>
     </div>
 
@@ -2305,6 +2438,163 @@
             </button>
             <button onclick="app.updateLocation()" class="flex-1 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium">
               <i class="fas fa-save mr-2"></i>저장
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 💰 급여명세서 업로드 모달 -->
+    <div id="payroll-upload-modal" class="fixed inset-0 z-50 bg-black bg-opacity-80 items-center justify-center p-4" style="display: none;">
+      <div class="bg-white rounded-2xl max-w-2xl w-full shadow-2xl overflow-y-auto max-h-[90vh]" onclick="event.stopPropagation()">
+        <div class="flex justify-between items-center p-6 border-b sticky top-0 bg-white z-10">
+          <h3 class="text-xl font-bold text-gray-800">
+            <i class="fas fa-file-upload mr-2 text-green-600"></i>급여명세서 업로드
+          </h3>
+          <button onclick="app.closePayrollUploadModal()" class="text-gray-400 hover:text-gray-600 text-2xl">×</button>
+        </div>
+        
+        <div class="p-6 space-y-4">
+          <!-- 연월 선택 -->
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                <i class="fas fa-calendar mr-1 text-green-600"></i>연도
+              </label>
+              <select id="payroll-upload-year" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500">
+                <!-- 동적 생성 -->
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                <i class="fas fa-calendar-day mr-1 text-green-600"></i>월
+              </label>
+              <select id="payroll-upload-month" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500">
+                <option value="01">1월</option>
+                <option value="02">2월</option>
+                <option value="03">3월</option>
+                <option value="04">4월</option>
+                <option value="05">5월</option>
+                <option value="06">6월</option>
+                <option value="07">7월</option>
+                <option value="08">8월</option>
+                <option value="09">9월</option>
+                <option value="10">10월</option>
+                <option value="11">11월</option>
+                <option value="12">12월</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- 직원 선택 방법 -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              <i class="fas fa-users mr-1 text-green-600"></i>직원 선택 방법
+            </label>
+            <div class="flex gap-3">
+              <button onclick="app.selectPayrollMethod('single')" id="payroll-method-single" class="flex-1 px-4 py-3 border-2 border-green-500 bg-green-50 text-green-700 rounded-lg font-medium transition">
+                <i class="fas fa-user mr-2"></i>개별 선택
+              </button>
+              <button onclick="app.selectPayrollMethod('department')" id="payroll-method-department" class="flex-1 px-4 py-3 border-2 border-gray-300 bg-white text-gray-700 rounded-lg font-medium transition hover:border-green-500">
+                <i class="fas fa-building mr-2"></i>부서별
+              </button>
+              <button onclick="app.selectPayrollMethod('all')" id="payroll-method-all" class="flex-1 px-4 py-3 border-2 border-gray-300 bg-white text-gray-700 rounded-lg font-medium transition hover:border-green-500">
+                <i class="fas fa-users mr-2"></i>전체
+              </button>
+            </div>
+          </div>
+
+          <!-- 개별 직원 선택 -->
+          <div id="payroll-single-select" class="space-y-3">
+            <label class="block text-sm font-medium text-gray-700">
+              <i class="fas fa-user-check mr-1 text-green-600"></i>직원 선택
+            </label>
+            <div class="border rounded-lg p-4 max-h-60 overflow-y-auto space-y-2">
+              <div id="payroll-employee-list">
+                <!-- 동적 생성 -->
+              </div>
+            </div>
+            <p class="text-xs text-gray-500">
+              <i class="fas fa-info-circle mr-1"></i>선택된 직원: <span id="payroll-selected-count" class="font-bold text-green-600">0</span>명
+            </p>
+          </div>
+
+          <!-- 부서별 선택 -->
+          <div id="payroll-department-select" class="hidden">
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              <i class="fas fa-building mr-1 text-green-600"></i>부서 선택
+            </label>
+            <select id="payroll-department-selector" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500">
+              <option value="">부서를 선택하세요</option>
+              <!-- 동적 생성 -->
+            </select>
+          </div>
+
+          <!-- 전체 선택 안내 -->
+          <div id="payroll-all-select" class="hidden bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div class="flex items-start gap-3">
+              <i class="fas fa-info-circle text-blue-600 text-xl mt-1"></i>
+              <div>
+                <p class="font-medium text-blue-800">전체 직원에게 발급</p>
+                <p class="text-sm text-blue-600 mt-1">활성화된 모든 직원에게 급여명세서가 발급됩니다.</p>
+                <p class="text-sm text-blue-600">총 <span id="payroll-all-count" class="font-bold">0</span>명</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- 파일 업로드 -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              <i class="fas fa-file-pdf mr-1 text-red-600"></i>PDF 파일 업로드
+            </label>
+            <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-green-500 transition cursor-pointer" onclick="document.getElementById('payroll-file-input').click()">
+              <input type="file" id="payroll-file-input" accept=".pdf" class="hidden" onchange="app.handlePayrollFileSelect(event)">
+              <div id="payroll-file-placeholder">
+                <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-2"></i>
+                <p class="text-gray-600 font-medium">클릭하여 PDF 파일 선택</p>
+                <p class="text-xs text-gray-500 mt-1">또는 파일을 드래그 앤 드롭하세요</p>
+                <p class="text-xs text-gray-500">최대 10MB</p>
+              </div>
+              <div id="payroll-file-info" class="hidden">
+                <i class="fas fa-file-pdf text-4xl text-red-500 mb-2"></i>
+                <p class="text-gray-800 font-medium" id="payroll-file-name"></p>
+                <p class="text-xs text-gray-500 mt-1" id="payroll-file-size"></p>
+                <button type="button" onclick="app.clearPayrollFile(); event.stopPropagation();" class="mt-2 text-sm text-red-600 hover:text-red-800">
+                  <i class="fas fa-times mr-1"></i>파일 제거
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 업로드 진행 상태 -->
+          <div id="payroll-upload-progress" class="hidden">
+            <div class="bg-gray-200 rounded-full h-2 overflow-hidden">
+              <div id="payroll-upload-progress-bar" class="bg-green-600 h-full transition-all duration-300" style="width: 0%"></div>
+            </div>
+            <p class="text-sm text-gray-600 mt-2 text-center">
+              <span id="payroll-upload-progress-text">업로드 중...</span>
+              <span id="payroll-upload-progress-percent" class="font-bold text-green-600">0%</span>
+            </p>
+          </div>
+
+          <!-- 알림 옵션 (선택사항) -->
+          <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+            <label class="flex items-center gap-2">
+              <input type="checkbox" id="payroll-send-notification" class="w-4 h-4 text-green-600 rounded focus:ring-green-500">
+              <span class="text-sm text-gray-700">
+                <i class="fas fa-bell mr-1 text-yellow-500"></i>업로드 후 직원에게 알림 발송 (선택사항)
+              </span>
+            </label>
+            <p class="text-xs text-gray-500 mt-2 ml-6">* 알림 기능은 추후 구현 예정입니다</p>
+          </div>
+
+          <!-- 액션 버튼 -->
+          <div class="flex gap-3 pt-4 border-t">
+            <button onclick="app.closePayrollUploadModal()" class="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium">
+              <i class="fas fa-times mr-2"></i>취소
+            </button>
+            <button onclick="app.uploadPayrollStatements()" id="payroll-upload-btn" class="flex-1 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium disabled:bg-gray-400 disabled:cursor-not-allowed">
+              <i class="fas fa-upload mr-2"></i>업로드 시작
             </button>
           </div>
         </div>
@@ -3038,6 +3328,10 @@
             this.loadDocuments();
             this.loadDocumentCategories();
             this.loadDocumentStats();
+          } else if (tab === 'payroll') {
+            console.log('💰 급여 관리 탭 로드 시작');
+            this.loadPayrollList();
+            this.loadPayrollStatistics();
           }
         },
 
@@ -11799,6 +12093,687 @@
         }
       };
       
+      // ==================== 💰 급여명세서 관리 함수 ====================
+      
+      app.loadPayrollList = async function() {
+        console.log('💰 급여명세서 목록 로드 시작');
+        const loadingEl = document.getElementById('payroll-loading');
+        const listEl = document.getElementById('payroll-list');
+        const emptyEl = document.getElementById('payroll-empty');
+        
+        loadingEl.classList.remove('hidden');
+        emptyEl.classList.add('hidden');
+        
+        try {
+          let query = this.sb
+            .from('payroll_statements')
+            .select(`
+              *,
+              employees(id, name, employee_number, department, position)
+            `)
+            .order('year_month', { ascending: false })
+            .order('created_at', { ascending: false });
+          
+          // 필터 적용
+          const filterYear = document.getElementById('payroll-filter-year')?.value;
+          const filterMonth = document.getElementById('payroll-filter-month')?.value;
+          const filterDept = document.getElementById('payroll-filter-department')?.value;
+          const filterStatus = document.getElementById('payroll-filter-status')?.value;
+          const searchText = document.getElementById('payroll-search')?.value?.trim();
+          
+          if (filterYear) {
+            if (filterMonth) {
+              query = query.eq('year_month', `${filterYear}-${filterMonth}`);
+            } else {
+              query = query.ilike('year_month', `${filterYear}%`);
+            }
+          } else if (filterMonth) {
+            query = query.ilike('year_month', `%-${filterMonth}`);
+          }
+          
+          if (filterStatus) {
+            query = query.eq('status', filterStatus);
+          }
+          
+          const { data, error } = await query;
+          
+          if (error) throw error;
+          
+          console.log(`✅ 급여명세서 ${data?.length || 0}건 로드 완료`);
+          
+          loadingEl.classList.add('hidden');
+          
+          // 필터 및 검색 적용
+          let filteredData = data || [];
+          
+          if (filterDept) {
+            filteredData = filteredData.filter(p => p.employees?.department === filterDept);
+          }
+          
+          if (searchText) {
+            const search = searchText.toLowerCase();
+            filteredData = filteredData.filter(p => 
+              p.employees?.name?.toLowerCase().includes(search) ||
+              p.employees?.department?.toLowerCase().includes(search)
+            );
+          }
+          
+          if (filteredData.length === 0) {
+            emptyEl.classList.remove('hidden');
+            listEl.innerHTML = '';
+            return;
+          }
+          
+          // 카드 렌더링
+          listEl.innerHTML = '';
+          filteredData.forEach(payroll => {
+            const card = this.createPayrollAdminCard(payroll);
+            listEl.appendChild(card);
+          });
+          
+        } catch (error) {
+          console.error('❌ 급여명세서 로드 실패:', error);
+          loadingEl.classList.add('hidden');
+          listEl.innerHTML = `
+            <div class="text-center py-12 text-red-500">
+              <i class="fas fa-exclamation-triangle text-4xl mb-3"></i>
+              <p>급여명세서 로드 중 오류가 발생했습니다</p>
+              <p class="text-sm mt-2">${error.message}</p>
+            </div>
+          `;
+        }
+      };
+      
+      app.createPayrollAdminCard = function(payroll) {
+        const div = document.createElement('div');
+        div.className = 'bg-white border-2 border-gray-100 rounded-xl p-4 hover:border-green-500 transition shadow-sm';
+        
+        // 상태 배지
+        let statusClass = 'bg-yellow-100 text-yellow-800';
+        let statusIcon = '📋';
+        let statusText = '대기';
+        
+        if (payroll.status === 'viewed') {
+          statusClass = 'bg-blue-100 text-blue-800';
+          statusIcon = '👁️';
+          statusText = '조회';
+        } else if (payroll.status === 'downloaded') {
+          statusClass = 'bg-green-100 text-green-800';
+          statusIcon = '✅';
+          statusText = '다운로드';
+        }
+        
+        const yearMonth = payroll.year_month || '-';
+        const [year, month] = yearMonth.split('-');
+        const formattedYearMonth = `${year}년 ${month}월`;
+        
+        const employee = payroll.employees || {};
+        const employeeName = employee.name || '알 수 없음';
+        const employeeDept = employee.department || '-';
+        const employeePos = employee.position || '-';
+        
+        const viewCount = payroll.view_count || 0;
+        const downloadCount = payroll.download_count || 0;
+        
+        const lastViewed = payroll.last_viewed_at 
+          ? new Date(payroll.last_viewed_at).toLocaleString('ko-KR')
+          : '조회 없음';
+        
+        div.innerHTML = `
+          <div class="flex justify-between items-start mb-3">
+            <div>
+              <h4 class="font-bold text-lg text-gray-800">${formattedYearMonth}</h4>
+              <p class="text-sm text-gray-600 mt-1">
+                <i class="fas fa-user mr-1"></i>${employeeName} (${employeePos})
+              </p>
+              <p class="text-xs text-gray-500">
+                <i class="fas fa-building mr-1"></i>${employeeDept}
+              </p>
+            </div>
+            <span class="${statusClass} px-3 py-1 rounded-full text-xs font-medium">
+              ${statusIcon} ${statusText}
+            </span>
+          </div>
+          
+          <div class="grid grid-cols-3 gap-2 mb-3 text-sm">
+            <div class="bg-blue-50 rounded-lg p-2 text-center">
+              <div class="text-xs text-gray-600">조회</div>
+              <div class="font-bold text-blue-600">${viewCount}회</div>
+            </div>
+            <div class="bg-green-50 rounded-lg p-2 text-center">
+              <div class="text-xs text-gray-600">다운로드</div>
+              <div class="font-bold text-green-600">${downloadCount}회</div>
+            </div>
+            <div class="bg-purple-50 rounded-lg p-2 text-center">
+              <div class="text-xs text-gray-600">발급일</div>
+              <div class="font-bold text-purple-600 text-xs">${new Date(payroll.created_at).toLocaleDateString('ko-KR', {month: 'short', day: 'numeric'})}</div>
+            </div>
+          </div>
+          
+          <div class="text-xs text-gray-500 mb-3 flex items-center gap-1">
+            <i class="fas fa-clock"></i>
+            <span>최근 조회: ${lastViewed}</span>
+          </div>
+          
+          <div class="flex gap-2">
+            <button onclick="app.viewPayrollAdmin('${payroll.id}', '${payroll.file_url}')" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded-lg transition text-sm">
+              <i class="fas fa-eye mr-1"></i>조회
+            </button>
+            <button onclick="app.deletePayrollStatement('${payroll.id}', '${employeeName}', '${formattedYearMonth}')" class="px-3 py-2 bg-red-100 text-red-600 hover:bg-red-200 rounded-lg transition text-sm">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+        `;
+        
+        return div;
+      };
+      
+      app.loadPayrollStatistics = async function() {
+        console.log('📊 급여명세서 통계 로드');
+        
+        try {
+          // 전체 직원 수
+          const { data: employees } = await this.sb
+            .from('employees')
+            .select('id')
+            .eq('is_active', true);
+          
+          document.getElementById('payroll-total-employees').textContent = employees?.length || 0;
+          
+          // 급여명세서 통계
+          const { data: payrolls } = await this.sb
+            .from('payroll_statements')
+            .select('*');
+          
+          const totalCount = payrolls?.length || 0;
+          const pendingCount = payrolls?.filter(p => p.status === 'pending').length || 0;
+          
+          // 이번 달 발급 건수
+          const now = new Date();
+          const currentYearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+          const currentMonthCount = payrolls?.filter(p => p.year_month === currentYearMonth).length || 0;
+          
+          document.getElementById('payroll-total-count').textContent = totalCount;
+          document.getElementById('payroll-pending-count').textContent = pendingCount;
+          document.getElementById('payroll-current-month-count').textContent = currentMonthCount;
+          
+          // 연도 필터 옵션 생성
+          const years = [...new Set(payrolls?.map(p => p.year_month?.split('-')[0]))].filter(Boolean).sort().reverse();
+          const yearFilter = document.getElementById('payroll-filter-year');
+          if (yearFilter) {
+            yearFilter.innerHTML = '<option value="">전체 연도</option>';
+            years.forEach(year => {
+              const opt = document.createElement('option');
+              opt.value = year;
+              opt.textContent = `${year}년`;
+              yearFilter.appendChild(opt);
+            });
+          }
+          
+          // 부서 필터 옵션 생성
+          const depts = [...new Set(employees?.map(e => e.department))].filter(Boolean).sort();
+          const deptFilter = document.getElementById('payroll-filter-department');
+          if (deptFilter) {
+            deptFilter.innerHTML = '<option value="">전체 부서</option>';
+            depts.forEach(dept => {
+              const opt = document.createElement('option');
+              opt.value = dept;
+              opt.textContent = dept;
+              deptFilter.appendChild(opt);
+            });
+          }
+          
+        } catch (error) {
+          console.error('❌ 급여명세서 통계 로드 실패:', error);
+        }
+      };
+      
+      app.viewPayrollAdmin = function(payrollId, fileUrl) {
+        if (fileUrl) {
+          window.open(fileUrl, '_blank');
+          // 조회 시간 업데이트
+          this.sb
+            .from('payroll_statements')
+            .update({ last_viewed_at: new Date().toISOString() })
+            .eq('id', payrollId)
+            .then(() => {
+              console.log('✅ 조회 시간 업데이트');
+              setTimeout(() => this.loadPayrollList(), 1000);
+            });
+        } else {
+          alert('⚠️ 파일 URL이 없습니다');
+        }
+      };
+      
+      app.deletePayrollStatement = async function(payrollId, employeeName, yearMonth) {
+        if (!confirm(`정말 삭제하시겠습니까?\n\n직원: ${employeeName}\n기간: ${yearMonth}\n\n이 작업은 되돌릴 수 없습니다.`)) {
+          return;
+        }
+        
+        try {
+          const { error } = await this.sb
+            .from('payroll_statements')
+            .delete()
+            .eq('id', payrollId);
+          
+          if (error) throw error;
+          
+          alert('✅ 급여명세서가 삭제되었습니다');
+          this.loadPayrollList();
+          this.loadPayrollStatistics();
+        } catch (error) {
+          console.error('❌ 급여명세서 삭제 실패:', error);
+          alert('❌ 삭제 중 오류가 발생했습니다: ' + error.message);
+        }
+      };
+      
+      app.refreshPayrollList = function() {
+        this.loadPayrollList();
+        this.loadPayrollStatistics();
+      };
+      
+      app.searchPayroll = function() {
+        this.loadPayrollList();
+      };
+      
+      app.filterPayroll = function() {
+        this.loadPayrollList();
+      };
+      
+      app.exportPayrollReport = async function() {
+        console.log('📊 급여명세서 리포트 내보내기');
+        
+        try {
+          const { data, error } = await this.sb
+            .from('payroll_statements')
+            .select(`
+              *,
+              employees(name, employee_number, department, position)
+            `)
+            .order('year_month', { ascending: false });
+          
+          if (error) throw error;
+          
+          if (!data || data.length === 0) {
+            alert('⚠️ 내보낼 데이터가 없습니다');
+            return;
+          }
+          
+          // 엑셀 데이터 준비
+          const excelData = data.map(p => ({
+            '연월': p.year_month || '-',
+            '직원명': p.employees?.name || '-',
+            '사번': p.employees?.employee_number || '-',
+            '부서': p.employees?.department || '-',
+            '직급': p.employees?.position || '-',
+            '상태': p.status === 'pending' ? '대기' : p.status === 'viewed' ? '조회' : '다운로드',
+            '조회수': p.view_count || 0,
+            '다운로드수': p.download_count || 0,
+            '최근조회': p.last_viewed_at ? new Date(p.last_viewed_at).toLocaleString('ko-KR') : '-',
+            '발급일': new Date(p.created_at).toLocaleString('ko-KR')
+          }));
+          
+          // 엑셀 생성
+          const ws = XLSX.utils.json_to_sheet(excelData);
+          const wb = XLSX.utils.book_new();
+          XLSX.utils.book_append_sheet(wb, ws, '급여명세서 현황');
+          
+          const filename = `급여명세서_현황_${new Date().toISOString().split('T')[0]}.xlsx`;
+          XLSX.writeFile(wb, filename);
+          
+          alert('✅ 엑셀 파일이 다운로드되었습니다');
+        } catch (error) {
+          console.error('❌ 엑셀 내보내기 실패:', error);
+          alert('❌ 엑셀 내보내기 중 오류가 발생했습니다: ' + error.message);
+        }
+      };
+      
+      // ==================== 💰 급여명세서 업로드 모달 ====================
+      
+      app.payrollUploadState = {
+        selectedMethod: 'single',
+        selectedEmployees: new Set(),
+        selectedFile: null,
+        selectedDepartment: null
+      };
+      
+      app.openPayrollUploadModal = async function() {
+        console.log('💰 급여명세서 업로드 모달 열기');
+        
+        // 현재 연월 설정
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        const currentMonth = String(now.getMonth() + 1).padStart(2, '0');
+        
+        // 연도 옵션 생성 (현재 -2년 ~ +1년)
+        const yearSelect = document.getElementById('payroll-upload-year');
+        yearSelect.innerHTML = '';
+        for (let i = -2; i <= 1; i++) {
+          const year = currentYear + i;
+          const opt = document.createElement('option');
+          opt.value = year;
+          opt.textContent = `${year}년`;
+          if (i === 0) opt.selected = true;
+          yearSelect.appendChild(opt);
+        }
+        
+        document.getElementById('payroll-upload-month').value = currentMonth;
+        
+        // 직원 목록 로드
+        await this.loadPayrollEmployeeList();
+        
+        // 부서 목록 로드
+        await this.loadPayrollDepartmentList();
+        
+        // 전체 직원 수 표시
+        const { data: allEmployees } = await this.sb
+          .from('employees')
+          .select('id')
+          .eq('is_active', true);
+        document.getElementById('payroll-all-count').textContent = allEmployees?.length || 0;
+        
+        // 초기화
+        this.payrollUploadState = {
+          selectedMethod: 'single',
+          selectedEmployees: new Set(),
+          selectedFile: null,
+          selectedDepartment: null
+        };
+        this.selectPayrollMethod('single');
+        this.clearPayrollFile();
+        
+        document.getElementById('payroll-upload-modal').style.display = 'flex';
+      };
+      
+      app.closePayrollUploadModal = function() {
+        document.getElementById('payroll-upload-modal').style.display = 'none';
+        this.payrollUploadState = {
+          selectedMethod: 'single',
+          selectedEmployees: new Set(),
+          selectedFile: null,
+          selectedDepartment: null
+        };
+      };
+      
+      app.selectPayrollMethod = function(method) {
+        console.log('📝 선택 방법:', method);
+        
+        this.payrollUploadState.selectedMethod = method;
+        
+        // 버튼 스타일 업데이트
+        ['single', 'department', 'all'].forEach(m => {
+          const btn = document.getElementById(`payroll-method-${m}`);
+          if (m === method) {
+            btn.className = 'flex-1 px-4 py-3 border-2 border-green-500 bg-green-50 text-green-700 rounded-lg font-medium transition';
+          } else {
+            btn.className = 'flex-1 px-4 py-3 border-2 border-gray-300 bg-white text-gray-700 rounded-lg font-medium transition hover:border-green-500';
+          }
+        });
+        
+        // 선택 영역 표시/숨김
+        document.getElementById('payroll-single-select').classList.toggle('hidden', method !== 'single');
+        document.getElementById('payroll-department-select').classList.toggle('hidden', method !== 'department');
+        document.getElementById('payroll-all-select').classList.toggle('hidden', method !== 'all');
+      };
+      
+      app.loadPayrollEmployeeList = async function() {
+        try {
+          const { data, error } = await this.sb
+            .from('employees')
+            .select('id, name, employee_number, department, position')
+            .eq('is_active', true)
+            .order('department', { ascending: true })
+            .order('name', { ascending: true });
+          
+          if (error) throw error;
+          
+          const container = document.getElementById('payroll-employee-list');
+          container.innerHTML = '';
+          
+          if (!data || data.length === 0) {
+            container.innerHTML = '<p class="text-gray-500 text-sm">등록된 직원이 없습니다</p>';
+            return;
+          }
+          
+          data.forEach(emp => {
+            const label = document.createElement('label');
+            label.className = 'flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer';
+            label.innerHTML = `
+              <input type="checkbox" value="${emp.id}" onchange="app.togglePayrollEmployee('${emp.id}')" class="w-4 h-4 text-green-600 rounded focus:ring-green-500">
+              <div class="flex-1">
+                <span class="font-medium">${emp.name}</span>
+                <span class="text-xs text-gray-500 ml-2">${emp.department} · ${emp.position}</span>
+              </div>
+            `;
+            container.appendChild(label);
+          });
+          
+        } catch (error) {
+          console.error('❌ 직원 목록 로드 실패:', error);
+        }
+      };
+      
+      app.loadPayrollDepartmentList = async function() {
+        try {
+          const { data, error } = await this.sb
+            .from('employees')
+            .select('department')
+            .eq('is_active', true);
+          
+          if (error) throw error;
+          
+          const depts = [...new Set(data?.map(e => e.department))].filter(Boolean).sort();
+          
+          const select = document.getElementById('payroll-department-selector');
+          select.innerHTML = '<option value="">부서를 선택하세요</option>';
+          
+          depts.forEach(dept => {
+            const opt = document.createElement('option');
+            opt.value = dept;
+            opt.textContent = dept;
+            select.appendChild(opt);
+          });
+          
+          select.onchange = (e) => {
+            this.payrollUploadState.selectedDepartment = e.target.value;
+          };
+          
+        } catch (error) {
+          console.error('❌ 부서 목록 로드 실패:', error);
+        }
+      };
+      
+      app.togglePayrollEmployee = function(employeeId) {
+        if (this.payrollUploadState.selectedEmployees.has(employeeId)) {
+          this.payrollUploadState.selectedEmployees.delete(employeeId);
+        } else {
+          this.payrollUploadState.selectedEmployees.add(employeeId);
+        }
+        
+        document.getElementById('payroll-selected-count').textContent = 
+          this.payrollUploadState.selectedEmployees.size;
+      };
+      
+      app.handlePayrollFileSelect = function(event) {
+        const file = event.target.files[0];
+        
+        if (!file) return;
+        
+        // PDF 검증
+        if (file.type !== 'application/pdf') {
+          alert('⚠️ PDF 파일만 업로드 가능합니다');
+          event.target.value = '';
+          return;
+        }
+        
+        // 크기 검증 (10MB)
+        if (file.size > 10 * 1024 * 1024) {
+          alert('⚠️ 파일 크기는 10MB 이하여야 합니다');
+          event.target.value = '';
+          return;
+        }
+        
+        this.payrollUploadState.selectedFile = file;
+        
+        // UI 업데이트
+        document.getElementById('payroll-file-placeholder').classList.add('hidden');
+        document.getElementById('payroll-file-info').classList.remove('hidden');
+        document.getElementById('payroll-file-name').textContent = file.name;
+        document.getElementById('payroll-file-size').textContent = 
+          `${(file.size / 1024).toFixed(1)} KB`;
+      };
+      
+      app.clearPayrollFile = function() {
+        this.payrollUploadState.selectedFile = null;
+        document.getElementById('payroll-file-input').value = '';
+        document.getElementById('payroll-file-placeholder').classList.remove('hidden');
+        document.getElementById('payroll-file-info').classList.add('hidden');
+      };
+      
+      app.uploadPayrollStatements = async function() {
+        console.log('🚀 급여명세서 업로드 시작');
+        
+        // 유효성 검사
+        const year = document.getElementById('payroll-upload-year').value;
+        const month = document.getElementById('payroll-upload-month').value;
+        const method = this.payrollUploadState.selectedMethod;
+        const file = this.payrollUploadState.selectedFile;
+        
+        if (!file) {
+          alert('⚠️ PDF 파일을 선택해주세요');
+          return;
+        }
+        
+        // 대상 직원 결정
+        let targetEmployees = [];
+        
+        if (method === 'single') {
+          if (this.payrollUploadState.selectedEmployees.size === 0) {
+            alert('⚠️ 직원을 선택해주세요');
+            return;
+          }
+          const { data } = await this.sb
+            .from('employees')
+            .select('*')
+            .in('id', Array.from(this.payrollUploadState.selectedEmployees));
+          targetEmployees = data || [];
+        } else if (method === 'department') {
+          const dept = this.payrollUploadState.selectedDepartment;
+          if (!dept) {
+            alert('⚠️ 부서를 선택해주세요');
+            return;
+          }
+          const { data } = await this.sb
+            .from('employees')
+            .select('*')
+            .eq('is_active', true)
+            .eq('department', dept);
+          targetEmployees = data || [];
+        } else if (method === 'all') {
+          const { data } = await this.sb
+            .from('employees')
+            .select('*')
+            .eq('is_active', true);
+          targetEmployees = data || [];
+        }
+        
+        if (targetEmployees.length === 0) {
+          alert('⚠️ 대상 직원이 없습니다');
+          return;
+        }
+        
+        const confirmMsg = `${year}년 ${month}월 급여명세서를\n${targetEmployees.length}명의 직원에게 발급하시겠습니까?`;
+        if (!confirm(confirmMsg)) {
+          return;
+        }
+        
+        // 버튼 비활성화
+        const uploadBtn = document.getElementById('payroll-upload-btn');
+        uploadBtn.disabled = true;
+        uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>업로드 중...';
+        
+        // 진행률 표시
+        const progressEl = document.getElementById('payroll-upload-progress');
+        const progressBar = document.getElementById('payroll-upload-progress-bar');
+        const progressText = document.getElementById('payroll-upload-progress-text');
+        const progressPercent = document.getElementById('payroll-upload-progress-percent');
+        progressEl.classList.remove('hidden');
+        
+        try {
+          const yearMonth = `${year}-${month}`;
+          let successCount = 0;
+          let failCount = 0;
+          
+          for (let i = 0; i < targetEmployees.length; i++) {
+            const emp = targetEmployees[i];
+            const progress = Math.round((i / targetEmployees.length) * 100);
+            
+            progressBar.style.width = `${progress}%`;
+            progressText.textContent = `${emp.name} 처리 중...`;
+            progressPercent.textContent = `${progress}%`;
+            
+            try {
+              // 파일 업로드 to Supabase Storage
+              const fileName = `${yearMonth}_${emp.employee_number || emp.id}_${emp.name}.pdf`;
+              const { data: uploadData, error: uploadError } = await this.sb.storage
+                .from('payroll-statements')
+                .upload(fileName, file, {
+                  cacheControl: '3600',
+                  upsert: true
+                });
+              
+              if (uploadError) throw uploadError;
+              
+              // Public URL 가져오기
+              const { data: urlData } = this.sb.storage
+                .from('payroll-statements')
+                .getPublicUrl(fileName);
+              
+              const fileUrl = urlData.publicUrl;
+              
+              // DB에 레코드 생성
+              const { error: insertError } = await this.sb
+                .from('payroll_statements')
+                .insert({
+                  employee_id: emp.id,
+                  year_month: yearMonth,
+                  file_url: fileUrl,
+                  status: 'pending',
+                  view_count: 0,
+                  download_count: 0
+                });
+              
+              if (insertError) throw insertError;
+              
+              successCount++;
+            } catch (error) {
+              console.error(`❌ ${emp.name} 처리 실패:`, error);
+              failCount++;
+            }
+          }
+          
+          // 완료
+          progressBar.style.width = '100%';
+          progressText.textContent = '완료!';
+          progressPercent.textContent = '100%';
+          
+          setTimeout(() => {
+            this.closePayrollUploadModal();
+            this.loadPayrollList();
+            this.loadPayrollStatistics();
+            
+            alert(`✅ 업로드 완료!\n\n성공: ${successCount}건\n실패: ${failCount}건`);
+          }, 1000);
+          
+        } catch (error) {
+          console.error('❌ 급여명세서 업로드 실패:', error);
+          alert('❌ 업로드 중 오류가 발생했습니다: ' + error.message);
+          uploadBtn.disabled = false;
+          uploadBtn.innerHTML = '<i class="fas fa-upload mr-2"></i>업로드 시작';
+          progressEl.classList.add('hidden');
+        }
+      };
+      
       // ==================== 기존 함수 ====================
       
       // 전역에 app 즉시 노출
@@ -11810,7 +12785,7 @@
         console.log('🚀 DOMContentLoaded 이벤트 발생');
         
         // 모든 모달의 배경 클릭 이벤트
-        ['location-modal', 'location-edit-modal', 'employee-modal', 'edit-employee-modal', 'apartment-modal', 'sales-modal', 'vacation-modal', 'holiday-modal', 'blocked-employees-modal', 'incomplete-today-modal', 'checkout-input-modal', 'new-purchase-modal', 'purchase-detail-modal', 'qr-management-modal', 'attendance-note-detail-modal', 'document-upload-modal', 'document-detail-modal', 'category-manage-modal'].forEach(id => {
+        ['location-modal', 'location-edit-modal', 'employee-modal', 'edit-employee-modal', 'apartment-modal', 'sales-modal', 'vacation-modal', 'holiday-modal', 'blocked-employees-modal', 'incomplete-today-modal', 'checkout-input-modal', 'new-purchase-modal', 'purchase-detail-modal', 'qr-management-modal', 'attendance-note-detail-modal', 'document-upload-modal', 'document-detail-modal', 'category-manage-modal', 'payroll-upload-modal'].forEach(id => {
           const modal = document.getElementById(id);
           if (modal) {
             modal.addEventListener('click', (e) => {
