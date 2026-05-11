@@ -86,26 +86,57 @@ Supabase 대시보드에서 SQL 실행:
 
 ## 📸 로고 이미지 업로드 방법
 
-### Supabase Storage 사용 (권장)
+### 🎯 방법 1: 직접 파일 업로드 (권장) ⭐
+
+브랜드 설정 페이지에서 직접 업로드:
+
+1. 브랜드 설정 페이지 접속
+2. "로고 이미지" 섹션에서 파일 선택 버튼 클릭
+3. PNG, JPG, SVG 파일 선택 (최대 2MB)
+4. 자동으로 Supabase Storage에 업로드됨
+5. Public URL이 자동으로 저장됨
+6. 미리보기에서 즉시 확인 가능
+
+**장점:**
+- ✅ URL 복사/붙여넣기 불필요
+- ✅ 자동으로 Storage 업로드
+- ✅ 즉시 미리보기 가능
+- ✅ 파일 크기 자동 검증
+
+### 방법 2: Supabase Storage 수동 업로드
 
 1. Supabase 대시보드 → Storage
-2. 새 버킷 생성 (예: `brand-assets`)
-3. Public 버킷으로 설정
-4. 로고 이미지 업로드 (PNG, SVG 권장)
-5. Public URL 복사
-6. 브랜드 설정에 붙여넣기
+2. `brand-assets` 버킷 선택 (없으면 생성)
+3. 로고 이미지 업로드 (PNG, SVG 권장)
+4. Public URL 복사
+5. 브랜드 설정에 붙여넣기
 
 **예시 URL:**
 ```
 https://qgpqhtuynxhmgawakjxe.supabase.co/storage/v1/object/public/brand-assets/logo.png
 ```
 
-### 외부 URL 사용
+### 방법 3: 외부 URL 사용
 
 CDN이나 다른 호스팅에 업로드한 이미지도 사용 가능:
 ```
 https://cdn.example.com/logo.png
 ```
+
+### ⚠️ Storage 설정 필수
+
+파일 업로드 기능을 사용하려면 먼저 Supabase에서 Storage 버킷을 설정해야 합니다:
+
+```bash
+# SQL 파일 위치
+/home/user/webapp/database/CREATE_STORAGE_BRAND_ASSETS.sql
+```
+
+이 파일을 Supabase SQL Editor에서 실행하면:
+- ✅ `brand-assets` Storage 버킷 생성
+- ✅ Public 접근 권한 설정
+- ✅ 업로드 정책 설정 (anon 사용자도 업로드 가능)
+- ✅ 읽기 정책 설정 (모두 읽기 가능)
 
 ---
 
@@ -216,9 +247,10 @@ brand_settings 테이블:
 ### 새로 추가된 파일
 ```
 /home/user/webapp/
-├── brand_settings.html          # 브랜드 설정 관리 페이지
+├── brand_settings.html                    # 브랜드 설정 관리 페이지
 └── database/
-    └── CREATE_BRAND_SETTINGS.sql # 테이블 생성 SQL
+    ├── CREATE_BRAND_SETTINGS.sql          # 테이블 생성 SQL
+    └── CREATE_STORAGE_BRAND_ASSETS.sql    # Storage 버킷 생성 SQL
 ```
 
 ### 수정된 파일
@@ -233,17 +265,19 @@ brand_settings 테이블:
 
 ### 최초 설정 시:
 - [ ] CREATE_BRAND_SETTINGS.sql 실행
+- [ ] CREATE_STORAGE_BRAND_ASSETS.sql 실행 (파일 업로드 사용 시)
 - [ ] 기본 데이터 삽입 확인
 - [ ] RLS 정책 활성화 확인
+- [ ] Storage 버킷 생성 확인
 - [ ] 브랜드 설정 페이지 접속 테스트
+- [ ] 로고 파일 업로드 테스트
 - [ ] 설정 저장 테스트
 - [ ] 메인 페이지에서 적용 확인
 
 ### 고객사 변경 시:
-- [ ] 로고 이미지 준비 (PNG/SVG)
-- [ ] Supabase Storage 업로드
-- [ ] Public URL 복사
-- [ ] 브랜드 설정 입력
+- [ ] 로고 이미지 준비 (PNG/SVG, 2MB 이하)
+- [ ] 브랜드 설정 페이지에서 직접 파일 업로드
+- [ ] 회사명 및 색상 입력
 - [ ] 미리보기 확인
 - [ ] 저장
 - [ ] 새로고침하여 확인
@@ -261,6 +295,24 @@ brand_settings 테이블:
 2. Supabase Storage 버킷이 Public인지 확인
 3. 이미지 파일이 실제로 존재하는지 확인
 
+### Q: 파일 업로드가 안 됨
+**A:** 
+1. **Storage 버킷 없음 오류:**
+   - `CREATE_STORAGE_BRAND_ASSETS.sql` 실행
+   - Supabase Storage에서 `brand-assets` 버킷 확인
+   
+2. **권한 오류:**
+   - SQL에서 Storage RLS 정책 확인
+   - Public Upload 정책이 활성화되어 있는지 확인
+   
+3. **파일 크기 오류:**
+   - 2MB 이하 이미지 사용
+   - PNG, JPG, SVG 형식 확인
+
+4. **네트워크 오류:**
+   - 인터넷 연결 확인
+   - Supabase 프로젝트 활성 상태 확인
+
 ### Q: 색상이 적용 안 됨
 **A:** HEX 코드 형식 확인 (`#RRGGBB`)
 
@@ -276,6 +328,12 @@ brand_settings 테이블:
 
 이제 코드 수정 없이 간편하게 브랜드를 커스터마이징할 수 있습니다!
 
+**주요 기능:**
+- ✅ 직접 파일 업로드로 로고 등록
+- ✅ 실시간 미리보기
+- ✅ 자동 Storage 업로드
+- ✅ 화이트 라벨링 지원
+
 **커밋**: 9c2865e  
 **상태**: ✅ Production Ready  
-**마지막 업데이트**: 2026-05-09
+**마지막 업데이트**: 2026-05-11
