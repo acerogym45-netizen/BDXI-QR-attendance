@@ -992,6 +992,13 @@
           document.getElementById('loading-screen').classList.add('hidden');
           document.getElementById('main-container').classList.remove('hidden');
           
+          // 급여명세서 세션에서 온 경우 급여 탭으로 자동 전환
+          const sessionEmployeeId = sessionStorage.getItem('payroll_employee_id');
+          if (sessionEmployeeId) {
+            console.log('💰 급여명세서 로그인 감지 - 급여 탭으로 전환');
+            this.switchTab('payroll');
+          }
+          
           console.log('✅ 앱 초기화 완료!');
           this.showToast('환영합니다! 👋', 'success');
           
@@ -1051,7 +1058,19 @@
         
         console.log('🔑 기기 지문:', fingerprint.substring(0, 16) + '...');
         
-        // 로컬 스토리지에서 직원 토큰 확인
+        // 1. 세션 스토리지 체크 (급여명세서 로그인에서 온 경우)
+        const sessionEmployeeId = sessionStorage.getItem('payroll_employee_id');
+        const sessionEmployeeName = sessionStorage.getItem('payroll_employee_name');
+        
+        if (sessionEmployeeId && sessionEmployeeName) {
+          console.log('✅ 급여명세서 세션 인증 정보 발견');
+          // localStorage로 복사하여 통일
+          localStorage.setItem('employee_id', sessionEmployeeId);
+          localStorage.setItem('employee_token', fingerprint); // 임시 토큰 생성
+          return { token: fingerprint, employeeId: sessionEmployeeId };
+        }
+        
+        // 2. 로컬 스토리지에서 직원 토큰 확인
         const savedToken = localStorage.getItem('employee_token');
         const savedEmployeeId = localStorage.getItem('employee_id');
         

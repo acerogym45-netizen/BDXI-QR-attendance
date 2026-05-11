@@ -225,7 +225,7 @@
           document.getElementById('change-password-view').classList.remove('hidden');
         } else {
           // 급여명세서 대시보드로 이동
-          window.location.href = 'employee_payroll_dashboard.html';
+          window.location.href = 'employee-app.html';
         }
 
       } catch (err) {
@@ -271,7 +271,7 @@
         }
 
         alert('✅ 비밀번호가 변경되었습니다!');
-        window.location.href = 'employee_payroll_dashboard.html';
+        window.location.href = 'employee-app.html';
 
       } catch (err) {
         console.error('Password change exception:', err);
@@ -288,7 +288,7 @@
           .update({ force_password_change: false })
           .eq('id', currentEmployee.id);
 
-        window.location.href = 'employee_payroll_dashboard.html';
+        window.location.href = 'employee-app.html';
       }
     }
 
@@ -296,7 +296,7 @@
     window.addEventListener('load', () => {
       const employeeId = sessionStorage.getItem('payroll_employee_id');
       if (employeeId) {
-        window.location.href = 'employee_payroll_dashboard.html';
+        window.location.href = 'employee-app.html';
       }
     });
   </script>
