@@ -1221,7 +1221,8 @@
             document.getElementById('criticalApartments').textContent = criticalCount;
             document.getElementById('unlinkedSheets').textContent = unlinkedCount;
             document.getElementById('noEmployees').textContent = noEmployeeCount;
-            document.getElementById('todayAttendanceRate').textContent = avgAttendanceRate + '%';
+            // todayAttendanceRate 요소가 없으므로 주석 처리
+            // document.getElementById('todayAttendanceRate').textContent = avgAttendanceRate + '%';
             
             console.log('📊 이번 달 전체 통계:', {
                 근무일수: workDays,
