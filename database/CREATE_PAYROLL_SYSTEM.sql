@@ -24,10 +24,17 @@ CREATE INDEX IF NOT EXISTS idx_employees_email ON employees(email);
 CREATE INDEX IF NOT EXISTS idx_employees_auth_user ON employees(auth_user_id);
 CREATE INDEX IF NOT EXISTS idx_employees_apartment ON employees(apartment_id);
 
--- 직원 역할 체크 제약조건
-ALTER TABLE employees 
-ADD CONSTRAINT check_employee_role 
-CHECK (role IN ('employee', 'manager', 'admin'));
+-- 직원 역할 체크 제약조건 (이미 존재하면 스킵)
+DO $$ 
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'check_employee_role'
+  ) THEN
+    ALTER TABLE employees 
+    ADD CONSTRAINT check_employee_role 
+    CHECK (role IN ('employee', 'manager', 'admin'));
+  END IF;
+END $$;
 
 COMMENT ON COLUMN employees.email IS '직원 로그인 이메일';
 COMMENT ON COLUMN employees.auth_user_id IS 'Supabase Auth 사용자 ID';
@@ -86,10 +93,17 @@ CREATE INDEX IF NOT EXISTS idx_payroll_uploaded_by ON payroll_statements(uploade
 CREATE UNIQUE INDEX IF NOT EXISTS idx_payroll_employee_month 
 ON payroll_statements(employee_id, year_month);
 
--- 상태 체크 제약조건
-ALTER TABLE payroll_statements 
-ADD CONSTRAINT check_payroll_status 
-CHECK (status IN ('pending', 'viewed', 'downloaded', 'printed'));
+-- 상태 체크 제약조건 (이미 존재하면 스킵)
+DO $$ 
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'check_payroll_status'
+  ) THEN
+    ALTER TABLE payroll_statements 
+    ADD CONSTRAINT check_payroll_status 
+    CHECK (status IN ('pending', 'viewed', 'downloaded', 'printed'));
+  END IF;
+END $$;
 
 -- 테이블 코멘트
 COMMENT ON TABLE payroll_statements IS '급여명세서 메타데이터 및 배포 현황';
@@ -134,14 +148,28 @@ CREATE INDEX IF NOT EXISTS idx_notification_employee ON payroll_notifications(em
 CREATE INDEX IF NOT EXISTS idx_notification_status ON payroll_notifications(status);
 CREATE INDEX IF NOT EXISTS idx_notification_type ON payroll_notifications(notification_type);
 
--- 알림 타입 체크
-ALTER TABLE payroll_notifications 
-ADD CONSTRAINT check_notification_type 
-CHECK (notification_type IN ('email', 'sms', 'push'));
+-- 알림 타입 체크 (이미 존재하면 스킵)
+DO $$ 
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'check_notification_type'
+  ) THEN
+    ALTER TABLE payroll_notifications 
+    ADD CONSTRAINT check_notification_type 
+    CHECK (notification_type IN ('email', 'sms', 'push'));
+  END IF;
+END $$;
 
-ALTER TABLE payroll_notifications 
-ADD CONSTRAINT check_notification_status 
-CHECK (status IN ('pending', 'sent', 'failed', 'opened'));
+DO $$ 
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'check_notification_status'
+  ) THEN
+    ALTER TABLE payroll_notifications 
+    ADD CONSTRAINT check_notification_status 
+    CHECK (status IN ('pending', 'sent', 'failed', 'opened'));
+  END IF;
+END $$;
 
 COMMENT ON TABLE payroll_notifications IS '급여명세서 배포 알림 로그';
 
@@ -154,6 +182,7 @@ COMMENT ON TABLE payroll_notifications IS '급여명세서 배포 알림 로그'
 ALTER TABLE payroll_statements ENABLE ROW LEVEL SECURITY;
 
 -- 직원: 본인의 급여명세서만 조회 가능
+DROP POLICY IF EXISTS "Employees can view own payroll statements" ON payroll_statements;
 CREATE POLICY "Employees can view own payroll statements"
 ON payroll_statements FOR SELECT
 USING (
@@ -163,6 +192,7 @@ USING (
 );
 
 -- 단지 관리자: 소속 단지 직원의 배포 현황 조회 가능 (금액은 볼 수 없음, 메타데이터만)
+DROP POLICY IF EXISTS "Managers can view apartment employee status" ON payroll_statements;
 CREATE POLICY "Managers can view apartment employee status"
 ON payroll_statements FOR SELECT
 USING (
@@ -175,6 +205,7 @@ USING (
 );
 
 -- 본사 관리자: 모든 명세서 조회 및 업로드 가능
+DROP POLICY IF EXISTS "Admins can manage all payroll statements" ON payroll_statements;
 CREATE POLICY "Admins can manage all payroll statements"
 ON payroll_statements FOR ALL
 USING (
@@ -184,6 +215,7 @@ USING (
 );
 
 -- 단지 관리자: 오프라인 배포 완료 체크 가능
+DROP POLICY IF EXISTS "Managers can update offline delivery" ON payroll_statements;
 CREATE POLICY "Managers can update offline delivery"
 ON payroll_statements FOR UPDATE
 USING (
@@ -204,6 +236,7 @@ WITH CHECK (
 ALTER TABLE payroll_notifications ENABLE ROW LEVEL SECURITY;
 
 -- 직원: 본인의 알림 내역 조회
+DROP POLICY IF EXISTS "Employees can view own notifications" ON payroll_notifications;
 CREATE POLICY "Employees can view own notifications"
 ON payroll_notifications FOR SELECT
 USING (
@@ -213,6 +246,7 @@ USING (
 );
 
 -- 본사 관리자: 모든 알림 관리
+DROP POLICY IF EXISTS "Admins can manage all notifications" ON payroll_notifications;
 CREATE POLICY "Admins can manage all notifications"
 ON payroll_notifications FOR ALL
 USING (
@@ -252,6 +286,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- 트리거 생성 (조회 시 자동 실행)
+DROP TRIGGER IF EXISTS trigger_update_payroll_view_stats ON payroll_statements;
 CREATE TRIGGER trigger_update_payroll_view_stats
 BEFORE UPDATE OF last_viewed_at ON payroll_statements
 FOR EACH ROW
