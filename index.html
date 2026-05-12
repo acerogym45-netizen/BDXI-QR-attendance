@@ -1712,9 +1712,7 @@
               <button onclick="app.generateMonthlySettlement()" class="flex-1 px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg hover:from-blue-600 hover:to-indigo-700 transition-all shadow-md font-medium">
                 <i class="fas fa-file-invoice mr-2"></i>정산서 생성
               </button>
-              <button onclick="app.submitSettlementToHQ()" id="btn-submit-settlement" class="flex-1 px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:from-green-600 hover:to-emerald-700 transition-all shadow-md font-medium disabled:opacity-50 disabled:cursor-not-allowed" disabled>
-                <i class="fas fa-paper-plane mr-2"></i>본사에 제출
-              </button>
+            </div>
             </div>
 
             <!-- 제출 후 피드백 -->
@@ -1754,9 +1752,14 @@
               <h3 class="font-bold text-xl text-gray-800">
                 <i class="fas fa-history mr-2 text-purple-600"></i>제출 이력
               </h3>
-              <button onclick="app.loadSettlementHistory()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition text-sm">
-                <i class="fas fa-sync mr-1"></i>새로고침
-              </button>
+              <div class="flex gap-2">
+                <button onclick="app.submitSelectedSettlements()" id="btn-submit-selected" class="px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:from-green-600 hover:to-emerald-700 transition-all shadow-md font-medium disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                  <i class="fas fa-paper-plane mr-1"></i>선택한 정산서 제출 (<span id="selected-count">0</span>)
+                </button>
+                <button onclick="app.loadSettlementHistory()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition text-sm">
+                  <i class="fas fa-sync mr-1"></i>새로고침
+                </button>
+              </div>
             </div>
 
             <!-- 필터 -->
@@ -12598,6 +12601,77 @@
         }
       };
       
+      // 선택된 정산서 ID 배열
+      app.selectedSettlements = [];
+      
+      // 체크박스 상태 변경 핸들러
+      app.toggleSettlementSelection = function(settlementId, checked) {
+        if (checked) {
+          if (!this.selectedSettlements.includes(settlementId)) {
+            this.selectedSettlements.push(settlementId);
+          }
+        } else {
+          this.selectedSettlements = this.selectedSettlements.filter(id => id !== settlementId);
+        }
+        
+        // 버튼 상태 업데이트
+        this.updateSubmitButtonState();
+      };
+      
+      // 제출 버튼 상태 업데이트
+      app.updateSubmitButtonState = function() {
+        const btn = document.getElementById('btn-submit-selected');
+        const countSpan = document.getElementById('selected-count');
+        
+        if (btn && countSpan) {
+          countSpan.textContent = this.selectedSettlements.length;
+          btn.disabled = this.selectedSettlements.length === 0;
+        }
+      };
+      
+      // 선택된 정산서 제출
+      app.submitSelectedSettlements = async function() {
+        if (this.selectedSettlements.length === 0) {
+          this.showToast('⚠️ 제출할 정산서를 선택해주세요', 'warning');
+          return;
+        }
+        
+        const confirm = window.confirm(
+          `선택한 ${this.selectedSettlements.length}개의 정산서를 본사에 제출하시겠습니까?\n제출 후에는 수정할 수 없습니다.`
+        );
+        
+        if (!confirm) return;
+        
+        try {
+          this.showToast('제출 중...', 'info');
+          
+          // 모든 선택된 정산서를 submitted 상태로 변경
+          const { error } = await this.sb
+            .from('monthly_settlements')
+            .update({
+              status: 'submitted',
+              submitted_at: new Date().toISOString(),
+              submitted_by_name: '단지 관리자'
+            })
+            .in('id', this.selectedSettlements);
+          
+          if (error) throw error;
+          
+          this.showToast(`✅ ${this.selectedSettlements.length}개 정산서가 제출되었습니다`, 'success');
+          
+          // 선택 초기화
+          this.selectedSettlements = [];
+          
+          // UI 새로고침
+          await this.loadSettlementHistory();
+          await this.updateDashboardStats();
+          
+        } catch (error) {
+          console.error('❌ 제출 실패:', error);
+          this.showToast('제출 중 오류가 발생했습니다: ' + error.message, 'error');
+        }
+      };
+      
       // 이력 카드 생성
       app.createSettlementHistoryCard = function(settlement) {
         const div = document.createElement('div');
@@ -12615,19 +12689,34 @@
         };
         
         const status = statusMap[settlement.status] || statusMap['draft'];
+        const isDraft = settlement.status === 'draft';
         
         div.innerHTML = `
-          <div class="flex justify-between items-start mb-3">
-            <div>
-              <h4 class="font-bold text-lg">${yearMonthText}</h4>
-              <p class="text-sm text-gray-500 mt-1">
-                직원 ${settlement.total_employees}명 · 
-                근무 ${settlement.total_work_days}일
-              </p>
+          <div class="flex gap-3 items-start mb-3">
+            ${isDraft ? `
+              <div class="flex items-center pt-1">
+                <input 
+                  type="checkbox" 
+                  id="settlement-checkbox-${settlement.id}"
+                  class="w-5 h-5 text-green-600 border-gray-300 rounded focus:ring-green-500 cursor-pointer"
+                  onchange="app.toggleSettlementSelection('${settlement.id}', this.checked)"
+                >
+              </div>
+            ` : ''}
+            <div class="flex-1">
+              <div class="flex justify-between items-start">
+                <div>
+                  <h4 class="font-bold text-lg">${yearMonthText}</h4>
+                  <p class="text-sm text-gray-500 mt-1">
+                    직원 ${settlement.total_employees}명 · 
+                    근무 ${settlement.total_work_days}일
+                  </p>
+                </div>
+                <span class="${status.class} px-3 py-1 rounded-full text-xs font-medium">
+                  ${status.icon} ${status.text}
+                </span>
+              </div>
             </div>
-            <span class="${status.class} px-3 py-1 rounded-full text-xs font-medium">
-              ${status.icon} ${status.text}
-            </span>
           </div>
           
           <div class="grid grid-cols-3 gap-2 text-sm mb-3">
