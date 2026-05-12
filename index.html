@@ -1709,8 +1709,8 @@
 
             <!-- 액션 버튼 -->
             <div class="flex gap-3">
-              <button onclick="app.generateSettlementExcel()" class="flex-1 px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg hover:from-blue-600 hover:to-indigo-700 transition-all shadow-md font-medium">
-                <i class="fas fa-file-excel mr-2"></i>정산서 생성
+              <button onclick="app.generateMonthlySettlement()" class="flex-1 px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg hover:from-blue-600 hover:to-indigo-700 transition-all shadow-md font-medium">
+                <i class="fas fa-file-invoice mr-2"></i>정산서 생성
               </button>
               <button onclick="app.submitSettlementToHQ()" id="btn-submit-settlement" class="flex-1 px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:from-green-600 hover:to-emerald-700 transition-all shadow-md font-medium disabled:opacity-50 disabled:cursor-not-allowed" disabled>
                 <i class="fas fa-paper-plane mr-2"></i>본사에 제출
@@ -12268,9 +12268,9 @@
         }
       };
       
-      // Excel 정산서 생성
-      app.generateSettlementExcel = async function() {
-        console.log('📊 정산서 Excel 생성 시작');
+      // 월간 정산서 생성 (DB 저장)
+      app.generateMonthlySettlement = async function() {
+        console.log('📊 월간 정산서 생성 시작');
         
         try {
           const now = new Date();
@@ -12282,160 +12282,120 @@
           
           this.showToast('정산서를 생성하는 중...', 'info');
           
-          // 데이터 수집
-          const [employeesRes, attendanceRes, purchasesRes, vacationsRes] = await Promise.all([
-            this.sb.from('employees').select('*').eq('apartment_id', this.currentApartment).eq('is_active', true),
-            this.sb.from('attendance').select('*').gte('check_in_time', startDate).lte('check_in_time', endDate + 'T23:59:59'),
-            this.sb.from('purchase_requests').select('*').gte('request_date', startDate).lte('request_date', endDate),
-            this.sb.from('vacation_requests').select('*').gte('start_date', startDate).lte('start_date', endDate)
+          // 이미 같은 월의 정산서가 있는지 확인
+          const { data: existing } = await this.sb
+            .from('monthly_settlements')
+            .select('id, status')
+            .eq('apartment_id', this.currentApartment)
+            .eq('year_month', yearMonth)
+            .single();
+          
+          if (existing && existing.status !== 'draft') {
+            this.showToast('이미 제출된 정산서가 있습니다. 초안 상태가 아니면 수정할 수 없습니다.', 'warning');
+            return;
+          }
+          
+          // 데이터 수집 - 직원 정보에 급여 필드 포함
+          const [employeesRes, attendanceRes] = await Promise.all([
+            this.sb.from('employees')
+              .select('id, name, email, phone, position, base_salary, position_allowance')
+              .eq('apartment_id', this.currentApartment)
+              .eq('status', 'active'),
+            this.sb.from('attendance_records')
+              .select('*')
+              .eq('apartment_id', this.currentApartment)
+              .gte('scan_time', startDate)
+              .lte('scan_time', endDate + 'T23:59:59')
           ]);
           
           const employees = employeesRes.data || [];
           const attendance = attendanceRes.data || [];
-          const purchases = purchasesRes.data || [];
-          const vacations = vacationsRes.data || [];
           
-          // Excel 생성
-          const wb = XLSX.utils.book_new();
-          
-          // Sheet 1: 요약 정보
-          const summaryData = [
-            ['월간 정산서'],
-            [],
-            ['단지명', this.currentApartmentName || '-'],
-            ['정산 기간', `${year}년 ${month}월 (${startDate} ~ ${endDate})`],
-            ['제출일', new Date().toLocaleDateString('ko-KR')],
-            ['제출자', '단지 관리자'],
-            ['상태', '초안'],
-            [],
-            ['총 직원 수', employees.length + '명'],
-            ['근무 일수', [...new Set(attendance.map(a => new Date(a.check_in_time).toISOString().split('T')[0]))].length + '일'],
-            ['총 근무 시간', attendance.length * 8 + '시간'],
-            ['총 급여 합계', '별도 계산 필요']
-          ];
-          const wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
-          XLSX.utils.book_append_sheet(wb, wsSummary, '요약');
-          
-          // Sheet 2: 직원별 근태 현황
-          const attendanceByEmployee = {};
-          employees.forEach(emp => {
+          // 직원별 근태 및 급여 계산
+          const employeeSettlements = employees.map(emp => {
             const empAttendance = attendance.filter(a => a.employee_id === emp.id);
-            const workDays = [...new Set(empAttendance.map(a => 
-              new Date(a.check_in_time).toISOString().split('T')[0]
-            ))].length;
+            
+            // 고유 출근일 계산
+            const uniqueDates = [...new Set(empAttendance.map(a => 
+              new Date(a.scan_time).toISOString().split('T')[0]
+            ))];
+            
+            const workDays = uniqueDates.length;
             const lateCount = empAttendance.filter(a => a.status === 'late').length;
             const absentCount = empAttendance.filter(a => a.status === 'absent').length;
-            const overtimeHours = empAttendance.reduce((sum, a) => sum + (a.overtime_hours || 0), 0);
             
-            attendanceByEmployee[emp.id] = {
-              name: emp.name,
-              employee_number: emp.employee_number || '-',
-              department: emp.department || '-',
-              position: emp.position || '-',
-              workDays,
-              lateCount,
-              absentCount,
-              overtimeHours
+            // 기본 급여 계산 (base_salary + position_allowance)
+            const baseSalary = parseFloat(emp.base_salary) || 0;
+            const positionAllowance = parseFloat(emp.position_allowance) || 0;
+            const totalBaseSalary = baseSalary + positionAllowance;
+            
+            return {
+              employee_id: emp.id,
+              employee_name: emp.name,
+              position: emp.position || '',
+              base_salary: baseSalary,
+              position_allowance: positionAllowance,
+              work_days: workDays,
+              late_count: lateCount,
+              absent_count: absentCount,
+              // 추가 수당 및 공제는 기본값 0 (추후 수정 가능)
+              overtime_allowance: 0,
+              lesson_allowance: 0,
+              other_allowances: 0,
+              early_leave_penalty: 0,
+              absence_penalty: 0,
+              other_deductions: 0,
+              total_salary: totalBaseSalary // 초기값은 기본급+직책수당
             };
           });
           
-          const attendanceRows = [
-            ['No', '사번', '이름', '부서', '직급', '출근일', '지각', '결근', '초과근무(h)']
-          ];
+          // 전체 통계 계산
+          const totalWorkDays = [...new Set(attendance.map(a => 
+            new Date(a.scan_time).toISOString().split('T')[0]
+          ))].length;
           
-          Object.values(attendanceByEmployee).forEach((emp, idx) => {
-            attendanceRows.push([
-              idx + 1,
-              emp.employee_number,
-              emp.name,
-              emp.department,
-              emp.position,
-              emp.workDays,
-              emp.lateCount,
-              emp.absentCount,
-              emp.overtimeHours.toFixed(1)
-            ]);
-          });
+          const totalBaseSalary = employeeSettlements.reduce((sum, emp) => 
+            sum + emp.base_salary + emp.position_allowance, 0
+          );
           
-          const wsAttendance = XLSX.utils.aoa_to_sheet(attendanceRows);
-          XLSX.utils.book_append_sheet(wb, wsAttendance, '직원별 근태');
+          // DB에 정산서 저장
+          const settlementData = {
+            apartment_id: this.currentApartment,
+            apartment_name: this.currentApartmentName,
+            year_month: yearMonth,
+            start_date: startDate,
+            end_date: endDate,
+            status: 'draft',
+            total_employees: employees.length,
+            total_work_days: totalWorkDays,
+            total_base_salary: totalBaseSalary,
+            employee_details: employeeSettlements,
+            created_by_name: '단지 관리자'
+          };
           
-          // Sheet 3: 일별 출퇴근 기록
-          const dailyRows = [['날짜', '이름', '출근', '퇴근', '근무시간', '상태', '비고']];
+          // upsert를 사용하여 같은 월의 정산서가 있으면 업데이트
+          const { data, error } = await this.sb
+            .from('monthly_settlements')
+            .upsert(settlementData, {
+              onConflict: 'apartment_id,year_month'
+            })
+            .select()
+            .single();
           
-          attendance.forEach(a => {
-            const emp = employees.find(e => e.id === a.employee_id);
-            if (!emp) return;
-            
-            const checkIn = new Date(a.check_in_time);
-            const checkOut = a.check_out_time ? new Date(a.check_out_time) : null;
-            const workHours = checkOut ? 
-              ((checkOut - checkIn) / (1000 * 60 * 60)).toFixed(1) : '-';
-            
-            dailyRows.push([
-              checkIn.toLocaleDateString('ko-KR'),
-              emp.name,
-              checkIn.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
-              checkOut ? checkOut.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }) : '-',
-              workHours + 'h',
-              a.status === 'late' ? '지각' : a.status === 'absent' ? '결근' : '정상',
-              a.notes || ''
-            ]);
-          });
-          
-          const wsDaily = XLSX.utils.aoa_to_sheet(dailyRows);
-          XLSX.utils.book_append_sheet(wb, wsDaily, '출퇴근 기록');
-          
-          // Sheet 4: 구매 요청 내역
-          const purchaseRows = [['No', '신청자', '품목', '수량', '금액', '상태', '비고']];
-          
-          purchases.forEach((p, idx) => {
-            const emp = employees.find(e => e.id === p.requester_id);
-            purchaseRows.push([
-              idx + 1,
-              emp?.name || '-',
-              p.item_name,
-              p.quantity,
-              p.estimated_price,
-              p.status === 'approved' ? '승인' : p.status === 'rejected' ? '반려' : '대기',
-              p.notes || ''
-            ]);
-          });
-          
-          const wsPurchase = XLSX.utils.aoa_to_sheet(purchaseRows);
-          XLSX.utils.book_append_sheet(wb, wsPurchase, '구매 요청');
-          
-          // Sheet 5: 휴가 사용 내역
-          const vacationRows = [['No', '이름', '시작일', '종료일', '일수', '유형', '상태']];
-          
-          vacations.forEach((v, idx) => {
-            const emp = employees.find(e => e.id === v.employee_id);
-            vacationRows.push([
-              idx + 1,
-              emp?.name || '-',
-              v.start_date,
-              v.end_date,
-              v.days,
-              v.type,
-              v.status === 'approved' ? '승인' : '대기'
-            ]);
-          });
-          
-          const wsVacation = XLSX.utils.aoa_to_sheet(vacationRows);
-          XLSX.utils.book_append_sheet(wb, wsVacation, '휴가 사용');
-          
-          // 파일 저장
-          const fileName = `정산서_${this.currentApartmentName}_${year}년${month}월.xlsx`;
-          XLSX.writeFile(wb, fileName);
+          if (error) throw error;
           
           this.showToast('✅ 정산서가 생성되었습니다!', 'success');
           
-          // DB에 저장 (초안 상태)
-          await this.saveSettlementDraft(yearMonth);
+          // 현재 정산서 데이터 업데이트
+          this.currentSettlementData = data;
+          
+          // UI 새로고침
+          await this.loadCurrentSettlement();
+          await this.loadSettlementHistory();
           
         } catch (error) {
           console.error('❌ 정산서 생성 실패:', error);
-          this.showToast('정산서 생성 중 오류가 발생했습니다', 'error');
+          this.showToast('정산서 생성 중 오류가 발생했습니다: ' + error.message, 'error');
         }
       };
       
