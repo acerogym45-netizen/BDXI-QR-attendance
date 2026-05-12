@@ -961,8 +961,8 @@
                     .from('attendance_records')
                     .select('*')
                     .eq('apartment_id', apt.id)
-                    .gte('check_in_time', `${firstDayStr}T00:00:00`)
-                    .lte('check_in_time', `${lastDayStr}T23:59:59`);
+                    .gte('scan_time', `${firstDayStr}T00:00:00`)
+                    .lte('scan_time', `${lastDayStr}T23:59:59`);
 
                 // 📋 이번 달 미처리 민원 조회 (월별 통계)
                 const { data: monthComp } = await supabaseClient
@@ -1263,7 +1263,7 @@
                     employees (name),
                     apartments (name)
                 `)
-                .order('check_in_time', { ascending: false })
+                .order('scan_time', { ascending: false })
                 .limit(10);
 
             if (error && error.code !== 'PGRST116') {
@@ -1278,7 +1278,7 @@
             }
 
             container.innerHTML = recentAtt.map(record => {
-                const time = new Date(record.check_in_time);
+                const time = new Date(record.scan_time);
                 const timeStr = time.toLocaleString('ko-KR', { 
                     month: '2-digit', 
                     day: '2-digit', 
