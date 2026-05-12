@@ -1797,6 +1797,82 @@
     </div>
 
 
+    <!-- Settlement Detail Modal -->
+    <div id="settlement-detail-modal" class="fixed inset-0 z-50 bg-black bg-opacity-80 items-center justify-center p-4" style="display: none;">
+      <div class="bg-white rounded-2xl max-w-6xl w-full max-h-[90vh] shadow-2xl flex flex-col" onclick="event.stopPropagation()">
+        <div class="flex justify-between items-center p-6 border-b flex-shrink-0">
+          <h3 class="text-xl font-bold text-gray-800">
+            <i class="fas fa-file-invoice-dollar mr-2 text-blue-600"></i>
+            <span id="settlement-detail-title">정산서 상세</span>
+          </h3>
+          <button onclick="app.closeSettlementDetailModal()" class="text-gray-400 hover:text-gray-600 text-2xl">×</button>
+        </div>
+        
+        <div class="p-6 overflow-y-auto flex-1">
+          <!-- 정산서 정보 -->
+          <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-xl mb-6 border-2 border-blue-200">
+            <div class="grid grid-cols-4 gap-4 text-sm">
+              <div>
+                <p class="text-gray-600 mb-1">정산 기간</p>
+                <p class="font-bold text-gray-800" id="detail-period">-</p>
+              </div>
+              <div>
+                <p class="text-gray-600 mb-1">총 직원</p>
+                <p class="font-bold text-gray-800" id="detail-employees">-</p>
+              </div>
+              <div>
+                <p class="text-gray-600 mb-1">총 근무일</p>
+                <p class="font-bold text-gray-800" id="detail-workdays">-</p>
+              </div>
+              <div>
+                <p class="text-gray-600 mb-1">상태</p>
+                <p class="font-bold text-gray-800" id="detail-status">-</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- 직원별 급여 상세 테이블 -->
+          <div class="mb-6">
+            <h4 class="font-bold text-lg mb-3 text-gray-800">
+              <i class="fas fa-users mr-2 text-green-600"></i>직원별 급여 상세
+            </h4>
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm border-collapse">
+                <thead class="bg-gray-100 border-b-2 border-gray-300">
+                  <tr>
+                    <th class="px-3 py-2 text-left font-bold text-gray-700">직원명</th>
+                    <th class="px-3 py-2 text-left font-bold text-gray-700">직책</th>
+                    <th class="px-3 py-2 text-right font-bold text-gray-700">기본급</th>
+                    <th class="px-3 py-2 text-right font-bold text-gray-700">직책수당</th>
+                    <th class="px-3 py-2 text-right font-bold text-blue-700">초과근무수당</th>
+                    <th class="px-3 py-2 text-right font-bold text-blue-700">레슨수당</th>
+                    <th class="px-3 py-2 text-right font-bold text-blue-700">기타수당</th>
+                    <th class="px-3 py-2 text-right font-bold text-red-700">조퇴벌금</th>
+                    <th class="px-3 py-2 text-right font-bold text-red-700">결근벌금</th>
+                    <th class="px-3 py-2 text-right font-bold text-red-700">기타공제</th>
+                    <th class="px-3 py-2 text-right font-bold text-green-700 bg-green-50">최종급여</th>
+                  </tr>
+                </thead>
+                <tbody id="settlement-detail-employee-list">
+                  <!-- 동적 생성 -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- 하단 버튼 -->
+        <div class="p-6 border-t flex gap-3 flex-shrink-0">
+          <button onclick="app.closeSettlementDetailModal()" class="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium">
+            <i class="fas fa-times mr-2"></i>닫기
+          </button>
+          <button onclick="app.saveSettlementDetails()" id="btn-save-settlement-details" class="flex-1 px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:from-green-600 hover:to-emerald-700 transition-all shadow-md font-medium">
+            <i class="fas fa-save mr-2"></i>저장
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Image Modal -->
     <div id="image-modal" class="fixed inset-0 z-50 hidden modal-backdrop bg-black/80 flex items-center justify-center p-4" onclick="if (event.target === this) app.closeModal();">
       <div class="bg-white rounded-2xl max-w-6xl w-full max-h-[95vh] overflow-hidden shadow-2xl" onclick="event.stopPropagation()">
@@ -12768,8 +12844,292 @@
       };
       
       // 상세보기
-      app.viewSettlementDetail = function(settlementId) {
-        this.showToast('상세보기 기능은 추후 구현 예정입니다', 'info');
+      app.viewSettlementDetail = async function(settlementId) {
+        try {
+          this.showToast('정산서를 불러오는 중...', 'info');
+          
+          // 정산서 데이터 로드
+          const { data: settlement, error } = await this.sb
+            .from('monthly_settlements')
+            .select('*')
+            .eq('id', settlementId)
+            .single();
+          
+          if (error) throw error;
+          
+          if (!settlement) {
+            this.showToast('정산서를 찾을 수 없습니다', 'error');
+            return;
+          }
+          
+          // 현재 정산서 데이터 저장
+          this.currentSettlementDetail = settlement;
+          
+          // 모달 표시
+          this.showSettlementDetailModal(settlement);
+          
+        } catch (error) {
+          console.error('❌ 정산서 로드 실패:', error);
+          this.showToast('정산서 로드 중 오류가 발생했습니다: ' + error.message, 'error');
+        }
+      };
+      
+      // 정산서 상세 모달 표시
+      app.showSettlementDetailModal = function(settlement) {
+        const modal = document.getElementById('settlement-detail-modal');
+        if (!modal) return;
+        
+        // 기본 정보 표시
+        const [year, month] = settlement.year_month.split('-');
+        document.getElementById('settlement-detail-title').textContent = 
+          `${year}년 ${month}월 정산서 상세`;
+        
+        document.getElementById('detail-period').textContent = 
+          `${settlement.start_date || ''} ~ ${settlement.end_date || ''}`;
+        document.getElementById('detail-employees').textContent = 
+          `${settlement.total_employees || 0}명`;
+        document.getElementById('detail-workdays').textContent = 
+          `${settlement.total_work_days || 0}일`;
+        
+        const statusMap = {
+          'draft': '초안',
+          'submitted': '제출완료',
+          'under_review': '검토중',
+          'approved': '승인',
+          'rejected': '반려'
+        };
+        document.getElementById('detail-status').textContent = 
+          statusMap[settlement.status] || settlement.status;
+        
+        // 직원 목록 렌더링
+        this.renderEmployeeDetailTable(settlement.employee_details || []);
+        
+        // 저장 버튼 활성화 여부 (draft 상태만)
+        const saveBtn = document.getElementById('btn-save-settlement-details');
+        if (saveBtn) {
+          saveBtn.disabled = settlement.status !== 'draft';
+          if (settlement.status !== 'draft') {
+            saveBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            saveBtn.title = '제출된 정산서는 수정할 수 없습니다';
+          } else {
+            saveBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            saveBtn.title = '';
+          }
+        }
+        
+        // 모달 표시
+        modal.style.display = 'flex';
+      };
+      
+      // 직원 상세 테이블 렌더링
+      app.renderEmployeeDetailTable = function(employeeDetails) {
+        const tbody = document.getElementById('settlement-detail-employee-list');
+        if (!tbody) return;
+        
+        tbody.innerHTML = '';
+        
+        if (!employeeDetails || employeeDetails.length === 0) {
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="11" class="px-3 py-8 text-center text-gray-500">
+                <i class="fas fa-inbox text-4xl mb-2"></i>
+                <p>직원 데이터가 없습니다</p>
+              </td>
+            </tr>
+          `;
+          return;
+        }
+        
+        employeeDetails.forEach((emp, index) => {
+          const row = document.createElement('tr');
+          row.className = 'border-b hover:bg-gray-50 transition';
+          
+          const baseSalary = parseFloat(emp.base_salary) || 0;
+          const positionAllowance = parseFloat(emp.position_allowance) || 0;
+          const overtimeAllowance = parseFloat(emp.overtime_allowance) || 0;
+          const lessonAllowance = parseFloat(emp.lesson_allowance) || 0;
+          const otherAllowances = parseFloat(emp.other_allowances) || 0;
+          const earlyLeavePenalty = parseFloat(emp.early_leave_penalty) || 0;
+          const absencePenalty = parseFloat(emp.absence_penalty) || 0;
+          const otherDeductions = parseFloat(emp.other_deductions) || 0;
+          
+          // 최종 급여 계산
+          const totalSalary = baseSalary + positionAllowance + overtimeAllowance + 
+                            lessonAllowance + otherAllowances - earlyLeavePenalty - 
+                            absencePenalty - otherDeductions;
+          
+          const isEditable = this.currentSettlementDetail?.status === 'draft';
+          
+          row.innerHTML = `
+            <td class="px-3 py-2 font-medium">${emp.employee_name || '-'}</td>
+            <td class="px-3 py-2 text-gray-600">${emp.position || '-'}</td>
+            <td class="px-3 py-2 text-right text-gray-700">₩${baseSalary.toLocaleString()}</td>
+            <td class="px-3 py-2 text-right text-gray-700">₩${positionAllowance.toLocaleString()}</td>
+            <td class="px-3 py-2 text-right">
+              ${isEditable ? `
+                <input 
+                  type="number" 
+                  value="${overtimeAllowance}" 
+                  data-index="${index}" 
+                  data-field="overtime_allowance"
+                  class="w-24 px-2 py-1 border rounded text-right focus:ring-2 focus:ring-blue-500"
+                  min="0"
+                  step="10000"
+                  onchange="app.updateEmployeeField(${index}, 'overtime_allowance', this.value)"
+                >
+              ` : `₩${overtimeAllowance.toLocaleString()}`}
+            </td>
+            <td class="px-3 py-2 text-right">
+              ${isEditable ? `
+                <input 
+                  type="number" 
+                  value="${lessonAllowance}" 
+                  data-index="${index}" 
+                  data-field="lesson_allowance"
+                  class="w-24 px-2 py-1 border rounded text-right focus:ring-2 focus:ring-blue-500"
+                  min="0"
+                  step="10000"
+                  onchange="app.updateEmployeeField(${index}, 'lesson_allowance', this.value)"
+                >
+              ` : `₩${lessonAllowance.toLocaleString()}`}
+            </td>
+            <td class="px-3 py-2 text-right">
+              ${isEditable ? `
+                <input 
+                  type="number" 
+                  value="${otherAllowances}" 
+                  data-index="${index}" 
+                  data-field="other_allowances"
+                  class="w-24 px-2 py-1 border rounded text-right focus:ring-2 focus:ring-blue-500"
+                  min="0"
+                  step="10000"
+                  onchange="app.updateEmployeeField(${index}, 'other_allowances', this.value)"
+                >
+              ` : `₩${otherAllowances.toLocaleString()}`}
+            </td>
+            <td class="px-3 py-2 text-right">
+              ${isEditable ? `
+                <input 
+                  type="number" 
+                  value="${earlyLeavePenalty}" 
+                  data-index="${index}" 
+                  data-field="early_leave_penalty"
+                  class="w-24 px-2 py-1 border rounded text-right focus:ring-2 focus:ring-red-500"
+                  min="0"
+                  step="10000"
+                  onchange="app.updateEmployeeField(${index}, 'early_leave_penalty', this.value)"
+                >
+              ` : `₩${earlyLeavePenalty.toLocaleString()}`}
+            </td>
+            <td class="px-3 py-2 text-right">
+              ${isEditable ? `
+                <input 
+                  type="number" 
+                  value="${absencePenalty}" 
+                  data-index="${index}" 
+                  data-field="absence_penalty"
+                  class="w-24 px-2 py-1 border rounded text-right focus:ring-2 focus:ring-red-500"
+                  min="0"
+                  step="10000"
+                  onchange="app.updateEmployeeField(${index}, 'absence_penalty', this.value)"
+                >
+              ` : `₩${absencePenalty.toLocaleString()}`}
+            </td>
+            <td class="px-3 py-2 text-right">
+              ${isEditable ? `
+                <input 
+                  type="number" 
+                  value="${otherDeductions}" 
+                  data-index="${index}" 
+                  data-field="other_deductions"
+                  class="w-24 px-2 py-1 border rounded text-right focus:ring-2 focus:ring-red-500"
+                  min="0"
+                  step="10000"
+                  onchange="app.updateEmployeeField(${index}, 'other_deductions', this.value)"
+                >
+              ` : `₩${otherDeductions.toLocaleString()}`}
+            </td>
+            <td class="px-3 py-2 text-right font-bold text-green-700 bg-green-50" id="total-salary-${index}">
+              ₩${totalSalary.toLocaleString()}
+            </td>
+          `;
+          
+          tbody.appendChild(row);
+        });
+      };
+      
+      // 직원 필드 업데이트
+      app.updateEmployeeField = function(index, field, value) {
+        if (!this.currentSettlementDetail || !this.currentSettlementDetail.employee_details) return;
+        
+        const numValue = parseFloat(value) || 0;
+        this.currentSettlementDetail.employee_details[index][field] = numValue;
+        
+        // 최종 급여 재계산
+        const emp = this.currentSettlementDetail.employee_details[index];
+        const baseSalary = parseFloat(emp.base_salary) || 0;
+        const positionAllowance = parseFloat(emp.position_allowance) || 0;
+        const overtimeAllowance = parseFloat(emp.overtime_allowance) || 0;
+        const lessonAllowance = parseFloat(emp.lesson_allowance) || 0;
+        const otherAllowances = parseFloat(emp.other_allowances) || 0;
+        const earlyLeavePenalty = parseFloat(emp.early_leave_penalty) || 0;
+        const absencePenalty = parseFloat(emp.absence_penalty) || 0;
+        const otherDeductions = parseFloat(emp.other_deductions) || 0;
+        
+        const totalSalary = baseSalary + positionAllowance + overtimeAllowance + 
+                          lessonAllowance + otherAllowances - earlyLeavePenalty - 
+                          absencePenalty - otherDeductions;
+        
+        emp.total_salary = totalSalary;
+        
+        // UI 업데이트
+        const totalCell = document.getElementById(`total-salary-${index}`);
+        if (totalCell) {
+          totalCell.textContent = `₩${totalSalary.toLocaleString()}`;
+        }
+      };
+      
+      // 정산서 상세 저장
+      app.saveSettlementDetails = async function() {
+        if (!this.currentSettlementDetail) {
+          this.showToast('저장할 정산서가 없습니다', 'error');
+          return;
+        }
+        
+        try {
+          this.showToast('저장 중...', 'info');
+          
+          // DB 업데이트
+          const { error } = await this.sb
+            .from('monthly_settlements')
+            .update({
+              employee_details: this.currentSettlementDetail.employee_details
+            })
+            .eq('id', this.currentSettlementDetail.id);
+          
+          if (error) throw error;
+          
+          this.showToast('✅ 정산서가 저장되었습니다', 'success');
+          
+          // 모달 닫기
+          this.closeSettlementDetailModal();
+          
+          // 목록 새로고침
+          await this.loadSettlementHistory();
+          
+        } catch (error) {
+          console.error('❌ 저장 실패:', error);
+          this.showToast('저장 중 오류가 발생했습니다: ' + error.message, 'error');
+        }
+      };
+      
+      // 정산서 상세 모달 닫기
+      app.closeSettlementDetailModal = function() {
+        const modal = document.getElementById('settlement-detail-modal');
+        if (modal) {
+          modal.style.display = 'none';
+        }
+        this.currentSettlementDetail = null;
       };
       
       // 필터 적용
