@@ -1822,7 +1822,7 @@
           </div>
 
           <!-- 제출 이력 -->
-          <div class="bg-white p-6 rounded-xl shadow-md border">
+          <div id="settlement-history-section" class="bg-white p-6 rounded-xl shadow-md border">
             <div class="flex justify-between items-center mb-4">
               <h3 class="font-bold text-xl text-gray-800">
                 <i class="fas fa-history mr-2 text-purple-600"></i>제출 이력
@@ -3692,6 +3692,20 @@
             contractBanner.style.display = 'none';
           }
           // 다른 탭에서는 배너가 필요할 때 checkContractExpiration에서 표시
+          
+          // 제출 이력 섹션 표시/숨김 제어 (정산서 탭에서만 표시)
+          const settlementHistorySection = document.getElementById('settlement-history-section');
+          if (settlementHistorySection) {
+            if (tab === 'settlement') {
+              // 정산서 탭: 제출 이력 표시
+              settlementHistorySection.style.display = '';
+              console.log('  ✅ Settlement history VISIBLE (settlement tab)');
+            } else {
+              // 다른 모든 탭: 제출 이력 완전 숨김
+              settlementHistorySection.style.display = 'none';
+              console.log('  🚫 Settlement history HIDDEN');
+            }
+          }
 
           if (tab === 'gallery') {
             this.loadGallery();

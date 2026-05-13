@@ -2663,32 +2663,49 @@
                 
                 const rows = data.table.rows;
                 
-                // Skip first row (header row) and process actual data
-                const dataRows = rows.slice(1); // Skip header
-                
                 console.log('📊 [Google Sheets] Data info:', {
                     totalRows: rows.length,
                     headerRow: rows[0]?.c?.map(cell => cell?.v || cell?.f),
-                    dataRowsCount: dataRows.length,
-                    firstDataRow: dataRows[0]?.c
+                    dataRowsCount: rows.length - 1
                 });
+                
+                // Log first 3 rows to see actual structure
+                for (let i = 0; i < Math.min(3, rows.length); i++) {
+                    const row = rows[i];
+                    console.log(`📋 [Google Sheets] Row ${i}:`, {
+                        cells: row.c?.map((cell, idx) => ({
+                            col: idx,
+                            v: cell?.v,
+                            f: cell?.f,
+                            formatted: cell?.v || cell?.f || 'null'
+                        }))
+                    });
+                }
+                
+                // Skip first row (header row) and process actual data
+                const dataRows = rows.slice(1); // Skip header
                 
                 const complaints = dataRows.map((row, index) => {
                     const cells = row.c || [];
                     
-                    // Helper to safely get cell value
-                    const getCellValue = (cell) => {
-                        if (!cell) return '-';
-                        return cell.v || cell.f || '-';
+                    // Helper to safely get cell value with detailed logging
+                    const getCellValue = (cell, columnName) => {
+                        if (!cell) {
+                            if (index < 3) console.log(`  ⚠️ ${columnName}: cell is null/undefined`);
+                            return '-';
+                        }
+                        const value = cell.v || cell.f || '-';
+                        if (index < 3) console.log(`  ✓ ${columnName}:`, value);
+                        return value;
                     };
                     
                     const complaint = {
-                        date: getCellValue(cells[0]),           // A열: 작성일시
-                        location: getCellValue(cells[1]),       // B열: 구역
-                        content: getCellValue(cells[7]),        // H열: 민원내용
-                        status: getCellValue(cells[6]),         // G열: 진행상황
-                        result: getCellValue(cells[8]),         // I열: 조치사항
-                        completeDate: getCellValue(cells[0])    // A열: 작성일시
+                        date: getCellValue(cells[0], 'A:작성일시'),
+                        location: getCellValue(cells[1], 'B:구역'),
+                        content: getCellValue(cells[7], 'H:민원내용'),
+                        status: getCellValue(cells[6], 'G:진행상황'),
+                        result: getCellValue(cells[8], 'I:조치사항'),
+                        completeDate: getCellValue(cells[0], 'A:작성일시(재확인)')
                     };
                     
                     // Log first 3 actual data rows with full details
