@@ -171,9 +171,9 @@
         max-width: none !important; /* 최대 너비 제한 제거 */
       }
       
-      /* Other tabs - centered with max-width */
+      /* Other tabs - Full width, no max-width restriction */
       .tab-content:not(#tab-report) {
-        max-width: 80rem !important;
+        width: 100% !important;
         margin-left: auto !important;
         margin-right: auto !important;
       }
@@ -1870,9 +1870,9 @@
         </div>
 
         <!-- ==================== 💵 급여명세서 TAB ==================== -->
-        <div id="tab-payroll" class="tab-content hidden space-y-3 px-4">
+        <div id="tab-payroll" class="tab-content hidden px-4">
           <!-- 상단 통계 대시보드 -->
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
             <div class="bg-gradient-to-br from-blue-50 to-indigo-50 p-4 rounded-xl shadow-sm border-2 border-blue-200">
               <div class="text-center">
                 <div class="text-blue-400 text-3xl mb-2">
@@ -2006,9 +2006,9 @@
         </div>
 
         <!-- ==================== 📢 내 단지 민원 현황 TAB ==================== -->
-        <div id="tab-complaints" class="tab-content hidden space-y-3 px-4">
+        <div id="tab-complaints" class="tab-content hidden px-4">
           <!-- 상단 헤더 -->
-          <div class="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-xl p-6 mb-6">
+          <div class="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-xl p-6 mb-4">
             <h2 class="text-2xl font-bold text-gray-800 mb-2 flex items-center">
               <i class="fas fa-comments text-yellow-600 mr-3"></i>
               내 단지 민원 현황
@@ -2019,7 +2019,7 @@
           </div>
 
           <!-- 통계 카드 -->
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
             <div class="bg-gradient-to-br from-blue-50 to-indigo-50 p-4 rounded-xl shadow-sm border-2 border-blue-200">
               <div class="text-center">
                 <div class="text-blue-400 text-3xl mb-2">
@@ -2088,13 +2088,16 @@
 
             <!-- 필터 -->
             <div class="flex gap-3 mb-4">
-              <input type="month" id="complaint-filter-month" onchange="app.filterComplaintsList()" class="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+              <input type="month" id="complaint-filter-month" onchange="app.filterComplaintsList()" class="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="기간 선택">
               <select id="complaint-filter-status" onchange="app.filterComplaintsList()" class="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
                 <option value="">전체 상태</option>
                 <option value="처리완료">처리완료</option>
                 <option value="처리중">처리중</option>
                 <option value="접수">접수</option>
               </select>
+              <button onclick="app.resetComplaintsFilter()" class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition text-sm">
+                <i class="fas fa-redo mr-1"></i>초기화
+              </button>
             </div>
 
             <!-- 민원 테이블 -->
@@ -14391,31 +14394,67 @@
         const filterStatus = document.getElementById('complaint-filter-status')?.value;
         
         console.log('📦 필터 조건:', { filterMonth, filterStatus });
+        console.log('💾 원본 데이터:', this.allComplaints?.length || 0, '건');
         
         // 원본 데이터가 저장되어 있지 않으면 다시 로드
         if (!this.allComplaints || this.allComplaints.length === 0) {
+          console.warn('⚠️ 원본 데이터가 없습니다. 데이터를 다시 불러옵니다.');
           this.loadComplaintsList();
           return;
         }
         
         // 필터링
-        let filtered = this.allComplaints;
+        let filtered = [...this.allComplaints]; // 복사본 생성
+        console.log('📋 필터링 시작:', filtered.length, '건');
         
         // 월 필터
         if (filterMonth) {
+          console.log('📅 월 필터 적용 중:', filterMonth);
+          const [year, month] = filterMonth.split('-');
+          
           filtered = filtered.filter(c => {
-            if (!c.date || c.date === '-') return false;
-            // 날짜 형식이 다양할 수 있으므로 체크
+            if (!c.date || c.date === '-') {
+              console.log('  ❌ 날짜 없음:', c);
+              return false;
+            }
+            
+            // 날짜 형식 변환 (Google Sheets에서 다양한 형식 가능)
             const dateStr = String(c.date);
-            return dateStr.includes(filterMonth);
+            console.log('  📆 검사 중:', dateStr, '→', filterMonth);
+            
+            // "Date(2025, 4, 1, 10, 30, 0)" 형식 파싱
+            if (dateStr.startsWith('Date(')) {
+              const match = dateStr.match(/Date\((\d+),\s*(\d+),\s*(\d+)/);
+              if (match) {
+                const [, y, m, d] = match;
+                const itemYear = y;
+                const itemMonth = String(parseInt(m) + 1).padStart(2, '0'); // JavaScript month는 0부터 시작
+                const matched = itemYear === year && itemMonth === month;
+                console.log('    ✅ Date() 파싱:', `${itemYear}-${itemMonth}`, matched ? '매칭' : '불일치');
+                return matched;
+              }
+            }
+            
+            // "2025-05-01" 또는 "2025/05/01" 형식
+            if (dateStr.includes(filterMonth) || dateStr.replace(/\//g, '-').includes(filterMonth)) {
+              console.log('    ✅ 문자열 매칭 성공');
+              return true;
+            }
+            
+            console.log('    ❌ 매칭 실패');
+            return false;
           });
           console.log(`📅 월 필터 (${filterMonth}) 적용 후:`, filtered.length, '건');
         }
         
         // 상태 필터
         if (filterStatus) {
+          console.log('🏷️ 상태 필터 적용 중:', filterStatus);
+          
           filtered = filtered.filter(c => {
-            return c.status === filterStatus;
+            const matched = c.status === filterStatus;
+            console.log('  상태 비교:', c.status, '===', filterStatus, '→', matched);
+            return matched;
           });
           console.log(`🏷️ 상태 필터 (${filterStatus}) 적용 후:`, filtered.length, '건');
         }
@@ -14427,6 +14466,18 @@
         
         // 테이블 렌더링 (필터링된 데이터)
         this.renderComplaintsTable(filtered);
+        
+        // 필터 적용 표시
+        if (filterMonth || filterStatus) {
+          this.showToast(`🔍 필터 적용: ${filtered.length}건 표시됨`, 'info');
+        }
+      };
+      
+      // 필터 초기화
+      app.resetComplaintsFilter = function() {
+        document.getElementById('complaint-filter-month').value = '';
+        document.getElementById('complaint-filter-status').value = '';
+        this.filterComplaintsList();
       };
       
       // ==================== 기존 함수 ====================
