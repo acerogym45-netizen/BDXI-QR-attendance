@@ -1872,56 +1872,48 @@
         <!-- ==================== 💵 급여명세서 TAB ==================== -->
         <div id="tab-payroll" class="tab-content hidden space-y-3 px-4">
           <!-- 상단 통계 대시보드 -->
-          <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-3">
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
             <div class="bg-gradient-to-br from-blue-50 to-indigo-50 p-4 rounded-xl shadow-sm border-2 border-blue-200">
-              <div class="flex items-center justify-between">
-                <div>
-                  <p class="text-sm text-gray-600 mb-1">이번 달 업로드</p>
-                  <p class="text-3xl font-bold text-blue-600" id="payroll-current-month-count">0</p>
-                  <p class="text-xs text-gray-500 mt-1">건</p>
-                </div>
-                <div class="text-blue-400 text-4xl">
+              <div class="text-center">
+                <div class="text-blue-400 text-3xl mb-2">
                   <i class="fas fa-upload"></i>
                 </div>
+                <p class="text-sm text-gray-600 mb-1">이번 달 업로드</p>
+                <p class="text-3xl font-bold text-blue-600" id="payroll-current-month-count">0</p>
+                <p class="text-xs text-gray-500 mt-1">건</p>
               </div>
             </div>
 
             <div class="bg-gradient-to-br from-green-50 to-emerald-50 p-4 rounded-xl shadow-sm border-2 border-green-200">
-              <div class="flex items-center justify-between">
-                <div>
-                  <p class="text-sm text-gray-600 mb-1">전체 직원</p>
-                  <p class="text-3xl font-bold text-green-600" id="payroll-total-employees">0</p>
-                  <p class="text-xs text-gray-500 mt-1">명</p>
-                </div>
-                <div class="text-green-400 text-4xl">
+              <div class="text-center">
+                <div class="text-green-400 text-3xl mb-2">
                   <i class="fas fa-users"></i>
                 </div>
+                <p class="text-sm text-gray-600 mb-1">전체 직원</p>
+                <p class="text-3xl font-bold text-green-600" id="payroll-total-employees">0</p>
+                <p class="text-xs text-gray-500 mt-1">명</p>
               </div>
             </div>
 
             <div class="bg-gradient-to-br from-purple-50 to-pink-50 p-4 rounded-xl shadow-sm border-2 border-purple-200">
-              <div class="flex items-center justify-between">
-                <div>
-                  <p class="text-sm text-gray-600 mb-1">조회됨</p>
-                  <p class="text-3xl font-bold text-purple-600" id="payroll-viewed-count">0</p>
-                  <p class="text-xs text-gray-500 mt-1">건</p>
-                </div>
-                <div class="text-purple-400 text-4xl">
+              <div class="text-center">
+                <div class="text-purple-400 text-3xl mb-2">
                   <i class="fas fa-eye"></i>
                 </div>
+                <p class="text-sm text-gray-600 mb-1">조회됨</p>
+                <p class="text-3xl font-bold text-purple-600" id="payroll-viewed-count">0</p>
+                <p class="text-xs text-gray-500 mt-1">건</p>
               </div>
             </div>
 
             <div class="bg-gradient-to-br from-orange-50 to-red-50 p-4 rounded-xl shadow-sm border-2 border-orange-200">
-              <div class="flex items-center justify-between">
-                <div>
-                  <p class="text-sm text-gray-600 mb-1">총 업로드</p>
-                  <p class="text-3xl font-bold text-orange-600" id="payroll-total-count">0</p>
-                  <p class="text-xs text-gray-500 mt-1">건</p>
-                </div>
-                <div class="text-orange-400 text-4xl">
+              <div class="text-center">
+                <div class="text-orange-400 text-3xl mb-2">
                   <i class="fas fa-file-pdf"></i>
                 </div>
+                <p class="text-sm text-gray-600 mb-1">총 업로드</p>
+                <p class="text-3xl font-bold text-orange-600" id="payroll-total-count">0</p>
+                <p class="text-xs text-gray-500 mt-1">건</p>
               </div>
             </div>
           </div>
@@ -2027,56 +2019,48 @@
           </div>
 
           <!-- 통계 카드 -->
-          <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-3">
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
             <div class="bg-gradient-to-br from-blue-50 to-indigo-50 p-4 rounded-xl shadow-sm border-2 border-blue-200">
-              <div class="flex items-center justify-between">
-                <div>
-                  <p class="text-sm text-gray-600 mb-1">전체 민원</p>
-                  <p class="text-3xl font-bold text-blue-600" id="complaint-total-count">0</p>
-                  <p class="text-xs text-gray-500 mt-1">건</p>
-                </div>
-                <div class="text-blue-400 text-4xl">
+              <div class="text-center">
+                <div class="text-blue-400 text-3xl mb-2">
                   <i class="fas fa-clipboard-list"></i>
                 </div>
+                <p class="text-sm text-gray-600 mb-1">전체 민원</p>
+                <p class="text-3xl font-bold text-blue-600" id="complaint-total-count">0</p>
+                <p class="text-xs text-gray-500 mt-1">건</p>
               </div>
             </div>
 
             <div class="bg-gradient-to-br from-green-50 to-emerald-50 p-4 rounded-xl shadow-sm border-2 border-green-200">
-              <div class="flex items-center justify-between">
-                <div>
-                  <p class="text-sm text-gray-600 mb-1">처리 완료</p>
-                  <p class="text-3xl font-bold text-green-600" id="complaint-completed-count">0</p>
-                  <p class="text-xs text-gray-500 mt-1">건</p>
-                </div>
-                <div class="text-green-400 text-4xl">
+              <div class="text-center">
+                <div class="text-green-400 text-3xl mb-2">
                   <i class="fas fa-check-circle"></i>
                 </div>
+                <p class="text-sm text-gray-600 mb-1">처리 완료</p>
+                <p class="text-3xl font-bold text-green-600" id="complaint-completed-count">0</p>
+                <p class="text-xs text-gray-500 mt-1">건</p>
               </div>
             </div>
 
             <div class="bg-gradient-to-br from-yellow-50 to-amber-50 p-4 rounded-xl shadow-sm border-2 border-yellow-200">
-              <div class="flex items-center justify-between">
-                <div>
-                  <p class="text-sm text-gray-600 mb-1">처리 중</p>
-                  <p class="text-3xl font-bold text-yellow-600" id="complaint-pending-count">0</p>
-                  <p class="text-xs text-gray-500 mt-1">건</p>
-                </div>
-                <div class="text-yellow-400 text-4xl">
+              <div class="text-center">
+                <div class="text-yellow-400 text-3xl mb-2">
                   <i class="fas fa-hourglass-half"></i>
                 </div>
+                <p class="text-sm text-gray-600 mb-1">처리 중</p>
+                <p class="text-3xl font-bold text-yellow-600" id="complaint-pending-count">0</p>
+                <p class="text-xs text-gray-500 mt-1">건</p>
               </div>
             </div>
 
             <div class="bg-gradient-to-br from-orange-50 to-red-50 p-4 rounded-xl shadow-sm border-2 border-orange-200">
-              <div class="flex items-center justify-between">
-                <div>
-                  <p class="text-sm text-gray-600 mb-1">이번 달</p>
-                  <p class="text-3xl font-bold text-orange-600" id="complaint-month-count">0</p>
-                  <p class="text-xs text-gray-500 mt-1">건</p>
-                </div>
-                <div class="text-orange-400 text-4xl">
+              <div class="text-center">
+                <div class="text-orange-400 text-3xl mb-2">
                   <i class="fas fa-calendar-day"></i>
                 </div>
+                <p class="text-sm text-gray-600 mb-1">이번 달</p>
+                <p class="text-3xl font-bold text-orange-600" id="complaint-month-count">0</p>
+                <p class="text-xs text-gray-500 mt-1">건</p>
               </div>
             </div>
           </div>
