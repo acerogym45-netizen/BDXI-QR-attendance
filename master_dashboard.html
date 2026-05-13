@@ -2621,20 +2621,38 @@
                 }
                 
                 const rows = data.table.rows;
+                
+                // Log column structure
+                console.log('📊 [Google Sheets] Column structure:', {
+                    columns: data.table.cols?.map(col => ({label: col.label, type: col.type})),
+                    totalRows: rows.length
+                });
+                
                 const complaints = rows.map((row, index) => {
                     const cells = row.c;
+                    
+                    // Log raw cell data for first row
+                    if (index === 0) {
+                        console.log('🔍 [Google Sheets] First row raw cells:', cells);
+                    }
+                    
                     const complaint = {
-                        date: cells[0]?.v || '-',
-                        location: cells[1]?.v || '-',
-                        content: cells[2]?.v || '-',
-                        status: cells[3]?.v || '-',
-                        result: cells[4]?.v || '-',
-                        completeDate: cells[5]?.v || '-'
+                        date: cells[0]?.v || cells[0]?.f || '-',
+                        location: cells[1]?.v || cells[1]?.f || '-',
+                        content: cells[2]?.v || cells[2]?.f || '-',
+                        status: cells[3]?.v || cells[3]?.f || '-',
+                        result: cells[4]?.v || cells[4]?.f || '-',
+                        completeDate: cells[5]?.v || cells[5]?.f || '-'
                     };
                     
                     // Log first 3 complaints for debugging
                     if (index < 3) {
-                        console.log(`📋 [Google Sheets] Complaint ${index + 1}:`, complaint);
+                        console.log(`📋 [Google Sheets] Complaint ${index + 1}:`, {
+                            date: complaint.date,
+                            location: complaint.location,
+                            content: complaint.content?.substring(0, 50),
+                            status: complaint.status
+                        });
                     }
                     
                     return complaint;
