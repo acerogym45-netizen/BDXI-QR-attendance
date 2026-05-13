@@ -14298,6 +14298,10 @@
             };
           });
           
+          // 원본 데이터 저장 (필터링용)
+          this.allComplaints = complaints;
+          console.log('💾 원본 민원 데이터 저장:', complaints.length, '건');
+          
           // 통계 계산
           this.updateComplaintsStats(complaints);
           
@@ -14396,8 +14400,49 @@
       
       // 필터 적용
       app.filterComplaintsList = function() {
-        // 간단한 필터는 클라이언트 사이드에서 처리하지 않고 전체 데이터 다시 로드
-        this.loadComplaintsList();
+        console.log('🔍 민원 필터링 적용 중');
+        
+        // 필터 값 가져오기
+        const filterMonth = document.getElementById('complaint-filter-month')?.value;
+        const filterStatus = document.getElementById('complaint-filter-status')?.value;
+        
+        console.log('📦 필터 조건:', { filterMonth, filterStatus });
+        
+        // 원본 데이터가 저장되어 있지 않으면 다시 로드
+        if (!this.allComplaints || this.allComplaints.length === 0) {
+          this.loadComplaintsList();
+          return;
+        }
+        
+        // 필터링
+        let filtered = this.allComplaints;
+        
+        // 월 필터
+        if (filterMonth) {
+          filtered = filtered.filter(c => {
+            if (!c.date || c.date === '-') return false;
+            // 날짜 형식이 다양할 수 있으므로 체크
+            const dateStr = String(c.date);
+            return dateStr.includes(filterMonth);
+          });
+          console.log(`📅 월 필터 (${filterMonth}) 적용 후:`, filtered.length, '건');
+        }
+        
+        // 상태 필터
+        if (filterStatus) {
+          filtered = filtered.filter(c => {
+            return c.status === filterStatus;
+          });
+          console.log(`🏷️ 상태 필터 (${filterStatus}) 적용 후:`, filtered.length, '건');
+        }
+        
+        console.log('✅ 최종 필터링 결과:', filtered.length, '건');
+        
+        // 통계 업데이트 (필터링된 데이터 기준)
+        this.updateComplaintsStats(filtered);
+        
+        // 테이블 렌더링 (필터링된 데이터)
+        this.renderComplaintsTable(filtered);
       };
       
       // ==================== 기존 함수 ====================
