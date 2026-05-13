@@ -1196,17 +1196,37 @@
                                                 ${complaints.slice(0, 3).map((complaint, idx) => {
                                                     console.log(`📋 [${apt.name}] Rendering complaint ${idx + 1}:`, complaint);
                                                     return `
-                                                        <div class="bg-white p-2 rounded border border-orange-100">
-                                                            <div class="flex items-start justify-between gap-2">
-                                                                <div class="flex-1 min-w-0">
-                                                                    <p class="text-xs text-gray-600 mb-1">
+                                                        <div class="bg-white p-3 rounded border border-orange-100">
+                                                            <div class="space-y-2">
+                                                                <!-- 날짜와 위치 -->
+                                                                <div class="flex items-center justify-between text-xs text-gray-600">
+                                                                    <span>
+                                                                        <i class="fas fa-calendar text-orange-400 mr-1"></i>
+                                                                        ${complaint.date !== '-' ? complaint.date : '날짜 미상'}
+                                                                    </span>
+                                                                    <span>
                                                                         <i class="fas fa-map-marker-alt text-orange-400 mr-1"></i>
-                                                                        ${complaint.location}
-                                                                    </p>
-                                                                    <p class="text-sm text-gray-800 truncate">${summarizeComplaint(complaint.content)}</p>
+                                                                        ${complaint.location !== '-' ? complaint.location : '위치 미상'}
+                                                                    </span>
                                                                 </div>
-                                                                <div class="flex-shrink-0">
-                                                                    ${getComplaintStatusBadge(complaint.status)}
+                                                                
+                                                                <!-- 민원내용 -->
+                                                                <div>
+                                                                    <p class="text-xs text-gray-500 mb-1">민원내용:</p>
+                                                                    <p class="text-sm text-gray-800">${complaint.content !== '-' ? summarizeComplaint(complaint.content) : '내용 없음'}</p>
+                                                                </div>
+                                                                
+                                                                <!-- 진행상황과 조치사항 -->
+                                                                <div class="flex items-center justify-between">
+                                                                    <div>
+                                                                        ${getComplaintStatusBadge(complaint.status)}
+                                                                    </div>
+                                                                    ${complaint.result !== '-' ? `
+                                                                        <span class="text-xs text-gray-600">
+                                                                            <i class="fas fa-check text-green-500 mr-1"></i>
+                                                                            조치완료
+                                                                        </span>
+                                                                    ` : ''}
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -2628,28 +2648,33 @@
                 console.log('📊 [Google Sheets] Data info:', {
                     totalRows: rows.length,
                     headerRow: rows[0]?.c?.map(cell => cell?.v || cell?.f),
-                    dataRowsCount: dataRows.length
+                    dataRowsCount: dataRows.length,
+                    firstDataRow: dataRows[0]?.c
                 });
                 
                 const complaints = dataRows.map((row, index) => {
-                    const cells = row.c;
+                    const cells = row.c || [];
                     
-                    const complaint = {
-                        date: cells[0]?.v || cells[0]?.f || '-',           // A열: 작성일시
-                        location: cells[1]?.v || cells[1]?.f || '-',       // B열: 구역
-                        content: cells[7]?.v || cells[7]?.f || '-',        // H열: 민원내용
-                        status: cells[6]?.v || cells[6]?.f || '-',         // G열: 진행상황
-                        result: cells[8]?.v || cells[8]?.f || '-',         // I열: 조치사항
-                        completeDate: cells[0]?.v || cells[0]?.f || '-'    // A열: 작성일시 (완료일 없으므로 작성일 사용)
+                    // Helper to safely get cell value
+                    const getCellValue = (cell) => {
+                        if (!cell) return '-';
+                        return cell.v || cell.f || '-';
                     };
                     
-                    // Log first 3 actual data rows
+                    const complaint = {
+                        date: getCellValue(cells[0]),           // A열: 작성일시
+                        location: getCellValue(cells[1]),       // B열: 구역
+                        content: getCellValue(cells[7]),        // H열: 민원내용
+                        status: getCellValue(cells[6]),         // G열: 진행상황
+                        result: getCellValue(cells[8]),         // I열: 조치사항
+                        completeDate: getCellValue(cells[0])    // A열: 작성일시
+                    };
+                    
+                    // Log first 3 actual data rows with full details
                     if (index < 3) {
-                        console.log(`📋 [Google Sheets] Data row ${index + 1}:`, {
-                            date: complaint.date,
-                            location: complaint.location,
-                            content: typeof complaint.content === 'string' ? complaint.content.substring(0, 50) : complaint.content,
-                            status: complaint.status
+                        console.log(`📋 [Google Sheets] Row ${index + 1} full data:`, {
+                            rawCells: cells.map((c, i) => ({col: i, v: c?.v, f: c?.f})),
+                            parsed: complaint
                         });
                     }
                     

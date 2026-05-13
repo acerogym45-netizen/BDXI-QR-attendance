@@ -3645,11 +3645,15 @@
         switchTab: function (tab) {
           console.log('🔄 Switching to tab:', tab);
           
-          // Hide all tabs - use both class and inline style for maximum compatibility
+          // Hide all tabs with maximum force
           document.querySelectorAll('.tab-content').forEach((el) => {
             console.log('  Hiding:', el.id);
             el.classList.add('hidden');
-            el.style.display = 'none';  // Force hide with inline style
+            el.style.display = 'none';
+            el.style.visibility = 'hidden';  // Extra protection
+            el.style.opacity = '0';           // Extra protection
+            el.style.position = 'absolute';   // Move out of flow
+            el.style.left = '-9999px';        // Move off screen
           });
           
           // Show target tab
@@ -3657,7 +3661,11 @@
           console.log('  Showing:', targetTab ? targetTab.id : 'NOT FOUND');
           if (targetTab) {
             targetTab.classList.remove('hidden');
-            targetTab.style.display = '';  // Remove inline style to show
+            targetTab.style.display = '';
+            targetTab.style.visibility = '';
+            targetTab.style.opacity = '';
+            targetTab.style.position = '';
+            targetTab.style.left = '';
           }
 
           document.querySelectorAll('.nav-tab').forEach((el) => {
