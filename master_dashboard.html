@@ -2625,6 +2625,27 @@
                 const text = await response.text();
                 console.log('📄 [Google Sheets] Response received, length:', text.length);
                 
+                // Check if response is HTML error page (not JSON)
+                if (text.startsWith('<!DOCTYPE') || text.startsWith('<html')) {
+                    console.error('❌ [Google Sheets] Received HTML instead of JSON. This means:');
+                    console.error('   1. Google Sheet is NOT publicly accessible (check sharing settings)');
+                    console.error('   2. Sheet ID is incorrect:', sheetId);
+                    console.error('   3. Sheet tab name is incorrect:', sheetName);
+                    console.error('📋 [Google Sheets] Please verify:');
+                    console.error('   - Open: https://docs.google.com/spreadsheets/d/' + sheetId);
+                    console.error('   - Click "Share" → Change to "Anyone with the link" → Viewer');
+                    console.error('   - Verify tab name exactly matches:', sheetName);
+                    
+                    // Show user-friendly error in UI
+                    throw new Error(`구글 시트 접근 불가: 시트가 공개되지 않았거나 ID/탭 이름이 잘못되었습니다.`);
+                }
+                
+                // Check if response starts with expected Google Sheets JSON prefix
+                if (!text.startsWith('/*O_o*/') && !text.includes('google.visualization')) {
+                    console.error('❌ [Google Sheets] Unexpected response format:', text.substring(0, 100));
+                    throw new Error('Google Sheets 응답 형식이 올바르지 않습니다');
+                }
+                
                 const jsonText = text.substring(47, text.length - 2);
                 const data = JSON.parse(jsonText);
                 
