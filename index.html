@@ -14289,6 +14289,9 @@
           this.allComplaints = complaints;
           console.log('💾 원본 민원 데이터 저장:', complaints.length, '건');
           
+          // 필터 옵션 자동 생성
+          this.populateComplaintFilters();
+          
           // 통계 계산
           this.updateComplaintsStats(complaints);
           
@@ -14414,13 +14417,11 @@
           
           filtered = filtered.filter(c => {
             if (!c.date || c.date === '-') {
-              console.log('  ❌ 날짜 없음:', c);
               return false;
             }
             
             // 날짜 형식 변환 (Google Sheets에서 다양한 형식 가능)
             const dateStr = String(c.date);
-            console.log('  📆 검사 중:', dateStr, '→', filterMonth);
             
             // "Date(2025, 4, 1, 10, 30, 0)" 형식 파싱
             if (dateStr.startsWith('Date(')) {
@@ -14430,30 +14431,34 @@
                 const itemYear = y;
                 const itemMonth = String(parseInt(m) + 1).padStart(2, '0'); // JavaScript month는 0부터 시작
                 const matched = itemYear === year && itemMonth === month;
-                console.log('    ✅ Date() 파싱:', `${itemYear}-${itemMonth}`, matched ? '매칭' : '불일치');
                 return matched;
               }
             }
             
             // "2025-05-01" 또는 "2025/05/01" 형식
             if (dateStr.includes(filterMonth) || dateStr.replace(/\//g, '-').includes(filterMonth)) {
-              console.log('    ✅ 문자열 매칭 성공');
               return true;
             }
             
-            console.log('    ❌ 매칭 실패');
             return false;
           });
           console.log(`📅 월 필터 (${filterMonth}) 적용 후:`, filtered.length, '건');
         }
         
-        // 상태 필터
+        // 상태 필터 (부분 매칭으로 변경)
         if (filterStatus) {
           console.log('🏷️ 상태 필터 적용 중:', filterStatus);
           
           filtered = filtered.filter(c => {
-            const matched = c.status === filterStatus;
-            console.log('  상태 비교:', c.status, '===', filterStatus, '→', matched);
+            if (!c.status || c.status === '-') return false;
+            
+            const statusStr = String(c.status).trim().toLowerCase();
+            const filterStr = filterStatus.trim().toLowerCase();
+            
+            // 부분 매칭: "처리완료"로 검색하면 "처리완료", "완료", "처리 완료" 등 모두 매칭
+            const matched = statusStr.includes(filterStr) || filterStr.includes(statusStr);
+            
+            console.log('  상태 비교:', `"${c.status}"`, 'vs', `"${filterStatus}"`, '→', matched);
             return matched;
           });
           console.log(`🏷️ 상태 필터 (${filterStatus}) 적용 후:`, filtered.length, '건');
@@ -14470,6 +14475,41 @@
         // 필터 적용 표시
         if (filterMonth || filterStatus) {
           this.showToast(`🔍 필터 적용: ${filtered.length}건 표시됨`, 'info');
+        }
+      };
+      
+      // 필터 옵션 자동 생성
+      app.populateComplaintFilters = function() {
+        if (!this.allComplaints || this.allComplaints.length === 0) return;
+        
+        // 고유한 상태 값 추출
+        const uniqueStatuses = [...new Set(
+          this.allComplaints
+            .map(c => c.status)
+            .filter(s => s && s !== '-')
+            .map(s => String(s).trim())
+        )].sort();
+        
+        console.log('📊 고유한 상태 값:', uniqueStatuses);
+        
+        // 상태 필터 드롭다운 업데이트
+        const statusSelect = document.getElementById('complaint-filter-status');
+        if (statusSelect && uniqueStatuses.length > 0) {
+          // 기존 옵션 유지하되, 실제 데이터 기반 옵션 추가
+          const currentValue = statusSelect.value;
+          statusSelect.innerHTML = '<option value="">전체 상태</option>';
+          
+          uniqueStatuses.forEach(status => {
+            const option = document.createElement('option');
+            option.value = status;
+            option.textContent = status;
+            statusSelect.appendChild(option);
+          });
+          
+          // 이전 선택값 복원
+          if (currentValue) {
+            statusSelect.value = currentValue;
+          }
         }
       };
       
