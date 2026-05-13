@@ -2705,7 +2705,7 @@
                     
                     const complaint = {
                         date: getCellValue(cells[0], 'A:작성일시'),
-                        location: getCellValue(cells[1], 'B:구역'),
+                        location: getCellValue(cells[3], 'D:민원인신상(동/호수)'),  // ← Fixed from cells[1]
                         content: getCellValue(cells[7], 'H:민원내용'),
                         status: getCellValue(cells[6], 'G:진행상황'),
                         result: getCellValue(cells[8], 'I:조치사항'),
