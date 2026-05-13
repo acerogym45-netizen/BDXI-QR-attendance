@@ -3484,8 +3484,9 @@
           const apartmentPassword = selectedApartment.password || LOGIN_PIN;
           
           if (pin === apartmentPassword) {
-            // 로그인 성공
-            this.currentApartment = selectedApartment;
+            // 로그인 성공 - UUID만 저장
+            this.currentApartment = selectedApartment.id;
+            this.currentApartmentInfo = selectedApartment;
             
             sessionStorage.setItem('kindwon_login', 'true');
             sessionStorage.setItem('kindwon_apartment_id', apartmentId);
@@ -3539,7 +3540,8 @@
             const selectedApartment = this.apartments.find(a => a.id === apartmentId);
             
             if (selectedApartment) {
-              this.currentApartment = selectedApartment;
+              this.currentApartment = selectedApartment.id;
+              this.currentApartmentInfo = selectedApartment;
               
               // 세션에 저장
               sessionStorage.setItem('kindwon_login', 'true');
@@ -3580,12 +3582,15 @@
               });
               
               if (fullApartmentInfo) {
-                // 전체 정보 사용 (google_sheet_id, google_sheet_name 포함)
-                this.currentApartment = fullApartmentInfo;
+                // UUID만 currentApartment에 저장 (DB 쿼리용)
+                this.currentApartment = fullApartmentInfo.id;
+                // 전체 정보는 별도 변수에 저장 (google_sheet_id 등 접근용)
+                this.currentApartmentInfo = fullApartmentInfo;
                 console.log('✅ 아파트 정보 복원 성공:', {
-                  name: this.currentApartment.name,
-                  google_sheet_id: this.currentApartment.google_sheet_id,
-                  google_sheet_name: this.currentApartment.google_sheet_name
+                  id: this.currentApartment,
+                  name: this.currentApartmentInfo.name,
+                  google_sheet_id: this.currentApartmentInfo.google_sheet_id,
+                  google_sheet_name: this.currentApartmentInfo.google_sheet_name
                 });
               } else {
                 // apartments 배열이 비어있거나 로드 안 됨
@@ -3611,10 +3616,10 @@
           document.getElementById('view-dashboard').classList.remove('hidden');
           
           // 관리자 정보 설정
-          if (!this.currentAdmin && this.currentApartment) {
+          if (!this.currentAdmin && this.currentApartmentInfo) {
             this.currentAdmin = {
-              name: this.currentApartment.name + ' 관리자',
-              apartmentId: this.currentApartment.id
+              name: this.currentApartmentInfo.name + ' 관리자',
+              apartmentId: this.currentApartment
             };
           }
           
@@ -7647,9 +7652,11 @@
             this.closeApartmentModal();
             
             // 현재 아파트 정보 업데이트
-            this.currentApartment.name = name;
-            this.currentApartment.google_sheet_id = sheetId || null;
-            this.currentApartment.google_sheet_name = sheetName;
+            if (this.currentApartmentInfo) {
+              this.currentApartmentInfo.name = name;
+              this.currentApartmentInfo.google_sheet_id = sheetId || null;
+              this.currentApartmentInfo.google_sheet_name = sheetName;
+            }
             sessionStorage.setItem('kindwon_apartment_name', name);
             
             // 헤더 업데이트
@@ -13957,16 +13964,33 @@
                 status = '결근';
               }
               
-              // 지각 판단 (09:00 기준, ±20분 오차 허용 → 09:20까지 허용)
+              // 지각 판단 (09:00 기준, 절대 엄격 - 1분이라도 늦으면 지각)
+              // 일찍 출근 10분 허용 (08:50 이전 출근도 정상)
               if (checkIn !== '-') {
                 const [hour, minute] = checkIn.split(':').map(Number);
                 const checkInMinutes = hour * 60 + minute;
                 const standardTime = 9 * 60; // 09:00 = 540분
-                const lateThreshold = standardTime + 20; // 09:20 = 560분
                 
-                if (checkInMinutes > lateThreshold) {
+                // 09:00 초과 시 무조건 지각 (엄격)
+                if (checkInMinutes > standardTime) {
                   status = '지각';
                 }
+                // 08:50 이전 출근도 정상 처리 (10분 일찍 출근 허용)
+              }
+              
+              // 조기퇴근 판단 (18:00 기준, 절대 엄격 - 1분이라도 일찍 퇴근하면 조기퇴근)
+              // 늦게 퇴근 10분 허용 (18:10까지 퇴근은 정상)
+              if (checkOut !== '-') {
+                const [hour, minute] = checkOut.split(':').map(Number);
+                const checkOutMinutes = hour * 60 + minute;
+                const standardEndTime = 18 * 60; // 18:00 = 1080분
+                const lateCheckoutThreshold = standardEndTime + 10; // 18:10 = 1090분
+                
+                // 18:00 미만 퇴근 시 무조건 조기퇴근 (엄격)
+                if (checkOutMinutes < standardEndTime) {
+                  status = '조기퇴근';
+                }
+                // 18:10까지 퇴근은 정상 처리 (10분 늦은 퇴근 허용)
               }
               
               return { date, status, checkIn, checkOut };
