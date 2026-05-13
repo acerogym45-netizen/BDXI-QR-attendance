@@ -1006,6 +1006,75 @@
           </div>
 
           <!-- ============================================ -->
+          <!-- 전자 근태표 생성 섹션 -->
+          <!-- ============================================ -->
+          <div class="mt-8 border-t-4 border-blue-200 pt-6">
+            <div class="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl p-6 mb-6">
+              <h2 class="text-2xl font-bold text-gray-800 mb-2 flex items-center">
+                <i class="fas fa-table text-blue-600 mr-3"></i>
+                전자 근태표 생성
+              </h2>
+              <p class="text-sm text-gray-600">
+                attendance_records 데이터를 기반으로 직원별 출퇴근 기록을 자동 집계하여 전자 근태표를 생성합니다.
+              </p>
+            </div>
+
+            <!-- 기간 선택 및 생성 -->
+            <div class="bg-white rounded-xl shadow-md border p-6 mb-6">
+              <h3 class="font-bold text-lg text-gray-800 mb-4">
+                <i class="fas fa-calendar-alt mr-2 text-blue-600"></i>기간 선택
+              </h3>
+              
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">시작일</label>
+                  <input type="date" id="attendance-sheet-start-date" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">종료일</label>
+                  <input type="date" id="attendance-sheet-end-date" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="flex items-end">
+                  <button onclick="app.setCurrentMonth()" class="w-full px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition text-sm">
+                    <i class="fas fa-calendar-day mr-2"></i>이번 달로 설정
+                  </button>
+                </div>
+              </div>
+
+              <div class="flex gap-3">
+                <button onclick="app.generateAttendanceSheet()" class="flex-1 px-6 py-3 bg-gradient-to-r from-blue-500 to-cyan-600 text-white rounded-lg hover:from-blue-600 hover:to-cyan-700 transition-all shadow-md font-medium">
+                  <i class="fas fa-sync mr-2"></i>근태표 생성
+                </button>
+                <button onclick="app.exportAttendanceSheetToExcel()" id="btn-export-attendance-excel" class="flex-1 px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:from-green-600 hover:to-emerald-700 transition-all shadow-md font-medium disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                  <i class="fas fa-file-excel mr-2"></i>Excel 다운로드
+                </button>
+              </div>
+            </div>
+
+            <!-- 근태표 테이블 -->
+            <div class="bg-white rounded-xl shadow-md border p-6">
+              <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold text-lg text-gray-800">
+                  <i class="fas fa-list-alt mr-2 text-purple-600"></i>
+                  <span id="attendance-sheet-title">근태표 미리보기</span>
+                </h3>
+                <div class="text-sm text-gray-600">
+                  <span id="attendance-sheet-summary">기간을 선택하고 생성 버튼을 클릭하세요</span>
+                </div>
+              </div>
+
+              <!-- 근태표 컨테이너 -->
+              <div id="attendance-sheet-container" class="overflow-x-auto">
+                <div class="text-center py-12 text-gray-400">
+                  <i class="fas fa-table text-5xl mb-3"></i>
+                  <p>근태표가 생성되지 않았습니다</p>
+                  <p class="text-sm mt-2">기간을 선택하고 '근태표 생성' 버튼을 클릭하세요</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ============================================ -->
           <!-- 휴가 관리 섹션 (근태 관리 탭 내부 서브 카테고리) -->
           <!-- ============================================ -->
           <div class="mt-8 border-t-4 border-purple-200 pt-6">
@@ -13648,6 +13717,296 @@
           
         } catch (error) {
           console.error('❌ 통계 업데이트 실패:', error);
+        }
+      };
+      
+      // ==================== 전자 근태표 생성 함수 ====================
+      
+      // 현재 변수 저장
+      app.currentAttendanceSheetData = null;
+      
+      // 이번 달로 설정
+      app.setCurrentMonth = function() {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const firstDay = `${year}-${month}-01`;
+        const lastDay = new Date(year, now.getMonth() + 1, 0).toISOString().split('T')[0];
+        
+        document.getElementById('attendance-sheet-start-date').value = firstDay;
+        document.getElementById('attendance-sheet-end-date').value = lastDay;
+      };
+      
+      // 근태표 생성
+      app.generateAttendanceSheet = async function() {
+        const startDate = document.getElementById('attendance-sheet-start-date')?.value;
+        const endDate = document.getElementById('attendance-sheet-end-date')?.value;
+        
+        if (!startDate || !endDate) {
+          this.showToast('시작일과 종료일을 선택하세요', 'warning');
+          return;
+        }
+        
+        if (new Date(startDate) > new Date(endDate)) {
+          this.showToast('시작일이 종료일보다 늦을 수 없습니다', 'error');
+          return;
+        }
+        
+        try {
+          this.showToast('근태표를 생성하는 중...', 'info');
+          
+          // 직원 목록 로드 (현재 아파트)
+          const { data: employees, error: empError } = await this.sb
+            .from('employees')
+            .select('id, name, position')
+            .eq('apartment_id', this.currentApartment)
+            .eq('status', 'active')
+            .order('name');
+          
+          if (empError) throw empError;
+          
+          if (!employees || employees.length === 0) {
+            this.showToast('등록된 직원이 없습니다', 'warning');
+            return;
+          }
+          
+          // 근태 기록 로드
+          const { data: records, error: recError } = await this.sb
+            .from('attendance_records')
+            .select('*')
+            .eq('apartment_id', this.currentApartment)
+            .gte('scan_time', startDate + 'T00:00:00')
+            .lte('scan_time', endDate + 'T23:59:59')
+            .order('scan_time');
+          
+          if (recError) throw recError;
+          
+          // 날짜 범위 생성
+          const dates = [];
+          const current = new Date(startDate);
+          const end = new Date(endDate);
+          
+          while (current <= end) {
+            dates.push(new Date(current).toISOString().split('T')[0]);
+            current.setDate(current.getDate() + 1);
+          }
+          
+          // 직원별 날짜별 데이터 매핑
+          const attendanceData = employees.map(emp => {
+            const empRecords = records.filter(r => r.employee_id === emp.id);
+            
+            const dailyData = dates.map(date => {
+              const dayRecords = empRecords.filter(r => 
+                r.scan_time.startsWith(date)
+              );
+              
+              if (dayRecords.length === 0) {
+                return { date, status: '-', checkIn: '-', checkOut: '-' };
+              }
+              
+              // 출근/퇴근 구분
+              const checkIns = dayRecords.filter(r => r.type === 'check_in');
+              const checkOuts = dayRecords.filter(r => r.type === 'check_out');
+              
+              const checkIn = checkIns.length > 0 
+                ? new Date(checkIns[0].scan_time).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
+                : '-';
+              
+              const checkOut = checkOuts.length > 0
+                ? new Date(checkOuts[checkOuts.length - 1].scan_time).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
+                : '-';
+              
+              let status = '정상';
+              if (checkIn !== '-' && checkOut === '-') {
+                status = '퇴근미기록';
+              } else if (checkIn === '-' && checkOut !== '-') {
+                status = '출근미기록';
+              } else if (checkIn === '-' && checkOut === '-') {
+                status = '결근';
+              }
+              
+              // 지각 판단 (09:00 기준)
+              if (checkIn !== '-') {
+                const [hour, minute] = checkIn.split(':').map(Number);
+                if (hour > 9 || (hour === 9 && minute > 0)) {
+                  status = '지각';
+                }
+              }
+              
+              return { date, status, checkIn, checkOut };
+            });
+            
+            return {
+              employee: emp,
+              dailyData
+            };
+          });
+          
+          // 데이터 저장
+          this.currentAttendanceSheetData = {
+            startDate,
+            endDate,
+            dates,
+            attendanceData
+          };
+          
+          // 테이블 렌더링
+          this.renderAttendanceSheet(dates, attendanceData);
+          
+          // Excel 다운로드 버튼 활성화
+          document.getElementById('btn-export-attendance-excel').disabled = false;
+          
+          // 제목 업데이트
+          document.getElementById('attendance-sheet-title').textContent = 
+            `${startDate} ~ ${endDate} 근태표`;
+          document.getElementById('attendance-sheet-summary').textContent = 
+            `직원 ${employees.length}명, 기간 ${dates.length}일`;
+          
+          this.showToast('✅ 근태표가 생성되었습니다', 'success');
+          
+        } catch (error) {
+          console.error('❌ 근태표 생성 실패:', error);
+          this.showToast('근태표 생성 중 오류가 발생했습니다: ' + error.message, 'error');
+        }
+      };
+      
+      // 근태표 렌더링
+      app.renderAttendanceSheet = function(dates, attendanceData) {
+        const container = document.getElementById('attendance-sheet-container');
+        if (!container) return;
+        
+        // 테이블 생성
+        let html = '<table class="w-full border-collapse text-sm">';
+        
+        // 헤더
+        html += '<thead class="bg-gray-100 border-b-2 border-gray-300">';
+        html += '<tr>';
+        html += '<th class="px-3 py-2 text-left font-bold text-gray-700 border sticky left-0 bg-gray-100" style="min-width: 100px;">직원명</th>';
+        html += '<th class="px-3 py-2 text-left font-bold text-gray-700 border sticky left-0 bg-gray-100" style="left: 100px; min-width: 80px;">직책</th>';
+        
+        dates.forEach(date => {
+          const d = new Date(date);
+          const dayOfWeek = ['일', '월', '화', '수', '목', '금', '토'][d.getDay()];
+          const isWeekend = dayOfWeek === '일' || dayOfWeek === '토';
+          const colorClass = isWeekend ? 'text-red-600' : 'text-gray-700';
+          
+          html += `<th class="px-2 py-2 text-center font-bold ${colorClass} border" style="min-width: 120px;">`;
+          html += `${d.getMonth() + 1}/${d.getDate()}<br>${dayOfWeek}`;
+          html += '</th>';
+        });
+        
+        html += '</tr>';
+        html += '</thead>';
+        
+        // 바디
+        html += '<tbody>';
+        
+        attendanceData.forEach((emp, empIndex) => {
+          html += '<tr class="hover:bg-gray-50">';
+          html += `<td class="px-3 py-2 font-medium border sticky left-0 bg-white">${emp.employee.name}</td>`;
+          html += `<td class="px-3 py-2 text-gray-600 border sticky left-0 bg-white" style="left: 100px;">${emp.employee.position || '-'}</td>`;
+          
+          emp.dailyData.forEach(day => {
+            let bgColor = 'bg-white';
+            let textColor = 'text-gray-800';
+            
+            if (day.status === '정상') {
+              bgColor = 'bg-green-50';
+              textColor = 'text-green-800';
+            } else if (day.status === '지각') {
+              bgColor = 'bg-yellow-50';
+              textColor = 'text-yellow-800';
+            } else if (day.status === '퇴근미기록') {
+              bgColor = 'bg-orange-50';
+              textColor = 'text-orange-800';
+            } else if (day.status === '결근' || day.status === '-') {
+              bgColor = 'bg-gray-50';
+              textColor = 'text-gray-400';
+            }
+            
+            html += `<td class="px-2 py-2 text-center border ${bgColor} ${textColor}" style="font-size: 11px;">`;
+            
+            if (day.checkIn !== '-' || day.checkOut !== '-') {
+              html += `<div class="font-medium">${day.status}</div>`;
+              html += `<div class="text-xs mt-1">출: ${day.checkIn}</div>`;
+              html += `<div class="text-xs">퇴: ${day.checkOut}</div>`;
+            } else {
+              html += '-';
+            }
+            
+            html += '</td>';
+          });
+          
+          html += '</tr>';
+        });
+        
+        html += '</tbody>';
+        html += '</table>';
+        
+        container.innerHTML = html;
+      };
+      
+      // Excel 내보내기
+      app.exportAttendanceSheetToExcel = function() {
+        if (!this.currentAttendanceSheetData) {
+          this.showToast('먼저 근태표를 생성하세요', 'warning');
+          return;
+        }
+        
+        try {
+          const { startDate, endDate, dates, attendanceData } = this.currentAttendanceSheetData;
+          
+          const wb = XLSX.utils.book_new();
+          
+          // 헤더 행
+          const headers = ['직원명', '직책'];
+          dates.forEach(date => {
+            const d = new Date(date);
+            const dayOfWeek = ['일', '월', '화', '수', '목', '금', '토'][d.getDay()];
+            headers.push(`${d.getMonth() + 1}/${d.getDate()} (${dayOfWeek})`);
+          });
+          
+          // 데이터 행
+          const rows = [headers];
+          
+          attendanceData.forEach(emp => {
+            const row = [
+              emp.employee.name,
+              emp.employee.position || '-'
+            ];
+            
+            emp.dailyData.forEach(day => {
+              if (day.checkIn !== '-' || day.checkOut !== '-') {
+                row.push(`${day.status} 출:${day.checkIn} 퇴:${day.checkOut}`);
+              } else {
+                row.push('-');
+              }
+            });
+            
+            rows.push(row);
+          });
+          
+          // 워크시트 생성
+          const ws = XLSX.utils.aoa_to_sheet(rows);
+          
+          // 열 너비 설정
+          ws['!cols'] = [
+            { wch: 10 },  // 직원명
+            { wch: 10 },  // 직책
+            ...dates.map(() => ({ wch: 25 }))  // 날짜 열들
+          ];
+          
+          XLSX.utils.book_append_sheet(wb, ws, '근태표');
+          
+          // 파일 저장
+          const fileName = `근태표_${this.currentApartmentName}_${startDate}_${endDate}.xlsx`;
+          XLSX.writeFile(wb, fileName);
+          
+          this.showToast('✅ Excel 파일이 다운로드되었습니다', 'success');
+          
+        } catch (error) {
+          console.error('❌ Excel 내보내기 실패:', error);
+          this.showToast('Excel 내보내기 중 오류가 발생했습니다', 'error');
         }
       };
       
