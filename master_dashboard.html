@@ -2638,7 +2638,7 @@
                         date: cells[0]?.v || cells[0]?.f || '-',
                         location: cells[1]?.v || cells[1]?.f || '-',
                         content: cells[2]?.v || cells[2]?.f || '-',
-                        status: cells[3]?.v || cells[3]?.f || '-',
+                        status: cells[6]?.v || cells[6]?.f || '-',  // G열: 진행상황
                         result: cells[4]?.v || cells[4]?.f || '-',
                         completeDate: cells[5]?.v || cells[5]?.f || '-'
                     };
@@ -2648,7 +2648,7 @@
                         console.log(`📋 [Google Sheets] Data row ${index + 1}:`, {
                             date: complaint.date,
                             location: complaint.location,
-                            content: complaint.content?.substring?.(0, 50) || complaint.content,
+                            content: typeof complaint.content === 'string' ? complaint.content.substring(0, 50) : complaint.content,
                             status: complaint.status
                         });
                     }

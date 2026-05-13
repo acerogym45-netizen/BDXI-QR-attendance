@@ -3644,14 +3644,20 @@
 
         switchTab: function (tab) {
           console.log('🔄 Switching to tab:', tab);
+          
+          // Hide all tabs - use both class and inline style for maximum compatibility
           document.querySelectorAll('.tab-content').forEach((el) => {
             console.log('  Hiding:', el.id);
             el.classList.add('hidden');
+            el.style.display = 'none';  // Force hide with inline style
           });
+          
+          // Show target tab
           const targetTab = document.getElementById(`tab-${tab}`);
           console.log('  Showing:', targetTab ? targetTab.id : 'NOT FOUND');
           if (targetTab) {
             targetTab.classList.remove('hidden');
+            targetTab.style.display = '';  // Remove inline style to show
           }
 
           document.querySelectorAll('.nav-tab').forEach((el) => {
