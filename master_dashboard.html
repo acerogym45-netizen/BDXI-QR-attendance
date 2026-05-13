@@ -2668,25 +2668,26 @@
                 
                 console.log('📊 [Google Sheets] Data info:', {
                     totalRows: rows.length,
-                    headerRow: rows[0]?.c?.map(cell => cell?.v || cell?.f),
-                    dataRowsCount: rows.length - 1
+                    headerRow: rows[15]?.c?.map(cell => cell?.v || cell?.f), // Row 16 is header (0-indexed = 15)
+                    dataRowsCount: rows.length - 16
                 });
                 
-                // Log first 3 rows to see actual structure
-                for (let i = 0; i < Math.min(3, rows.length); i++) {
+                // Log rows around header (rows 14-18) to see structure
+                console.log('📋 [Google Sheets] Rows around header (14-18):');
+                for (let i = 14; i < Math.min(19, rows.length); i++) {
                     const row = rows[i];
-                    console.log(`📋 [Google Sheets] Row ${i}:`, {
+                    console.log(`  Row ${i + 1} (index ${i}):`, {
                         cells: row.c?.map((cell, idx) => ({
-                            col: idx,
+                            col: String.fromCharCode(65 + idx), // A, B, C...
                             v: cell?.v,
-                            f: cell?.f,
-                            formatted: cell?.v || cell?.f || 'null'
+                            f: cell?.f
                         }))
                     });
                 }
                 
-                // Skip first row (header row) and process actual data
-                const dataRows = rows.slice(1); // Skip header
+                // Skip first 16 rows (rows 1-15: summary dashboard, row 16: headers)
+                // Data starts at row 17 (index 16)
+                const dataRows = rows.slice(16); // Skip summary dashboard and header
                 
                 const complaints = dataRows.map((row, index) => {
                     const cells = row.c || [];
@@ -2713,8 +2714,8 @@
                     
                     // Log first 3 actual data rows with full details
                     if (index < 3) {
-                        console.log(`📋 [Google Sheets] Row ${index + 1} full data:`, {
-                            rawCells: cells.map((c, i) => ({col: i, v: c?.v, f: c?.f})),
+                        console.log(`📋 [Google Sheets] Data Row ${index + 1} (Sheet Row ${index + 17}) full data:`, {
+                            rawCells: cells.map((c, i) => ({col: String.fromCharCode(65 + i), v: c?.v, f: c?.f})),
                             parsed: complaint
                         });
                     }
