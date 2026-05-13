@@ -969,8 +969,10 @@
                 let complaintCount = 0;
                 
                 if (apt.google_sheet_id) {
+                    console.log(`🔍 [${apt.name}] Fetching complaints with Sheet ID: ${apt.google_sheet_id}`);
                     complaints = await fetchComplaintsFromGoogleSheets(apt.google_sheet_id, apt.google_sheet_name || '월간 민원 처리 현황 DB');
                     complaintCount = countComplaintsThisMonth(complaints);
+                    console.log(`📊 [${apt.name}] Complaints loaded: ${complaints.length} total, ${complaintCount} this month`);
                 } else {
                     console.warn(`⚠️ ${apt.name}: Google Sheets ID가 없어 민원 데이터를 불러올 수 없습니다`);
                 }
@@ -1174,53 +1176,71 @@
                             </div>
 
                             <!-- 민원 미리보기 섹션 -->
-                            ${complaints.length > 0 ? `
-                                <div class="bg-orange-50 p-4 rounded-lg mb-4 border border-orange-200">
-                                    <div class="flex items-center justify-between mb-3">
-                                        <h4 class="text-sm font-bold text-gray-700">
-                                            <i class="fas fa-exclamation-circle text-orange-500 mr-1"></i>
-                                            최근 민원 (${complaintCount}건)
-                                        </h4>
-                                    </div>
-                                    <div class="space-y-2">
-                                        ${complaints.slice(0, 3).map(complaint => `
-                                            <div class="bg-white p-2 rounded border border-orange-100">
-                                                <div class="flex items-start justify-between gap-2">
-                                                    <div class="flex-1 min-w-0">
-                                                        <p class="text-xs text-gray-600 mb-1">
-                                                            <i class="fas fa-map-marker-alt text-orange-400 mr-1"></i>
-                                                            ${complaint.location}
-                                                        </p>
-                                                        <p class="text-sm text-gray-800 truncate">${summarizeComplaint(complaint.content)}</p>
-                                                    </div>
-                                                    <div class="flex-shrink-0">
-                                                        ${getComplaintStatusBadge(complaint.status)}
-                                                    </div>
-                                                </div>
+                            ${(() => {
+                                console.log(`🎨 [${apt.name}] Rendering complaints section:`, {
+                                    complaintsLength: complaints.length,
+                                    hasGoogleSheetId: !!apt.google_sheet_id,
+                                    first3Complaints: complaints.slice(0, 3)
+                                });
+                                
+                                if (complaints.length > 0) {
+                                    return `
+                                        <div class="bg-orange-50 p-4 rounded-lg mb-4 border border-orange-200">
+                                            <div class="flex items-center justify-between mb-3">
+                                                <h4 class="text-sm font-bold text-gray-700">
+                                                    <i class="fas fa-exclamation-circle text-orange-500 mr-1"></i>
+                                                    최근 민원 (${complaintCount}건)
+                                                </h4>
                                             </div>
-                                        `).join('')}
-                                        ${complaints.length > 3 ? `
-                                            <p class="text-xs text-center text-gray-500 mt-2">
-                                                외 ${complaints.length - 3}건 더 있음
+                                            <div class="space-y-2">
+                                                ${complaints.slice(0, 3).map((complaint, idx) => {
+                                                    console.log(`📋 [${apt.name}] Rendering complaint ${idx + 1}:`, complaint);
+                                                    return `
+                                                        <div class="bg-white p-2 rounded border border-orange-100">
+                                                            <div class="flex items-start justify-between gap-2">
+                                                                <div class="flex-1 min-w-0">
+                                                                    <p class="text-xs text-gray-600 mb-1">
+                                                                        <i class="fas fa-map-marker-alt text-orange-400 mr-1"></i>
+                                                                        ${complaint.location}
+                                                                    </p>
+                                                                    <p class="text-sm text-gray-800 truncate">${summarizeComplaint(complaint.content)}</p>
+                                                                </div>
+                                                                <div class="flex-shrink-0">
+                                                                    ${getComplaintStatusBadge(complaint.status)}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    `;
+                                                }).join('')}
+                                                ${complaints.length > 3 ? `
+                                                    <p class="text-xs text-center text-gray-500 mt-2">
+                                                        외 ${complaints.length - 3}건 더 있음
+                                                    </p>
+                                                ` : ''}
+                                            </div>
+                                        </div>
+                                    `;
+                                } else if (apt.google_sheet_id) {
+                                    return `
+                                        <div class="bg-gray-50 p-4 rounded-lg mb-4 border border-gray-200">
+                                            <p class="text-sm text-center text-gray-500">
+                                                <i class="fas fa-check-circle text-green-500 mr-1"></i>
+                                                이번 달 등록된 민원이 없습니다
                                             </p>
-                                        ` : ''}
-                                    </div>
-                                </div>
-                            ` : apt.google_sheet_id ? `
-                                <div class="bg-gray-50 p-4 rounded-lg mb-4 border border-gray-200">
-                                    <p class="text-sm text-center text-gray-500">
-                                        <i class="fas fa-check-circle text-green-500 mr-1"></i>
-                                        이번 달 등록된 민원이 없습니다
-                                    </p>
-                                </div>
-                            ` : `
-                                <div class="bg-yellow-50 p-4 rounded-lg mb-4 border border-yellow-200">
-                                    <p class="text-sm text-center text-yellow-700">
-                                        <i class="fas fa-exclamation-triangle mr-1"></i>
-                                        Google Sheets 미연동 (민원 데이터 없음)
-                                    </p>
-                                </div>
-                            `}
+                                        </div>
+                                    `;
+                                } else {
+                                    return `
+                                        <div class="bg-yellow-50 p-4 rounded-lg mb-4 border border-yellow-200">
+                                            <p class="text-sm text-center text-yellow-700">
+                                                <i class="fas fa-exclamation-triangle mr-1"></i>
+                                                Google Sheets 미연동 (민원 데이터 없음)
+                                            </p>
+                                        </div>
+                                    `;
+                                }
+                            })()}
+
 
                             <div class="flex gap-2">
                                 <button onclick="editApartment('${apt.id}')" class="flex-1 px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg text-sm font-medium transition">
@@ -2573,20 +2593,37 @@
                 }
                 
                 const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(sheetName)}`;
+                console.log('🔍 [Google Sheets] Fetching complaints from:', url);
                 
                 const response = await fetch(url);
+                console.log('📡 [Google Sheets] Response status:', response.status, response.statusText);
+                
                 if (!response.ok) {
                     throw new Error(`Google Sheets 로드 실패: ${response.status}`);
                 }
                 
                 const text = await response.text();
+                console.log('📄 [Google Sheets] Response received, length:', text.length);
+                
                 const jsonText = text.substring(47, text.length - 2);
                 const data = JSON.parse(jsonText);
                 
+                console.log('✅ [Google Sheets] Parsed data structure:', {
+                    hasTable: !!data.table,
+                    hasRows: !!data.table?.rows,
+                    rowCount: data.table?.rows?.length || 0,
+                    columns: data.table?.cols?.map(col => col.label) || []
+                });
+                
+                if (!data.table || !data.table.rows || data.table.rows.length === 0) {
+                    console.warn('⚠️ [Google Sheets] No data rows found');
+                    return [];
+                }
+                
                 const rows = data.table.rows;
-                const complaints = rows.map(row => {
+                const complaints = rows.map((row, index) => {
                     const cells = row.c;
-                    return {
+                    const complaint = {
                         date: cells[0]?.v || '-',
                         location: cells[1]?.v || '-',
                         content: cells[2]?.v || '-',
@@ -2594,12 +2631,20 @@
                         result: cells[4]?.v || '-',
                         completeDate: cells[5]?.v || '-'
                     };
+                    
+                    // Log first 3 complaints for debugging
+                    if (index < 3) {
+                        console.log(`📋 [Google Sheets] Complaint ${index + 1}:`, complaint);
+                    }
+                    
+                    return complaint;
                 });
                 
+                console.log(`✅ [Google Sheets] Successfully parsed ${complaints.length} complaints`);
                 return complaints;
                 
             } catch (error) {
-                console.error('❌ Google Sheets 민원 데이터 로드 실패:', error);
+                console.error('❌ [Google Sheets] 민원 데이터 로드 실패:', error);
                 return [];
             }
         }
