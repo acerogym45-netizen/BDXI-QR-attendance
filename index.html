@@ -14277,15 +14277,24 @@
           const data = JSON.parse(jsonText);
           
           const rows = data.table.rows;
-          const complaints = rows.map(row => {
+          
+          // Skip rows 1-16 (summary dashboard rows 1-15 + header row 16)
+          // Data starts at row 17 (index 16)
+          const dataRows = rows.slice(16);
+          
+          const complaints = dataRows.map(row => {
             const cells = row.c;
+            // Column mapping per user specification:
+            // A(0): 작성일시, B(1): 구역, C(2): 요청자유형, D(3): 민원인신상
+            // E(4): 접수자, F(5): 담당자, G(6): 진행상황, H(7): 민원내용
+            // I(8): 조치사항, J(9): 피드백, K(10): 비고
             return {
-              date: cells[0]?.v || '-',
-              location: cells[1]?.v || '-',
-              content: cells[2]?.v || '-',
-              status: cells[3]?.v || '-',
-              result: cells[4]?.v || '-',
-              completeDate: cells[5]?.v || '-'
+              date: cells[0]?.v || '-',          // A: 작성일시 (접수일)
+              location: cells[1]?.v || '-',      // B: 구역 (동/호수)
+              content: cells[7]?.v || '-',       // H: 민원내용 ← Fixed!
+              status: cells[6]?.v || '-',        // G: 진행상황 (처리 상태)
+              result: cells[8]?.v || '-',        // I: 조치사항 (처리 결과)
+              completeDate: cells[0]?.v || '-'   // A: 작성일시 (완료일 - 같은 날짜)
             };
           });
           

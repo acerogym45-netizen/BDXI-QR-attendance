@@ -1183,7 +1183,7 @@
                                 console.log(`🎨 [${apt.name}] Rendering complaints section:`, {
                                     complaintsLength: complaints.length,
                                     hasGoogleSheetId: !!apt.google_sheet_id,
-                                    first3Complaints: complaints.slice(0, 3)
+                                    latest3Complaints: complaints.slice(-3).reverse()
                                 });
                                 
                                 if (complaints.length > 0) {
@@ -1196,7 +1196,7 @@
                                                 </h4>
                                             </div>
                                             <div class="space-y-2">
-                                                ${complaints.slice(0, 3).map((complaint, idx) => {
+                                                ${complaints.slice(-3).reverse().map((complaint, idx) => {
                                                     console.log(`📋 [${apt.name}] Rendering complaint ${idx + 1}:`, complaint);
                                                     return `
                                                         <div class="bg-white p-3 rounded border border-orange-100">
