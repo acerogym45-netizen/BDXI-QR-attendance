@@ -3625,8 +3625,14 @@
           
           // 헤더에 아파트 이름 표시
           const apartmentNameEl = document.getElementById('current-apartment-name');
-          if (apartmentNameEl && this.currentApartment) {
-            apartmentNameEl.textContent = this.currentApartment.name;
+          if (apartmentNameEl && this.currentApartmentInfo) {
+            apartmentNameEl.textContent = this.currentApartmentInfo.name;
+            console.log('✅ 헤더에 아파트명 표시:', this.currentApartmentInfo.name);
+          } else {
+            console.error('❌ 아파트명 표시 실패:', {
+              elementExists: !!apartmentNameEl,
+              hasApartmentInfo: !!this.currentApartmentInfo
+            });
           }
           
           // 계약 만료 알림 체크
@@ -3806,8 +3812,8 @@
             let q = this.sb.from('cleaning_tasks').select('*').order('created_at', { ascending: false });
 
             // 🏢 아파트 필터 (필수)
-            if (this.currentApartment && this.currentApartment.id) {
-              q = q.eq('apartment_id', this.currentApartment.id);
+            if (this.currentApartment) {
+              q = q.eq('apartment_id', this.currentApartment);
             }
 
             const dateStart = document.getElementById('filter-date-start').value;
@@ -4307,11 +4313,11 @@
             // 1️⃣ 먼저 attendance_notes를 모두 로드 (캐싱)
             let notesData = [];
             try {
-              if (this.currentApartment && this.currentApartment.id) {
+              if (this.currentApartment) {
                 const { data: notes, error: notesError } = await this.sb
                   .from('attendance_notes')
                   .select('*')
-                  .eq('apartment_id', this.currentApartment.id);
+                  .eq('apartment_id', this.currentApartment);
                 
                 if (!notesError && notes) {
                   notesData = notes;
@@ -4326,8 +4332,8 @@
             let q = this.sb.from('attendance_records').select('*').order('scan_time', { ascending: false });
 
             // 🏢 아파트 필터 (필수)
-            if (this.currentApartment && this.currentApartment.id) {
-              q = q.eq('apartment_id', this.currentApartment.id);
+            if (this.currentApartment) {
+              q = q.eq('apartment_id', this.currentApartment);
             }
 
             const start = document.getElementById('hist-start').value;
@@ -4484,8 +4490,8 @@
               .select('id, name, position, apartment_id, status')
               .eq('status', 'active');
             
-            if (this.currentApartment && this.currentApartment.id) {
-              query = query.eq('apartment_id', this.currentApartment.id);
+            if (this.currentApartment) {
+              query = query.eq('apartment_id', this.currentApartment);
             }
             
             const { data, error } = await query;
@@ -4586,8 +4592,8 @@
               .order('created_at', { ascending: true });
             
             // 단지별 필터링 (중요!)
-            if (this.currentApartment && this.currentApartment.id) {
-              query = query.eq('apartment_id', this.currentApartment.id);
+            if (this.currentApartment) {
+              query = query.eq('apartment_id', this.currentApartment);
             }
             
             // 개별 직원 또는 전체 직원
@@ -4846,11 +4852,11 @@
               .lte('vacation_date', end);
 
             // 아파트 필터 적용
-            if (this.currentApartment && this.currentApartment.id) {
-              activeEmpQuery = activeEmpQuery.eq('apartment_id', this.currentApartment.id);
-              allEmpQuery = allEmpQuery.eq('apartment_id', this.currentApartment.id);
-              attsQuery = attsQuery.eq('apartment_id', this.currentApartment.id);
-              vacQuery = vacQuery.eq('apartment_id', this.currentApartment.id);
+            if (this.currentApartment) {
+              activeEmpQuery = activeEmpQuery.eq('apartment_id', this.currentApartment);
+              allEmpQuery = allEmpQuery.eq('apartment_id', this.currentApartment);
+              attsQuery = attsQuery.eq('apartment_id', this.currentApartment);
+              vacQuery = vacQuery.eq('apartment_id', this.currentApartment);
             }
 
             const { data: activeEmps } = await activeEmpQuery;
@@ -5117,8 +5123,8 @@
             let query = this.sb.from('locations').select('*').eq('status', 'active');
             
             // 🏢 아파트 필터 적용
-            if (this.currentApartment && this.currentApartment.id) {
-              query = query.eq('apartment_id', this.currentApartment.id);
+            if (this.currentApartment) {
+              query = query.eq('apartment_id', this.currentApartment);
             }
             
             const { data, error } = await query;
@@ -5290,8 +5296,8 @@
               .gte('scan_time', `${startDate}T00:00:00Z`)
               .order('scan_time', { ascending: false });
             
-            if (this.currentApartment && this.currentApartment.id) {
-              query = query.eq('apartment_id', this.currentApartment.id);
+            if (this.currentApartment) {
+              query = query.eq('apartment_id', this.currentApartment);
             }
             
             const { data: records } = await query;
@@ -5381,9 +5387,9 @@
               .select('id, name, work_start_time, work_days')
               .eq('status', 'active');
             
-            if (this.currentApartment && this.currentApartment.id) {
-              recordQuery = recordQuery.eq('apartment_id', this.currentApartment.id);
-              empQuery = empQuery.eq('apartment_id', this.currentApartment.id);
+            if (this.currentApartment) {
+              recordQuery = recordQuery.eq('apartment_id', this.currentApartment);
+              empQuery = empQuery.eq('apartment_id', this.currentApartment);
             }
             
             const { data: records } = await recordQuery;
@@ -5502,8 +5508,8 @@
               .eq('status', 'pending')
               .order('start_date', { ascending: true });
             
-            if (this.currentApartment && this.currentApartment.id) {
-              query = query.eq('apartment_id', this.currentApartment.id);
+            if (this.currentApartment) {
+              query = query.eq('apartment_id', this.currentApartment);
             }
             
             const { data: pendingVacations } = await query;
@@ -5653,8 +5659,8 @@
               .eq('status', 'active')
               .order('name');
             
-            if (this.currentApartment && this.currentApartment.id) {
-              query = query.eq('apartment_id', this.currentApartment.id);
+            if (this.currentApartment) {
+              query = query.eq('apartment_id', this.currentApartment);
             }
             
             const { data, error } = await query;
@@ -5687,8 +5693,8 @@
               .lte('vacation_date', endOfMonth)
               .order('vacation_date', { ascending: false });
             
-            if (this.currentApartment && this.currentApartment.id) {
-              query = query.eq('apartment_id', this.currentApartment.id);
+            if (this.currentApartment) {
+              query = query.eq('apartment_id', this.currentApartment);
             }
             
             const { data, error } = await query;
@@ -5747,14 +5753,14 @@
             return;
           }
           
-          if (!this.currentApartment || !this.currentApartment.id) {
+          if (!this.currentApartment || !this.currentApartment) {
             alert('아파트 정보가 없습니다.');
             return;
           }
           
           try {
             const { error } = await this.sb.from('vacations').insert({
-              apartment_id: this.currentApartment.id,
+              apartment_id: this.currentApartment,
               employee_id: employeeId,
               employee_name: employeeName,
               vacation_date: vacationDate,
@@ -5888,7 +5894,7 @@
 
             // 아파트 필터
             if (this.currentApartment?.id) {
-              query = query.eq('apartment_id', this.currentApartment.id);
+              query = query.eq('apartment_id', this.currentApartment);
             }
 
             const { data: vacations, error } = await query;
@@ -5988,7 +5994,7 @@
 
             // 아파트 필터
             if (this.currentApartment?.id) {
-              query = query.eq('apartment_id', this.currentApartment.id);
+              query = query.eq('apartment_id', this.currentApartment);
             }
 
             // 직원 필터
@@ -6084,7 +6090,7 @@
               .order('name');
 
             if (this.currentApartment?.id) {
-              empQuery = empQuery.eq('apartment_id', this.currentApartment.id);
+              empQuery = empQuery.eq('apartment_id', this.currentApartment);
             }
 
             const { data: employees, error: empError } = await empQuery;
@@ -6171,7 +6177,7 @@
               .order('created_at', { ascending: false });
 
             if (this.currentApartment?.id) {
-              query = query.eq('apartment_id', this.currentApartment.id);
+              query = query.eq('apartment_id', this.currentApartment);
             }
 
             const { data: vacations, error } = await query;
@@ -6233,8 +6239,8 @@
             let query = this.sb.from('employees').select('*').order('created_at', { ascending: false });
             
             // 🏢 아파트 필터 적용
-            if (this.currentApartment && this.currentApartment.id) {
-              query = query.eq('apartment_id', this.currentApartment.id);
+            if (this.currentApartment) {
+              query = query.eq('apartment_id', this.currentApartment);
             }
             
             const { data, error } = await query;
@@ -6380,8 +6386,8 @@
               .order('name', { ascending: true });
             
             // 아파트 필터
-            if (this.currentApartment && this.currentApartment.id) {
-              query = query.eq('apartment_id', this.currentApartment.id);
+            if (this.currentApartment) {
+              query = query.eq('apartment_id', this.currentApartment);
             }
             
             const { data, error } = await query;
@@ -6549,8 +6555,8 @@
               .select('name, phone, login_password, password_changed_at, last_login_at')
               .order('name', { ascending: true });
             
-            if (this.currentApartment && this.currentApartment.id) {
-              query = query.eq('apartment_id', this.currentApartment.id);
+            if (this.currentApartment) {
+              query = query.eq('apartment_id', this.currentApartment);
             }
             
             const { data, error } = await query;
@@ -6766,7 +6772,7 @@
               base_salary: baseSalary ? parseFloat(baseSalary) : null,
               position_allowance: positionAllowance ? parseFloat(positionAllowance) : null,
               status,
-              apartment_id: this.currentApartment ? this.currentApartment.id : null,
+              apartment_id: this.currentApartment ? this.currentApartment : null,
               contract_start: contractStart || null,
               contract_end: contractEnd || null,
               notes: notes || null,
@@ -6867,7 +6873,7 @@
           
           try {
             const { error } = await this.sb.from('holidays').insert([{
-              apartment_id: this.currentApartment ? this.currentApartment.id : null,
+              apartment_id: this.currentApartment ? this.currentApartment : null,
               holiday_date: date,
               holiday_name: name,
               holiday_type: type,
@@ -6912,8 +6918,8 @@
               .order('holiday_date', { ascending: true });
             
             // 아파트 필터
-            if (this.currentApartment && this.currentApartment.id) {
-              query = query.eq('apartment_id', this.currentApartment.id);
+            if (this.currentApartment) {
+              query = query.eq('apartment_id', this.currentApartment);
             }
             
             // 연도 필터
@@ -7010,8 +7016,8 @@
               .not('contract_end', 'is', null);
             
             // 🏢 아파트 필터 적용
-            if (this.currentApartment && this.currentApartment.id) {
-              query = query.eq('apartment_id', this.currentApartment.id);
+            if (this.currentApartment) {
+              query = query.eq('apartment_id', this.currentApartment);
             }
             
             const { data, error } = await query;
@@ -7080,8 +7086,8 @@
               .not('contract_end', 'is', null);
             
             // 🏢 아파트 필터 적용
-            if (this.currentApartment && this.currentApartment.id) {
-              query = query.eq('apartment_id', this.currentApartment.id);
+            if (this.currentApartment) {
+              query = query.eq('apartment_id', this.currentApartment);
             }
             
             const { data, error } = await query;
@@ -7182,8 +7188,8 @@
             let query = this.sb.from('locations').select('*').order('created_at', { ascending: false });
             
             // 🏢 아파트 필터 적용
-            if (this.currentApartment && this.currentApartment.id) {
-              query = query.eq('apartment_id', this.currentApartment.id);
+            if (this.currentApartment) {
+              query = query.eq('apartment_id', this.currentApartment);
             }
             
             const { data, error } = await query;
@@ -7336,7 +7342,7 @@
             const locationData = { 
               name, 
               status,
-              apartment_id: this.currentApartment ? this.currentApartment.id : null
+              apartment_id: this.currentApartment ? this.currentApartment : null
             };
             
             const { error } = await this.sb.from('locations').insert([locationData]);
@@ -7447,7 +7453,7 @@
         // Apartment Management
         loadApartmentInfo: async function () {
           const container = document.getElementById('apartment-info');
-          if (!this.currentApartment || !this.currentApartment.id) {
+          if (!this.currentApartment || !this.currentApartment) {
             container.innerHTML = '<div class="text-gray-500"><i class="fas fa-info-circle mr-2"></i>아파트 정보가 없습니다.</div>';
             return;
           }
@@ -7456,7 +7462,7 @@
             const { data, error } = await this.sb
               .from('apartments')
               .select('*')
-              .eq('id', this.currentApartment.id)
+              .eq('id', this.currentApartment)
               .single();
             
             if (error) throw error;
@@ -7513,7 +7519,7 @@
         },
         
         showEditApartmentModal: async function () {
-          if (!this.currentApartment || !this.currentApartment.id) {
+          if (!this.currentApartment || !this.currentApartment) {
             alert('아파트 정보가 없습니다.');
             return;
           }
@@ -7522,7 +7528,7 @@
             const { data, error } = await this.sb
               .from('apartments')
               .select('*')
-              .eq('id', this.currentApartment.id)
+              .eq('id', this.currentApartment)
               .single();
             
             if (error) throw error;
@@ -7727,8 +7733,8 @@
               .order('created_at', { ascending: false }); // 최신순 정렬
             
             // 아파트 필터 적용
-            if (this.currentApartment && this.currentApartment.id) {
-              taskQuery = taskQuery.eq('apartment_id', this.currentApartment.id);
+            if (this.currentApartment) {
+              taskQuery = taskQuery.eq('apartment_id', this.currentApartment);
             }
             
             const { data: tasks, error: taskError } = await taskQuery;
@@ -7737,8 +7743,8 @@
             
             // 직원 정보 로드 (전체 직원)
             let employeeQuery = this.sb.from('employees').select('name, position, status');
-            if (this.currentApartment && this.currentApartment.id) {
-              employeeQuery = employeeQuery.eq('apartment_id', this.currentApartment.id);
+            if (this.currentApartment) {
+              employeeQuery = employeeQuery.eq('apartment_id', this.currentApartment);
             }
             
             const { data: employees, error: empError } = await employeeQuery;
@@ -7817,9 +7823,9 @@
               endDateType: typeof endDate,
               queryStart: `${startDate}T00:00:00Z`,
               queryEnd: `${endDate}T23:59:59Z`,
-              hasApartment: !!(this.currentApartment && this.currentApartment.id),
-              apartmentId: this.currentApartment ? this.currentApartment.id : null,
-              apartmentName: this.currentApartment ? this.currentApartment.name : null
+              hasApartment: !!(this.currentApartment && this.currentApartment),
+              apartmentId: this.currentApartment ? this.currentApartment : null,
+              apartmentName: this.currentApartmentInfo ? this.currentApartmentInfo.name : null
             });
             
             // 근태 관리와 동일: select('*')로 모든 필드 조회
@@ -7829,9 +7835,9 @@
               .gte('scan_time', `${startDate}T00:00:00Z`)
               .lte('scan_time', `${endDate}T23:59:59Z`);
             
-            if (this.currentApartment && this.currentApartment.id) {
-              console.log('✅ 아파트 필터 적용:', this.currentApartment.id);
-              attendanceQuery = attendanceQuery.eq('apartment_id', this.currentApartment.id);
+            if (this.currentApartment) {
+              console.log('✅ 아파트 필터 적용:', this.currentApartment);
+              attendanceQuery = attendanceQuery.eq('apartment_id', this.currentApartment);
             } else {
               console.log('⚠️ 아파트 필터 없음 - 전체 조회');
             }
@@ -7877,8 +7883,8 @@
               .gte('vacation_date', startDate)
               .lte('vacation_date', endDate);
             
-            if (this.currentApartment && this.currentApartment.id) {
-              vacationQuery = vacationQuery.eq('apartment_id', this.currentApartment.id);
+            if (this.currentApartment) {
+              vacationQuery = vacationQuery.eq('apartment_id', this.currentApartment);
             }
             
             const { data: vacationRecords, error: vacError } = await vacationQuery;
@@ -7904,8 +7910,8 @@
             
             // 구역 정보 로드 (시설물 점검용)
             let locationQuery = this.sb.from('locations').select('name').order('name', { ascending: true });
-            if (this.currentApartment && this.currentApartment.id) {
-              locationQuery = locationQuery.eq('apartment_id', this.currentApartment.id);
+            if (this.currentApartment) {
+              locationQuery = locationQuery.eq('apartment_id', this.currentApartment);
             }
             
             const { data: locations, error: locError } = await locationQuery;
@@ -7950,14 +7956,14 @@
         loadComplaintData: async function(startDate, endDate) {
           // 아파트별 Google Sheets ID 사용 (없으면 기본값)
           console.log('🔍 민원 데이터 로드 시작:', {
-            currentApartment: this.currentApartment?.name,
-            google_sheet_id: this.currentApartment?.google_sheet_id,
-            google_sheet_name: this.currentApartment?.google_sheet_name
+            currentApartmentName: this.currentApartmentInfo?.name,
+            google_sheet_id: this.currentApartmentInfo?.google_sheet_id,
+            google_sheet_name: this.currentApartmentInfo?.google_sheet_name
           });
           
-          const SHEET_ID = this.currentApartment?.google_sheet_id || '1Q2eWuYqc8rueSAzN89eLTW0PdG3kIS2f8UZjh4NK-HM';
+          const SHEET_ID = this.currentApartmentInfo?.google_sheet_id || '1Q2eWuYqc8rueSAzN89eLTW0PdG3kIS2f8UZjh4NK-HM';
           const API_KEY = 'AIzaSyC0GBEpgXSFKHcyKVn9t-Pq9upa04QqmmQ';
-          const SHEET_NAME = this.currentApartment?.google_sheet_name || '월간 민원 처리 현황 DB';
+          const SHEET_NAME = this.currentApartmentInfo?.google_sheet_name || '월간 민원 처리 현황 DB';
           // 시트 이름 URL 인코딩 (공백, 특수문자 처리)
           const RANGE = `${encodeURIComponent(SHEET_NAME)}!A:K`;
           
@@ -7965,7 +7971,7 @@
             SHEET_ID,
             SHEET_NAME,
             RANGE,
-            usingDefault: !this.currentApartment?.google_sheet_id
+            usingDefault: !this.currentApartmentInfo?.google_sheet_id
           });
           
           // Sheet ID가 없으면 민원 데이터 없음 처리
@@ -8811,7 +8817,7 @@
           const { data: sales, error } = await this.sb
             .from('sales')
             .select('*')
-            .eq('apartment_id', this.currentApartment.id)
+            .eq('apartment_id', this.currentApartment)
             .order('year', { ascending: false })
             .order('month', { ascending: false });
             
@@ -8986,7 +8992,7 @@
         
         try {
           const salesData = {
-            apartment_id: this.currentApartment.id,
+            apartment_id: this.currentApartment,
             year,
             month,
             amount,
@@ -9057,7 +9063,7 @@
         
         try {
           const { data, error } = await this.sb.rpc('get_all_incomplete_checkouts', {
-            apartment_id_param: this.currentApartment.id
+            apartment_id_param: this.currentApartment
           });
           
           if (error) throw error;
@@ -9094,7 +9100,7 @@
         try {
           const today = new Date().toISOString().split('T')[0];
           const { data, error } = await this.sb.rpc('get_incomplete_checkouts', {
-            apartment_id_param: this.currentApartment.id,
+            apartment_id_param: this.currentApartment,
             date_param: today
           });
           
@@ -9129,7 +9135,7 @@
         
         try {
           const { data, error } = await this.sb.rpc('get_all_incomplete_checkouts', {
-            apartment_id_param: this.currentApartment.id
+            apartment_id_param: this.currentApartment
           });
           
           if (error) throw error;
@@ -9223,7 +9229,7 @@
         try {
           const today = new Date().toISOString().split('T')[0];
           const { data, error } = await this.sb.rpc('get_incomplete_checkouts', {
-            apartment_id_param: this.currentApartment.id,
+            apartment_id_param: this.currentApartment,
             date_param: today
           });
           
@@ -9357,7 +9363,7 @@
             const { data: checkOutRecord, error: insertError } = await this.sb
               .from('attendance_records')
               .insert({
-                apartment_id: this.currentApartment.id,
+                apartment_id: this.currentApartment,
                 employee_id: employeeId,
                 employee_name: employeeName,
                 attendance_type: '퇴근',
@@ -9374,7 +9380,7 @@
             const { error: logError } = await this.sb
               .from('attendance_edit_logs')
               .insert({
-                apartment_id: this.currentApartment.id,
+                apartment_id: this.currentApartment,
                 record_id: checkOutRecord.id,
                 editor_name: this.currentUser?.name || '관리자',
                 editor_role: this.currentUser?.role || 'center_manager',
@@ -9426,7 +9432,7 @@
       app.loadPurchaseDashboard = async function() {
         console.log('📊 loadPurchaseDashboard 시작');
         try {
-          const aptId = this.currentApartment.id;
+          const aptId = this.currentApartment;
           console.log('  aptId:', aptId);
           const now = new Date();
           const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -9472,7 +9478,7 @@
       app.loadPurchases = async function() {
         console.log('📦 loadPurchases 시작');
         try {
-          const aptId = this.currentApartment.id;
+          const aptId = this.currentApartment;
           console.log('  aptId:', aptId);
           
           const { data, error } = await this.sb
@@ -9616,7 +9622,7 @@
           const { data } = await this.sb
             .from('frequent_items')
             .select('*')
-            .eq('apartment_id', this.currentApartment.id)
+            .eq('apartment_id', this.currentApartment)
             .order('usage_count', { ascending: false });
           frequentItems = data || [];
         } catch (err) {
@@ -9736,7 +9742,7 @@
           const { data: purchase, error: e1 } = await this.sb
             .from('purchases')
             .insert([{
-              apartment_id: this.currentApartment.id,
+              apartment_id: this.currentApartment,
               requester_name: requesterName,
               requester_role: requesterRole,
               reason: reason,
@@ -9768,7 +9774,7 @@
             const { data: existing } = await this.sb
               .from('frequent_items')
               .select('*')
-              .eq('apartment_id', this.currentApartment.id)
+              .eq('apartment_id', this.currentApartment)
               .eq('item_name', item.name)
               .single();
             
@@ -9785,7 +9791,7 @@
               await this.sb
                 .from('frequent_items')
                 .insert([{
-                  apartment_id: this.currentApartment.id,
+                  apartment_id: this.currentApartment,
                   item_name: item.name,
                   category: item.category,
                   unit_price: item.price,
@@ -11140,7 +11146,7 @@
           const { data, error } = await this.sb
             .from('purchase_qr_requests')
             .select('*')
-            .eq('apartment_id', this.currentApartment.id)
+            .eq('apartment_id', this.currentApartment)
             .order('created_at', { ascending: false });
           
           if (error) throw error;
@@ -11193,7 +11199,7 @@
           const { error } = await this.sb
             .from('purchase_qr_requests')
             .insert([{
-              apartment_id: this.currentApartment.id,
+              apartment_id: this.currentApartment,
               qr_code: qrCode,
               location_name: locationName,
               is_active: true
@@ -11809,7 +11815,7 @@
             .from('document_downloads')
             .insert([{
               document_id: documentId,
-              apartment_id: this.currentApartment.id,
+              apartment_id: this.currentApartment,
               downloaded_by: this.currentEmployee?.id
             }]);
           
@@ -11837,7 +11843,7 @@
             .from('document_views')
             .upsert({
               document_id: documentId,
-              apartment_id: this.currentApartment.id,
+              apartment_id: this.currentApartment,
               viewed_by: this.currentEmployee?.id,
               last_viewed_at: new Date().toISOString(),
               view_count: (doc.view_count || 0) + 1
@@ -12422,7 +12428,7 @@
             .from('document_views')
             .upsert({
               document_id: documentId,
-              apartment_id: this.currentApartment.id,
+              apartment_id: this.currentApartment,
               viewed_by: this.currentEmployee?.id,
               is_read: true,
               read_at: new Date().toISOString(),
@@ -12445,13 +12451,13 @@
           const { data: employees } = await this.sb
             .from('employees')
             .select('id')
-            .eq('apartment_id', this.currentApartment.id)
+            .eq('apartment_id', this.currentApartment)
             .eq('status', 'active');
           
           if (employees && employees.length > 0) {
             const notifications = employees.map(emp => ({
               document_id: documentId,
-              apartment_id: this.currentApartment.id,
+              apartment_id: this.currentApartment,
               recipient_id: emp.id,
               notification_type: type,
               title: title,
