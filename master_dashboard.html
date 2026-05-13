@@ -2635,12 +2635,12 @@
                     const cells = row.c;
                     
                     const complaint = {
-                        date: cells[0]?.v || cells[0]?.f || '-',
-                        location: cells[1]?.v || cells[1]?.f || '-',
-                        content: cells[2]?.v || cells[2]?.f || '-',
-                        status: cells[6]?.v || cells[6]?.f || '-',  // G열: 진행상황
-                        result: cells[4]?.v || cells[4]?.f || '-',
-                        completeDate: cells[5]?.v || cells[5]?.f || '-'
+                        date: cells[0]?.v || cells[0]?.f || '-',           // A열: 작성일시
+                        location: cells[1]?.v || cells[1]?.f || '-',       // B열: 구역
+                        content: cells[7]?.v || cells[7]?.f || '-',        // H열: 민원내용
+                        status: cells[6]?.v || cells[6]?.f || '-',         // G열: 진행상황
+                        result: cells[8]?.v || cells[8]?.f || '-',         // I열: 조치사항
+                        completeDate: cells[0]?.v || cells[0]?.f || '-'    // A열: 작성일시 (완료일 없으므로 작성일 사용)
                     };
                     
                     // Log first 3 actual data rows
