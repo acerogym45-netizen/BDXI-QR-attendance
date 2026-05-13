@@ -1336,15 +1336,19 @@
                     hour: '2-digit', 
                     minute: '2-digit' 
                 });
+                
+                // 출퇴근 구분
+                const typeText = record.type === 'check_out' ? '퇴근 체크아웃' : '출근 체크인';
+                const iconClass = record.type === 'check_out' ? 'fa-user-times' : 'fa-user-check';
 
                 return `
                     <div class="flex items-center gap-4 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
                         <div class="w-10 h-10 brand-bg rounded-full flex items-center justify-center text-white">
-                            <i class="fas fa-user-check"></i>
+                            <i class="fas ${iconClass}"></i>
                         </div>
                         <div class="flex-1">
                             <p class="font-medium">${record.employees?.name || '직원'} - ${record.apartments?.name || '아파트'}</p>
-                            <p class="text-sm text-gray-600">출근 체크인 · ${timeStr}</p>
+                            <p class="text-sm text-gray-600">${typeText} · ${timeStr}</p>
                         </div>
                     </div>
                 `;
