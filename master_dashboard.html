@@ -970,7 +970,10 @@
                 
                 if (apt.google_sheet_id) {
                     console.log(`🔍 [${apt.name}] Fetching complaints with Sheet ID: ${apt.google_sheet_id}`);
-                    complaints = await fetchComplaintsFromGoogleSheets(apt.google_sheet_id, apt.google_sheet_name || '월간 민원 처리 현황 DB');
+                    // FORCE: Always use "월간 민원 처리 현황 DB" tab, ignore apt.google_sheet_name
+                    const correctSheetName = '월간 민원 처리 현황 DB';
+                    console.log(`📝 [${apt.name}] Using sheet tab: ${correctSheetName} (forced)`);
+                    complaints = await fetchComplaintsFromGoogleSheets(apt.google_sheet_id, correctSheetName);
                     complaintCount = countComplaintsThisMonth(complaints);
                     console.log(`📊 [${apt.name}] Complaints loaded: ${complaints.length} total, ${complaintCount} this month`);
                 } else {
