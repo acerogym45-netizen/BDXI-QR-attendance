@@ -2622,19 +2622,17 @@
                 
                 const rows = data.table.rows;
                 
-                // Log column structure
-                console.log('📊 [Google Sheets] Column structure:', {
-                    columns: data.table.cols?.map(col => ({label: col.label, type: col.type})),
-                    totalRows: rows.length
+                // Skip first row (header row) and process actual data
+                const dataRows = rows.slice(1); // Skip header
+                
+                console.log('📊 [Google Sheets] Data info:', {
+                    totalRows: rows.length,
+                    headerRow: rows[0]?.c?.map(cell => cell?.v || cell?.f),
+                    dataRowsCount: dataRows.length
                 });
                 
-                const complaints = rows.map((row, index) => {
+                const complaints = dataRows.map((row, index) => {
                     const cells = row.c;
-                    
-                    // Log raw cell data for first row
-                    if (index === 0) {
-                        console.log('🔍 [Google Sheets] First row raw cells:', cells);
-                    }
                     
                     const complaint = {
                         date: cells[0]?.v || cells[0]?.f || '-',
@@ -2645,12 +2643,12 @@
                         completeDate: cells[5]?.v || cells[5]?.f || '-'
                     };
                     
-                    // Log first 3 complaints for debugging
+                    // Log first 3 actual data rows
                     if (index < 3) {
-                        console.log(`📋 [Google Sheets] Complaint ${index + 1}:`, {
+                        console.log(`📋 [Google Sheets] Data row ${index + 1}:`, {
                             date: complaint.date,
                             location: complaint.location,
-                            content: complaint.content?.substring(0, 50),
+                            content: complaint.content?.substring?.(0, 50) || complaint.content,
                             status: complaint.status
                         });
                     }
