@@ -120,7 +120,6 @@
       /* Main Content Container */
       #main-content {
         position: relative !important;
-        min-height: 100vh !important;
         overflow-x: hidden !important;
       }
       
@@ -129,7 +128,6 @@
         width: 100% !important;
         max-width: none !important;
         margin: 0 !important;
-        padding: 0 !important;
       }
       
       .tab-content.hidden {
@@ -423,7 +421,7 @@
       <!-- Main Content -->
       <main id="main-content" class="flex-1 w-full relative">
         <!-- 계약 만료 알림 배너 -->
-        <div id="contract-alert-banner" style="display: none;" class="bg-gradient-to-r from-orange-50 to-red-50 border-2 border-orange-300 rounded-xl shadow-lg">
+        <div id="contract-alert-banner" class="hidden bg-gradient-to-r from-orange-50 to-red-50 border-2 border-orange-300 rounded-xl shadow-lg">
           <div class="flex items-start gap-3">
             <div class="flex-shrink-0">
               <i class="fas fa-exclamation-triangle text-orange-600 text-2xl"></i>
