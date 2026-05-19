@@ -1062,6 +1062,20 @@
                 // apt 객체에 정산서 제출 여부 추가
                 apt.settlement_submitted = settlementSubmitted;
 
+                // 📅 최근 3일 활동 확인
+                const threeDaysAgo = new Date();
+                threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+                const threeDaysAgoStr = threeDaysAgo.toISOString().split('T')[0];
+                
+                const { data: recentActivity } = await supabaseClient
+                    .from('attendance_records')
+                    .select('id')
+                    .eq('apartment_id', apt.id)
+                    .gte('scan_time', `${threeDaysAgoStr}T00:00:00`)
+                    .limit(1);
+                
+                const hasRecentActivity = recentActivity && recentActivity.length > 0;
+                const inactiveDays = hasRecentActivity ? 0 : 3;
 
                 // Determine status (더 세밀한 기준)
                 let status = 'normal';
@@ -1096,6 +1110,8 @@
                     decreaseReason,
                     status,
                     statusText,
+                    hasRecentActivity,
+                    inactiveDays,
                     html: `
                         <div class="apartment-card" data-status="${status}">
                             <div class="flex items-start justify-between mb-4">
@@ -1299,6 +1315,9 @@
             // 직원 미배정 개수
             const noEmployeeCount = apartmentCards.filter(card => card.employeeCount === 0).length;
             
+            // 최근 3일 활동 없는 단지 개수
+            const inactiveCount = apartmentCards.filter(card => !card.hasRecentActivity).length;
+            
             // 📅 이번 달 전체 출근율 계산
             const today = new Date();
             const workDays = Math.min(today.getDate(), new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate());
@@ -1312,7 +1331,7 @@
                 : 0;
             
             document.getElementById('warningApartments').textContent = warningCount;
-            document.getElementById('criticalApartments').textContent = criticalCount;
+            document.getElementById('inactiveApartments').textContent = inactiveCount;
             document.getElementById('unlinkedSheets').textContent = unlinkedCount;
             document.getElementById('noEmployees').textContent = noEmployeeCount;
             // todayAttendanceRate 요소가 없으므로 주석 처리
@@ -1325,7 +1344,7 @@
                 실제출근: totalAttendance,
                 평균출근율: avgAttendanceRate + '%'
             });
-            console.log('📊 Status counts - Warning:', warningCount, 'Critical:', criticalCount);
+            console.log('📊 Status counts - Warning:', warningCount, 'Inactive (3 days):', inactiveCount);
             console.log('📊 Additional - Unlinked:', unlinkedCount, 'No employees:', noEmployeeCount);
         }
 

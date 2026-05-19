@@ -28,6 +28,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
     <style>
@@ -1038,6 +1039,9 @@
                 </button>
                 <button onclick="app.exportAttendanceSheetToExcel()" id="btn-export-attendance-excel" class="flex-1 px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:from-green-600 hover:to-emerald-700 transition-all shadow-md font-medium disabled:opacity-50 disabled:cursor-not-allowed" disabled>
                   <i class="fas fa-file-excel mr-2"></i>Excel 다운로드
+                </button>
+                <button onclick="app.exportAttendanceSheetToPDF()" id="btn-export-attendance-pdf" class="flex-1 px-6 py-3 bg-gradient-to-r from-red-500 to-pink-600 text-white rounded-lg hover:from-red-600 hover:to-pink-700 transition-all shadow-md font-medium disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                  <i class="fas fa-file-pdf mr-2"></i>PDF 다운로드
                 </button>
               </div>
             </div>
@@ -5901,9 +5905,9 @@
               `)
               .order('created_at', { ascending: false });
 
-            // 아파트 필터
+            // 아파트 필터 (현재 로그인한 아파트만 표시)
             if (this.currentApartment?.id) {
-              query = query.eq('apartment_id', this.currentApartment);
+              query = query.eq('apartment_id', this.currentApartment.id);
             }
 
             const { data: vacations, error } = await query;
@@ -6001,9 +6005,9 @@
               `)
               .order('created_at', { ascending: false });
 
-            // 아파트 필터
+            // 아파트 필터 (현재 로그인한 아파트만 표시)
             if (this.currentApartment?.id) {
-              query = query.eq('apartment_id', this.currentApartment);
+              query = query.eq('apartment_id', this.currentApartment.id);
             }
 
             // 직원 필터
@@ -13913,7 +13917,7 @@
           const { data: employees, error: empError } = await this.sb
             .from('employees')
             .select('id, name, position')
-            .eq('apartment_id', this.currentApartment)
+            .eq('apartment_id', this.currentApartment.id)
             .eq('is_active', true)
             .order('name');
           
@@ -13928,7 +13932,7 @@
           const { data: records, error: recError } = await this.sb
             .from('attendance_records')
             .select('*')
-            .eq('apartment_id', this.currentApartment)
+            .eq('apartment_id', this.currentApartment.id)
             .gte('scan_time', startDate + 'T00:00:00')
             .lte('scan_time', endDate + 'T23:59:59')
             .order('scan_time');
@@ -13958,9 +13962,9 @@
                 return { date, status: '-', checkIn: '-', checkOut: '-' };
               }
               
-              // 출근/퇴근 구분
-              const checkIns = dayRecords.filter(r => r.type === 'check_in');
-              const checkOuts = dayRecords.filter(r => r.type === 'check_out');
+              // 출근/퇴근 구분 (attendance_type 컬럼 사용)
+              const checkIns = dayRecords.filter(r => r.attendance_type === '출근');
+              const checkOuts = dayRecords.filter(r => r.attendance_type === '퇴근');
               
               const checkIn = checkIns.length > 0 
                 ? new Date(checkIns[0].scan_time).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
@@ -14028,8 +14032,9 @@
           // 테이블 렌더링
           this.renderAttendanceSheet(dates, attendanceData);
           
-          // Excel 다운로드 버튼 활성화
+          // Excel, PDF 다운로드 버튼 활성화
           document.getElementById('btn-export-attendance-excel').disabled = false;
+          document.getElementById('btn-export-attendance-pdf').disabled = false;
           
           // 제목 업데이트
           document.getElementById('attendance-sheet-title').textContent = 
@@ -14182,6 +14187,97 @@
         } catch (error) {
           console.error('❌ Excel 내보내기 실패:', error);
           this.showToast('Excel 내보내기 중 오류가 발생했습니다', 'error');
+        }
+      };
+      
+      // PDF로 근태표 내보내기
+      app.exportAttendanceSheetToPDF = async function() {
+        console.log('📄 PDF 근태표 내보내기 시작');
+        
+        try {
+          if (!this.currentAttendanceSheetData) {
+            this.showToast('생성된 근태표가 없습니다', 'warning');
+            return;
+          }
+          
+          const { startDate, endDate, dates, attendanceData } = this.currentAttendanceSheetData;
+          
+          // jsPDF 라이브러리 확인
+          if (typeof jspdf === 'undefined' || !jspdf.jsPDF) {
+            this.showToast('PDF 라이브러리를 불러올 수 없습니다', 'error');
+            return;
+          }
+          
+          const { jsPDF } = jspdf;
+          const doc = new jsPDF({
+            orientation: 'landscape',
+            unit: 'mm',
+            format: 'a4'
+          });
+          
+          // 한글 폰트 설정을 위해 autoTable 사용
+          const apartmentName = this.currentApartment?.name || '아파트';
+          const title = `${apartmentName} 근태표 (${startDate} ~ ${endDate})`;
+          
+          // 제목
+          doc.setFontSize(16);
+          doc.text(title, 148, 15, { align: 'center' });
+          
+          // 테이블 데이터 준비
+          const headers = [['직원명', '직책', ...dates.map(date => {
+            const d = new Date(date);
+            return `${d.getMonth() + 1}/${d.getDate()}`;
+          })]];
+          
+          const rows = Object.entries(attendanceData).map(([empId, empData]) => {
+            const row = [
+              empData.name,
+              empData.position,
+              ...dates.map(date => {
+                const dayData = empData.days[date];
+                if (!dayData) return '-';
+                
+                const checkInTime = dayData.checkIn ? new Date(dayData.checkIn).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }) : '';
+                const checkOutTime = dayData.checkOut ? new Date(dayData.checkOut).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }) : '';
+                
+                return checkInTime && checkOutTime ? `${checkInTime}\n${checkOutTime}` : (checkInTime || checkOutTime || '-');
+              })
+            ];
+            return row;
+          });
+          
+          // autoTable 플러그인 사용
+          doc.autoTable({
+            head: headers,
+            body: rows,
+            startY: 25,
+            styles: {
+              font: 'helvetica',
+              fontSize: 8,
+              cellPadding: 2,
+              overflow: 'linebreak'
+            },
+            headStyles: {
+              fillColor: [66, 139, 202],
+              textColor: 255,
+              fontStyle: 'bold'
+            },
+            columnStyles: {
+              0: { cellWidth: 25, fontStyle: 'bold' },
+              1: { cellWidth: 20 }
+            },
+            margin: { top: 25, left: 10, right: 10 }
+          });
+          
+          // 파일 저장
+          const fileName = `근태표_${apartmentName}_${startDate}_${endDate}.pdf`;
+          doc.save(fileName);
+          
+          this.showToast('✅ PDF 파일이 다운로드되었습니다', 'success');
+          
+        } catch (error) {
+          console.error('❌ PDF 내보내기 실패:', error);
+          this.showToast('PDF 내보내기 중 오류가 발생했습니다', 'error');
         }
       };
       
