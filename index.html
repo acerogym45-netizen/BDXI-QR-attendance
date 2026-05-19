@@ -5906,8 +5906,8 @@
               .order('created_at', { ascending: false });
 
             // 아파트 필터 (현재 로그인한 아파트만 표시)
-            if (this.currentApartment?.id) {
-              query = query.eq('apartment_id', this.currentApartment.id);
+            if (this.currentApartment) {
+              query = query.eq('apartment_id', this.currentApartment);
             }
 
             const { data: vacations, error } = await query;
@@ -6006,8 +6006,8 @@
               .order('created_at', { ascending: false });
 
             // 아파트 필터 (현재 로그인한 아파트만 표시)
-            if (this.currentApartment?.id) {
-              query = query.eq('apartment_id', this.currentApartment.id);
+            if (this.currentApartment) {
+              query = query.eq('apartment_id', this.currentApartment);
             }
 
             // 직원 필터
@@ -13917,7 +13917,7 @@
           const { data: employees, error: empError } = await this.sb
             .from('employees')
             .select('id, name, position')
-            .eq('apartment_id', this.currentApartment.id)
+            .eq('apartment_id', this.currentApartment)
             .eq('is_active', true)
             .order('name');
           
@@ -13932,7 +13932,7 @@
           const { data: records, error: recError } = await this.sb
             .from('attendance_records')
             .select('*')
-            .eq('apartment_id', this.currentApartment.id)
+            .eq('apartment_id', this.currentApartment)
             .gte('scan_time', startDate + 'T00:00:00')
             .lte('scan_time', endDate + 'T23:59:59')
             .order('scan_time');
@@ -14179,7 +14179,7 @@
           XLSX.utils.book_append_sheet(wb, ws, '근태표');
           
           // 파일 저장
-          const fileName = `근태표_${this.currentApartmentName}_${startDate}_${endDate}.xlsx`;
+          const fileName = `근태표_${this.currentApartmentInfo?.name || '아파트'}_${startDate}_${endDate}.xlsx`;
           XLSX.writeFile(wb, fileName);
           
           this.showToast('✅ Excel 파일이 다운로드되었습니다', 'success');
@@ -14216,7 +14216,7 @@
           });
           
           // 한글 폰트 설정을 위해 autoTable 사용
-          const apartmentName = this.currentApartment?.name || '아파트';
+          const apartmentName = this.currentApartmentInfo?.name || '아파트';
           const title = `${apartmentName} 근태표 (${startDate} ~ ${endDate})`;
           
           // 제목
@@ -14229,16 +14229,15 @@
             return `${d.getMonth() + 1}/${d.getDate()}`;
           })]];
           
-          const rows = Object.entries(attendanceData).map(([empId, empData]) => {
+          const rows = attendanceData.map(empData => {
             const row = [
-              empData.name,
-              empData.position,
-              ...dates.map(date => {
-                const dayData = empData.days[date];
-                if (!dayData) return '-';
+              empData.employee.name,
+              empData.employee.position || '-',
+              ...empData.dailyData.map(dayData => {
+                if (dayData.checkIn === '-' && dayData.checkOut === '-') return '-';
                 
-                const checkInTime = dayData.checkIn ? new Date(dayData.checkIn).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }) : '';
-                const checkOutTime = dayData.checkOut ? new Date(dayData.checkOut).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }) : '';
+                const checkInTime = dayData.checkIn !== '-' ? dayData.checkIn : '';
+                const checkOutTime = dayData.checkOut !== '-' ? dayData.checkOut : '';
                 
                 return checkInTime && checkOutTime ? `${checkInTime}\n${checkOutTime}` : (checkInTime || checkOutTime || '-');
               })
