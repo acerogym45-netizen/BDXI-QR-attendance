@@ -199,15 +199,15 @@
 
             <!-- Summary Stats Row 2 -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-                <!-- 1. 긴급 현장 -->
+                <!-- 1. 최근 3일 활동 없는 단지 -->
                 <div class="stat-card" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-sm opacity-90">긴급 현장</p>
-                            <h3 class="text-4xl font-bold mt-2" id="criticalApartments">0</h3>
-                            <p class="text-xs opacity-75 mt-1">즉각 대응</p>
+                            <p class="text-sm opacity-90">3일 활동 없음</p>
+                            <h3 class="text-4xl font-bold mt-2" id="inactiveApartments">0</h3>
+                            <p class="text-xs opacity-75 mt-1">즉각 확인</p>
                         </div>
-                        <i class="fas fa-fire text-5xl opacity-30"></i>
+                        <i class="fas fa-exclamation-triangle text-5xl opacity-30"></i>
                     </div>
                 </div>
 
@@ -1380,18 +1380,30 @@
                     minute: '2-digit' 
                 });
                 
-                // 출퇴근 구분
-                const typeText = record.type === 'check_out' ? '퇴근 체크아웃' : '출근 체크인';
-                const iconClass = record.type === 'check_out' ? 'fa-user-times' : 'fa-user-check';
+                // 출퇴근/휴게 구분
+                let typeText, iconClass, bgClass;
+                if (record.attendance_type === '퇴근') {
+                    typeText = '퇴근';
+                    iconClass = 'fa-sign-out-alt';
+                    bgClass = 'bg-red-500';
+                } else if (record.attendance_type === '휴게') {
+                    typeText = '휴게';
+                    iconClass = 'fa-coffee';
+                    bgClass = 'bg-yellow-500';
+                } else {
+                    typeText = '출근';
+                    iconClass = 'fa-sign-in-alt';
+                    bgClass = 'bg-green-500';
+                }
 
                 return `
                     <div class="flex items-center gap-4 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
-                        <div class="w-10 h-10 brand-bg rounded-full flex items-center justify-center text-white">
+                        <div class="w-10 h-10 ${bgClass} rounded-full flex items-center justify-center text-white">
                             <i class="fas ${iconClass}"></i>
                         </div>
                         <div class="flex-1">
                             <p class="font-medium">${record.employees?.name || '직원'} - ${record.apartments?.name || '아파트'}</p>
-                            <p class="text-sm text-gray-600">${typeText} · ${timeStr}</p>
+                            <p class="text-sm text-gray-600">${typeText} · ${record.location || ''} · ${timeStr}</p>
                         </div>
                     </div>
                 `;
@@ -1649,7 +1661,10 @@
             }
         }
 
-        function showContractModal() {
+        async function showContractModal() {
+            // 🔄 모달 열 때마다 최신 계약 데이터 로드
+            await loadContractData();
+            
             document.getElementById('contractModal').classList.remove('hidden');
             document.getElementById('contractModal').classList.add('flex');
             
