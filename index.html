@@ -14294,9 +14294,9 @@
         }
       };
       
-      // PDF로 근태표 내보내기
+      // PDF로 근태표 내보내기 (autoTable 사용 - 빠른 생성)
       app.exportAttendanceSheetToPDF = async function() {
-        console.log('📄 PDF 근태표 내보내기 시작');
+        console.log('📄 PDF 근태표 내보내기 시작 (autoTable 방식)');
         
         try {
           if (!this.currentAttendanceSheetData) {
@@ -14306,109 +14306,176 @@
           
           const { startDate, endDate, dates, attendanceData } = this.currentAttendanceSheetData;
           
-          // jsPDF 및 html2canvas 라이브러리 확인
+          // jsPDF 확인
           if (typeof jspdf === 'undefined' || !jspdf.jsPDF) {
             this.showToast('PDF 라이브러리를 불러올 수 없습니다', 'error');
             return;
           }
           
-          if (typeof html2canvas === 'undefined') {
-            this.showToast('html2canvas 라이브러리를 불러올 수 없습니다', 'error');
-            return;
-          }
+          this.showToast('📊 PDF 생성 중... (2-3초 소요)', 'info');
           
-          this.showToast('📊 PDF 생성 준비 중...', 'info');
-          
-          // 근태표 컨테이너를 캡처
-          const container = document.getElementById('attendance-sheet-container');
-          if (!container) {
-            this.showToast('근태표를 찾을 수 없습니다', 'error');
-            return;
-          }
-          
-          // 테이블의 실제 크기 가져오기
-          const table = container.querySelector('table');
-          const tableWidth = table ? table.scrollWidth : container.scrollWidth;
-          const tableHeight = table ? table.scrollHeight : container.scrollHeight;
-          
-          console.log('📊 테이블 크기:', tableWidth, 'x', tableHeight);
-          
-          // 최대 크기 제한 (너무 큰 경우 축소)
-          const maxWidth = 5000;
-          const maxHeight = 5000;
-          let targetWidth = tableWidth;
-          let targetHeight = tableHeight;
-          
-          if (tableWidth > maxWidth || tableHeight > maxHeight) {
-            const scale = Math.min(maxWidth / tableWidth, maxHeight / tableHeight);
-            targetWidth = Math.floor(tableWidth * scale);
-            targetHeight = Math.floor(tableHeight * scale);
-            console.log('⚠️ 테이블 크기 축소:', targetWidth, 'x', targetHeight);
-          }
-          
-          this.showToast('🖼️ PDF 이미지 생성 중... (10-15초 소요)', 'info');
-          
-          // html2canvas로 이미지 생성 (고속 모드)
-          const canvas = await html2canvas(container, {
-            scale: 1.0, // 해상도 최소화 (1.5 -> 1.0) 속도 우선
-            useCORS: true,
-            logging: false,
-            backgroundColor: '#ffffff',
-            width: targetWidth,
-            height: targetHeight,
-            windowWidth: tableWidth,
-            windowHeight: tableHeight,
-            scrollX: 0,
-            scrollY: 0,
-            // 추가 최적화 옵션
-            imageTimeout: 0,
-            removeContainer: false,
-            foreignObjectRendering: false // SVG 렌더링 비활성화 (속도 향상)
-          });
-          
-          console.log('🖼️ 캡처된 캔버스 크기:', canvas.width, 'x', canvas.height);
-          
-          this.showToast('📄 PDF 파일 생성 중...', 'info');
-          
-          // JPEG로 변환 (PNG보다 빠름)
-          const imgData = canvas.toDataURL('image/jpeg', 0.95);
-          
-          // PDF 생성 (A3 크기, 가로 모드)
           const { jsPDF } = jspdf;
+          
+          // A4 가로 방향으로 생성
           const pdf = new jsPDF({
-            orientation: 'landscape', // 가로 고정 (큰 표 수용)
+            orientation: 'landscape',
             unit: 'mm',
-            format: 'a3', // A3 크기 (420mm x 297mm)
-            compress: true // PDF 압축 활성화
+            format: 'a4', // A4 (297mm x 210mm)
+            compress: true
           });
           
-          const pdfWidth = pdf.internal.pageSize.getWidth(); // A3 landscape: 420mm
-          const pdfHeight = pdf.internal.pageSize.getHeight(); // A3 landscape: 297mm
+          // 제목 추가
+          pdf.setFontSize(16);
+          pdf.setFont('helvetica', 'bold');
+          const title = `${this.currentApartmentInfo?.name || '아파트'} 근태표`;
+          const titleWidth = pdf.getTextWidth(title);
+          pdf.text(title, (297 - titleWidth) / 2, 15);
           
-          // 이미지를 PDF에 맞게 조정 (여백 10mm)
-          const margin = 10;
-          const availableWidth = pdfWidth - (margin * 2);
-          const availableHeight = pdfHeight - (margin * 2);
+          // 기간 표시
+          pdf.setFontSize(10);
+          pdf.setFont('helvetica', 'normal');
+          const period = `${startDate} ~ ${endDate}`;
+          const periodWidth = pdf.getTextWidth(period);
+          pdf.text(period, (297 - periodWidth) / 2, 22);
           
-          const imgWidth = canvas.width;
-          const imgHeight = canvas.height;
-          const ratio = Math.min(availableWidth / imgWidth, availableHeight / imgHeight);
+          // 날짜 헤더 준비 (한글 요일 포함)
+          const dateHeaders = dates.map(date => {
+            const d = new Date(date);
+            const month = d.getMonth() + 1;
+            const day = d.getDate();
+            const dayOfWeek = ['일', '월', '화', '수', '목', '금', '토'][d.getDay()];
+            return `${month}/${day}\n(${dayOfWeek})`;
+          });
           
-          const scaledWidth = imgWidth * ratio;
-          const scaledHeight = imgHeight * ratio;
+          // 테이블 헤더
+          const headers = [
+            ['직원명', '직책', '총 근무\n시간', ...dateHeaders]
+          ];
           
-          const imgX = (pdfWidth - scaledWidth) / 2;
-          const imgY = margin;
+          // 테이블 데이터 준비
+          const rows = attendanceData.map(emp => {
+            const row = [
+              emp.employee.name,
+              emp.employee.position || '-',
+              `${emp.totalWorkHours}h`
+            ];
+            
+            // 각 날짜별 데이터 추가
+            emp.dailyData.forEach(day => {
+              if (day.checkIn !== '-' || day.checkOut !== '-') {
+                // 상태에 따라 다른 포맷
+                let cellText = '';
+                if (day.status === '정상') {
+                  cellText = `출:${day.checkIn}\n퇴:${day.checkOut}\n${day.workHours}h`;
+                } else if (day.status === '지각') {
+                  cellText = `[지각]\n출:${day.checkIn}\n퇴:${day.checkOut}\n${day.workHours}h`;
+                } else if (day.status === '조기퇴근') {
+                  cellText = `[조퇴]\n출:${day.checkIn}\n퇴:${day.checkOut}\n${day.workHours}h`;
+                } else {
+                  cellText = `[${day.status}]\n출:${day.checkIn}\n퇴:${day.checkOut}\n${day.workHours}h`;
+                }
+                row.push(cellText);
+              } else {
+                row.push(day.status === '결근' ? '결근' : '-');
+              }
+            });
+            
+            return row;
+          });
           
-          // JPEG 포맷으로 추가 (PNG보다 파일 크기 작음)
-          pdf.addImage(imgData, 'JPEG', imgX, imgY, scaledWidth, scaledHeight);
+          // 날짜 수에 따라 동적으로 컬럼 너비 조정
+          const fixedColumnsWidth = 20 + 20 + 18; // 직원명 + 직책 + 총 근무시간
+          const availableWidth = 297 - 20; // A4 가로 - 여백
+          const dateColumnWidth = (availableWidth - fixedColumnsWidth) / dates.length;
+          
+          // 컬럼 스타일 설정
+          const columnStyles = {
+            0: { cellWidth: 20, halign: 'center' }, // 직원명
+            1: { cellWidth: 20, halign: 'center' }, // 직책
+            2: { cellWidth: 18, halign: 'center', fontStyle: 'bold' }  // 총 근무시간
+          };
+          
+          // 날짜 컬럼들 동적 너비 설정
+          for (let i = 3; i < 3 + dates.length; i++) {
+            columnStyles[i] = { 
+              cellWidth: dateColumnWidth, 
+              halign: 'center',
+              fontSize: 7
+            };
+          }
+          
+          // autoTable로 테이블 생성
+          pdf.autoTable({
+            head: headers,
+            body: rows,
+            startY: 28,
+            theme: 'grid',
+            styles: {
+              font: 'helvetica',
+              fontSize: 8,
+              cellPadding: 2,
+              overflow: 'linebreak',
+              halign: 'center',
+              valign: 'middle',
+              lineColor: [200, 200, 200],
+              lineWidth: 0.1
+            },
+            headStyles: {
+              fillColor: [41, 128, 185],
+              textColor: [255, 255, 255],
+              fontStyle: 'bold',
+              fontSize: 8,
+              halign: 'center'
+            },
+            columnStyles: columnStyles,
+            alternateRowStyles: {
+              fillColor: [245, 245, 245]
+            },
+            // 상태별 셀 색상 적용
+            didParseCell: function(data) {
+              // 헤더와 고정 컬럼은 제외
+              if (data.section === 'body' && data.column.index >= 3) {
+                const cellText = data.cell.raw;
+                if (typeof cellText === 'string') {
+                  if (cellText.includes('[지각]')) {
+                    data.cell.styles.textColor = [220, 53, 69]; // 빨강
+                    data.cell.styles.fontStyle = 'bold';
+                  } else if (cellText.includes('[조퇴]')) {
+                    data.cell.styles.textColor = [255, 193, 7]; // 주황
+                    data.cell.styles.fontStyle = 'bold';
+                  } else if (cellText === '결근') {
+                    data.cell.styles.textColor = [108, 117, 125]; // 회색
+                    data.cell.styles.fillColor = [240, 240, 240];
+                  }
+                }
+              }
+              
+              // 총 근무시간 컬럼 하이라이트
+              if (data.section === 'body' && data.column.index === 2) {
+                data.cell.styles.fillColor = [232, 245, 253];
+                data.cell.styles.textColor = [13, 110, 253];
+              }
+            },
+            margin: { left: 10, right: 10 }
+          });
+          
+          // 페이지 번호 추가
+          const pageCount = pdf.internal.getNumberOfPages();
+          for (let i = 1; i <= pageCount; i++) {
+            pdf.setPage(i);
+            pdf.setFontSize(9);
+            pdf.setFont('helvetica', 'normal');
+            pdf.text(`${i} / ${pageCount}`, 297 / 2, 205, { align: 'center' });
+          }
           
           // 파일 저장
           const apartmentName = this.currentApartmentInfo?.name || '아파트';
           const fileName = `근태표_${apartmentName}_${startDate}_${endDate}.pdf`;
           pdf.save(fileName);
           
-          this.showToast('✅ PDF 파일이 다운로드되었습니다', 'success');
+          this.showToast('✅ PDF 파일이 다운로드되었습니다 (고속 생성 완료)', 'success');
+          
+          console.log('✅ PDF 생성 완료 (autoTable 방식)');
           
         } catch (error) {
           console.error('❌ PDF 내보내기 실패:', error);
