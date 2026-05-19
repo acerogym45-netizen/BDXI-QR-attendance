@@ -1668,6 +1668,14 @@
                 }
 
                 console.log(`✅ Loaded ${employees.length} active employees with contract dates`);
+                
+                // 🔍 디버깅: 로드된 직원 목록 출력
+                console.log('📋 Loaded employees:', employees.map(e => ({ 
+                    name: e.name, 
+                    is_active: e.is_active, 
+                    contract_end: e.contract_end,
+                    apartment: e.apartments?.name 
+                })));
 
                 // 계약 상태별 분류
                 contractData.expired = [];
