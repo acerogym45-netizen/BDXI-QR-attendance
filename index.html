@@ -13962,6 +13962,38 @@
                 return { date, status: '-', checkIn: '-', checkOut: '-' };
               }
               
+              // 시간 파싱 헬퍼 함수 ("오전 09:28" -> {hour: 9, minute: 28})
+              const parseKoreanTime = (timeStr) => {
+                if (!timeStr || timeStr === '-') return null;
+                
+                // "오전 09:28" 또는 "오후 05:08" 형식
+                const match = timeStr.match(/(오전|오후)\s*(\d{1,2}):(\d{2})/);
+                if (!match) {
+                  // 만약 "HH:MM" 형식이면 직접 파싱
+                  const parts = timeStr.split(':');
+                  if (parts.length === 2) {
+                    return {
+                      hour: parseInt(parts[0], 10),
+                      minute: parseInt(parts[1], 10)
+                    };
+                  }
+                  return null;
+                }
+                
+                const period = match[1]; // 오전/오후
+                let hour = parseInt(match[2], 10);
+                const minute = parseInt(match[3], 10);
+                
+                // 오후 시간 변환 (12시간제 -> 24시간제)
+                if (period === '오후' && hour !== 12) {
+                  hour += 12;
+                } else if (period === '오전' && hour === 12) {
+                  hour = 0;
+                }
+                
+                return { hour, minute };
+              };
+              
               // 출근/퇴근 구분 (attendance_type 컬럼 사용)
               const checkIns = dayRecords.filter(r => r.attendance_type === '출근');
               const checkOuts = dayRecords.filter(r => r.attendance_type === '퇴근');
@@ -13986,41 +14018,54 @@
               // 지각 판단 (09:00 기준, 절대 엄격 - 1분이라도 늦으면 지각)
               // 일찍 출근 10분 허용 (08:50 이전 출근도 정상)
               if (checkIn !== '-') {
-                const [hour, minute] = checkIn.split(':').map(Number);
-                const checkInMinutes = hour * 60 + minute;
-                const standardTime = 9 * 60; // 09:00 = 540분
-                
-                // 09:00 초과 시 무조건 지각 (엄격)
-                if (checkInMinutes > standardTime) {
-                  status = '지각';
+                const parsed = parseKoreanTime(checkIn);
+                if (parsed) {
+                  const checkInMinutes = parsed.hour * 60 + parsed.minute;
+                  const standardTime = 9 * 60; // 09:00 = 540분
+                  
+                  // 09:00 초과 시 무조건 지각 (엄격)
+                  if (checkInMinutes > standardTime) {
+                    status = '지각';
+                  }
+                  // 08:50 이전 출근도 정상 처리 (10분 일찍 출근 허용)
                 }
-                // 08:50 이전 출근도 정상 처리 (10분 일찍 출근 허용)
               }
               
               // 조기퇴근 판단 (18:00 기준, 절대 엄격 - 1분이라도 일찍 퇴근하면 조기퇴근)
               // 늦게 퇴근 10분 허용 (18:10까지 퇴근은 정상)
               if (checkOut !== '-') {
-                const [hour, minute] = checkOut.split(':').map(Number);
-                const checkOutMinutes = hour * 60 + minute;
-                const standardEndTime = 18 * 60; // 18:00 = 1080분
-                const lateCheckoutThreshold = standardEndTime + 10; // 18:10 = 1090분
-                
-                // 18:00 미만 퇴근 시 무조건 조기퇴근 (엄격)
-                if (checkOutMinutes < standardEndTime) {
-                  status = '조기퇴근';
+                const parsed = parseKoreanTime(checkOut);
+                if (parsed) {
+                  const checkOutMinutes = parsed.hour * 60 + parsed.minute;
+                  const standardEndTime = 18 * 60; // 18:00 = 1080분
+                  const lateCheckoutThreshold = standardEndTime + 10; // 18:10 = 1090분
+                  
+                  // 18:00 미만 퇴근 시 무조건 조기퇴근 (엄격)
+                  if (checkOutMinutes < standardEndTime) {
+                    status = '조기퇴근';
+                  }
+                  // 18:10까지 퇴근은 정상 처리 (10분 늦은 퇴근 허용)
                 }
-                // 18:10까지 퇴근은 정상 처리 (10분 늦은 퇴근 허용)
               }
               
               // 일별 근무시간 계산 (시간 단위, 소수점 절사)
               let workHours = 0;
               if (checkIn !== '-' && checkOut !== '-') {
-                const [inHour, inMin] = checkIn.split(':').map(Number);
-                const [outHour, outMin] = checkOut.split(':').map(Number);
-                const inMinutes = inHour * 60 + inMin;
-                const outMinutes = outHour * 60 + outMin;
-                const workMinutes = outMinutes - inMinutes;
-                workHours = Math.floor(workMinutes / 60); // 소수점 절사
+                const inParsed = parseKoreanTime(checkIn);
+                const outParsed = parseKoreanTime(checkOut);
+                
+                if (inParsed && outParsed) {
+                  const inMinutes = inParsed.hour * 60 + inParsed.minute;
+                  let outMinutes = outParsed.hour * 60 + outParsed.minute;
+                  
+                  // 자정 넘어가는 경우 처리 (퇴근이 출근보다 이른 경우)
+                  if (outMinutes < inMinutes) {
+                    outMinutes += 24 * 60; // 다음날로 간주
+                  }
+                  
+                  const workMinutes = outMinutes - inMinutes;
+                  workHours = Math.floor(workMinutes / 60); // 소수점 절사
+                }
               }
               
               return { date, status, checkIn, checkOut, workHours };
@@ -14233,7 +14278,7 @@
             return;
           }
           
-          this.showToast('PDF 생성 중...', 'info');
+          this.showToast('PDF 생성 중... (잠시만 기다려주세요)', 'info');
           
           // 근태표 컨테이너를 캡처
           const container = document.getElementById('attendance-sheet-container');
@@ -14242,35 +14287,58 @@
             return;
           }
           
-          // html2canvas로 이미지 생성
+          // 테이블의 실제 크기 가져오기
+          const table = container.querySelector('table');
+          const tableWidth = table ? table.scrollWidth : container.scrollWidth;
+          const tableHeight = table ? table.scrollHeight : container.scrollHeight;
+          
+          console.log('📊 테이블 크기:', tableWidth, 'x', tableHeight);
+          
+          // html2canvas로 이미지 생성 (최적화된 설정)
           const canvas = await html2canvas(container, {
-            scale: 2, // 고해상도
+            scale: 1.5, // 해상도 낮춤 (2 -> 1.5) 속도 개선
             useCORS: true,
             logging: false,
-            backgroundColor: '#ffffff'
+            backgroundColor: '#ffffff',
+            width: tableWidth, // 명시적 크기 설정
+            height: tableHeight,
+            windowWidth: tableWidth,
+            windowHeight: tableHeight,
+            scrollX: 0,
+            scrollY: 0
           });
+          
+          console.log('🖼️ 캡처된 캔버스 크기:', canvas.width, 'x', canvas.height);
           
           const imgData = canvas.toDataURL('image/png');
           
-          // PDF 생성
+          // PDF 생성 (A3 크기, 가로 모드)
           const { jsPDF } = jspdf;
           const pdf = new jsPDF({
-            orientation: canvas.width > canvas.height ? 'landscape' : 'portrait',
+            orientation: 'landscape', // 가로 고정 (큰 표 수용)
             unit: 'mm',
-            format: 'a4'
+            format: 'a3' // A4 -> A3로 변경 (더 큰 페이지)
           });
           
-          const pdfWidth = pdf.internal.pageSize.getWidth();
-          const pdfHeight = pdf.internal.pageSize.getHeight();
+          const pdfWidth = pdf.internal.pageSize.getWidth(); // A3 landscape: 420mm
+          const pdfHeight = pdf.internal.pageSize.getHeight(); // A3 landscape: 297mm
+          
+          // 이미지를 PDF에 맞게 조정 (여백 10mm)
+          const margin = 10;
+          const availableWidth = pdfWidth - (margin * 2);
+          const availableHeight = pdfHeight - (margin * 2);
           
           const imgWidth = canvas.width;
           const imgHeight = canvas.height;
-          const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
+          const ratio = Math.min(availableWidth / imgWidth, availableHeight / imgHeight);
           
-          const imgX = (pdfWidth - imgWidth * ratio) / 2;
-          const imgY = 10;
+          const scaledWidth = imgWidth * ratio;
+          const scaledHeight = imgHeight * ratio;
           
-          pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
+          const imgX = (pdfWidth - scaledWidth) / 2;
+          const imgY = margin;
+          
+          pdf.addImage(imgData, 'PNG', imgX, imgY, scaledWidth, scaledHeight);
           
           // 파일 저장
           const apartmentName = this.currentApartmentInfo?.name || '아파트';
