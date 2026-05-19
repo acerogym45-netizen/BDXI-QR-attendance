@@ -30,6 +30,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="paperlogy_fonts.js"></script>
 
     <style>
       /* Paperlogy Font Face */
@@ -3189,6 +3190,16 @@
             this.setupEmployeeSearch('filter-employee-input', 'filter-employee-dropdown');
             this.setupEmployeeSearch('hist-employee-input', 'hist-employee-dropdown');
           }, 1000);
+          
+          // Paperlogy 폰트 로드 (PDF 생성용)
+          console.log('📝 Paperlogy 폰트 로드 시작...');
+          loadPaperlogyFonts().then(success => {
+            if (success) {
+              console.log('✅ Paperlogy 폰트 로드 완료');
+            } else {
+              console.warn('⚠️ Paperlogy 폰트 로드 실패');
+            }
+          });
         },
         
         // ============================================
@@ -14324,16 +14335,29 @@
             compress: true
           });
           
+          // ✅ Paperlogy 폰트 추가
+          const fontAdded = addPaperlogyFontsToPDF(pdf);
+          if (fontAdded) {
+            console.log('✅ PDF에 Paperlogy 폰트 임베드 완료');
+            pdf.setFont('Paperlogy', 'bold');
+          } else {
+            console.warn('⚠️ Paperlogy 폰트 로드 실패, helvetica 사용');
+            pdf.setFont('helvetica', 'bold');
+          }
+          
           // 제목 추가
           pdf.setFontSize(16);
-          pdf.setFont('helvetica', 'bold');
           const title = `${this.currentApartmentInfo?.name || '아파트'} 근태표`;
           const titleWidth = pdf.getTextWidth(title);
           pdf.text(title, (297 - titleWidth) / 2, 15);
           
           // 기간 표시
           pdf.setFontSize(10);
-          pdf.setFont('helvetica', 'normal');
+          if (fontAdded) {
+            pdf.setFont('Paperlogy', 'normal');
+          } else {
+            pdf.setFont('helvetica', 'normal');
+          }
           const period = `${startDate} ~ ${endDate}`;
           const periodWidth = pdf.getTextWidth(period);
           pdf.text(period, (297 - periodWidth) / 2, 22);
@@ -14411,7 +14435,7 @@
             startY: 28,
             theme: 'grid',
             styles: {
-              font: 'helvetica',
+              font: fontAdded ? 'Paperlogy' : 'helvetica',
               fontSize: 8,
               cellPadding: 2,
               overflow: 'linebreak',
@@ -14464,7 +14488,11 @@
           for (let i = 1; i <= pageCount; i++) {
             pdf.setPage(i);
             pdf.setFontSize(9);
-            pdf.setFont('helvetica', 'normal');
+            if (fontAdded) {
+              pdf.setFont('Paperlogy', 'normal');
+            } else {
+              pdf.setFont('helvetica', 'normal');
+            }
             pdf.text(`${i} / ${pageCount}`, 297 / 2, 205, { align: 'center' });
           }
           
