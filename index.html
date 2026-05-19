@@ -3254,14 +3254,8 @@
             if (settings.logo_url) {
               img.src = settings.logo_url;
               img.alt = settings.company_name + ' Logo';
-            } else {
-              // 로고가 없으면 텍스트 로고로 대체
-              const textLogo = document.createElement('div');
-              textLogo.className = 'text-2xl font-bold';
-              textLogo.style.color = settings.primary_color;
-              textLogo.textContent = settings.company_name.replace('(유)', '');
-              img.replaceWith(textLogo);
             }
+            // 로고가 없어도 원본 이미지 유지 (텍스트로 교체하지 않음)
           });
           
           // 2. 회사명 텍스트 교체
@@ -3512,12 +3506,30 @@
           const apartmentId = urlParams.get('apartment');
           const masterToken = urlParams.get('masterToken');
           
+          console.log('🔍 checkLogin 호출:', { 
+            apartmentId, 
+            masterToken: masterToken ? '있음' : '없음',
+            apartmentsCount: this.apartments?.length || 0 
+          });
+          
           // 마스터 토큰이 있으면 자동 로그인
           if (apartmentId && masterToken) {
             console.log('🔑 마스터 관리자 직접 접근 감지');
             
+            // apartments가 로드되지 않았으면 에러
+            if (!this.apartments || this.apartments.length === 0) {
+              console.error('❌ 아파트 목록이 로드되지 않았습니다');
+              alert('아파트 목록을 로드하는 중 오류가 발생했습니다. 페이지를 새로고침해주세요.');
+              return;
+            }
+            
             // 아파트 정보 찾기
             const selectedApartment = this.apartments.find(a => a.id === apartmentId);
+            
+            console.log('🔍 아파트 검색:', { 
+              찾는ID: apartmentId, 
+              결과: selectedApartment ? selectedApartment.name : '없음' 
+            });
             
             if (selectedApartment) {
               this.currentApartment = selectedApartment.id;
@@ -3529,6 +3541,8 @@
               sessionStorage.setItem('kindwon_apartment_name', selectedApartment.name);
               sessionStorage.setItem('kindwon_master_access', 'true'); // 마스터 접근 표시
               
+              console.log('✅ 마스터 토큰 로그인 성공:', selectedApartment.name);
+              
               // URL에서 파라미터 제거 (깔끔하게)
               window.history.replaceState({}, document.title, window.location.pathname);
               
@@ -3536,6 +3550,9 @@
               return;
             } else {
               console.error('❌ 아파트를 찾을 수 없습니다:', apartmentId);
+              alert('해당 아파트를 찾을 수 없습니다. 마스터 대시보드로 돌아갑니다.');
+              window.location.href = 'master_dashboard.html';
+              return;
             }
           }
           
