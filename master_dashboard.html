@@ -1685,8 +1685,19 @@
                 employees.forEach(emp => {
                     // 🔴 추가 안전 장치: 비활성 직원 한 번 더 필터링
                     if (!emp.contract_end || emp.is_active === false) {
-                        console.log('⚠️ Skipping inactive employee:', emp.name);
+                        console.log('⚠️ Skipping inactive employee:', emp.name, 'is_active:', emp.is_active);
                         return;
+                    }
+                    
+                    // 🔍 강은서 직원 특별 로그
+                    if (emp.name === '강은서') {
+                        console.log('🔍 강은서 직원 상세 정보:', {
+                            이름: emp.name,
+                            is_active: emp.is_active,
+                            계약종료일: emp.contract_end,
+                            아파트: emp.apartments?.name,
+                            전체데이터: emp
+                        });
                     }
 
                     const contractEnd = new Date(emp.contract_end);
