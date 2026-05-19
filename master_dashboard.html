@@ -855,7 +855,6 @@
                 document.getElementById('totalApartments').textContent = apartmentsData.length;
                 document.getElementById('totalEmployees').textContent = employeesCount || 0;
                 document.getElementById('warningApartments').textContent = '0';
-                document.getElementById('criticalApartments').textContent = '0';
                 
                 // 아파트별 상세 데이터 로드 (상태별 카운트는 여기서 업데이트됨)
                 await loadApartmentsDetails();
