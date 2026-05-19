@@ -1644,7 +1644,7 @@
                 const today = new Date();
                 const todayStr = today.toISOString().split('T')[0];
                 
-                // 🔴 중요: 활성 상태(is_active=true)이고 계약 종료일이 있는 직원만 로드
+                // 🔴 중요: 활성 상태(status='active')이고 계약 종료일이 있는 직원만 로드
                 // 비활성 직원(퇴사자)은 계약 만료 알림에서 제외
                 const { data: employees, error } = await supabaseClient
                     .from('employees')
@@ -1653,7 +1653,7 @@
                         apartments (name)
                     `)
                     .not('contract_end', 'is', null)
-                    .eq('is_active', true); // 🔴 활성 직원만 (비활성/퇴사자 제외)
+                    .eq('status', 'active'); // 🔴 수정: is_active -> status
 
                 if (error && error.code !== 'PGRST116') {
                     console.error('Contract data load error:', error);
@@ -1683,8 +1683,8 @@
                 contractData.month = [];
 
                 employees.forEach(emp => {
-                    // 비활성 직원 필터링
-                    if (!emp.contract_end || emp.is_active === false) {
+                    // 비활성 직원 필터링 (status !== 'active')
+                    if (!emp.contract_end || emp.status !== 'active') {
                         return;
                     }
 

@@ -3203,7 +3203,7 @@
             const { data, error } = await this.sb
               .from('brand_settings')
               .select('*')
-              .eq('is_active', true)
+              .eq('status', 'active')
               .order('created_at', { ascending: false })
               .limit(1)
               .single();
@@ -3338,7 +3338,7 @@
             const { data, error } = await this.sb
               .from('apartments')
               .select('*')
-              .eq('is_active', true)
+              .eq('status', 'active')
               .order('name');
             
             if (error) throw error;
@@ -11298,7 +11298,7 @@
               *,
               document_categories(name, icon, color)
             `)
-            .eq('is_active', true)
+            .eq('status', 'active')
             .order('created_at', { ascending: false });
           
           if (error) throw error;
@@ -11429,7 +11429,7 @@
           const { data, error } = await this.sb
             .from('document_categories')
             .select('*')
-            .eq('is_active', true)
+            .eq('status', 'active')
             .order('display_order');
           
           if (error) throw error;
@@ -12696,7 +12696,7 @@
             .from('employees')
             .select('id')
             .eq('apartment_id', this.currentApartment)
-            .eq('is_active', true);
+            .eq('status', 'active');
           
           // 구매 요청
           const { data: purchases } = await this.sb
@@ -12940,7 +12940,7 @@
         const endDate = new Date(year, parseInt(month), 0).toISOString().split('T')[0];
         
         const [employeesRes, attendanceRes] = await Promise.all([
-          this.sb.from('employees').select('id').eq('apartment_id', this.currentApartment).eq('is_active', true),
+          this.sb.from('employees').select('id').eq('apartment_id', this.currentApartment).eq('status', 'active'),
           this.sb.from('attendance').select('*').gte('check_in_time', startDate).lte('check_in_time', endDate + 'T23:59:59')
         ]);
         
@@ -13918,7 +13918,7 @@
             .from('employees')
             .select('id, name, position, work_start_time, work_end_time')
             .eq('apartment_id', this.currentApartment)
-            .eq('is_active', true)
+            .eq('status', 'active')
             .order('name');
           
           if (empError) throw empError;
@@ -14907,7 +14907,7 @@
           const { data: employees } = await this.sb
             .from('employees')
             .select('id')
-            .eq('is_active', true);
+            .eq('status', 'active');
           
           document.getElementById('payroll-total-employees').textContent = employees?.length || 0;
           
@@ -15100,7 +15100,7 @@
         const { data: allEmployees } = await this.sb
           .from('employees')
           .select('id')
-          .eq('is_active', true);
+          .eq('status', 'active');
         document.getElementById('payroll-all-count').textContent = allEmployees?.length || 0;
         
         // 초기화
@@ -15152,7 +15152,7 @@
           const { data, error } = await this.sb
             .from('employees')
             .select('id, name, employee_number, department, position')
-            .eq('is_active', true)
+            .eq('status', 'active')
             .order('department', { ascending: true })
             .order('name', { ascending: true });
           
@@ -15189,7 +15189,7 @@
           const { data, error } = await this.sb
             .from('employees')
             .select('department')
-            .eq('is_active', true);
+            .eq('status', 'active');
           
           if (error) throw error;
           
@@ -15297,14 +15297,14 @@
           const { data } = await this.sb
             .from('employees')
             .select('*')
-            .eq('is_active', true)
+            .eq('status', 'active')
             .eq('department', dept);
           targetEmployees = data || [];
         } else if (method === 'all') {
           const { data } = await this.sb
             .from('employees')
             .select('*')
-            .eq('is_active', true);
+            .eq('status', 'active');
           targetEmployees = data || [];
         }
         
