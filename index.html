@@ -3203,7 +3203,6 @@
             const { data, error } = await this.sb
               .from('brand_settings')
               .select('*')
-              .eq('status', 'active')
               .order('created_at', { ascending: false })
               .limit(1)
               .single();
@@ -3212,11 +3211,11 @@
               console.warn('⚠️ 브랜드 설정 로드 실패 (기본값 사용):', error);
               // 기본값 사용
               this.brandSettings = {
-                company_name: '마스터플랜리소스(유)',
-                company_name_en: 'MasterPlanResource Co.,Ltd.',
-                logo_url: null,
-                primary_color: '#C5A35F',
-                secondary_color: '#D4AF37',
+                company_name: '카인드원',
+                company_name_en: 'KINDWON',
+                logo_url: './logo.png',
+                primary_color: '#10B981',
+                secondary_color: '#059669',
                 login_subtitle: '직원 업무 관리 시스템',
                 master_dashboard_title: '총괄 관리자'
               };
@@ -3232,11 +3231,11 @@
             console.error('❌ 브랜드 설정 로드 오류:', error);
             // 기본값으로 계속 진행
             this.brandSettings = {
-              company_name: '마스터플랜리소스(유)',
-              company_name_en: 'MasterPlanResource Co.,Ltd.',
-              logo_url: null,
-              primary_color: '#C5A35F',
-              secondary_color: '#D4AF37',
+              company_name: '카인드원',
+              company_name_en: 'KINDWON',
+              logo_url: './logo.png',
+              primary_color: '#10B981',
+              secondary_color: '#059669',
               login_subtitle: '직원 업무 관리 시스템',
               master_dashboard_title: '총괄 관리자'
             };
