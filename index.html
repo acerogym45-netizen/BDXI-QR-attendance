@@ -3332,7 +3332,6 @@
             const { data, error } = await this.sb
               .from('apartments')
               .select('*')
-              .eq('status', 'active')
               .order('name');
             
             if (error) throw error;
@@ -3766,7 +3765,6 @@
             const { data: apartments, error } = await this.sb
               .from('apartments')
               .select('id, name')
-              .eq('status', 'active')
               .order('name');
             
             if (error) throw error;
