@@ -14012,12 +14012,27 @@
                 // 18:10까지 퇴근은 정상 처리 (10분 늦은 퇴근 허용)
               }
               
-              return { date, status, checkIn, checkOut };
+              // 일별 근무시간 계산 (시간 단위, 소수점 절사)
+              let workHours = 0;
+              if (checkIn !== '-' && checkOut !== '-') {
+                const [inHour, inMin] = checkIn.split(':').map(Number);
+                const [outHour, outMin] = checkOut.split(':').map(Number);
+                const inMinutes = inHour * 60 + inMin;
+                const outMinutes = outHour * 60 + outMin;
+                const workMinutes = outMinutes - inMinutes;
+                workHours = Math.floor(workMinutes / 60); // 소수점 절사
+              }
+              
+              return { date, status, checkIn, checkOut, workHours };
             });
+            
+            // 당월 총 근무시간 계산
+            const totalWorkHours = dailyData.reduce((sum, day) => sum + (day.workHours || 0), 0);
             
             return {
               employee: emp,
-              dailyData
+              dailyData,
+              totalWorkHours
             };
           });
           
@@ -14063,6 +14078,7 @@
         html += '<tr>';
         html += '<th class="px-3 py-2 text-left font-bold text-gray-700 border sticky left-0 bg-gray-100" style="min-width: 100px;">직원명</th>';
         html += '<th class="px-3 py-2 text-left font-bold text-gray-700 border sticky left-0 bg-gray-100" style="left: 100px; min-width: 80px;">직책</th>';
+        html += '<th class="px-3 py-2 text-center font-bold text-blue-700 border bg-blue-50" style="min-width: 100px;">총 근무시간</th>';
         
         dates.forEach(date => {
           const d = new Date(date);
@@ -14070,7 +14086,7 @@
           const isWeekend = dayOfWeek === '일' || dayOfWeek === '토';
           const colorClass = isWeekend ? 'text-red-600' : 'text-gray-700';
           
-          html += `<th class="px-2 py-2 text-center font-bold ${colorClass} border" style="min-width: 120px;">`;
+          html += `<th class="px-2 py-2 text-center font-bold ${colorClass} border" style="min-width: 140px;">`;
           html += `${d.getMonth() + 1}/${d.getDate()}<br>${dayOfWeek}`;
           html += '</th>';
         });
@@ -14085,6 +14101,7 @@
           html += '<tr class="hover:bg-gray-50">';
           html += `<td class="px-3 py-2 font-medium border sticky left-0 bg-white">${emp.employee.name}</td>`;
           html += `<td class="px-3 py-2 text-gray-600 border sticky left-0 bg-white" style="left: 100px;">${emp.employee.position || '-'}</td>`;
+          html += `<td class="px-3 py-2 text-center font-bold text-blue-700 border bg-blue-50">${emp.totalWorkHours}시간</td>`;
           
           emp.dailyData.forEach(day => {
             let bgColor = 'bg-white';
@@ -14110,6 +14127,7 @@
               html += `<div class="font-medium">${day.status}</div>`;
               html += `<div class="text-xs mt-1">출: ${day.checkIn}</div>`;
               html += `<div class="text-xs">퇴: ${day.checkOut}</div>`;
+              html += `<div class="text-xs font-bold text-blue-600 mt-1">${day.workHours}시간</div>`;
             } else {
               html += '-';
             }
@@ -14139,7 +14157,7 @@
           const wb = XLSX.utils.book_new();
           
           // 헤더 행
-          const headers = ['직원명', '직책'];
+          const headers = ['직원명', '직책', '총 근무시간'];
           dates.forEach(date => {
             const d = new Date(date);
             const dayOfWeek = ['일', '월', '화', '수', '목', '금', '토'][d.getDay()];
@@ -14152,12 +14170,13 @@
           attendanceData.forEach(emp => {
             const row = [
               emp.employee.name,
-              emp.employee.position || '-'
+              emp.employee.position || '-',
+              `${emp.totalWorkHours}시간`
             ];
             
             emp.dailyData.forEach(day => {
               if (day.checkIn !== '-' || day.checkOut !== '-') {
-                row.push(`${day.status} 출:${day.checkIn} 퇴:${day.checkOut}`);
+                row.push(`${day.status} 출:${day.checkIn} 퇴:${day.checkOut} (${day.workHours}h)`);
               } else {
                 row.push('-');
               }
@@ -14173,7 +14192,8 @@
           ws['!cols'] = [
             { wch: 10 },  // 직원명
             { wch: 10 },  // 직책
-            ...dates.map(() => ({ wch: 25 }))  // 날짜 열들
+            { wch: 12 },  // 총 근무시간
+            ...dates.map(() => ({ wch: 30 }))  // 날짜 열들 (더 넓게)
           ];
           
           XLSX.utils.book_append_sheet(wb, ws, '근태표');
@@ -14202,81 +14222,66 @@
           
           const { startDate, endDate, dates, attendanceData } = this.currentAttendanceSheetData;
           
-          // jsPDF 라이브러리 확인
+          // jsPDF 및 html2canvas 라이브러리 확인
           if (typeof jspdf === 'undefined' || !jspdf.jsPDF) {
             this.showToast('PDF 라이브러리를 불러올 수 없습니다', 'error');
             return;
           }
           
+          if (typeof html2canvas === 'undefined') {
+            this.showToast('html2canvas 라이브러리를 불러올 수 없습니다', 'error');
+            return;
+          }
+          
+          this.showToast('PDF 생성 중...', 'info');
+          
+          // 근태표 컨테이너를 캡처
+          const container = document.getElementById('attendance-sheet-container');
+          if (!container) {
+            this.showToast('근태표를 찾을 수 없습니다', 'error');
+            return;
+          }
+          
+          // html2canvas로 이미지 생성
+          const canvas = await html2canvas(container, {
+            scale: 2, // 고해상도
+            useCORS: true,
+            logging: false,
+            backgroundColor: '#ffffff'
+          });
+          
+          const imgData = canvas.toDataURL('image/png');
+          
+          // PDF 생성
           const { jsPDF } = jspdf;
-          const doc = new jsPDF({
-            orientation: 'landscape',
+          const pdf = new jsPDF({
+            orientation: canvas.width > canvas.height ? 'landscape' : 'portrait',
             unit: 'mm',
             format: 'a4'
           });
           
-          // 한글 폰트 설정을 위해 autoTable 사용
-          const apartmentName = this.currentApartmentInfo?.name || '아파트';
-          const title = `${apartmentName} 근태표 (${startDate} ~ ${endDate})`;
+          const pdfWidth = pdf.internal.pageSize.getWidth();
+          const pdfHeight = pdf.internal.pageSize.getHeight();
           
-          // 제목
-          doc.setFontSize(16);
-          doc.text(title, 148, 15, { align: 'center' });
+          const imgWidth = canvas.width;
+          const imgHeight = canvas.height;
+          const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
           
-          // 테이블 데이터 준비
-          const headers = [['직원명', '직책', ...dates.map(date => {
-            const d = new Date(date);
-            return `${d.getMonth() + 1}/${d.getDate()}`;
-          })]];
+          const imgX = (pdfWidth - imgWidth * ratio) / 2;
+          const imgY = 10;
           
-          const rows = attendanceData.map(empData => {
-            const row = [
-              empData.employee.name,
-              empData.employee.position || '-',
-              ...empData.dailyData.map(dayData => {
-                if (dayData.checkIn === '-' && dayData.checkOut === '-') return '-';
-                
-                const checkInTime = dayData.checkIn !== '-' ? dayData.checkIn : '';
-                const checkOutTime = dayData.checkOut !== '-' ? dayData.checkOut : '';
-                
-                return checkInTime && checkOutTime ? `${checkInTime}\n${checkOutTime}` : (checkInTime || checkOutTime || '-');
-              })
-            ];
-            return row;
-          });
-          
-          // autoTable 플러그인 사용
-          doc.autoTable({
-            head: headers,
-            body: rows,
-            startY: 25,
-            styles: {
-              font: 'helvetica',
-              fontSize: 8,
-              cellPadding: 2,
-              overflow: 'linebreak'
-            },
-            headStyles: {
-              fillColor: [66, 139, 202],
-              textColor: 255,
-              fontStyle: 'bold'
-            },
-            columnStyles: {
-              0: { cellWidth: 25, fontStyle: 'bold' },
-              1: { cellWidth: 20 }
-            },
-            margin: { top: 25, left: 10, right: 10 }
-          });
+          pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
           
           // 파일 저장
+          const apartmentName = this.currentApartmentInfo?.name || '아파트';
           const fileName = `근태표_${apartmentName}_${startDate}_${endDate}.pdf`;
-          doc.save(fileName);
+          pdf.save(fileName);
           
           this.showToast('✅ PDF 파일이 다운로드되었습니다', 'success');
           
         } catch (error) {
           console.error('❌ PDF 내보내기 실패:', error);
-          this.showToast('PDF 내보내기 중 오류가 발생했습니다', 'error');
+          this.showToast('PDF 내보내기 중 오류가 발생했습니다: ' + error.message, 'error');
         }
       };
       
