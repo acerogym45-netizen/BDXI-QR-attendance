@@ -14015,36 +14015,65 @@
                 status = '결근';
               }
               
-              // 지각 판단 (09:00 기준, 절대 엄격 - 1분이라도 늦으면 지각)
-              // 일찍 출근 10분 허용 (08:50 이전 출근도 정상)
+              // 🔧 직원별 근무시간대 설정
+              // 직책에 따라 다른 출퇴근 시간 기준 적용
+              let workStartHour = 9;  // 기본: 오전 9시
+              let workEndHour = 18;   // 기본: 오후 6시
+              
+              if (emp.position) {
+                const position = emp.position.toLowerCase();
+                
+                // 오후 근무자 (오후 3시 ~ 오후 11시)
+                if (position.includes('오후') || position.includes('afternoon') || position.includes('pm')) {
+                  workStartHour = 15;  // 오후 3시
+                  workEndHour = 23;    // 오후 11시
+                }
+                // 오전 근무자 (오전 6시 ~ 오후 2시)
+                else if (position.includes('오전') || position.includes('morning') || position.includes('am')) {
+                  workStartHour = 6;   // 오전 6시
+                  workEndHour = 14;    // 오후 2시
+                }
+                // 저녁/야간 근무자 (오후 6시 ~ 새벽 2시)
+                else if (position.includes('저녁') || position.includes('야간') || position.includes('evening') || position.includes('night')) {
+                  workStartHour = 18;  // 오후 6시
+                  workEndHour = 26;    // 새벽 2시 (다음날)
+                }
+              }
+              
+              // 지각 판단 (직원별 근무 시작 시간 기준, 20분 허용)
+              // 예: 9시 출근이면 09:20까지 정상, 15시 출근이면 15:20까지 정상
               if (checkIn !== '-') {
                 const parsed = parseKoreanTime(checkIn);
                 if (parsed) {
                   const checkInMinutes = parsed.hour * 60 + parsed.minute;
-                  const standardTime = 9 * 60; // 09:00 = 540분
+                  const standardTime = workStartHour * 60; // 해당 직원의 출근 시간
+                  const lateThreshold = standardTime + 20; // 20분 여유
                   
-                  // 09:00 초과 시 무조건 지각 (엄격)
-                  if (checkInMinutes > standardTime) {
+                  // 출근 시간 + 20분 초과 시 지각
+                  if (checkInMinutes > lateThreshold) {
                     status = '지각';
                   }
-                  // 08:50 이전 출근도 정상 처리 (10분 일찍 출근 허용)
                 }
               }
               
-              // 조기퇴근 판단 (18:00 기준, 절대 엄격 - 1분이라도 일찍 퇴근하면 조기퇴근)
-              // 늦게 퇴근 10분 허용 (18:10까지 퇴근은 정상)
+              // 조기퇴근 판단 (직원별 근무 종료 시간 기준, 10분 허용)
+              // 예: 18시 퇴근이면 18:10까지 정상, 23시 퇴근이면 23:10까지 정상
               if (checkOut !== '-') {
                 const parsed = parseKoreanTime(checkOut);
                 if (parsed) {
-                  const checkOutMinutes = parsed.hour * 60 + parsed.minute;
-                  const standardEndTime = 18 * 60; // 18:00 = 1080분
-                  const lateCheckoutThreshold = standardEndTime + 10; // 18:10 = 1090분
+                  let checkOutMinutes = parsed.hour * 60 + parsed.minute;
+                  const standardEndTime = workEndHour * 60; // 해당 직원의 퇴근 시간
                   
-                  // 18:00 미만 퇴근 시 무조건 조기퇴근 (엄격)
-                  if (checkOutMinutes < standardEndTime) {
+                  // 자정 넘어가는 근무 처리
+                  if (workEndHour >= 24 && parsed.hour < 12) {
+                    // 새벽 시간대 퇴근 (예: 새벽 2시)
+                    checkOutMinutes += 24 * 60;
+                  }
+                  
+                  // 퇴근 시간 - 10분 미만 시 조기퇴근
+                  if (checkOutMinutes < standardEndTime - 10) {
                     status = '조기퇴근';
                   }
-                  // 18:10까지 퇴근은 정상 처리 (10분 늦은 퇴근 허용)
                 }
               }
               
@@ -14278,7 +14307,7 @@
             return;
           }
           
-          this.showToast('PDF 생성 중... (잠시만 기다려주세요)', 'info');
+          this.showToast('📊 PDF 생성 준비 중...', 'info');
           
           // 근태표 컨테이너를 캡처
           const container = document.getElementById('attendance-sheet-container');
@@ -14294,30 +14323,53 @@
           
           console.log('📊 테이블 크기:', tableWidth, 'x', tableHeight);
           
-          // html2canvas로 이미지 생성 (최적화된 설정)
+          // 최대 크기 제한 (너무 큰 경우 축소)
+          const maxWidth = 5000;
+          const maxHeight = 5000;
+          let targetWidth = tableWidth;
+          let targetHeight = tableHeight;
+          
+          if (tableWidth > maxWidth || tableHeight > maxHeight) {
+            const scale = Math.min(maxWidth / tableWidth, maxHeight / tableHeight);
+            targetWidth = Math.floor(tableWidth * scale);
+            targetHeight = Math.floor(tableHeight * scale);
+            console.log('⚠️ 테이블 크기 축소:', targetWidth, 'x', targetHeight);
+          }
+          
+          this.showToast('🖼️ PDF 이미지 생성 중... (10-15초 소요)', 'info');
+          
+          // html2canvas로 이미지 생성 (고속 모드)
           const canvas = await html2canvas(container, {
-            scale: 1.5, // 해상도 낮춤 (2 -> 1.5) 속도 개선
+            scale: 1.0, // 해상도 최소화 (1.5 -> 1.0) 속도 우선
             useCORS: true,
             logging: false,
             backgroundColor: '#ffffff',
-            width: tableWidth, // 명시적 크기 설정
-            height: tableHeight,
+            width: targetWidth,
+            height: targetHeight,
             windowWidth: tableWidth,
             windowHeight: tableHeight,
             scrollX: 0,
-            scrollY: 0
+            scrollY: 0,
+            // 추가 최적화 옵션
+            imageTimeout: 0,
+            removeContainer: false,
+            foreignObjectRendering: false // SVG 렌더링 비활성화 (속도 향상)
           });
           
           console.log('🖼️ 캡처된 캔버스 크기:', canvas.width, 'x', canvas.height);
           
-          const imgData = canvas.toDataURL('image/png');
+          this.showToast('📄 PDF 파일 생성 중...', 'info');
+          
+          // JPEG로 변환 (PNG보다 빠름)
+          const imgData = canvas.toDataURL('image/jpeg', 0.95);
           
           // PDF 생성 (A3 크기, 가로 모드)
           const { jsPDF } = jspdf;
           const pdf = new jsPDF({
             orientation: 'landscape', // 가로 고정 (큰 표 수용)
             unit: 'mm',
-            format: 'a3' // A4 -> A3로 변경 (더 큰 페이지)
+            format: 'a3', // A3 크기 (420mm x 297mm)
+            compress: true // PDF 압축 활성화
           });
           
           const pdfWidth = pdf.internal.pageSize.getWidth(); // A3 landscape: 420mm
@@ -14338,7 +14390,8 @@
           const imgX = (pdfWidth - scaledWidth) / 2;
           const imgY = margin;
           
-          pdf.addImage(imgData, 'PNG', imgX, imgY, scaledWidth, scaledHeight);
+          // JPEG 포맷으로 추가 (PNG보다 파일 크기 작음)
+          pdf.addImage(imgData, 'JPEG', imgX, imgY, scaledWidth, scaledHeight);
           
           // 파일 저장
           const apartmentName = this.currentApartmentInfo?.name || '아파트';
