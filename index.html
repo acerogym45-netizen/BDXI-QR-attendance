@@ -14305,9 +14305,9 @@
         }
       };
       
-      // PDF로 근태표 내보내기 (autoTable 사용 - 빠른 생성)
+      // PDF로 근태표 내보내기 (1주일 단위 페이지 분할, 가로 배열)
       app.exportAttendanceSheetToPDF = async function() {
-        console.log('📄 PDF 근태표 내보내기 시작 (autoTable 방식)');
+        console.log('📄 PDF 근태표 내보내기 시작 (1주일 단위 페이지 분할)');
         
         try {
           if (!this.currentAttendanceSheetData) {
@@ -14323,7 +14323,7 @@
             return;
           }
           
-          this.showToast('📊 PDF 생성 중... (2-3초 소요)', 'info');
+          this.showToast('📊 PDF 생성 중... (1주일 단위 분할)', 'info');
           
           const { jsPDF } = jspdf;
           
@@ -14339,171 +14339,208 @@
           const fontAdded = addPaperlogyFontsToPDF(pdf);
           if (fontAdded) {
             console.log('✅ PDF에 Paperlogy 폰트 임베드 완료');
-            pdf.setFont('Paperlogy', 'bold');
           } else {
             console.warn('⚠️ Paperlogy 폰트 로드 실패, helvetica 사용');
-            pdf.setFont('helvetica', 'bold');
           }
           
-          // 제목 추가
-          pdf.setFontSize(16);
-          const title = `${this.currentApartmentInfo?.name || '아파트'} 근태표`;
-          const titleWidth = pdf.getTextWidth(title);
-          pdf.text(title, (297 - titleWidth) / 2, 15);
-          
-          // 기간 표시
-          pdf.setFontSize(10);
-          if (fontAdded) {
-            pdf.setFont('Paperlogy', 'normal');
-          } else {
-            pdf.setFont('helvetica', 'normal');
+          // 날짜를 1주일(7일) 단위로 분할
+          const weeksData = [];
+          for (let i = 0; i < dates.length; i += 7) {
+            weeksData.push({
+              dates: dates.slice(i, i + 7),
+              startIndex: i,
+              endIndex: Math.min(i + 7, dates.length)
+            });
           }
-          const period = `${startDate} ~ ${endDate}`;
-          const periodWidth = pdf.getTextWidth(period);
-          pdf.text(period, (297 - periodWidth) / 2, 22);
           
-          // 날짜 헤더 준비 (한글 요일 포함)
-          const dateHeaders = dates.map(date => {
-            const d = new Date(date);
-            const month = d.getMonth() + 1;
-            const day = d.getDate();
-            const dayOfWeek = ['일', '월', '화', '수', '목', '금', '토'][d.getDay()];
-            return `${month}/${day}\n(${dayOfWeek})`;
-          });
+          console.log(`📅 총 ${weeksData.length}주차로 분할`);
           
-          // 테이블 헤더
-          const headers = [
-            ['직원명', '직책', '총 근무\n시간', ...dateHeaders]
-          ];
-          
-          // 테이블 데이터 준비
-          const rows = attendanceData.map(emp => {
-            const row = [
-              emp.employee.name,
-              emp.employee.position || '-',
-              `${emp.totalWorkHours}h`
-            ];
+          // 각 주차별로 페이지 생성
+          weeksData.forEach((week, weekIndex) => {
+            if (weekIndex > 0) {
+              pdf.addPage();
+            }
             
-            // 각 날짜별 데이터 추가
-            emp.dailyData.forEach(day => {
-              if (day.checkIn !== '-' || day.checkOut !== '-') {
-                // 상태에 따라 다른 포맷
-                let cellText = '';
-                if (day.status === '정상') {
-                  cellText = `출:${day.checkIn}\n퇴:${day.checkOut}\n${day.workHours}h`;
-                } else if (day.status === '지각') {
-                  cellText = `[지각]\n출:${day.checkIn}\n퇴:${day.checkOut}\n${day.workHours}h`;
-                } else if (day.status === '조기퇴근') {
-                  cellText = `[조퇴]\n출:${day.checkIn}\n퇴:${day.checkOut}\n${day.workHours}h`;
-                } else {
-                  cellText = `[${day.status}]\n출:${day.checkIn}\n퇴:${day.checkOut}\n${day.workHours}h`;
-                }
-                row.push(cellText);
-              } else {
-                row.push(day.status === '결근' ? '결근' : '-');
-              }
+            // 제목
+            pdf.setFontSize(16);
+            if (fontAdded) {
+              pdf.setFont('Paperlogy', 'bold');
+            } else {
+              pdf.setFont('helvetica', 'bold');
+            }
+            const title = `${this.currentApartmentInfo?.name || '아파트'} 근태표`;
+            const titleWidth = pdf.getTextWidth(title);
+            pdf.text(title, (297 - titleWidth) / 2, 15);
+            
+            // 기간 표시 (전체 기간 + 현재 주차)
+            pdf.setFontSize(10);
+            if (fontAdded) {
+              pdf.setFont('Paperlogy', 'normal');
+            } else {
+              pdf.setFont('helvetica', 'normal');
+            }
+            
+            const weekStart = week.dates[0];
+            const weekEnd = week.dates[week.dates.length - 1];
+            const period = `전체 기간: ${startDate} ~ ${endDate} | ${weekIndex + 1}주차: ${weekStart} ~ ${weekEnd}`;
+            const periodWidth = pdf.getTextWidth(period);
+            pdf.text(period, (297 - periodWidth) / 2, 22);
+            
+            // 날짜 헤더 준비 (가로 배열 - 줄바꿈 없음)
+            const dateHeaders = week.dates.map(date => {
+              const d = new Date(date);
+              const month = d.getMonth() + 1;
+              const day = d.getDate();
+              const dayOfWeek = ['일', '월', '화', '수', '목', '금', '토'][d.getDay()];
+              return `${month}/${day}(${dayOfWeek})`;  // ✅ 가로 배열
             });
             
-            return row;
-          });
-          
-          // 날짜 수에 따라 동적으로 컬럼 너비 조정
-          const fixedColumnsWidth = 20 + 20 + 18; // 직원명 + 직책 + 총 근무시간
-          const availableWidth = 297 - 20; // A4 가로 - 여백
-          const dateColumnWidth = (availableWidth - fixedColumnsWidth) / dates.length;
-          
-          // 컬럼 스타일 설정
-          const columnStyles = {
-            0: { cellWidth: 20, halign: 'center' }, // 직원명
-            1: { cellWidth: 20, halign: 'center' }, // 직책
-            2: { cellWidth: 18, halign: 'center', fontStyle: 'bold' }  // 총 근무시간
-          };
-          
-          // 날짜 컬럼들 동적 너비 설정
-          for (let i = 3; i < 3 + dates.length; i++) {
-            columnStyles[i] = { 
-              cellWidth: dateColumnWidth, 
-              halign: 'center',
-              fontSize: 7
-            };
-          }
-          
-          // autoTable로 테이블 생성
-          pdf.autoTable({
-            head: headers,
-            body: rows,
-            startY: 28,
-            theme: 'grid',
-            styles: {
-              font: fontAdded ? 'Paperlogy' : 'helvetica',
-              fontSize: 8,
-              cellPadding: 2,
-              overflow: 'linebreak',
-              halign: 'center',
-              valign: 'middle',
-              lineColor: [200, 200, 200],
-              lineWidth: 0.1
-            },
-            headStyles: {
-              fillColor: [41, 128, 185],
-              textColor: [255, 255, 255],
-              fontStyle: 'bold',
-              fontSize: 8,
-              halign: 'center'
-            },
-            columnStyles: columnStyles,
-            alternateRowStyles: {
-              fillColor: [245, 245, 245]
-            },
-            // 상태별 셀 색상 적용
-            didParseCell: function(data) {
-              // 헤더와 고정 컬럼은 제외
-              if (data.section === 'body' && data.column.index >= 3) {
-                const cellText = data.cell.raw;
-                if (typeof cellText === 'string') {
-                  if (cellText.includes('[지각]')) {
-                    data.cell.styles.textColor = [220, 53, 69]; // 빨강
-                    data.cell.styles.fontStyle = 'bold';
-                  } else if (cellText.includes('[조퇴]')) {
-                    data.cell.styles.textColor = [255, 193, 7]; // 주황
-                    data.cell.styles.fontStyle = 'bold';
-                  } else if (cellText === '결근') {
-                    data.cell.styles.textColor = [108, 117, 125]; // 회색
-                    data.cell.styles.fillColor = [240, 240, 240];
+            // 테이블 헤더
+            const headers = [
+              ['직원명', '직책', ...dateHeaders, '주간 근무시간']  // ✅ 주간 근무시간 맨 뒤로
+            ];
+            
+            // 테이블 데이터 준비
+            const rows = attendanceData.map(emp => {
+              const row = [
+                emp.employee.name,
+                emp.employee.position || '-'
+              ];
+              
+              // 이번 주 근무시간 합계 계산
+              let weekWorkHours = 0;
+              
+              // 각 날짜별 데이터 추가 (이번 주만)
+              for (let i = week.startIndex; i < week.endIndex; i++) {
+                const day = emp.dailyData[i];
+                
+                if (day.checkIn !== '-' || day.checkOut !== '-') {
+                  // 상태에 따라 다른 포맷 (가로 배열)
+                  let cellText = '';
+                  if (day.status === '정상') {
+                    cellText = `${day.checkIn} ~ ${day.checkOut} (${day.workHours}h)`;  // ✅ 가로 배열
+                  } else if (day.status === '지각') {
+                    cellText = `[지각] ${day.checkIn} ~ ${day.checkOut} (${day.workHours}h)`;
+                  } else if (day.status === '조기퇴근') {
+                    cellText = `[조퇴] ${day.checkIn} ~ ${day.checkOut} (${day.workHours}h)`;
+                  } else {
+                    cellText = `[${day.status}] ${day.checkIn} ~ ${day.checkOut} (${day.workHours}h)`;
                   }
+                  row.push(cellText);
+                  
+                  // 근무시간 합산 (숫자만 추출)
+                  const hours = parseFloat(day.workHours);
+                  if (!isNaN(hours)) {
+                    weekWorkHours += hours;
+                  }
+                } else {
+                  row.push(day.status === '결근' ? '결근' : '-');
                 }
               }
               
-              // 총 근무시간 컬럼 하이라이트
-              if (data.section === 'body' && data.column.index === 2) {
-                data.cell.styles.fillColor = [232, 245, 253];
-                data.cell.styles.textColor = [13, 110, 253];
-              }
-            },
-            margin: { left: 10, right: 10 }
-          });
-          
-          // 페이지 번호 추가
-          const pageCount = pdf.internal.getNumberOfPages();
-          for (let i = 1; i <= pageCount; i++) {
-            pdf.setPage(i);
+              // 주간 근무시간 추가
+              row.push(`${weekWorkHours.toFixed(1)}h`);
+              
+              return row;
+            });
+            
+            // 컬럼 너비 설정 (1주일이므로 여유 있음)
+            const columnStyles = {
+              0: { cellWidth: 25, halign: 'center' },  // 직원명
+              1: { cellWidth: 25, halign: 'center' }   // 직책
+            };
+            
+            // 날짜 컬럼들 (7일 기준으로 여유롭게)
+            const dateColumnWidth = 28;  // 각 날짜 컬럼 28mm
+            for (let i = 2; i < 2 + week.dates.length; i++) {
+              columnStyles[i] = {
+                cellWidth: dateColumnWidth,
+                halign: 'center',
+                fontSize: 8  // ✅ 가로 배열이므로 폰트 크기 유지
+              };
+            }
+            
+            // 주간 근무시간 컬럼
+            columnStyles[2 + week.dates.length] = {
+              cellWidth: 25,
+              halign: 'center',
+              fontStyle: 'bold'
+            };
+            
+            // autoTable로 테이블 생성
+            pdf.autoTable({
+              head: headers,
+              body: rows,
+              startY: 28,
+              theme: 'grid',
+              styles: {
+                font: fontAdded ? 'Paperlogy' : 'helvetica',
+                fontSize: 8,
+                cellPadding: 3,  // ✅ 가로 배열이므로 패딩 증가
+                overflow: 'linebreak',
+                halign: 'center',
+                valign: 'middle',
+                lineColor: [200, 200, 200],
+                lineWidth: 0.1
+              },
+              headStyles: {
+                fillColor: [41, 128, 185],
+                textColor: [255, 255, 255],
+                fontStyle: 'bold',
+                fontSize: 9,  // ✅ 헤더 폰트 크기 증가
+                halign: 'center',
+                minCellHeight: 10
+              },
+              columnStyles: columnStyles,
+              alternateRowStyles: {
+                fillColor: [245, 245, 245]
+              },
+              // 상태별 셀 색상 적용
+              didParseCell: function(data) {
+                // 날짜 컬럼 (직원명, 직책 제외)
+                if (data.section === 'body' && data.column.index >= 2 && data.column.index < 2 + week.dates.length) {
+                  const cellText = data.cell.raw;
+                  if (typeof cellText === 'string') {
+                    if (cellText.includes('[지각]')) {
+                      data.cell.styles.textColor = [220, 53, 69]; // 빨강
+                      data.cell.styles.fontStyle = 'bold';
+                    } else if (cellText.includes('[조퇴]')) {
+                      data.cell.styles.textColor = [255, 193, 7]; // 주황
+                      data.cell.styles.fontStyle = 'bold';
+                    } else if (cellText === '결근') {
+                      data.cell.styles.textColor = [108, 117, 125]; // 회색
+                      data.cell.styles.fillColor = [240, 240, 240];
+                    }
+                  }
+                }
+                
+                // 주간 근무시간 컬럼 하이라이트
+                if (data.section === 'body' && data.column.index === 2 + week.dates.length) {
+                  data.cell.styles.fillColor = [232, 245, 253];
+                  data.cell.styles.textColor = [13, 110, 253];
+                }
+              },
+              margin: { left: 10, right: 10, bottom: 15 }
+            });
+            
+            // 페이지 번호 추가
             pdf.setFontSize(9);
             if (fontAdded) {
               pdf.setFont('Paperlogy', 'normal');
             } else {
               pdf.setFont('helvetica', 'normal');
             }
-            pdf.text(`${i} / ${pageCount}`, 297 / 2, 205, { align: 'center' });
-          }
+            pdf.text(`${weekIndex + 1}주차 / 전체 ${weeksData.length}주차`, 297 / 2, 205, { align: 'center' });
+          });
           
           // 파일 저장
           const apartmentName = this.currentApartmentInfo?.name || '아파트';
           const fileName = `근태표_${apartmentName}_${startDate}_${endDate}.pdf`;
           pdf.save(fileName);
           
-          this.showToast('✅ PDF 파일이 다운로드되었습니다 (고속 생성 완료)', 'success');
+          this.showToast(`✅ PDF 파일이 다운로드되었습니다 (${weeksData.length}주차 분할)`, 'success');
           
-          console.log('✅ PDF 생성 완료 (autoTable 방식)');
+          console.log(`✅ PDF 생성 완료 (${weeksData.length}주차 분할)`);
           
         } catch (error) {
           console.error('❌ PDF 내보내기 실패:', error);
