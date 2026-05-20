@@ -855,18 +855,42 @@
             }
 
             // 3. Load Apartment ID from code
+            console.log('🔍 아파트 조회 시도:', { aptCode });
+            
             const { data: aptData, error: aptError } = await this.sb
               .from('apartments')
-              .select('id')
+              .select('id, code, name')
               .eq('code', aptCode)
-              .single();
+              .maybeSingle(); // single() 대신 maybeSingle() 사용
             
-            if (aptError || !aptData) {
-              throw new Error('아파트 정보를 찾을 수 없습니다.');
+            console.log('📊 아파트 조회 결과:', { aptData, aptError });
+            
+            if (aptError) {
+              console.error('❌ DB 조회 오류:', aptError);
+              throw new Error('데이터베이스 조회 오류: ' + aptError.message);
+            }
+            
+            if (!aptData) {
+              // 코드가 없으면 모든 아파트 목록 확인
+              const { data: allApts } = await this.sb
+                .from('apartments')
+                .select('id, code, name')
+                .limit(10);
+              
+              console.log('📋 전체 아파트 목록:', allApts);
+              
+              throw new Error(`아파트 정보를 찾을 수 없습니다.\n\n조회 코드: ${aptCode}\n\n관리자에게 문의하세요.`);
             }
             
             this.state.aptId = aptData.id; // 실제 UUID
             this.state.aptCode = aptCode;  // 코드 저장
+            this.state.aptName = aptData.name; // 이름 저장
+            
+            console.log('✅ 아파트 정보 로드 완료:', {
+              id: this.state.aptId,
+              code: this.state.aptCode,
+              name: this.state.aptName
+            });
 
             // 4. Load Data
             await Promise.all([this.loadLocation(), this.loadEmployees()]);
