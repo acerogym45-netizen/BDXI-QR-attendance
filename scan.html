@@ -867,20 +867,23 @@
             // 3. Load Apartment ID from code
             console.log('🔍 아파트 조회 시도:', { aptCode });
             
-            // 3-1. 먼저 code로 조회 시도
+            // 3-1. 먼저 code로 조회 시도 (APT001, APT002 등 신규 형식)
             let { data: aptData, error: aptError } = await this.sb
               .from('apartments')
               .select('id, code, name')
               .eq('code', aptCode)
               .maybeSingle();
             
-            console.log('📊 code로 조회 결과:', { aptData, aptError });
+            console.log('📊 Step 1 - code로 조회 결과:', { aptData, aptError });
             
-            // 3-2. code로 찾을 수 없으면 name으로 조회 시도 (폴백)
+            // 3-2. code로 찾을 수 없으면 name으로 조회 시도 (BJD001, YDB002 등 구형식 폴백)
             if (!aptData && !aptError) {
               const aptName = APARTMENTS[aptCode];
               if (aptName) {
-                console.log('🔄 name으로 재시도:', { aptName });
+                console.log('🔄 Step 2 - name으로 재시도 (구형식 QR 호환):', { 
+                  oldCode: aptCode, 
+                  aptName 
+                });
                 
                 const result = await this.sb
                   .from('apartments')
@@ -891,7 +894,17 @@
                 aptData = result.data;
                 aptError = result.error;
                 
-                console.log('📊 name으로 조회 결과:', { aptData, aptError });
+                console.log('📊 Step 2 - name으로 조회 결과:', { aptData, aptError });
+                
+                if (aptData) {
+                  console.log('✅ 구형식 QR 코드(BJD/YDB) 호환 성공!', {
+                    oldCode: aptCode,
+                    newCode: aptData.code,
+                    name: aptData.name
+                  });
+                }
+              } else {
+                console.warn('⚠️ APARTMENTS 매핑에 없는 코드:', aptCode);
               }
             }
             
@@ -907,19 +920,22 @@
                 .select('id, code, name')
                 .limit(10);
               
-              console.log('📋 전체 아파트 목록:', allApts);
+              console.log('📋 전체 아파트 목록 (참고용):', allApts);
               
-              throw new Error(`아파트 정보를 찾을 수 없습니다.\n\n조회 코드: ${aptCode}\n조회 이름: ${APARTMENTS[aptCode] || '없음'}\n\n관리자에게 문의하세요.`);
+              throw new Error(`아파트 정보를 찾을 수 없습니다.\n\n조회 코드: ${aptCode}\n조회 이름: ${APARTMENTS[aptCode] || '없음'}\n\n관리자 페이지에서 새 QR 코드를 생성해주세요.`);
             }
             
             this.state.aptId = aptData.id; // 실제 UUID
-            this.state.aptCode = aptCode;  // 코드 저장
+            this.state.aptCode = aptCode;  // 원본 코드 저장 (BJD001 또는 APT004)
             this.state.aptName = aptData.name; // 이름 저장
+            this.state.aptDbCode = aptData.code; // DB의 실제 code (APT004 등)
             
             console.log('✅ 아파트 정보 로드 완료:', {
               id: this.state.aptId,
-              code: this.state.aptCode,
-              name: this.state.aptName
+              scannedCode: aptCode,
+              dbCode: aptData.code,
+              name: this.state.aptName,
+              compatibility: aptCode === aptData.code ? 'NEW_QR' : 'OLD_QR_LEGACY'
             });
 
             // 4. Load Data
