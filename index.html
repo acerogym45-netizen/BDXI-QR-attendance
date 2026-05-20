@@ -5201,7 +5201,8 @@
               });
               
               // Generate QR code
-              const aptCode = this.currentApartment?.code || 'BJD001';
+              const aptCode = this.currentApartmentInfo?.code || 'APT001';
+              console.log('🔍 QR 생성:', { aptCode, apartmentInfo: this.currentApartmentInfo });
               const qrUrl = `https://bdxi-qr-attendance.vercel.app/scan.html?loc=${loc.id}&apt=${aptCode}`;
               new QRCode(document.getElementById(`qr-${loc.id}`), {
                 text: qrUrl,
