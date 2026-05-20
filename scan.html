@@ -848,10 +848,20 @@
             // 2. Parse URL
             const params = new URLSearchParams(window.location.search);
             this.state.locId = params.get('loc');
-            const aptCode = params.get('apt'); // 코드 (예: BJD001)
+            const aptCode = params.get('apt'); // 코드 (예: BJD001 또는 APT004)
 
-            if (!this.state.locId || !aptCode) {
-              throw new Error('유효하지 않은 QR 코드입니다.');
+            console.log('📱 QR 스캔 URL 파라미터:', {
+              fullUrl: window.location.href,
+              locId: this.state.locId,
+              aptCode: aptCode
+            });
+
+            if (!this.state.locId) {
+              throw new Error('유효하지 않은 QR 코드입니다.\n\n구역 정보(loc)가 없습니다.\n\n새 QR 코드를 생성해주세요.');
+            }
+            
+            if (!aptCode) {
+              throw new Error('유효하지 않은 QR 코드입니다.\n\n아파트 정보(apt)가 없습니다.\n\n새 QR 코드를 생성해주세요.');
             }
 
             // 3. Load Apartment ID from code
