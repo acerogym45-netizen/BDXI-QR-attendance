@@ -857,13 +857,33 @@
             // 3. Load Apartment ID from code
             console.log('🔍 아파트 조회 시도:', { aptCode });
             
-            const { data: aptData, error: aptError } = await this.sb
+            // 3-1. 먼저 code로 조회 시도
+            let { data: aptData, error: aptError } = await this.sb
               .from('apartments')
               .select('id, code, name')
               .eq('code', aptCode)
-              .maybeSingle(); // single() 대신 maybeSingle() 사용
+              .maybeSingle();
             
-            console.log('📊 아파트 조회 결과:', { aptData, aptError });
+            console.log('📊 code로 조회 결과:', { aptData, aptError });
+            
+            // 3-2. code로 찾을 수 없으면 name으로 조회 시도 (폴백)
+            if (!aptData && !aptError) {
+              const aptName = APARTMENTS[aptCode];
+              if (aptName) {
+                console.log('🔄 name으로 재시도:', { aptName });
+                
+                const result = await this.sb
+                  .from('apartments')
+                  .select('id, code, name')
+                  .eq('name', aptName)
+                  .maybeSingle();
+                
+                aptData = result.data;
+                aptError = result.error;
+                
+                console.log('📊 name으로 조회 결과:', { aptData, aptError });
+              }
+            }
             
             if (aptError) {
               console.error('❌ DB 조회 오류:', aptError);
@@ -871,7 +891,7 @@
             }
             
             if (!aptData) {
-              // 코드가 없으면 모든 아파트 목록 확인
+              // 코드와 이름 모두로 찾을 수 없으면 전체 목록 확인
               const { data: allApts } = await this.sb
                 .from('apartments')
                 .select('id, code, name')
@@ -879,7 +899,7 @@
               
               console.log('📋 전체 아파트 목록:', allApts);
               
-              throw new Error(`아파트 정보를 찾을 수 없습니다.\n\n조회 코드: ${aptCode}\n\n관리자에게 문의하세요.`);
+              throw new Error(`아파트 정보를 찾을 수 없습니다.\n\n조회 코드: ${aptCode}\n조회 이름: ${APARTMENTS[aptCode] || '없음'}\n\n관리자에게 문의하세요.`);
             }
             
             this.state.aptId = aptData.id; // 실제 UUID
