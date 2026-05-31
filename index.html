@@ -2691,6 +2691,28 @@
             </div>
           </div>
           </div>
+          <!-- 주말 근무시간 섹션 (수정 모달) -->
+          <div class="bg-amber-50 border border-amber-200 rounded-lg p-4 space-y-3">
+            <div class="flex items-center mb-2">
+              <i class="fas fa-calendar-week text-amber-600 mr-2"></i>
+              <label class="text-sm font-medium text-gray-700">주말 근무시간 (토·일)</label>
+              <span class="ml-2 text-xs text-gray-500">(선택사항)</span>
+            </div>
+            <p class="text-xs text-gray-600">
+              <i class="fas fa-info-circle mr-1"></i>
+              주말 근무시간이 평일과 다른 경우에만 입력하세요. 미입력시 평일 근무시간이 적용됩니다.
+            </p>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs text-gray-600 mb-1">시작 시간</label>
+                <input type="time" id="edit-employee-weekend-start" placeholder="예: 09:00" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500">
+              </div>
+              <div>
+                <label class="block text-xs text-gray-600 mb-1">종료 시간</label>
+                <input type="time" id="edit-employee-weekend-end" placeholder="예: 18:00" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500">
+              </div>
+            </div>
+          </div>
           <div class="grid grid-cols-2 gap-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">계약 시작일</label>
@@ -6720,6 +6742,10 @@
           // 근무시간 설정
           document.getElementById('edit-employee-work-start').value = emp.work_start_time ? emp.work_start_time.substring(0, 5) : '';
           document.getElementById('edit-employee-work-end').value = emp.work_end_time ? emp.work_end_time.substring(0, 5) : '';
+          
+          // 주말 근무시간 설정
+          document.getElementById('edit-employee-weekend-start').value = emp.weekend_start_time ? emp.weekend_start_time.substring(0, 5) : '';
+          document.getElementById('edit-employee-weekend-end').value = emp.weekend_end_time ? emp.weekend_end_time.substring(0, 5) : '';
         },
         
         closeEditEmployeeModal: function () {
@@ -6747,6 +6773,10 @@
           // 근무시간 수집
           const workStart = document.getElementById('edit-employee-work-start').value;
           const workEnd = document.getElementById('edit-employee-work-end').value;
+          
+          // 주말 근무시간 수집
+          const weekendStart = document.getElementById('edit-employee-weekend-start').value;
+          const weekendEnd = document.getElementById('edit-employee-weekend-end').value;
           
           if (!name) {
             alert('직원명을 입력하세요.');
