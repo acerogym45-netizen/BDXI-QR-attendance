@@ -6869,6 +6869,11 @@
             return;
           }
           
+          if (!this.currentApartment) {
+            alert('아파트를 먼저 선택해주세요.');
+            return;
+          }
+          
           try {
             // 🏢 현재 아파트 ID 포함 + 계약 정보 + 근무 패턴 + 급여 정보
             const employeeData = { 
@@ -6879,7 +6884,7 @@
               base_salary: baseSalary ? parseFloat(baseSalary) : null,
               position_allowance: positionAllowance ? parseFloat(positionAllowance) : null,
               status,
-              apartment_id: this.currentApartment ? this.currentApartment : null,
+              apartment_id: this.currentApartment,
               contract_start: contractStart || null,
               contract_end: contractEnd || null,
               notes: notes || null,
@@ -6980,9 +6985,14 @@
             return;
           }
           
+          if (!this.currentApartment) {
+            alert('아파트를 먼저 선택해주세요.');
+            return;
+          }
+          
           try {
             const { error } = await this.sb.from('holidays').insert([{
-              apartment_id: this.currentApartment ? this.currentApartment : null,
+              apartment_id: this.currentApartment,
               holiday_date: date,
               holiday_name: name,
               holiday_type: type,
@@ -7446,12 +7456,17 @@
             return;
           }
           
+          if (!this.currentApartment) {
+            alert('아파트를 먼저 선택해주세요.');
+            return;
+          }
+          
           try {
             // 🏢 현재 아파트 ID 포함
             const locationData = { 
               name, 
               status,
-              apartment_id: this.currentApartment ? this.currentApartment : null
+              apartment_id: this.currentApartment
             };
             
             const { error } = await this.sb.from('locations').insert([locationData]);
@@ -9084,7 +9099,10 @@
       };
       
       app.saveSales = async function() {
-        if (!this.currentApartment) return;
+        if (!this.currentApartment) {
+          alert('아파트를 먼저 선택해주세요.');
+          return;
+        }
         
         const salesId = document.getElementById('edit-sales-id').value;
         const year = parseInt(document.getElementById('sales-year').value);
