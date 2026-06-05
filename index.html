@@ -3183,6 +3183,15 @@
         calendarMonth: new Date().getMonth(), // 0-11
         selectedEmployeeId: null,
         employeeAttendanceRecords: [],
+        
+        // 날짜 헬퍼 함수 (타임존 문제 해결)
+        getLocalDateString: function(date = new Date()) {
+          const d = date instanceof Date ? date : new Date(date);
+          const year = d.getFullYear();
+          const month = String(d.getMonth() + 1).padStart(2, '0');
+          const day = String(d.getDate()).padStart(2, '0');
+          return `${year}-${month}-${day}`;
+        },
 
         init: async function () {
           try {
@@ -4903,7 +4912,7 @@
             start = d.toISOString().split('T')[0];
             end = now.toISOString().split('T')[0];
           } else if (period === 'month') {
-            start = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+            start = this.getLocalDateString(new Date(now.getFullYear(), now.getMonth(), 1));
             end = now.toISOString().split('T')[0];
           } else {
             start = document.getElementById('custom-start').value;
@@ -4990,7 +4999,7 @@
 
             // Calculate hours by employee and period
             // 주의: 통계 기간은 사용자가 선택한 start ~ end 기준!
-            const today = new Date().toISOString().split('T')[0]; // 실제 오늘
+            const today = this.getLocalDateString(); // 실제 오늘
             const queryEnd = end; // 사용자가 선택한 종료일
             
             const weekAgo = new Date(queryEnd);
@@ -5358,7 +5367,7 @@
           const ws = XLSX.utils.json_to_sheet(data);
           XLSX.utils.book_append_sheet(wb, ws, '근로시간 집계');
           
-          const today = new Date().toISOString().split('T')[0];
+          const today = this.getLocalDateString();
           XLSX.writeFile(wb, `근로시간_집계_${today}.xlsx`);
         },
 
@@ -5777,8 +5786,8 @@
         loadMonthlyVacations: async function () {
           try {
             const now = new Date();
-            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
-            const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+            const startOfMonth = this.getLocalDateString(new Date(now.getFullYear(), now.getMonth(), 1));
+            const endOfMonth = this.getLocalDateString(new Date(now.getFullYear(), now.getMonth() + 1, 0));
             
             let query = this.sb.from('vacations')
               .select('*')
@@ -5948,8 +5957,8 @@
 
             // 이번달 휴가
             const now = new Date();
-            const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
-            const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+            const firstDay = this.getLocalDateString(new Date(now.getFullYear(), now.getMonth(), 1));
+            const lastDay = this.getLocalDateString(new Date(now.getFullYear(), now.getMonth() + 1, 0));
             
             const { data: thisMonth } = await this.sb
               .from('vacations')
@@ -6311,7 +6320,7 @@
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;
-            link.download = `휴가관리_${new Date().toISOString().split('T')[0]}.csv`;
+            link.download = `휴가관리_${this.getLocalDateString()}.csv`;
             link.click();
             URL.revokeObjectURL(url);
 
@@ -6676,7 +6685,7 @@
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, '직원 비밀번호');
             
-            const today = new Date().toISOString().split('T')[0];
+            const today = this.getLocalDateString();
             XLSX.writeFile(wb, `직원_비밀번호_${today}.xlsx`);
             
             alert('✅ Excel 파일이 다운로드되었습니다.');
@@ -6960,7 +6969,7 @@
           });
           
           // 현재 날짜로 초기화
-          const today = new Date().toISOString().split('T')[0];
+          const today = this.getLocalDateString();
           document.getElementById('new-holiday-date').value = today;
         },
         
@@ -9225,7 +9234,7 @@
         }
         
         try {
-          const today = new Date().toISOString().split('T')[0];
+          const today = this.getLocalDateString();
           const { data, error } = await this.sb.rpc('get_incomplete_checkouts', {
             apartment_id_param: this.currentApartment,
             date_param: today
@@ -9354,7 +9363,7 @@
         modal.style.display = 'flex';
         
         try {
-          const today = new Date().toISOString().split('T')[0];
+          const today = this.getLocalDateString();
           const { data, error } = await this.sb.rpc('get_incomplete_checkouts', {
             apartment_id_param: this.currentApartment,
             date_param: today
@@ -10802,7 +10811,7 @@
           XLSX.utils.book_append_sheet(wb, ws, '검수조서');
           
           // 파일 다운로드
-          const fileName = `검수조서_${data.requester_name}_${new Date().toISOString().split('T')[0]}.xlsx`;
+          const fileName = `검수조서_${data.requester_name}_${this.getLocalDateString()}.xlsx`;
           XLSX.writeFile(wb, fileName);
           
           alert('✅ Excel 파일이 다운로드되었습니다');
@@ -10916,7 +10925,7 @@
           document.body.removeChild(loadingMsg);
           
           // PDF 저장
-          const fileName = `검수조서_${data.requester_name}_${new Date().toISOString().split('T')[0]}.pdf`;
+          const fileName = `검수조서_${data.requester_name}_${this.getLocalDateString()}.pdf`;
           pdf.save(fileName);
           
           alert('✅ PDF 파일이 다운로드되었습니다');
@@ -12795,7 +12804,7 @@
         try {
           const [year, month] = yearMonth.split('-');
           const startDate = `${year}-${month}-01`;
-          const endDate = new Date(year, parseInt(month), 0).toISOString().split('T')[0];
+          const endDate = this.getLocalDateString(new Date(year, parseInt(month), 0));
           
           // 근태 데이터 집계
           const { data: attendance } = await this.sb
@@ -12890,7 +12899,7 @@
           const month = String(now.getMonth() + 1).padStart(2, '0');
           const yearMonth = `${year}-${month}`;
           const startDate = `${year}-${month}-01`;
-          const endDate = new Date(year, parseInt(month), 0).toISOString().split('T')[0];
+          const endDate = this.getLocalDateString(new Date(year, parseInt(month), 0));
           
           this.showToast('정산서를 생성하는 중...', 'info');
           
@@ -13016,7 +13025,7 @@
         try {
           const [year, month] = yearMonth.split('-');
           const startDate = `${year}-${month}-01`;
-          const endDate = new Date(year, parseInt(month), 0).toISOString().split('T')[0];
+          const endDate = this.getLocalDateString(new Date(year, parseInt(month), 0));
           
           // 통계 계산
           const stats = await this.calculateFinalStats(yearMonth);
@@ -14003,7 +14012,7 @@
         const year = now.getFullYear();
         const month = String(now.getMonth() + 1).padStart(2, '0');
         const firstDay = `${year}-${month}-01`;
-        const lastDay = new Date(year, now.getMonth() + 1, 0).toISOString().split('T')[0];
+        const lastDay = this.getLocalDateString(new Date(year, now.getMonth() + 1, 0));
         
         document.getElementById('attendance-sheet-start-date').value = firstDay;
         document.getElementById('attendance-sheet-end-date').value = lastDay;
@@ -14059,7 +14068,7 @@
           const end = new Date(endDate);
           
           while (current <= end) {
-            dates.push(new Date(current).toISOString().split('T')[0]);
+            dates.push(this.getLocalDateString(new Date(current)));
             current.setDate(current.getDate() + 1);
           }
           
@@ -15272,7 +15281,7 @@
           const wb = XLSX.utils.book_new();
           XLSX.utils.book_append_sheet(wb, ws, '급여명세서 현황');
           
-          const filename = `급여명세서_현황_${new Date().toISOString().split('T')[0]}.xlsx`;
+          const filename = `급여명세서_현황_${this.getLocalDateString()}.xlsx`;
           XLSX.writeFile(wb, filename);
           
           alert('✅ 엑셀 파일이 다운로드되었습니다');
