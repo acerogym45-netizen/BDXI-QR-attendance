@@ -5514,6 +5514,16 @@
               
               if (!empInfo || !empInfo.work_start_time) continue;
               
+              // 근무요일 확인
+              const workDate = new Date(work.date);
+              const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+              const dayOfWeek = dayNames[workDate.getDay()];
+              
+              // 근무요일이 아니면 지각/조퇴 체크 제외
+              if (!empInfo.work_days.includes(dayOfWeek)) {
+                continue;
+              }
+              
               if (work['출근']) {
                 const checkInTime = work['출근'];
                 const [startHour, startMin] = empInfo.work_start_time.split(':');
