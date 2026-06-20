@@ -818,7 +818,7 @@
         YDB002: '용인동백센트럴',
         SYT003: '수원영통자이',
         PGD004: '평택고덕국제신도시',
-        ETC999: '기타 단지',
+        ETC999: '기타 시설',
       };
 
       const app = {
@@ -851,7 +851,7 @@
             // 구역 정보 - 여러 파라미터 이름 시도
             this.state.locId = params.get('loc') || params.get('location') || params.get('locId');
             
-            // 아파트 정보 - 여러 파라미터 이름 시도
+            // 시설 정보 - 여러 파라미터 이름 시도
             const aptCode = params.get('apt') || params.get('apartment') || params.get('code') || params.get('aptCode');
 
             console.log('📱 QR 스캔 URL 분석:', {
@@ -867,11 +867,11 @@
             }
             
             if (!aptCode) {
-              throw new Error('유효하지 않은 QR 코드입니다.\n\n아파트 정보(apt/apartment)가 없습니다.\n\nURL: ' + window.location.href + '\n\n새 QR 코드를 생성해주세요.');
+              throw new Error('유효하지 않은 QR 코드입니다.\n\n시설 정보(apt/apartment)가 없습니다.\n\nURL: ' + window.location.href + '\n\n새 QR 코드를 생성해주세요.');
             }
 
             // 3. Load Apartment ID from code
-            console.log('🔍 아파트 조회 시도:', { aptCode });
+            console.log('🔍 시설 조회 시도:', { aptCode });
             
             // 3-1. 먼저 code로 조회 시도 (APT001, APT002 등 신규 형식)
             let { data: aptData, error: aptError } = await this.sb
@@ -931,24 +931,24 @@
                 .select('id, code, name')
                 .limit(10);
               
-              console.log('📋 전체 아파트 목록 (참고용):', allApts);
+              console.log('📋 전체 시설 목록 (참고용):', allApts);
               
               const aptCodeUpper = aptCode.toUpperCase();
               const mappedName = APARTMENTS[aptCodeUpper] || APARTMENTS[aptCode];
               
               throw new Error(
-                `아파트 정보를 찾을 수 없습니다.\n\n` +
+                `시설 정보를 찾을 수 없습니다.\n\n` +
                 `스캔한 코드: ${aptCode}\n` +
                 `정규화 코드: ${aptCodeUpper}\n` +
                 `매핑된 이름: ${mappedName || '없음'}\n` +
                 `전체 URL: ${window.location.href}\n\n` +
                 `가능한 원인:\n` +
                 `1️⃣ QR 코드가 오래된 출력본 (구형식)\n` +
-                `2️⃣ 데이터베이스에 해당 아파트가 없음\n` +
+                `2️⃣ 데이터베이스에 해당 시설이 없음\n` +
                 `3️⃣ QR 코드 형식이 잘못됨\n\n` +
                 `해결 방법:\n` +
                 `관리자 페이지에서 새 QR 코드를 생성해주세요.\n\n` +
-                `현재 DB 아파트 목록:\n${allApts?.map(a => `- ${a.code}: ${a.name}`).join('\n') || '없음'}`
+                `현재 DB 시설 목록:\n${allApts?.map(a => `- ${a.code}: ${a.name}`).join('\n') || '없음'}`
               );
             }
             
@@ -957,7 +957,7 @@
             this.state.aptName = aptData.name; // 이름 저장
             this.state.aptDbCode = aptData.code; // DB의 실제 code (APT004 등)
             
-            console.log('✅ 아파트 정보 로드 완료:', {
+            console.log('✅ 시설 정보 로드 완료:', {
               id: this.state.aptId,
               scannedCode: aptCode,
               dbCode: aptData.code,
@@ -1070,7 +1070,7 @@
           
           // 구역의 apartment_id와 QR의 apartment_id가 일치하는지 확인
           if (data.apartment_id && data.apartment_id !== this.state.aptId) {
-            throw new Error('이 구역은 다른 아파트에 속해 있습니다.');
+            throw new Error('이 구역은 다른 시설에 속해 있습니다.');
           }
           
           this.state.locationName = data.name;
