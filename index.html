@@ -5,7 +5,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KINDWON Admin Dashboard v2.2</title>
+    <title>ERP CRM LJH - 시설 관리 시스템 v2.2</title>
     
     <!-- 강력한 캐시 방지 -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0">
@@ -318,16 +318,16 @@
 
         <h1 class="text-3xl font-extrabold text-gray-800 mb-2">관리자 로그인</h1>
         <p class="text-gray-500 mb-2 text-sm">KINDWON 직원 업무 관리 시스템</p>
-        <p class="text-gray-400 mb-8 text-xs">🔒 보안 접속을 위해 아파트와 PIN 번호를 입력하세요</p>
+        <p class="text-gray-400 mb-8 text-xs">🔒 보안 접속을 위해 시설과 PIN 번호를 입력하세요</p>
 
         <div class="space-y-4">
-          <!-- 아파트 선택 -->
+          <!-- 시설 선택 -->
           <div class="text-left">
             <label class="block text-sm font-medium text-gray-700 mb-2">
-              <i class="fas fa-building mr-2 text-brand"></i>아파트 선택
+              <i class="fas fa-building mr-2 text-brand"></i>시설 선택
             </label>
             <select id="inp-apartment" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-green-600 transition-colors text-gray-700">
-              <option value="">아파트를 선택하세요</option>
+              <option value="">시설을 선택하세요</option>
               <!-- Populated by JavaScript -->
             </select>
           </div>
@@ -364,7 +364,7 @@
               <div class="font-bold text-gray-800 text-base md:text-lg whitespace-nowrap">KINDWON</div>
               <div class="text-xs text-gray-400 -mt-1 whitespace-nowrap">관리자 시스템</div>
             </div>
-            <!-- 선택된 아파트 표시 -->
+            <!-- 선택된 시설 표시 -->
             <div class="hidden lg:flex items-center gap-2 ml-4 px-3 py-1.5 bg-green-50 border border-green-200 rounded-lg">
               <i class="fas fa-building text-brand text-sm"></i>
               <span id="current-apartment-name" class="text-sm font-medium text-gray-700">-</span>
@@ -414,7 +414,7 @@
               <i class="fas fa-money-check-alt mr-2"></i>💵 급여명세서
             </button>
             <button onclick="app.switchTab('complaints')" class="nav-tab py-4 px-2 text-sm font-medium transition-all tab-inactive">
-              <i class="fas fa-comments mr-2"></i>📢 내 단지 민원
+              <i class="fas fa-comments mr-2"></i>📢 내 시설 민원
             </button>
           </div>
         </div>
@@ -558,7 +558,7 @@
               <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <i class="fas fa-search text-gray-400"></i>
               </div>
-              <input type="text" id="quick-search" placeholder="직원명, 아파트명으로 빠른 검색..." class="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all" oninput="app.quickSearch(this.value)">
+              <input type="text" id="quick-search" placeholder="직원명, 시설명으로 빠른 검색..." class="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all" oninput="app.quickSearch(this.value)">
               <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
                 <span id="search-count" class="text-sm text-gray-500"></span>
               </div>
@@ -1923,9 +1923,9 @@
             <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-xl border-2 border-blue-200">
               <div class="space-y-4">
                 <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-2">아파트 선택</label>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">시설 선택</label>
                   <select id="payroll-apartment-select" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" onchange="app.loadEmployeesForPayroll()">
-                    <option value="">아파트를 선택하세요</option>
+                    <option value="">시설을 선택하세요</option>
                     <!-- 동적 생성 -->
                   </select>
                 </div>
@@ -1933,7 +1933,7 @@
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-2">직원 선택</label>
                   <select id="payroll-employee-select" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" disabled>
-                    <option value="">먼저 아파트를 선택하세요</option>
+                    <option value="">먼저 시설을 선택하세요</option>
                     <!-- 동적 생성 -->
                   </select>
                   <p class="text-xs text-gray-500 mt-1">
@@ -1976,7 +1976,7 @@
             <div class="flex gap-3 mb-4">
               <input type="month" id="payroll-filter-month" onchange="app.filterPayrollStatements()" class="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
               <select id="payroll-filter-apartment" onchange="app.filterPayrollStatements()" class="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
-                <option value="">전체 아파트</option>
+                <option value="">전체 시설</option>
                 <!-- 동적 생성 -->
               </select>
             </div>
@@ -1998,16 +1998,16 @@
           </div>
         </div>
 
-        <!-- ==================== 📢 내 단지 민원 현황 TAB ==================== -->
+        <!-- ==================== 📢 내 시설 민원 현황 TAB ==================== -->
         <div id="tab-complaints" class="tab-content hidden pt-4">
           <!-- 상단 헤더 -->
           <div class="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-xl p-4 mb-2">
             <h2 class="text-xl font-bold text-gray-800 mb-1 flex items-center">
               <i class="fas fa-comments text-yellow-600 mr-3"></i>
-              내 단지 민원 현황
+              내 시설 민원 현황
             </h2>
             <p class="text-xs text-gray-600">
-              Google Sheets에 기록된 우리 단지의 모든 민원 데이터를 조회합니다.
+              Google Sheets에 기록된 우리 시설의 모든 민원 데이터를 조회합니다.
             </p>
           </div>
 
@@ -2744,14 +2744,14 @@
       <div class="bg-white rounded-2xl max-w-md w-full max-h-[90vh] shadow-2xl flex flex-col" onclick="event.stopPropagation()">
         <div class="flex justify-between items-center p-6 border-b flex-shrink-0">
           <h3 class="text-xl font-bold text-gray-800">
-            <i class="fas fa-building mr-2 text-indigo-600"></i>아파트 정보 수정
+            <i class="fas fa-building mr-2 text-indigo-600"></i>시설 정보 수정
           </h3>
           <button onclick="app.closeApartmentModal()" class="text-gray-400 hover:text-gray-600 text-2xl">×</button>
         </div>
         <div class="p-6 space-y-4 overflow-y-auto flex-1">
           <input type="hidden" id="edit-apartment-id">
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">아파트명</label>
+            <label class="block text-sm font-medium text-gray-700 mb-2">시설명</label>
             <input type="text" id="edit-apartment-name" placeholder="예: 봉담자이프라이드시티" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
           </div>
           <div>
@@ -2784,7 +2784,7 @@
                 <i class="fas fa-info-circle mr-1"></i>GPS 좌표 찾는 방법:
               </p>
               <ol class="text-xs text-blue-700 space-y-1 ml-4 list-decimal">
-                <li>Google Maps에서 단지 관리사무소 검색</li>
+                <li>Google Maps에서 시설 위치 검색</li>
                 <li>관리사무소 위치에서 우클릭 → "이 장소 정보" 클릭</li>
                 <li>좌표 복사 (예: 37.2157891, 127.0528374)</li>
                 <li>첫 번째 숫자는 위도, 두 번째 숫자는 경도에 입력</li>
@@ -2796,7 +2796,7 @@
           </div>
           
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">아파트 코드</label>
+            <label class="block text-sm font-medium text-gray-700 mb-2">시설 코드</label>
             <input type="text" id="edit-apartment-code" placeholder="예: APT004" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
           </div>
           <div>
@@ -3169,8 +3169,8 @@
         sb: null,
         charts: {},
         employeeList: [],
-        apartments: [], // 아파트 목록
-        currentApartment: null, // 현재 선택된 아파트
+        apartments: [], // 시설 목록
+        currentApartment: null, // 현재 선택된 시설
         currentAdmin: null, // 현재 로그인한 관리자 정보
         purchases: [], // 구매 요청 목록
         currentPurchase: null, // 현재 선택된 구매 요청
@@ -3214,7 +3214,7 @@
           // 브랜드 설정 로드 (로고, 회사명 등)
           await this.loadBrandSettings();
           
-          await this.loadApartments(); // 아파트 목록 로드
+          await this.loadApartments(); // 시설 목록 로드
           this.checkLogin();
 
           setInterval(() => this.updateClock(), 1000);
@@ -3389,7 +3389,7 @@
           this.realtimeChannel = channel;
         },
 
-        // 아파트 목록 로드
+        // 시설 목록 로드
         loadApartments: async function() {
           try {
             const { data, error } = await this.sb
@@ -3401,10 +3401,10 @@
             
             this.apartments = data || [];
             
-            // 드롭다운에 아파트 목록 추가
+            // 드롭다운에 시설 목록 추가
             const select = document.getElementById('inp-apartment');
             if (select) {
-              select.innerHTML = '<option value="">아파트를 선택하세요</option>';
+              select.innerHTML = '<option value="">시설을 선택하세요</option>';
               this.apartments.forEach(apt => {
                 const option = document.createElement('option');
                 option.value = apt.id;
@@ -3413,7 +3413,7 @@
               });
             }
           } catch (err) {
-            console.error('아파트 목록 로드 실패:', err);
+            console.error('시설 목록 로드 실패:', err);
           }
         },
 
@@ -3502,21 +3502,21 @@
           const apartmentId = document.getElementById('inp-apartment').value;
           
           if (!apartmentId) {
-            document.getElementById('msg-error').textContent = '⚠️ 아파트를 선택하세요';
+            document.getElementById('msg-error').textContent = '⚠️ 시설을 선택하세요';
             document.getElementById('msg-error').classList.remove('hidden');
             return;
           }
           
-          // 선택된 아파트 정보 찾기
+          // 선택된 시설 정보 찾기
           const selectedApartment = this.apartments.find(a => a.id === apartmentId);
           
           if (!selectedApartment) {
-            document.getElementById('msg-error').textContent = '⚠️ 아파트 정보를 찾을 수 없습니다.';
+            document.getElementById('msg-error').textContent = '⚠️ 시설 정보를 찾을 수 없습니다.';
             document.getElementById('msg-error').classList.remove('hidden');
             return;
           }
           
-          // 🔑 아파트별 개별 비밀번호 확인 (password 필드가 있으면 사용, 없으면 기본 PIN)
+          // 🔑 시설별 개별 비밀번호 확인 (password 필드가 있으면 사용, 없으면 기본 PIN)
           const apartmentPassword = selectedApartment.password || LOGIN_PIN;
           
           if (pin === apartmentPassword) {
@@ -3580,15 +3580,15 @@
             
             // apartments가 로드되지 않았으면 에러
             if (!this.apartments || this.apartments.length === 0) {
-              console.error('❌ 아파트 목록이 로드되지 않았습니다');
-              alert('아파트 목록을 로드하는 중 오류가 발생했습니다. 페이지를 새로고침해주세요.');
+              console.error('❌ 시설 목록이 로드되지 않았습니다');
+              alert('시설 목록을 로드하는 중 오류가 발생했습니다. 페이지를 새로고침해주세요.');
               return;
             }
             
-            // 아파트 정보 찾기
+            // 시설 정보 찾기
             const selectedApartment = this.apartments.find(a => a.id === apartmentId);
             
-            console.log('🔍 아파트 검색:', { 
+            console.log('🔍 시설 검색:', { 
               찾는ID: apartmentId, 
               결과: selectedApartment ? selectedApartment.name : '없음' 
             });
@@ -3611,8 +3611,8 @@
               this.showDashboard();
               return;
             } else {
-              console.error('❌ 아파트를 찾을 수 없습니다:', apartmentId);
-              alert('해당 아파트를 찾을 수 없습니다. 마스터 대시보드로 돌아갑니다.');
+              console.error('❌ 시설을 찾을 수 없습니다:', apartmentId);
+              alert('해당 시설을 찾을 수 없습니다. 마스터 대시보드로 돌아갑니다.');
               window.location.href = 'master_dashboard.html';
               return;
             }
@@ -3620,7 +3620,7 @@
           
           // 기존 로그인 확인
           if (sessionStorage.getItem('kindwon_login') === 'true') {
-            // 저장된 아파트 정보 복원
+            // 저장된 시설 정보 복원
             const storedApartmentId = sessionStorage.getItem('kindwon_apartment_id');
             const apartmentName = sessionStorage.getItem('kindwon_apartment_name');
             
@@ -3632,10 +3632,10 @@
             });
             
             if (storedApartmentId && apartmentName) {
-              // 아파트 전체 정보 다시 로드 (구글 시트 정보 포함)
+              // 시설 전체 정보 다시 로드 (구글 시트 정보 포함)
               const fullApartmentInfo = this.apartments.find(a => a.id === storedApartmentId);
               
-              console.log('🔍 아파트 검색 결과:', {
+              console.log('🔍 시설 검색 결과:', {
                 found: !!fullApartmentInfo,
                 fullInfo: fullApartmentInfo
               });
@@ -3645,7 +3645,7 @@
                 this.currentApartment = fullApartmentInfo.id;
                 // 전체 정보는 별도 변수에 저장 (google_sheet_id 등 접근용)
                 this.currentApartmentInfo = fullApartmentInfo;
-                console.log('✅ 아파트 정보 복원 성공:', {
+                console.log('✅ 시설 정보 복원 성공:', {
                   id: this.currentApartment,
                   name: this.currentApartmentInfo.name,
                   google_sheet_id: this.currentApartmentInfo.google_sheet_id,
@@ -3653,7 +3653,7 @@
                 });
               } else {
                 // apartments 배열이 비어있거나 로드 안 됨
-                console.error('❌ apartments 배열에서 아파트를 찾을 수 없습니다!');
+                console.error('❌ apartments 배열에서 시설을 찾을 수 없습니다!');
                 console.error('재로그인이 필요합니다.');
                 this.logout();
                 return;
@@ -3661,7 +3661,7 @@
               
               this.showDashboard();
             } else {
-              // 아파트 정보가 없으면 로그인 화면으로
+              // 시설 정보가 없으면 로그인 화면으로
               this.logout();
             }
           } else {
@@ -3682,13 +3682,13 @@
             };
           }
           
-          // 헤더에 아파트 이름 표시
+          // 헤더에 시설 이름 표시
           const apartmentNameEl = document.getElementById('current-apartment-name');
           if (apartmentNameEl && this.currentApartmentInfo) {
             apartmentNameEl.textContent = this.currentApartmentInfo.name;
-            console.log('✅ 헤더에 아파트명 표시:', this.currentApartmentInfo.name);
+            console.log('✅ 헤더에 시설명 표시:', this.currentApartmentInfo.name);
           } else {
-            console.error('❌ 아파트명 표시 실패:', {
+            console.error('❌ 시설명 표시 실패:', {
               elementExists: !!apartmentNameEl,
               hasApartmentInfo: !!this.currentApartmentInfo
             });
@@ -3822,7 +3822,7 @@
           }
         },
 
-        // 급여명세서용 아파트 목록 로드
+        // 급여명세서용 시설 목록 로드
         loadPayrollApartments: async function() {
           try {
             const { data: apartments, error } = await this.sb
@@ -3832,10 +3832,10 @@
             
             if (error) throw error;
             
-            // 업로드 폼 아파트 셀렉트
+            // 업로드 폼 시설 셀렉트
             const uploadSelect = document.getElementById('payroll-apartment-select');
             if (uploadSelect) {
-              uploadSelect.innerHTML = '<option value="">아파트를 선택하세요</option>';
+              uploadSelect.innerHTML = '<option value="">시설을 선택하세요</option>';
               apartments.forEach(apt => {
                 const option = document.createElement('option');
                 option.value = apt.id;
@@ -3844,10 +3844,10 @@
               });
             }
             
-            // 필터 아파트 셀렉트
+            // 필터 시설 셀렉트
             const filterSelect = document.getElementById('payroll-filter-apartment');
             if (filterSelect) {
-              filterSelect.innerHTML = '<option value="">전체 아파트</option>';
+              filterSelect.innerHTML = '<option value="">전체 시설</option>';
               apartments.forEach(apt => {
                 const option = document.createElement('option');
                 option.value = apt.id;
@@ -3857,7 +3857,7 @@
             }
             
           } catch (error) {
-            console.error('❌ 아파트 목록 로드 실패:', error);
+            console.error('❌ 시설 목록 로드 실패:', error);
           }
         },
 
@@ -3902,7 +3902,7 @@
           try {
             let q = this.sb.from('cleaning_tasks').select('*').order('created_at', { ascending: false });
 
-            // 🏢 아파트 필터 (필수)
+            // 🏢 시설 필터 (필수)
             if (this.currentApartment) {
               q = q.eq('apartment_id', this.currentApartment);
             }
@@ -4422,7 +4422,7 @@
             // 2️⃣ attendance_records 조회
             let q = this.sb.from('attendance_records').select('*').order('scan_time', { ascending: false });
 
-            // 🏢 아파트 필터 (필수)
+            // 🏢 시설 필터 (필수)
             if (this.currentApartment) {
               q = q.eq('apartment_id', this.currentApartment);
             }
@@ -4575,7 +4575,7 @@
           console.log('  - employeeList 전체:', this.employeeList.length, '명');
           console.log('  - currentApartment:', this.currentApartment);
           
-          // 🔧 현재 단지의 활성 직원을 DB에서 직접 로드
+          // 🔧 현재 시설의 활성 직원을 DB에서 직접 로드
           try {
             let query = this.sb.from('employees')
               .select('id, name, position, apartment_id, status')
@@ -4601,12 +4601,12 @@
             this.employeeList = employees;
             
             select.innerHTML = '<option value="">직원을 선택하세요</option>' +
-              '<option value="ALL">📊 전체 직원 (현재 단지)</option>' +
+              '<option value="ALL">📊 전체 직원 (현재 시설)</option>' +
               employees.map(emp => `<option value="${emp.id}">${emp.name} (${emp.position || '직원'})</option>`).join('');
             
             // 직원 목록이 비어있으면 메시지 표시
             if (employees.length === 0) {
-              select.innerHTML = '<option value="">이 단지에 등록된 활성 직원이 없습니다</option>';
+              select.innerHTML = '<option value="">이 시설에 등록된 활성 직원이 없습니다</option>';
             }
           } catch (e) {
             console.error('❌ [캘린더] 예외 발생:', e);
@@ -4682,7 +4682,7 @@
               .lte('created_at', lastDay.toISOString())
               .order('created_at', { ascending: true });
             
-            // 단지별 필터링 (중요!)
+            // 시설별 필터링 (중요!)
             if (this.currentApartment) {
               query = query.eq('apartment_id', this.currentApartment);
             }
@@ -4922,7 +4922,7 @@
           if (!start) return;
 
           try {
-            // 🏢 아파트 필터를 위한 쿼리 수정
+            // 🏢 시설 필터를 위한 쿼리 수정
             // 1. 활성 직원만 조회 (통계 카드용)
             let activeEmpQuery = this.sb.from('employees').select('id, name, position, status').eq('status', 'active');
             
@@ -4942,7 +4942,7 @@
               .gte('vacation_date', start)
               .lte('vacation_date', end);
 
-            // 아파트 필터 적용
+            // 시설 필터 적용
             if (this.currentApartment) {
               activeEmpQuery = activeEmpQuery.eq('apartment_id', this.currentApartment);
               allEmpQuery = allEmpQuery.eq('apartment_id', this.currentApartment);
@@ -5213,7 +5213,7 @@
           try {
             let query = this.sb.from('locations').select('*').eq('status', 'active');
             
-            // 🏢 아파트 필터 적용
+            // 🏢 시설 필터 적용
             if (this.currentApartment) {
               query = query.eq('apartment_id', this.currentApartment);
             }
@@ -5856,7 +5856,7 @@
           }
           
           if (!this.currentApartment || !this.currentApartment) {
-            alert('아파트 정보가 없습니다.');
+            alert('시설 정보가 없습니다.');
             return;
           }
           
@@ -5994,7 +5994,7 @@
               `)
               .order('created_at', { ascending: false });
 
-            // 아파트 필터 (현재 로그인한 아파트만 표시)
+            // 시설 필터 (현재 로그인한 시설만 표시)
             if (this.currentApartment) {
               query = query.eq('apartment_id', this.currentApartment);
             }
@@ -6094,7 +6094,7 @@
               `)
               .order('created_at', { ascending: false });
 
-            // 아파트 필터 (현재 로그인한 아파트만 표시)
+            // 시설 필터 (현재 로그인한 시설만 표시)
             if (this.currentApartment) {
               query = query.eq('apartment_id', this.currentApartment);
             }
@@ -6340,7 +6340,7 @@
           try {
             let query = this.sb.from('employees').select('*').order('created_at', { ascending: false });
             
-            // 🏢 아파트 필터 적용
+            // 🏢 시설 필터 적용
             if (this.currentApartment) {
               query = query.eq('apartment_id', this.currentApartment);
             }
@@ -6487,7 +6487,7 @@
               .select('id, name, phone, login_password, password_changed_at, last_login_at, force_password_change, status')
               .order('name', { ascending: true });
             
-            // 아파트 필터
+            // 시설 필터
             if (this.currentApartment) {
               query = query.eq('apartment_id', this.currentApartment);
             }
@@ -6879,12 +6879,12 @@
           }
           
           if (!this.currentApartment) {
-            alert('아파트를 먼저 선택해주세요.');
+            alert('시설을 먼저 선택해주세요.');
             return;
           }
           
           try {
-            // 🏢 현재 아파트 ID 포함 + 계약 정보 + 근무 패턴 + 급여 정보
+            // 🏢 현재 시설 ID 포함 + 계약 정보 + 근무 패턴 + 급여 정보
             const employeeData = { 
               name, 
               phone,
@@ -6995,7 +6995,7 @@
           }
           
           if (!this.currentApartment) {
-            alert('아파트를 먼저 선택해주세요.');
+            alert('시설을 먼저 선택해주세요.');
             return;
           }
           
@@ -7045,7 +7045,7 @@
               .select('*')
               .order('holiday_date', { ascending: true });
             
-            // 아파트 필터
+            // 시설 필터
             if (this.currentApartment) {
               query = query.eq('apartment_id', this.currentApartment);
             }
@@ -7143,7 +7143,7 @@
               .eq('status', 'active')
               .not('contract_end', 'is', null);
             
-            // 🏢 아파트 필터 적용
+            // 🏢 시설 필터 적용
             if (this.currentApartment) {
               query = query.eq('apartment_id', this.currentApartment);
             }
@@ -7213,7 +7213,7 @@
               .eq('status', 'active')
               .not('contract_end', 'is', null);
             
-            // 🏢 아파트 필터 적용
+            // 🏢 시설 필터 적용
             if (this.currentApartment) {
               query = query.eq('apartment_id', this.currentApartment);
             }
@@ -7315,7 +7315,7 @@
           try {
             let query = this.sb.from('locations').select('*').order('created_at', { ascending: false });
             
-            // 🏢 아파트 필터 적용
+            // 🏢 시설 필터 적용
             if (this.currentApartment) {
               query = query.eq('apartment_id', this.currentApartment);
             }
@@ -7466,12 +7466,12 @@
           }
           
           if (!this.currentApartment) {
-            alert('아파트를 먼저 선택해주세요.');
+            alert('시설을 먼저 선택해주세요.');
             return;
           }
           
           try {
-            // 🏢 현재 아파트 ID 포함
+            // 🏢 현재 시설 ID 포함
             const locationData = { 
               name, 
               status,
@@ -7587,7 +7587,7 @@
         loadApartmentInfo: async function () {
           const container = document.getElementById('apartment-info');
           if (!this.currentApartment || !this.currentApartment) {
-            container.innerHTML = '<div class="text-gray-500"><i class="fas fa-info-circle mr-2"></i>아파트 정보가 없습니다.</div>';
+            container.innerHTML = '<div class="text-gray-500"><i class="fas fa-info-circle mr-2"></i>시설 정보가 없습니다.</div>';
             return;
           }
           
@@ -7601,7 +7601,7 @@
             if (error) throw error;
             
             if (!data) {
-              container.innerHTML = '<div class="text-gray-500"><i class="fas fa-info-circle mr-2"></i>아파트 정보를 찾을 수 없습니다.</div>';
+              container.innerHTML = '<div class="text-gray-500"><i class="fas fa-info-circle mr-2"></i>시설 정보를 찾을 수 없습니다.</div>';
               return;
             }
             
@@ -7612,7 +7612,7 @@
                     <i class="fas fa-building text-indigo-600"></i>
                   </div>
                   <div>
-                    <p class="text-xs text-gray-500">아파트명</p>
+                    <p class="text-xs text-gray-500">시설명</p>
                     <p class="font-semibold text-gray-800">${data.name}</p>
                   </div>
                 </div>
@@ -7630,7 +7630,7 @@
                     <i class="fas fa-code text-indigo-600"></i>
                   </div>
                   <div>
-                    <p class="text-xs text-gray-500">아파트 코드</p>
+                    <p class="text-xs text-gray-500">시설 코드</p>
                     <p class="font-semibold text-gray-800">${data.code}</p>
                   </div>
                 </div>
@@ -7646,14 +7646,14 @@
               </div>
             `;
           } catch (error) {
-            console.error('아파트 정보 로드 실패:', error);
+            console.error('시설 정보 로드 실패:', error);
             container.innerHTML = '<div class="text-red-500"><i class="fas fa-exclamation-circle mr-2"></i>정보 로드 실패</div>';
           }
         },
         
         showEditApartmentModal: async function () {
           if (!this.currentApartment || !this.currentApartment) {
-            alert('아파트 정보가 없습니다.');
+            alert('시설 정보가 없습니다.');
             return;
           }
           
@@ -7694,8 +7694,8 @@
             document.getElementById('edit-apartment-lng').value = data.location_lng || '';
             document.getElementById('edit-apartment-radius').value = data.allowed_radius_meters || 1000;
           } catch (error) {
-            console.error('아파트 정보 로드 실패:', error);
-            alert('아파트 정보를 불러올 수 없습니다.');
+            console.error('시설 정보 로드 실패:', error);
+            alert('시설 정보를 불러올 수 없습니다.');
           }
         },
         
@@ -7731,12 +7731,12 @@
           const radius = document.getElementById('edit-apartment-radius').value.trim();
           
           if (!name) {
-            alert('아파트명을 입력하세요.');
+            alert('시설명을 입력하세요.');
             return;
           }
           
           if (!code) {
-            alert('아파트 코드를 입력하세요.');
+            alert('시설 코드를 입력하세요.');
             return;
           }
           
@@ -7787,10 +7787,10 @@
             
             if (error) throw error;
             
-            alert('아파트 정보가 수정되었습니다.' + (lat && lng ? '\nGPS 좌표가 설정되었습니다! 🎯' : ''));
+            alert('시설 정보가 수정되었습니다.' + (lat && lng ? '\nGPS 좌표가 설정되었습니다! 🎯' : ''));
             this.closeApartmentModal();
             
-            // 현재 아파트 정보 업데이트
+            // 현재 시설 정보 업데이트
             if (this.currentApartmentInfo) {
               this.currentApartmentInfo.name = name;
               this.currentApartmentInfo.google_sheet_id = sheetId || null;
@@ -7804,12 +7804,12 @@
               apartmentBadge.textContent = name;
             }
             
-            // 아파트 목록 새로고침
+            // 시설 목록 새로고침
             await this.loadApartments();
             this.loadApartmentInfo();
           } catch (error) {
-            console.error('아파트 수정 실패:', error);
-            alert('아파트 수정 실패: ' + error.message);
+            console.error('시설 수정 실패:', error);
+            alert('시설 수정 실패: ' + error.message);
           }
         },
         
@@ -7865,7 +7865,7 @@
               .lte('created_at', `${endDate}T23:59:59Z`)
               .order('created_at', { ascending: false }); // 최신순 정렬
             
-            // 아파트 필터 적용
+            // 시설 필터 적용
             if (this.currentApartment) {
               taskQuery = taskQuery.eq('apartment_id', this.currentApartment);
             }
@@ -7969,10 +7969,10 @@
               .lte('scan_time', `${endDate}T23:59:59Z`);
             
             if (this.currentApartment) {
-              console.log('✅ 아파트 필터 적용:', this.currentApartment);
+              console.log('✅ 시설 필터 적용:', this.currentApartment);
               attendanceQuery = attendanceQuery.eq('apartment_id', this.currentApartment);
             } else {
-              console.log('⚠️ 아파트 필터 없음 - 전체 조회');
+              console.log('⚠️ 시설 필터 없음 - 전체 조회');
             }
             
             const { data: attendanceRecords, error: attError } = await attendanceQuery;
@@ -8087,7 +8087,7 @@
         },
         
         loadComplaintData: async function(startDate, endDate) {
-          // 아파트별 Google Sheets ID 사용 (없으면 기본값)
+          // 시설별 Google Sheets ID 사용 (없으면 기본값)
           console.log('🔍 민원 데이터 로드 시작:', {
             currentApartmentName: this.currentApartmentInfo?.name,
             google_sheet_id: this.currentApartmentInfo?.google_sheet_id,
@@ -8109,7 +8109,7 @@
           
           // Sheet ID가 없으면 민원 데이터 없음 처리
           if (!SHEET_ID) {
-            console.warn('⚠️ Google Sheets ID가 설정되지 않았습니다. 아파트 설정에서 등록해주세요.');
+            console.warn('⚠️ Google Sheets ID가 설정되지 않았습니다. 시설 설정에서 등록해주세요.');
             this.complaintData = { stats: { total: 0, completed: 0, inProgress: 0, pending: 0, completionRate: 0 }, recentComplaints: [] };
             document.getElementById('report-complaint-section').classList.add('hidden');
             return;
@@ -9109,7 +9109,7 @@
       
       app.saveSales = async function() {
         if (!this.currentApartment) {
-          alert('아파트를 먼저 선택해주세요.');
+          alert('시설을 먼저 선택해주세요.');
           return;
         }
         
@@ -12991,7 +12991,7 @@
             total_work_days: totalWorkDays,
             total_base_salary: totalBaseSalary,
             employee_details: employeeSettlements,
-            created_by_name: '단지 관리자'
+            created_by_name: '시설 관리자'
           };
           
           // upsert를 사용하여 같은 월의 정산서가 있으면 업데이트
@@ -13113,7 +13113,7 @@
             .update({
               status: 'submitted',
               submitted_at: new Date().toISOString(),
-              submitted_by_name: '단지 관리자'
+              submitted_by_name: '시설 관리자'
             })
             .eq('id', this.currentSettlementData.id);
           
@@ -13269,7 +13269,7 @@
             .update({
               status: 'submitted',
               submitted_at: new Date().toISOString(),
-              submitted_by_name: '단지 관리자'
+              submitted_by_name: '시설 관리자'
             })
             .in('id', this.selectedSettlements);
           
@@ -13681,7 +13681,7 @@
       
       // ==================== 급여명세서 관리 함수 ====================
       
-      // 아파트 선택 시 직원 로드
+      // 시설 선택 시 직원 로드
       app.loadEmployeesForPayroll = async function() {
         const apartmentSelect = document.getElementById('payroll-apartment-select');
         const employeeSelect = document.getElementById('payroll-employee-select');
@@ -13692,7 +13692,7 @@
         
         if (!apartmentId) {
           employeeSelect.disabled = true;
-          employeeSelect.innerHTML = '<option value="">먼저 아파트를 선택하세요</option>';
+          employeeSelect.innerHTML = '<option value="">먼저 시설을 선택하세요</option>';
           return;
         }
         
@@ -13738,7 +13738,7 @@
         const pdfFile = pdfFileInput?.files[0];
         
         if (!apartmentId) {
-          this.showToast('아파트를 선택하세요', 'warning');
+          this.showToast('시설을 선택하세요', 'warning');
           return;
         }
         
@@ -13964,7 +13964,7 @@
           
           document.getElementById('payroll-current-month-count').textContent = currentMonth?.length || 0;
           
-          // 전체 직원 수 (현재 아파트)
+          // 전체 직원 수 (현재 시설)
           if (this.currentApartment) {
             const { data: employees, error: e2 } = await this.sb
               .from('employees')
@@ -14036,7 +14036,7 @@
         try {
           this.showToast('근태표를 생성하는 중...', 'info');
           
-          // 직원 목록 로드 (현재 아파트) - 근무시간 포함
+          // 직원 목록 로드 (현재 시설) - 근무시간 포함
           const { data: employees, error: empError } = await this.sb
             .from('employees')
             .select('id, name, position, work_start_time, work_end_time')
@@ -14392,7 +14392,7 @@
           XLSX.utils.book_append_sheet(wb, ws, '근태표');
           
           // 파일 저장
-          const fileName = `근태표_${this.currentApartmentInfo?.name || '아파트'}_${startDate}_${endDate}.xlsx`;
+          const fileName = `근태표_${this.currentApartmentInfo?.name || '시설'}_${startDate}_${endDate}.xlsx`;
           XLSX.writeFile(wb, fileName);
           
           this.showToast('✅ Excel 파일이 다운로드되었습니다', 'success');
@@ -14451,7 +14451,7 @@
           } else {
             pdf.setFont('helvetica', 'bold');
           }
-          const title = `${this.currentApartmentInfo?.name || '아파트'} 근태표`;
+          const title = `${this.currentApartmentInfo?.name || '시설'} 근태표`;
           pdf.text(title, 10, 10);
           
           // 기간 표시
@@ -14620,7 +14620,7 @@
           pdf.text(`전체 ${dates.length}일 | ${attendanceData.length}명`, 297 - 10, 205, { align: 'right' });
           
           // 파일 저장
-          const apartmentName = this.currentApartmentInfo?.name || '아파트';
+          const apartmentName = this.currentApartmentInfo?.name || '시설';
           const fileName = `근태표_${apartmentName}_${startDate}_${endDate}.pdf`;
           pdf.save(fileName);
           
@@ -14643,11 +14643,11 @@
         try {
           const apartment = this.currentApartment;
           if (!apartment) {
-            this.showToast('아파트 정보를 불러올 수 없습니다', 'error');
+            this.showToast('시설 정보를 불러올 수 없습니다', 'error');
             return;
           }
           
-          // 현재 아파트의 Google Sheets 정보 가져오기
+          // 현재 시설의 Google Sheets 정보 가져오기
           const { data: aptData, error: aptError } = await this.sb
             .from('apartments')
             .select('google_sheet_id, google_sheet_name')
