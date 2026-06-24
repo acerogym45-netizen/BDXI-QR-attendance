@@ -5435,7 +5435,7 @@
               // Generate QR code
               const aptCode = this.currentApartmentInfo?.code || 'APT001';
               console.log('🔍 QR 생성:', { aptCode, apartmentInfo: this.currentApartmentInfo });
-              const qrUrl = `https://bdxi-qr-attendance.vercel.app/scan.html?loc=${loc.id}&apt=${aptCode}`;
+              const qrUrl = `https://acerogym45-netizen.github.io/BDXI-QR-attendance/scan.html?loc=${loc.id}&apt=${aptCode}`;
               new QRCode(document.getElementById(`qr-${loc.id}`), {
                 text: qrUrl,
                 width: 150,

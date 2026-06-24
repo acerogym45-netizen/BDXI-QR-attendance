@@ -65,7 +65,6 @@ CREATE TABLE IF NOT EXISTS work_photos (
   photo_type VARCHAR(10) CHECK (photo_type IN ('before', 'after')) NOT NULL,
   
   -- 메타데이터
-  taken_at TIMESTAMP NOT NULL,
   file_size INTEGER,
   
   created_at TIMESTAMP DEFAULT NOW()
