@@ -3678,9 +3678,18 @@
             card.className = 'group bg-gradient-to-br from-gray-800 to-gray-900 hover:from-red-900 hover:to-gray-900 border-2 border-gray-700 hover:border-red-500 rounded-xl p-6 transition-all duration-300 transform hover:scale-105 text-left';
             card.onclick = () => this.selectFacility(facility);
             
-            // 시설명과 코드 결정 (name이 실제 이름, code가 코드)
-            const displayName = facility.name || facility.code || '이름 없음';
-            const displayCode = facility.code && facility.code !== facility.name ? facility.code : '';
+            // 시설명 결정: name에 코드같은 값(대문자+숫자)이 있으면 code를 시설명으로 사용
+            const isCodeLike = /^[A-Z]{2}\d+$/i.test(facility.name);
+            const displayName = isCodeLike ? (facility.code || facility.name) : facility.name;
+            const displayCode = isCodeLike ? facility.name : (facility.code || '');
+            
+            console.log('시설 카드 렌더링:', { 
+              originalName: facility.name, 
+              originalCode: facility.code,
+              isCodeLike,
+              displayName, 
+              displayCode 
+            });
             
             card.innerHTML = `
               <div class="flex items-center gap-4 mb-4">
