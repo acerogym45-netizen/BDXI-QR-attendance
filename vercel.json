@@ -1,6 +1,5 @@
 {
   "version": 2,
-  "public": true,
   "cleanUrls": true,
   "trailingSlash": false,
   "headers": [
@@ -22,13 +21,26 @@
         {
           "key": "Referrer-Policy",
           "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/static/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
         }
       ]
     }
   ],
   "rewrites": [
     {
-      "source": "/",
+      "source": "/(.*)",
       "destination": "/index.html"
     }
   ]
