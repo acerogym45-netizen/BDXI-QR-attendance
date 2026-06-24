@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><title>Validate</title></head>
+<body>
+<h1>Validating...</h1>
+<pre id="result"></pre>
+<script>
+const result = document.getElementById('result');
+
+fetch('index.html')
+  .then(r => r.text())
+  .then(html => {
+    const start = html.indexOf('<script>');
+    const end = html.lastIndexOf('</script>');
+    const script = html.substring(start + 8, end);
+    
+    // Try to parse
+    try {
+      new Function(script);
+      result.textContent = '✅ NO SYNTAX ERROR!\n\nDeployed version may be outdated. Check Vercel deployment status.';
+    } catch(e) {
+      result.textContent = '❌ SYNTAX ERROR:\n\n' + e.message + '\n\nLine: ' + (e.lineNumber || 'unknown') + '\n\n' + e.stack;
+    }
+  });
+</script>
+</body>
+</html>

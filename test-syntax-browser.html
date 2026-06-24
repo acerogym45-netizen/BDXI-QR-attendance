@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Browser Syntax Test</title>
+  <style>
+    body { font-family: monospace; padding: 20px; }
+    .success { color: green; font-size: 18px; font-weight: bold; }
+    .error { color: red; font-size: 18px; font-weight: bold; }
+    pre { background: #f5f5f5; padding: 15px; overflow: auto; }
+  </style>
+</head>
+<body>
+  <h1>🔍 JavaScript Syntax Test in Browser</h1>
+  <div id="result">Testing...</div>
+  
+  <script>
+    const resultDiv = document.getElementById('result');
+    
+    try {
+      // Test 1: Multi-line const declaration (like SUPABASE_ANON_KEY)
+      const TEST_CONST =
+        'this_is_a_very_long_string_that_spans_multiple_lines';
+      
+      // Test 2: Load and parse actual index.html
+      fetch('index.html')
+        .then(r => r.text())
+        .then(html => {
+          // Extract main script block
+          const scriptRegex = /<script>([\s\S]*?)<\/script>/g;
+          const matches = [];
+          let match;
+          
+          while ((match = scriptRegex.exec(html)) !== null) {
+            matches.push(match[1]);
+          }
+          
+          // Find largest script (main app code)
+          const mainScript = matches.reduce((a, b) => a.length > b.length ? a : b, '');
+          
+          console.log('📦 Script size:', mainScript.length, 'characters');
+          
+          // Try to parse it
+          try {
+            new Function(mainScript);
+            resultDiv.innerHTML = `
+              <div class="success">✅ SUCCESS! No syntax errors detected!</div>
+              <p>Script size: ${mainScript.length} characters</p>
+              <p>브라우저에서는 정상적으로 파싱됩니다.</p>
+              <p><strong>Vercel 배포가 완료되면 정상 작동할 것입니다.</strong></p>
+            `;
+          } catch (err) {
+            resultDiv.innerHTML = `
+              <div class="error">❌ SYNTAX ERROR FOUND!</div>
+              <pre>${err.message}</pre>
+              <p><strong>Line:</strong> ${err.lineNumber || 'Unknown'}</p>
+              <p><strong>Column:</strong> ${err.columnNumber || 'Unknown'}</p>
+            `;
+            console.error('Syntax error:', err);
+          }
+        })
+        .catch(err => {
+          resultDiv.innerHTML = `<div class="error">❌ Failed to load index.html: ${err.message}</div>`;
+        });
+      
+    } catch (err) {
+      resultDiv.innerHTML = `<div class="error">❌ Test failed: ${err.message}</div>`;
+    }
+  </script>
+</body>
+</html>
