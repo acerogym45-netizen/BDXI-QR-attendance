@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Syntax Check</title>
+</head>
+<body>
+  <h1>JavaScript Syntax Validation</h1>
+  <div id="result"></div>
+  
+  <script>
+    const resultDiv = document.getElementById('result');
+    
+    fetch('index.html')
+      .then(r => r.text())
+      .then(html => {
+        // Extract main script
+        const scriptMatch = html.match(/<script[^>]*>([\s\S]*?)<\/script>/gi);
+        const mainScript = scriptMatch.reduce((largest, current) => {
+          return (current.length > largest.length) ? current : largest;
+        }, scriptMatch[0]);
+        
+        const scriptContent = mainScript.replace(/<script[^>]*>/, '').replace(/<\/script>/, '');
+        
+        try {
+          // Try to evaluate
+          new Function(scriptContent);
+          resultDiv.innerHTML = `
+            <h2 style="color: green;">✅ Syntax OK!</h2>
+            <p>스크립트 크기: ${scriptContent.length} 문자</p>
+            <p>이제 Vercel에서도 정상 동작할 것입니다!</p>
+          `;
+        } catch (err) {
+          resultDiv.innerHTML = `
+            <h2 style="color: red;">❌ Syntax Error</h2>
+            <pre>${err.message}\n${err.stack}</pre>
+            <p><strong>Error Line:</strong> ${err.lineNumber || 'Unknown'}</p>
+          `;
+        }
+      })
+      .catch(err => {
+        resultDiv.innerHTML = `<h2 style="color: red;">Fetch Error: ${err.message}</h2>`;
+      });
+  </script>
+</body>
+</html>
