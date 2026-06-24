@@ -416,6 +416,9 @@
             <button onclick="app.switchTab('complaints')" class="nav-tab py-4 px-2 text-sm font-medium transition-all tab-inactive">
               <i class="fas fa-comments mr-2"></i>📢 내 시설 민원
             </button>
+            <button onclick="app.switchTab('work-photos')" id="tab-btn-work-photos" class="nav-tab py-4 px-2 text-sm font-medium transition-all tab-inactive" style="display: none;">
+              <i class="fas fa-camera mr-2"></i>📸 작업 사진
+            </button>
           </div>
         </div>
       </nav>
@@ -2118,6 +2121,164 @@
             </div>
           </div>
         </div>
+
+    <!-- ==================== 📸 작업 사진 TAB (에어컨 청소업체 전용) ==================== -->
+    <div id="tab-work-photos" class="tab-content hidden px-4 pt-4">
+      <!-- 작업 세션 선택 -->
+      <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-4 mb-4">
+        <h2 class="text-xl font-bold text-gray-800 mb-2 flex items-center">
+          <i class="fas fa-camera text-blue-600 mr-3"></i>
+          작업 사진 관리
+        </h2>
+        <p class="text-sm text-gray-600">
+          구역별 작업 전/후 사진을 촬영하고 관리합니다.
+        </p>
+      </div>
+
+      <!-- 작업 세션 목록 뷰 -->
+      <div id="work-sessions-view">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-lg font-bold text-gray-800">
+            <i class="fas fa-list mr-2 text-purple-600"></i>작업 세션 목록
+          </h3>
+          <button onclick="app.startNewWorkSession()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+            <i class="fas fa-plus mr-2"></i>새 작업 시작
+          </button>
+        </div>
+
+        <!-- 작업 세션 카드들 -->
+        <div id="work-sessions-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div class="text-center py-8 text-gray-400 col-span-full">
+            <i class="fas fa-clipboard-list text-4xl mb-2"></i>
+            <p>작업 세션이 없습니다. 새 작업을 시작하세요.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 작업 세션 상세 뷰 (카메라 UI) -->
+      <div id="work-session-detail" class="hidden">
+        <!-- 뒤로가기 버튼 -->
+        <button onclick="app.backToSessionsList()" class="mb-4 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition">
+          <i class="fas fa-arrow-left mr-2"></i>목록으로 돌아가기
+        </button>
+
+        <!-- 진행률 표시 -->
+        <div class="bg-white rounded-xl shadow-md p-4 mb-4">
+          <div class="flex justify-between items-center mb-2">
+            <h3 class="text-lg font-bold text-gray-800">
+              <i class="fas fa-tasks mr-2 text-green-600"></i>작업 진행률
+            </h3>
+            <span id="progress-text" class="text-xl font-bold text-blue-600">0/0</span>
+          </div>
+          <div class="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
+            <div id="progress-bar" class="bg-gradient-to-r from-blue-500 to-green-500 h-4 rounded-full transition-all duration-500" style="width: 0%">
+            </div>
+          </div>
+          <p id="progress-percentage" class="text-sm text-gray-600 text-right mt-1">0%</p>
+        </div>
+
+        <!-- 현재 작업 중인 구역 정보 -->
+        <div class="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-4 mb-4 border-2 border-purple-200">
+          <h3 class="text-lg font-bold text-gray-800 mb-2">
+            <i class="fas fa-map-marker-alt mr-2 text-purple-600"></i>현재 구역
+          </h3>
+          <div class="flex items-center justify-between">
+            <div>
+              <p id="current-location-name" class="text-2xl font-bold text-purple-600">구역을 선택하세요</p>
+              <p id="current-location-group" class="text-sm text-gray-600 mt-1"></p>
+            </div>
+            <select id="location-selector" class="px-4 py-2 border-2 border-purple-300 rounded-lg focus:ring-2 focus:ring-purple-500 text-sm">
+              <option value="">구역 선택...</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- 카메라 프리뷰 영역 -->
+        <div class="bg-white rounded-xl shadow-md p-4 mb-4">
+          <div class="relative bg-gray-900 rounded-lg overflow-hidden" style="aspect-ratio: 4/3;">
+            <video id="camera-preview" class="w-full h-full object-cover" autoplay playsinline></video>
+            <canvas id="camera-canvas" class="hidden"></canvas>
+            
+            <!-- 카메라 오버레이 UI -->
+            <div class="absolute top-4 left-4 right-4 flex justify-between items-start">
+              <div class="bg-black bg-opacity-60 text-white px-3 py-2 rounded-lg text-sm">
+                <i class="fas fa-camera mr-2"></i>
+                <span id="photo-type-indicator">작업 전</span>
+              </div>
+              <button onclick="app.switchCamera()" class="bg-black bg-opacity-60 text-white px-3 py-2 rounded-lg hover:bg-opacity-80 transition">
+                <i class="fas fa-sync-alt"></i>
+              </button>
+            </div>
+
+            <!-- 촬영 버튼 -->
+            <div class="absolute bottom-4 left-0 right-0 flex justify-center">
+              <button id="capture-btn" onclick="app.capturePhoto()" class="w-20 h-20 bg-white rounded-full shadow-lg hover:bg-gray-100 transition-all transform hover:scale-105 flex items-center justify-center">
+                <div class="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center">
+                  <i class="fas fa-camera text-white text-2xl"></i>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          <!-- 작업 전/후 토글 -->
+          <div class="mt-4 flex gap-2">
+            <button id="before-btn" onclick="app.setPhotoType('before')" class="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg font-medium transition-all">
+              <i class="fas fa-arrow-left mr-2"></i>작업 전
+            </button>
+            <button id="after-btn" onclick="app.setPhotoType('after')" class="flex-1 px-4 py-3 bg-gray-300 text-gray-700 rounded-lg font-medium transition-all">
+              작업 후<i class="fas fa-arrow-right ml-2"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- 구역 빠른 선택 (스마트 기능 #1: 완료된 구역 자동 숨김) -->
+        <div class="bg-white rounded-xl shadow-md p-4 mb-4">
+          <div class="flex justify-between items-center mb-3">
+            <h3 class="text-lg font-bold text-gray-800">
+              <i class="fas fa-th mr-2 text-orange-600"></i>구역 빠른 선택
+            </h3>
+            <button onclick="app.toggleCompletedLocations()" class="text-sm text-blue-600 hover:text-blue-700">
+              <i class="fas fa-eye mr-1"></i>
+              <span id="toggle-completed-text">완료된 구역 보기</span>
+            </button>
+          </div>
+
+          <!-- 개선 B: 층/동별 그룹 폴더 -->
+          <div id="location-groups" class="space-y-3">
+            <!-- JavaScript로 동적 생성 -->
+          </div>
+
+          <!-- 미분류 구역 (그룹 없는 경우) -->
+          <div id="ungrouped-locations" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
+            <!-- JavaScript로 동적 생성 -->
+          </div>
+        </div>
+
+        <!-- 촬영한 사진 미리보기 -->
+        <div class="bg-white rounded-xl shadow-md p-4 mb-4">
+          <h3 class="text-lg font-bold text-gray-800 mb-3">
+            <i class="fas fa-images mr-2 text-green-600"></i>촬영한 사진
+          </h3>
+          <div id="captured-photos-grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+            <div class="text-center py-8 text-gray-400 col-span-full">
+              <i class="fas fa-camera-retro text-4xl mb-2"></i>
+              <p class="text-sm">촬영한 사진이 없습니다</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 작업 완료 버튼 (스마트 기능 #3: 검증) -->
+        <div class="flex gap-3">
+          <button onclick="app.saveWorkSession()" class="flex-1 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium text-lg">
+            <i class="fas fa-check mr-2"></i>작업 완료 및 저장
+          </button>
+          <button onclick="app.previewWorkSession()" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium">
+            <i class="fas fa-eye mr-2"></i>미리보기
+          </button>
+        </div>
+      </div>
+    </div>
+
     <div id="tab-report" class="tab-content hidden pt-4">
       <div class="grid grid-cols-1 md:grid-cols-2" style="height: calc(100vh - 180px);">
         <!-- 좌측: 설정 및 요약 -->
@@ -3694,6 +3855,20 @@
             });
           }
           
+          // 🏢 시설 타입에 따른 탭 표시/숨김
+          const facilityType = this.currentApartmentInfo?.facility_type || 'apartment';
+          const workPhotosTab = document.getElementById('tab-btn-work-photos');
+          
+          if (facilityType === 'ac_cleaning') {
+            // 에어컨 청소업체: 작업 사진 탭 표시
+            if (workPhotosTab) workPhotosTab.style.display = '';
+            console.log('✅ 작업 사진 탭 활성화 (에어컨 청소업체)');
+          } else {
+            // 다른 시설 타입: 작업 사진 탭 숨김
+            if (workPhotosTab) workPhotosTab.style.display = 'none';
+            console.log('ℹ️ 작업 사진 탭 비활성화');
+          }
+          
           // 계약 만료 알림 체크
           this.checkContractExpirations();
           
@@ -3819,6 +3994,10 @@
           } else if (tab === 'complaints') {
             console.log('📢 민원 현황 탭 로드 시작');
             this.loadComplaintsList();
+          } else if (tab === 'work-photos') {
+            console.log('📸 작업 사진 탭 로드 시작');
+            this.loadWorkSessions();
+            this.initializeCamera();
           }
         },
 
@@ -15635,8 +15814,815 @@
           uploadBtn.innerHTML = '<i class="fas fa-upload mr-2"></i>업로드 시작';
           progressEl.classList.add('hidden');
         }
-      };
+      },
+
+      // ==================== 📸 작업 사진 관리 함수들 ====================
       
+      // 작업 사진 관련 상태
+      workPhoto: {
+        currentSession: null,
+        currentLocation: null,
+        currentPhotoType: 'before', // 'before' or 'after'
+        cameraStream: null,
+        completedLocations: new Set(),
+        showCompleted: false,
+        capturedPhotos: [] // {locationId, locationType, photoUrl, photoType}
+      },
+
+      // 작업 세션 목록 로드
+      loadWorkSessions: async function() {
+        try {
+          const { data: sessions, error } = await this.sb
+            .from('work_sessions')
+            .select(`
+              *,
+              work_locations (
+                id,
+                location_name,
+                status
+              )
+            `)
+            .eq('apartment_id', this.currentApartment)
+            .order('work_date', { ascending: false });
+          
+          if (error) throw error;
+
+          const listContainer = document.getElementById('work-sessions-list');
+          if (!sessions || sessions.length === 0) {
+            listContainer.innerHTML = `
+              <div class="text-center py-8 text-gray-400 col-span-full">
+                <i class="fas fa-clipboard-list text-4xl mb-2"></i>
+                <p>작업 세션이 없습니다. 새 작업을 시작하세요.</p>
+              </div>
+            `;
+            return;
+          }
+
+          listContainer.innerHTML = sessions.map(session => {
+            const progress = session.total_locations > 0 
+              ? Math.round((session.completed_locations / session.total_locations) * 100) 
+              : 0;
+            
+            const statusBadge = {
+              'in_progress': '<span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded text-xs">진행중</span>',
+              'completed': '<span class="px-2 py-1 bg-green-100 text-green-800 rounded text-xs">완료</span>',
+              'pending_review': '<span class="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">검토대기</span>'
+            }[session.status] || '';
+
+            return `
+              <div class="bg-white rounded-xl shadow-md p-4 hover:shadow-lg transition cursor-pointer" 
+                   onclick="app.openWorkSession('${session.id}')">
+                <div class="flex justify-between items-start mb-3">
+                  <div>
+                    <h4 class="font-bold text-lg text-gray-800">${session.customer_name || '고객명 없음'}</h4>
+                    <p class="text-sm text-gray-600">${new Date(session.work_date).toLocaleDateString('ko-KR')}</p>
+                  </div>
+                  ${statusBadge}
+                </div>
+                
+                <div class="mb-3">
+                  <div class="flex justify-between text-sm mb-1">
+                    <span class="text-gray-600">진행률</span>
+                    <span class="font-bold text-blue-600">${session.completed_locations}/${session.total_locations}</span>
+                  </div>
+                  <div class="w-full bg-gray-200 rounded-full h-2">
+                    <div class="bg-gradient-to-r from-blue-500 to-green-500 h-2 rounded-full" 
+                         style="width: ${progress}%"></div>
+                  </div>
+                </div>
+
+                <div class="flex gap-2">
+                  <button onclick="event.stopPropagation(); app.continueWorkSession('${session.id}')" 
+                          class="flex-1 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm">
+                    <i class="fas fa-play mr-1"></i>계속하기
+                  </button>
+                  <button onclick="event.stopPropagation(); app.deleteWorkSession('${session.id}')" 
+                          class="px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-sm">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </div>
+              </div>
+            `;
+          }).join('');
+
+        } catch (error) {
+          console.error('❌ 작업 세션 로드 실패:', error);
+          alert('작업 세션을 불러오는데 실패했습니다.');
+        }
+      },
+
+      // 새 작업 세션 시작
+      startNewWorkSession: async function() {
+        const customerName = prompt('고객명을 입력하세요:');
+        if (!customerName) return;
+
+        const locationsInput = prompt('작업 구역을 입력하세요 (쉼표로 구분):\n예: 거실, 안방, 작은방');
+        if (!locationsInput) return;
+
+        const locations = locationsInput.split(',').map(l => l.trim()).filter(l => l);
+        if (locations.length === 0) {
+          alert('최소 1개의 구역을 입력해야 합니다.');
+          return;
+        }
+
+        try {
+          // 작업 세션 생성
+          const { data: session, error: sessionError } = await this.sb
+            .from('work_sessions')
+            .insert({
+              apartment_id: this.currentApartment,
+              customer_name: customerName,
+              work_date: new Date().toISOString().split('T')[0],
+              status: 'in_progress',
+              total_locations: locations.length,
+              completed_locations: 0
+            })
+            .select()
+            .single();
+
+          if (sessionError) throw sessionError;
+
+          // 구역들 생성
+          const locationRecords = locations.map((loc, idx) => ({
+            work_session_id: session.id,
+            location_name: loc,
+            display_order: idx,
+            status: 'pending'
+          }));
+
+          const { error: locationsError } = await this.sb
+            .from('work_locations')
+            .insert(locationRecords);
+
+          if (locationsError) throw locationsError;
+
+          alert('✅ 새 작업이 시작되었습니다!');
+          this.continueWorkSession(session.id);
+
+        } catch (error) {
+          console.error('❌ 작업 세션 생성 실패:', error);
+          alert('작업 세션 생성에 실패했습니다: ' + error.message);
+        }
+      },
+
+      // 작업 세션 계속하기
+      continueWorkSession: async function(sessionId) {
+        try {
+          // 세션 및 구역 정보 로드
+          const { data: session, error: sessionError } = await this.sb
+            .from('work_sessions')
+            .select(`
+              *,
+              work_locations (
+                id,
+                location_name,
+                location_group,
+                display_order,
+                status
+              )
+            `)
+            .eq('id', sessionId)
+            .single();
+
+          if (sessionError) throw sessionError;
+
+          this.workPhoto.currentSession = session;
+          this.workPhoto.completedLocations.clear();
+          this.workPhoto.capturedPhotos = [];
+
+          // 각 구역의 사진 로드
+          for (const location of session.work_locations) {
+            const { data: photos } = await this.sb
+              .from('work_photos')
+              .select('*')
+              .eq('work_location_id', location.id);
+
+            if (photos && photos.length > 0) {
+              photos.forEach(photo => {
+                this.workPhoto.capturedPhotos.push({
+                  locationId: location.id,
+                  locationName: location.location_name,
+                  photoUrl: photo.photo_url,
+                  photoType: photo.photo_type,
+                  photoId: photo.id
+                });
+              });
+
+              // 작업 전/후 사진이 모두 있으면 완료 처리
+              const hasBefore = photos.some(p => p.photo_type === 'before');
+              const hasAfter = photos.some(p => p.photo_type === 'after');
+              if (hasBefore && hasAfter) {
+                this.workPhoto.completedLocations.add(location.id);
+              }
+            }
+          }
+
+          // UI 전환
+          document.getElementById('work-sessions-view').classList.add('hidden');
+          document.getElementById('work-session-detail').classList.remove('hidden');
+
+          // 구역 선택 드롭다운 채우기
+          this.updateLocationSelector();
+          this.updateProgress();
+          this.renderLocationButtons();
+          this.renderCapturedPhotos();
+
+          // 카메라 초기화 (아직 시작하지 않음 - 사용자가 촬영 버튼 누를 때 시작)
+          console.log('✅ 작업 세션 로드 완료:', session.customer_name);
+
+        } catch (error) {
+          console.error('❌ 작업 세션 로드 실패:', error);
+          alert('작업 세션을 불러오는데 실패했습니다.');
+        }
+      },
+
+      // 작업 세션 목록으로 돌아가기
+      backToSessionsList: function() {
+        // 카메라 정지
+        this.stopCamera();
+        
+        document.getElementById('work-session-detail').classList.add('hidden');
+        document.getElementById('work-sessions-view').classList.remove('hidden');
+        
+        this.loadWorkSessions();
+      },
+
+      // 카메라 초기화
+      initializeCamera: async function() {
+        try {
+          const video = document.getElementById('camera-preview');
+          
+          // 카메라 권한 요청 및 스트림 시작
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: 'environment' }, // 후면 카메라 우선
+            audio: false
+          });
+
+          video.srcObject = stream;
+          this.workPhoto.cameraStream = stream;
+          
+          console.log('✅ 카메라 초기화 완료');
+        } catch (error) {
+          console.error('❌ 카메라 초기화 실패:', error);
+          alert('카메라에 접근할 수 없습니다. 권한을 확인해주세요.');
+        }
+      },
+
+      // 카메라 정지
+      stopCamera: function() {
+        if (this.workPhoto.cameraStream) {
+          this.workPhoto.cameraStream.getTracks().forEach(track => track.stop());
+          this.workPhoto.cameraStream = null;
+          console.log('✅ 카메라 정지');
+        }
+      },
+
+      // 카메라 전환 (전면/후면)
+      switchCamera: async function() {
+        const video = document.getElementById('camera-preview');
+        const currentFacingMode = this.workPhoto.cameraStream
+          ?.getVideoTracks()[0]
+          ?.getSettings()
+          ?.facingMode || 'environment';
+
+        // 현재 스트림 정지
+        this.stopCamera();
+
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: currentFacingMode === 'environment' ? 'user' : 'environment' },
+            audio: false
+          });
+
+          video.srcObject = stream;
+          this.workPhoto.cameraStream = stream;
+          
+          console.log('✅ 카메라 전환 완료');
+        } catch (error) {
+          console.error('❌ 카메라 전환 실패:', error);
+          // 실패하면 원래 카메라로 복구
+          this.initializeCamera();
+        }
+      },
+
+      // 사진 타입 설정 (작업 전/후)
+      setPhotoType: function(type) {
+        this.workPhoto.currentPhotoType = type;
+        
+        const beforeBtn = document.getElementById('before-btn');
+        const afterBtn = document.getElementById('after-btn');
+        const indicator = document.getElementById('photo-type-indicator');
+
+        if (type === 'before') {
+          beforeBtn.className = 'flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg font-medium transition-all';
+          afterBtn.className = 'flex-1 px-4 py-3 bg-gray-300 text-gray-700 rounded-lg font-medium transition-all';
+          indicator.textContent = '작업 전';
+        } else {
+          beforeBtn.className = 'flex-1 px-4 py-3 bg-gray-300 text-gray-700 rounded-lg font-medium transition-all';
+          afterBtn.className = 'flex-1 px-4 py-3 bg-green-600 text-white rounded-lg font-medium transition-all';
+          indicator.textContent = '작업 후';
+        }
+      },
+
+      // 사진 촬영
+      capturePhoto: async function() {
+        if (!this.workPhoto.currentLocation) {
+          alert('구역을 먼저 선택해주세요!');
+          return;
+        }
+
+        if (!this.workPhoto.cameraStream) {
+          await this.initializeCamera();
+          // 카메라가 초기화될 때까지 잠시 대기
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+
+        try {
+          const video = document.getElementById('camera-preview');
+          const canvas = document.getElementById('camera-canvas');
+          const context = canvas.getContext('2d');
+
+          // 캔버스 크기 설정
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+
+          // 현재 프레임 캡처
+          context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+          // Blob으로 변환
+          canvas.toBlob(async (blob) => {
+            const location = this.workPhoto.currentSession.work_locations.find(
+              l => l.id === this.workPhoto.currentLocation
+            );
+            
+            const fileName = `${this.workPhoto.currentSession.id}/${location.id}_${this.workPhoto.currentPhotoType}_${Date.now()}.jpg`;
+
+            // Supabase Storage에 업로드
+            const { data, error } = await this.sb.storage
+              .from('work-photos')
+              .upload(fileName, blob, {
+                cacheControl: '3600',
+                upsert: true
+              });
+
+            if (error) throw error;
+
+            // Public URL 가져오기
+            const { data: urlData } = this.sb.storage
+              .from('work-photos')
+              .getPublicUrl(fileName);
+
+            const photoUrl = urlData.publicUrl;
+
+            // DB에 저장
+            const { data: photoRecord, error: insertError } = await this.sb
+              .from('work_photos')
+              .insert({
+                work_location_id: location.id,
+                photo_url: photoUrl,
+                photo_type: this.workPhoto.currentPhotoType
+              })
+              .select()
+              .single();
+
+            if (insertError) throw insertError;
+
+            // 로컬 상태에 추가
+            this.workPhoto.capturedPhotos.push({
+              locationId: location.id,
+              locationName: location.location_name,
+              photoUrl: photoUrl,
+              photoType: this.workPhoto.currentPhotoType,
+              photoId: photoRecord.id
+            });
+
+            // 스마트 기능 #1: 완료 체크 및 자동 숨김
+            this.checkLocationComplete(location.id);
+
+            // UI 업데이트
+            this.updateProgress();
+            this.renderCapturedPhotos();
+            this.renderLocationButtons();
+
+            // 개선 A: 다음 구역 자동 제안
+            this.suggestNextLocation();
+
+            // 촬영 성공 피드백
+            const captureBtn = document.getElementById('capture-btn');
+            captureBtn.style.transform = 'scale(1.2)';
+            setTimeout(() => {
+              captureBtn.style.transform = 'scale(1)';
+            }, 200);
+
+            console.log('✅ 사진 촬영 완료:', fileName);
+
+          }, 'image/jpeg', 0.9);
+
+        } catch (error) {
+          console.error('❌ 사진 촬영 실패:', error);
+          alert('사진 촬영에 실패했습니다: ' + error.message);
+        }
+      },
+
+      // 스마트 기능 #1: 구역 완료 체크
+      checkLocationComplete: function(locationId) {
+        const photos = this.workPhoto.capturedPhotos.filter(p => p.locationId === locationId);
+        const hasBefore = photos.some(p => p.photoType === 'before');
+        const hasAfter = photos.some(p => p.photoType === 'after');
+
+        if (hasBefore && hasAfter) {
+          this.workPhoto.completedLocations.add(locationId);
+          console.log('✅ 구역 완료:', locationId);
+          
+          // DB 업데이트
+          this.sb
+            .from('work_locations')
+            .update({ status: 'completed' })
+            .eq('id', locationId)
+            .then(() => {
+              // 세션의 completed_locations 카운트 업데이트
+              const completedCount = this.workPhoto.completedLocations.size;
+              return this.sb
+                .from('work_sessions')
+                .update({ completed_locations: completedCount })
+                .eq('id', this.workPhoto.currentSession.id);
+            });
+        }
+      },
+
+      // 스마트 기능 #2: 진행률 업데이트
+      updateProgress: function() {
+        if (!this.workPhoto.currentSession) return;
+
+        const total = this.workPhoto.currentSession.work_locations.length;
+        const completed = this.workPhoto.completedLocations.size;
+        const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+        document.getElementById('progress-text').textContent = `${completed}/${total}`;
+        document.getElementById('progress-bar').style.width = `${percentage}%`;
+        document.getElementById('progress-percentage').textContent = `${percentage}%`;
+      },
+
+      // 개선 A: 다음 구역 자동 제안
+      suggestNextLocation: function() {
+        if (!this.workPhoto.currentSession) return;
+
+        const locations = this.workPhoto.currentSession.work_locations
+          .filter(l => !this.workPhoto.completedLocations.has(l.id))
+          .sort((a, b) => a.display_order - b.display_order);
+
+        if (locations.length > 0) {
+          const nextLocation = locations[0];
+          
+          // 다음 구역으로 자동 전환 제안
+          if (confirm(`다음 구역으로 이동하시겠습니까?\n\n📍 ${nextLocation.location_name}`)) {
+            this.switchLocation(nextLocation.id);
+          }
+        } else {
+          alert('🎉 모든 구역 촬영이 완료되었습니다!');
+        }
+      },
+
+      // 구역 전환
+      switchLocation: function(locationId) {
+        this.workPhoto.currentLocation = locationId;
+        
+        const location = this.workPhoto.currentSession.work_locations.find(l => l.id === locationId);
+        if (location) {
+          document.getElementById('current-location-name').textContent = location.location_name;
+          document.getElementById('current-location-group').textContent = location.location_group || '';
+          document.getElementById('location-selector').value = locationId;
+
+          // 해당 구역의 사진 확인하여 작업 전/후 자동 전환
+          const photos = this.workPhoto.capturedPhotos.filter(p => p.locationId === locationId);
+          const hasBefore = photos.some(p => p.photoType === 'before');
+          const hasAfter = photos.some(p => p.photoType === 'after');
+
+          if (!hasBefore) {
+            this.setPhotoType('before');
+          } else if (!hasAfter) {
+            this.setPhotoType('after');
+          } else {
+            this.setPhotoType('before'); // 둘 다 있으면 기본값
+          }
+        }
+      },
+
+      // 구역 선택기 업데이트
+      updateLocationSelector: function() {
+        if (!this.workPhoto.currentSession) return;
+
+        const selector = document.getElementById('location-selector');
+        selector.innerHTML = '<option value="">구역 선택...</option>';
+
+        // 개선 B: 그룹별로 정렬
+        const grouped = {};
+        this.workPhoto.currentSession.work_locations.forEach(loc => {
+          const group = loc.location_group || '미분류';
+          if (!grouped[group]) grouped[group] = [];
+          grouped[group].push(loc);
+        });
+
+        Object.keys(grouped).sort().forEach(group => {
+          if (group !== '미분류') {
+            const optgroup = document.createElement('optgroup');
+            optgroup.label = group;
+            grouped[group]
+              .sort((a, b) => a.display_order - b.display_order)
+              .forEach(loc => {
+                const option = document.createElement('option');
+                option.value = loc.id;
+                option.textContent = loc.location_name;
+                if (this.workPhoto.completedLocations.has(loc.id)) {
+                  option.textContent += ' ✓';
+                }
+                optgroup.appendChild(option);
+              });
+            selector.appendChild(optgroup);
+          }
+        });
+
+        // 미분류 항목
+        if (grouped['미분류']) {
+          grouped['미분류']
+            .sort((a, b) => a.display_order - b.display_order)
+            .forEach(loc => {
+              const option = document.createElement('option');
+              option.value = loc.id;
+              option.textContent = loc.location_name;
+              if (this.workPhoto.completedLocations.has(loc.id)) {
+                option.textContent += ' ✓';
+              }
+              selector.appendChild(option);
+            });
+        }
+
+        // 이벤트 리스너
+        selector.onchange = (e) => {
+          if (e.target.value) {
+            this.switchLocation(e.target.value);
+          }
+        };
+      },
+
+      // 개선 B: 구역 버튼 렌더링 (그룹 폴더)
+      renderLocationButtons: function() {
+        if (!this.workPhoto.currentSession) return;
+
+        const groupsContainer = document.getElementById('location-groups');
+        const ungroupedContainer = document.getElementById('ungrouped-locations');
+
+        // 그룹별로 분류
+        const grouped = {};
+        const ungrouped = [];
+
+        this.workPhoto.currentSession.work_locations.forEach(loc => {
+          // 스마트 기능 #1: 완료된 구역 숨김 (토글 상태에 따라)
+          if (this.workPhoto.completedLocations.has(loc.id) && !this.workPhoto.showCompleted) {
+            return;
+          }
+
+          if (loc.location_group) {
+            if (!grouped[loc.location_group]) grouped[loc.location_group] = [];
+            grouped[loc.location_group].push(loc);
+          } else {
+            ungrouped.push(loc);
+          }
+        });
+
+        // 그룹 폴더 렌더링
+        groupsContainer.innerHTML = Object.keys(grouped).sort().map(group => {
+          const locations = grouped[group].sort((a, b) => a.display_order - b.display_order);
+          
+          return `
+            <div class="border border-gray-200 rounded-lg overflow-hidden">
+              <button onclick="this.nextElementSibling.classList.toggle('hidden')" 
+                      class="w-full px-4 py-2 bg-gray-100 hover:bg-gray-200 transition text-left font-medium flex justify-between items-center">
+                <span><i class="fas fa-folder mr-2 text-yellow-600"></i>${group}</span>
+                <span class="text-sm text-gray-600">${locations.length}개</span>
+              </button>
+              <div class="p-3 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
+                ${locations.map(loc => this.renderLocationButton(loc)).join('')}
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        // 미분류 버튼 렌더링
+        ungroupedContainer.innerHTML = ungrouped
+          .sort((a, b) => a.display_order - b.display_order)
+          .map(loc => this.renderLocationButton(loc))
+          .join('');
+      },
+
+      // 구역 버튼 HTML 생성
+      renderLocationButton: function(location) {
+        const isCompleted = this.workPhoto.completedLocations.has(location.id);
+        const isActive = this.workPhoto.currentLocation === location.id;
+        
+        let bgClass = 'bg-white border-2 border-gray-300';
+        let textClass = 'text-gray-800';
+        let icon = '';
+
+        if (isActive) {
+          bgClass = 'bg-blue-500 border-blue-600';
+          textClass = 'text-white';
+          icon = '<i class="fas fa-crosshairs mr-1"></i>';
+        } else if (isCompleted) {
+          bgClass = 'bg-green-100 border-green-400';
+          textClass = 'text-green-800';
+          icon = '<i class="fas fa-check-circle mr-1"></i>';
+        }
+
+        return `
+          <button onclick="app.switchLocation('${location.id}')" 
+                  class="${bgClass} ${textClass} px-3 py-2 rounded-lg hover:shadow-md transition text-sm font-medium">
+            ${icon}${location.location_name}
+          </button>
+        `;
+      },
+
+      // 완료된 구역 표시/숨김 토글
+      toggleCompletedLocations: function() {
+        this.workPhoto.showCompleted = !this.workPhoto.showCompleted;
+        
+        const toggleText = document.getElementById('toggle-completed-text');
+        toggleText.innerHTML = this.workPhoto.showCompleted 
+          ? '<i class="fas fa-eye-slash mr-1"></i>완료된 구역 숨기기'
+          : '<i class="fas fa-eye mr-1"></i>완료된 구역 보기';
+
+        this.renderLocationButtons();
+      },
+
+      // 촬영한 사진 렌더링
+      renderCapturedPhotos: function() {
+        const container = document.getElementById('captured-photos-grid');
+        
+        if (this.workPhoto.capturedPhotos.length === 0) {
+          container.innerHTML = `
+            <div class="text-center py-8 text-gray-400 col-span-full">
+              <i class="fas fa-camera-retro text-4xl mb-2"></i>
+              <p class="text-sm">촬영한 사진이 없습니다</p>
+            </div>
+          `;
+          return;
+        }
+
+        // 구역별로 그룹화
+        const byLocation = {};
+        this.workPhoto.capturedPhotos.forEach(photo => {
+          if (!byLocation[photo.locationId]) {
+            byLocation[photo.locationId] = [];
+          }
+          byLocation[photo.locationId].push(photo);
+        });
+
+        container.innerHTML = Object.keys(byLocation).map(locationId => {
+          const photos = byLocation[locationId];
+          const locationName = photos[0].locationName;
+          
+          return photos.map(photo => {
+            const typeLabel = photo.photoType === 'before' ? '전' : '후';
+            const typeBadge = photo.photoType === 'before' 
+              ? 'bg-blue-500' 
+              : 'bg-green-500';
+
+            return `
+              <div class="relative group">
+                <img src="${photo.photoUrl}" 
+                     class="w-full h-32 object-cover rounded-lg shadow-md cursor-pointer hover:opacity-90 transition"
+                     onclick="app.viewPhoto('${photo.photoUrl}')" />
+                <div class="absolute top-2 left-2 ${typeBadge} text-white px-2 py-1 rounded text-xs font-bold">
+                  ${typeLabel}
+                </div>
+                <div class="absolute bottom-2 left-2 right-2 bg-black bg-opacity-60 text-white px-2 py-1 rounded text-xs truncate">
+                  ${locationName}
+                </div>
+                <button onclick="app.deletePhoto('${photo.photoId}', '${locationId}')" 
+                        class="absolute top-2 right-2 bg-red-600 text-white w-6 h-6 rounded-full opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                  <i class="fas fa-times text-xs"></i>
+                </button>
+              </div>
+            `;
+          }).join('');
+        }).join('');
+      },
+
+      // 사진 크게 보기
+      viewPhoto: function(photoUrl) {
+        window.open(photoUrl, '_blank');
+      },
+
+      // 사진 삭제
+      deletePhoto: async function(photoId, locationId) {
+        if (!confirm('이 사진을 삭제하시겠습니까?')) return;
+
+        try {
+          const { error } = await this.sb
+            .from('work_photos')
+            .delete()
+            .eq('id', photoId);
+
+          if (error) throw error;
+
+          // 로컬 상태에서 제거
+          this.workPhoto.capturedPhotos = this.workPhoto.capturedPhotos.filter(p => p.photoId !== photoId);
+          
+          // 완료 상태 재확인
+          this.workPhoto.completedLocations.delete(locationId);
+          this.checkLocationComplete(locationId);
+
+          // UI 업데이트
+          this.updateProgress();
+          this.renderCapturedPhotos();
+          this.renderLocationButtons();
+
+          console.log('✅ 사진 삭제 완료');
+        } catch (error) {
+          console.error('❌ 사진 삭제 실패:', error);
+          alert('사진 삭제에 실패했습니다.');
+        }
+      },
+
+      // 스마트 기능 #3: 작업 완료 검증 및 저장
+      saveWorkSession: async function() {
+        if (!this.workPhoto.currentSession) return;
+
+        const total = this.workPhoto.currentSession.work_locations.length;
+        const completed = this.workPhoto.completedLocations.size;
+
+        // 검증: 모든 구역이 완료되었는지 확인
+        if (completed < total) {
+          const incomplete = this.workPhoto.currentSession.work_locations
+            .filter(l => !this.workPhoto.completedLocations.has(l.id))
+            .map(l => l.location_name);
+
+          alert(`❌ 아직 완료되지 않은 구역이 있습니다:\n\n${incomplete.join(', ')}\n\n모든 구역의 작업 전/후 사진을 촬영해주세요.`);
+          return;
+        }
+
+        // 고객 서명 및 피드백 받기
+        const feedback = prompt('고객 피드백을 입력하세요 (선택):');
+        const rating = prompt('고객 만족도를 입력하세요 (1-5):');
+
+        try {
+          const { error } = await this.sb
+            .from('work_sessions')
+            .update({
+              status: 'completed',
+              customer_feedback: feedback,
+              customer_rating: rating ? parseInt(rating) : null
+            })
+            .eq('id', this.workPhoto.currentSession.id);
+
+          if (error) throw error;
+
+          alert('✅ 작업이 완료되었습니다!');
+          this.backToSessionsList();
+
+        } catch (error) {
+          console.error('❌ 작업 완료 저장 실패:', error);
+          alert('작업 완료 저장에 실패했습니다.');
+        }
+      },
+
+      // 작업 세션 미리보기
+      previewWorkSession: function() {
+        if (!this.workPhoto.currentSession) return;
+
+        // 새 창에서 미리보기 페이지 열기
+        const previewData = {
+          session: this.workPhoto.currentSession,
+          photos: this.workPhoto.capturedPhotos,
+          completedLocations: Array.from(this.workPhoto.completedLocations)
+        };
+
+        localStorage.setItem('work_session_preview', JSON.stringify(previewData));
+        window.open('work-session-preview.html', '_blank');
+      },
+
+      // 작업 세션 삭제
+      deleteWorkSession: async function(sessionId) {
+        if (!confirm('이 작업 세션을 삭제하시겠습니까?\n모든 사진도 함께 삭제됩니다.')) return;
+
+        try {
+          // ON DELETE CASCADE로 인해 관련 데이터 자동 삭제
+          const { error } = await this.sb
+            .from('work_sessions')
+            .delete()
+            .eq('id', sessionId);
+
+          if (error) throw error;
+
+          alert('✅ 작업 세션이 삭제되었습니다.');
+          this.loadWorkSessions();
+
+        } catch (error) {
+          console.error('❌ 작업 세션 삭제 실패:', error);
+          alert('작업 세션 삭제에 실패했습니다.');
+        }
+      },
+
       // ==================== 기존 함수 ====================
       
       // 전역에 app 즉시 노출

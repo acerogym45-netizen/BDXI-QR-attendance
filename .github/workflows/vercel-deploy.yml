@@ -1,0 +1,16 @@
+name: Vercel Production Deployment
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Vercel Deployment
+        run: |
+          echo "Main branch updated - Vercel should auto-deploy"
+          echo "Commit: ${{ github.sha }}"
+          echo "Timestamp: $(date)"
