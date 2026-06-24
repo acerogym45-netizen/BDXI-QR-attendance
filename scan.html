@@ -3267,9 +3267,21 @@
 
         // AC 작업 사진 버튼 표시 (ac_cleaning 시설만)
         showACPhotoBtnIfNeeded: function() {
+          console.log('🔍 AC 버튼 표시 체크:', {
+            facilityType: this.state.facilityType,
+            isACCleaning: this.state.facilityType === 'ac_cleaning'
+          });
+          
           if (this.state.facilityType === 'ac_cleaning') {
             const btn = document.getElementById('ac-work-photo-btn');
-            if (btn) btn.classList.remove('hidden');
+            if (btn) {
+              btn.classList.remove('hidden');
+              console.log('✅ AC 작업 사진 버튼 표시됨');
+            } else {
+              console.error('❌ ac-work-photo-btn 요소를 찾을 수 없습니다');
+            }
+          } else {
+            console.log('ℹ️ AC cleaning 시설이 아니므로 버튼 숨김');
           }
         },
 
