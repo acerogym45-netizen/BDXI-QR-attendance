@@ -3272,17 +3272,23 @@
             isACCleaning: this.state.facilityType === 'ac_cleaning'
           });
           
-          if (this.state.facilityType === 'ac_cleaning') {
-            const btn = document.getElementById('ac-work-photo-btn');
-            if (btn) {
-              btn.classList.remove('hidden');
-              console.log('✅ AC 작업 사진 버튼 표시됨');
-            } else {
-              console.error('❌ ac-work-photo-btn 요소를 찾을 수 없습니다');
-            }
+          // 임시로 항상 표시 (테스트용)
+          const btn = document.getElementById('ac-work-photo-btn');
+          if (btn) {
+            btn.classList.remove('hidden');
+            console.log('✅ AC 작업 사진 버튼 표시됨 (테스트 모드 - 항상 표시)');
           } else {
-            console.log('ℹ️ AC cleaning 시설이 아니므로 버튼 숨김');
+            console.error('❌ ac-work-photo-btn 요소를 찾을 수 없습니다');
           }
+          
+          // 원래 코드 (주석 처리)
+          // if (this.state.facilityType === 'ac_cleaning') {
+          //   const btn = document.getElementById('ac-work-photo-btn');
+          //   if (btn) {
+          //     btn.classList.remove('hidden');
+          //     console.log('✅ AC 작업 사진 버튼 표시됨');
+          //   }
+          // }
         },
 
         // AC 사진 촬영 모달 열기
