@@ -15819,7 +15819,7 @@
       // ==================== 📸 작업 사진 관리 함수들 ====================
       
       // 작업 사진 관련 상태
-      workPhoto: {
+      app.workPhoto = {
         currentSession: null,
         currentLocation: null,
         currentPhotoType: 'before', // 'before' or 'after'
@@ -15830,7 +15830,7 @@
       },
 
       // 작업 세션 목록 로드
-      loadWorkSessions: async function() {
+      app.loadWorkSessions = async function() {
         try {
           const { data: sessions, error } = await this.sb
             .from('work_sessions')
@@ -15912,7 +15912,7 @@
       },
 
       // 새 작업 세션 시작
-      startNewWorkSession: async function() {
+      app.startNewWorkSession = async function() {
         const customerName = prompt('고객명을 입력하세요:');
         if (!customerName) return;
 
@@ -15966,7 +15966,7 @@
       },
 
       // 작업 세션 계속하기
-      continueWorkSession: async function(sessionId) {
+      app.continueWorkSession = async function(sessionId) {
         try {
           // 세션 및 구역 정보 로드
           const { data: session, error: sessionError } = await this.sb
@@ -16037,7 +16037,7 @@
       },
 
       // 작업 세션 목록으로 돌아가기
-      backToSessionsList: function() {
+      app.backToSessionsList = function() {
         // 카메라 정지
         this.stopCamera();
         
@@ -16048,7 +16048,7 @@
       },
 
       // 카메라 초기화
-      initializeCamera: async function() {
+      app.initializeCamera = async function() {
         try {
           const video = document.getElementById('camera-preview');
           
@@ -16069,7 +16069,7 @@
       },
 
       // 카메라 정지
-      stopCamera: function() {
+      app.stopCamera = function() {
         if (this.workPhoto.cameraStream) {
           this.workPhoto.cameraStream.getTracks().forEach(track => track.stop());
           this.workPhoto.cameraStream = null;
@@ -16078,7 +16078,7 @@
       },
 
       // 카메라 전환 (전면/후면)
-      switchCamera: async function() {
+      app.switchCamera = async function() {
         const video = document.getElementById('camera-preview');
         const currentFacingMode = this.workPhoto.cameraStream
           ?.getVideoTracks()[0]
@@ -16106,7 +16106,7 @@
       },
 
       // 사진 타입 설정 (작업 전/후)
-      setPhotoType: function(type) {
+      app.setPhotoType = function(type) {
         this.workPhoto.currentPhotoType = type;
         
         const beforeBtn = document.getElementById('before-btn');
@@ -16125,7 +16125,7 @@
       },
 
       // 사진 촬영
-      capturePhoto: async function() {
+      app.capturePhoto = async function() {
         if (!this.workPhoto.currentLocation) {
           alert('구역을 먼저 선택해주세요!');
           return;
@@ -16225,7 +16225,7 @@
       },
 
       // 스마트 기능 #1: 구역 완료 체크
-      checkLocationComplete: function(locationId) {
+      app.checkLocationComplete = function(locationId) {
         const photos = this.workPhoto.capturedPhotos.filter(p => p.locationId === locationId);
         const hasBefore = photos.some(p => p.photoType === 'before');
         const hasAfter = photos.some(p => p.photoType === 'after');
@@ -16251,7 +16251,7 @@
       },
 
       // 스마트 기능 #2: 진행률 업데이트
-      updateProgress: function() {
+      app.updateProgress = function() {
         if (!this.workPhoto.currentSession) return;
 
         const total = this.workPhoto.currentSession.work_locations.length;
@@ -16264,7 +16264,7 @@
       },
 
       // 개선 A: 다음 구역 자동 제안
-      suggestNextLocation: function() {
+      app.suggestNextLocation = function() {
         if (!this.workPhoto.currentSession) return;
 
         const locations = this.workPhoto.currentSession.work_locations
@@ -16284,7 +16284,7 @@
       },
 
       // 구역 전환
-      switchLocation: function(locationId) {
+      app.switchLocation = function(locationId) {
         this.workPhoto.currentLocation = locationId;
         
         const location = this.workPhoto.currentSession.work_locations.find(l => l.id === locationId);
@@ -16309,7 +16309,7 @@
       },
 
       // 구역 선택기 업데이트
-      updateLocationSelector: function() {
+      app.updateLocationSelector = function() {
         if (!this.workPhoto.currentSession) return;
 
         const selector = document.getElementById('location-selector');
@@ -16366,7 +16366,7 @@
       },
 
       // 개선 B: 구역 버튼 렌더링 (그룹 폴더)
-      renderLocationButtons: function() {
+      app.renderLocationButtons = function() {
         if (!this.workPhoto.currentSession) return;
 
         const groupsContainer = document.getElementById('location-groups');
@@ -16416,7 +16416,7 @@
       },
 
       // 구역 버튼 HTML 생성
-      renderLocationButton: function(location) {
+      app.renderLocationButton = function(location) {
         const isCompleted = this.workPhoto.completedLocations.has(location.id);
         const isActive = this.workPhoto.currentLocation === location.id;
         
@@ -16443,7 +16443,7 @@
       },
 
       // 완료된 구역 표시/숨김 토글
-      toggleCompletedLocations: function() {
+      app.toggleCompletedLocations = function() {
         this.workPhoto.showCompleted = !this.workPhoto.showCompleted;
         
         const toggleText = document.getElementById('toggle-completed-text');
@@ -16455,7 +16455,7 @@
       },
 
       // 촬영한 사진 렌더링
-      renderCapturedPhotos: function() {
+      app.renderCapturedPhotos = function() {
         const container = document.getElementById('captured-photos-grid');
         
         if (this.workPhoto.capturedPhotos.length === 0) {
@@ -16509,12 +16509,12 @@
       },
 
       // 사진 크게 보기
-      viewPhoto: function(photoUrl) {
+      app.viewPhoto = function(photoUrl) {
         window.open(photoUrl, '_blank');
       },
 
       // 사진 삭제
-      deletePhoto: async function(photoId, locationId) {
+      app.deletePhoto = async function(photoId, locationId) {
         if (!confirm('이 사진을 삭제하시겠습니까?')) return;
 
         try {
@@ -16545,7 +16545,7 @@
       },
 
       // 스마트 기능 #3: 작업 완료 검증 및 저장
-      saveWorkSession: async function() {
+      app.saveWorkSession = async function() {
         if (!this.workPhoto.currentSession) return;
 
         const total = this.workPhoto.currentSession.work_locations.length;
@@ -16587,7 +16587,7 @@
       },
 
       // 작업 세션 미리보기
-      previewWorkSession: function() {
+      app.previewWorkSession = function() {
         if (!this.workPhoto.currentSession) return;
 
         // 새 창에서 미리보기 페이지 열기
@@ -16602,7 +16602,7 @@
       },
 
       // 작업 세션 삭제
-      deleteWorkSession: async function(sessionId) {
+      app.deleteWorkSession = async function(sessionId) {
         if (!confirm('이 작업 세션을 삭제하시겠습니까?\n모든 사진도 함께 삭제됩니다.')) return;
 
         try {
@@ -16623,8 +16623,7 @@
         }
       } // ← deleteWorkSession 함수 끝
 
-      // ==================== app 객체 종료 ====================
-      }; // ← app 객체 닫기
+      // ==================== app 객체는 Line 9119에서 이미 닫혔음 ====================
       
       // 전역에 app 즉시 노출
       window.app = app;
