@@ -313,6 +313,27 @@
           <i class="fas fa-chevron-right text-gray-400 group-hover:text-yellow-600 transition-colors"></i>
         </button>
 
+        <!-- 🆕 에어컨 청소 작업 사진 촬영 버튼 (ac_cleaning 시설만 표시) -->
+        <button
+          id="ac-work-photo-btn"
+          onclick="app.showACWorkPhotoUI()"
+          class="hidden btn-professional bg-white border-2 border-purple-200 text-gray-800 p-5 rounded-xl flex items-center justify-between group hover:border-purple-300 transition-all"
+        >
+          <div class="flex items-center gap-4">
+            <div class="w-12 h-12 rounded-lg bg-purple-50 flex items-center justify-center group-hover:bg-purple-100 transition-colors">
+              <i class="fas fa-camera-retro text-xl text-purple-600"></i>
+            </div>
+            <div class="text-left">
+              <div class="font-bold text-base flex items-center gap-2">
+                작업 사진 촬영
+                <span class="px-2 py-0.5 text-xs font-bold bg-purple-100 text-purple-600 rounded-full">NEW</span>
+              </div>
+              <div class="text-gray-500 text-xs mt-0.5">에어컨 청소 작업 전/후 촬영</div>
+            </div>
+          </div>
+          <i class="fas fa-chevron-right text-gray-400 group-hover:text-purple-600 transition-colors"></i>
+        </button>
+
         <!-- Before/After Mode Toggle -->
         <div class="bg-white border-2 border-gray-200 rounded-xl p-4 flex items-center justify-between">
           <div class="flex items-center gap-3">
@@ -792,6 +813,150 @@
       <span id="toast-msg" class="font-medium text-sm">처리가 완료되었습니다.</span>
     </div>
 
+    <!-- 🆕 AC Cleaning Work Photo Modal -->
+    <div id="ac-work-photo-modal" class="hidden fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4" style="overflow-y: auto;">
+      <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[95vh] overflow-hidden shadow-2xl my-auto">
+        <!-- Header -->
+        <div class="flex justify-between items-center p-6 border-b bg-gradient-to-r from-purple-500 to-indigo-600">
+          <h3 class="text-xl font-bold text-white flex items-center gap-2">
+            <i class="fas fa-camera-retro"></i>
+            에어컨 청소 작업 사진
+          </h3>
+          <button onclick="app.closeACWorkPhotoUI()" class="text-white hover:bg-white/20 w-8 h-8 rounded-full flex items-center justify-center transition-colors">
+            <i class="fas fa-times text-xl"></i>
+          </button>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="bg-gradient-to-r from-purple-50 to-indigo-50 p-4 border-b">
+          <div class="flex justify-between items-center mb-2">
+            <span class="text-sm font-medium text-gray-700">작업 진행률</span>
+            <span id="ac-progress-text" class="text-lg font-bold text-purple-600">0/30</span>
+          </div>
+          <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+            <div id="ac-progress-bar" class="bg-gradient-to-r from-purple-500 to-indigo-500 h-3 rounded-full transition-all duration-500" style="width: 0%"></div>
+          </div>
+          <p id="ac-progress-percentage" class="text-xs text-gray-600 text-right mt-1">0%</p>
+        </div>
+
+        <!-- Location Selector -->
+        <div class="p-6 border-b bg-gray-50">
+          <label class="block text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
+            <i class="fas fa-map-marker-alt text-purple-600"></i>
+            작업 구역 선택
+          </label>
+          <select id="ac-location-selector" onchange="app.selectACLocation(this.value)" class="w-full px-4 py-3 border-2 border-purple-300 rounded-xl focus:ring-2 focus:ring-purple-500 font-medium text-gray-800">
+            <option value="">구역을 선택하세요...</option>
+          </select>
+          <div id="ac-next-suggestion" class="hidden mt-2 text-sm text-purple-600 font-medium">
+            <i class="fas fa-lightbulb mr-1"></i>
+            <span id="ac-next-suggestion-text"></span>
+          </div>
+        </div>
+
+        <!-- Camera Preview Section -->
+        <div id="ac-camera-section" class="hidden p-6 space-y-4 overflow-y-auto" style="max-height: 60vh;">
+          <!-- Photo Type Toggle -->
+          <div class="flex gap-3 mb-4">
+            <button id="ac-before-btn" onclick="app.setACPhotoType('before')" class="flex-1 px-4 py-3 bg-blue-600 text-white rounded-xl font-bold transition-all shadow-md hover:bg-blue-700">
+              <i class="fas fa-arrow-left mr-2"></i>작업 전 (Before)
+            </button>
+            <button id="ac-after-btn" onclick="app.setACPhotoType('after')" class="flex-1 px-4 py-3 bg-gray-300 text-gray-600 rounded-xl font-bold transition-all hover:bg-gray-400">
+              <i class="fas fa-arrow-right mr-2"></i>작업 후 (After)
+            </button>
+          </div>
+
+          <!-- Camera Preview -->
+          <div class="relative bg-gray-900 rounded-xl overflow-hidden" style="aspect-ratio: 4/3;">
+            <video id="ac-camera-preview" class="w-full h-full object-cover" autoplay playsinline></video>
+            <canvas id="ac-camera-canvas" class="hidden"></canvas>
+            
+            <!-- Camera Overlay -->
+            <div class="absolute top-4 left-4 right-4 flex justify-between items-start">
+              <div class="bg-black bg-opacity-70 text-white px-4 py-2 rounded-lg font-bold">
+                <i class="fas fa-camera mr-2"></i>
+                <span id="ac-photo-type-indicator">작업 전 (Before)</span>
+              </div>
+              <button onclick="app.switchACCamera()" class="bg-black bg-opacity-70 text-white px-4 py-2 rounded-lg hover:bg-opacity-90 transition">
+                <i class="fas fa-sync-alt"></i>
+              </button>
+            </div>
+
+            <!-- Capture Button -->
+            <div class="absolute bottom-6 left-0 right-0 flex justify-center">
+              <button id="ac-capture-btn" onclick="app.captureACPhoto()" class="w-20 h-20 bg-white rounded-full shadow-2xl hover:bg-gray-100 transition-all transform hover:scale-105 flex items-center justify-center">
+                <div class="w-16 h-16 bg-purple-600 rounded-full flex items-center justify-center">
+                  <i class="fas fa-camera text-white text-2xl"></i>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          <!-- Captured Photos Display -->
+          <div id="ac-captured-photos" class="hidden">
+            <h4 class="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
+              <i class="fas fa-images text-purple-600"></i>
+              촬영한 사진 (2장 필수)
+            </h4>
+            <div class="grid grid-cols-2 gap-3">
+              <!-- Before Photo -->
+              <div class="border-2 border-blue-300 rounded-xl p-3 bg-blue-50">
+                <div class="text-center mb-2">
+                  <div class="text-sm font-bold text-blue-700">🔵 Before</div>
+                </div>
+                <div id="ac-before-preview" class="bg-gray-200 rounded-lg overflow-hidden" style="aspect-ratio: 4/3;">
+                  <img id="ac-before-img" class="w-full h-full object-cover hidden" />
+                  <div id="ac-before-placeholder" class="w-full h-full flex items-center justify-center text-gray-400">
+                    <div class="text-center">
+                      <i class="fas fa-image text-3xl mb-2"></i>
+                      <p class="text-xs">사진을 촬영하세요</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- After Photo -->
+              <div class="border-2 border-green-300 rounded-xl p-3 bg-green-50">
+                <div class="text-center mb-2">
+                  <div class="text-sm font-bold text-green-700">🟢 After</div>
+                </div>
+                <div id="ac-after-preview" class="bg-gray-200 rounded-lg overflow-hidden" style="aspect-ratio: 4/3;">
+                  <img id="ac-after-img" class="w-full h-full object-cover hidden" />
+                  <div id="ac-after-placeholder" class="w-full h-full flex items-center justify-center text-gray-400">
+                    <div class="text-center">
+                      <i class="fas fa-image text-3xl mb-2"></i>
+                      <p class="text-xs">사진을 촬영하세요</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Upload Button -->
+          <button
+            id="ac-upload-btn"
+            onclick="app.uploadACPhotos()"
+            disabled
+            class="w-full py-4 bg-gray-300 text-white rounded-xl font-bold text-lg flex items-center justify-center gap-2 disabled:opacity-50 transition-all"
+          >
+            <i class="fas fa-cloud-upload-alt"></i>
+            <span>업로드 (2장 모두 촬영 필요)</span>
+            <div id="ac-upload-spinner" class="spinner hidden w-5 h-5 ml-2"></div>
+          </button>
+        </div>
+
+        <!-- Instructions -->
+        <div class="p-6 bg-gray-50 border-t">
+          <div class="text-xs text-gray-600 space-y-1">
+            <p><i class="fas fa-info-circle text-purple-600 mr-1"></i> 각 구역마다 작업 전/후 사진 2장씩 촬영해주세요</p>
+            <p><i class="fas fa-check-circle text-green-600 mr-1"></i> 완료된 구역은 자동으로 숨겨집니다</p>
+            <p><i class="fas fa-lightbulb text-yellow-600 mr-1"></i> 다음 구역이 자동으로 추천됩니다</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Error Screen -->
     <div
       id="screen-error"
@@ -876,7 +1041,7 @@
             // 3-1. 먼저 code로 조회 시도 (APT001, APT002 등 신규 형식)
             let { data: aptData, error: aptError } = await this.sb
               .from('apartments')
-              .select('id, code, name')
+              .select('id, code, name, facility_type')
               .eq('code', aptCode)
               .maybeSingle();
             
@@ -897,7 +1062,7 @@
                 
                 const result = await this.sb
                   .from('apartments')
-                  .select('id, code, name')
+                  .select('id, code, name, facility_type')
                   .eq('name', aptName)
                   .maybeSingle();
                 
@@ -956,12 +1121,14 @@
             this.state.aptCode = aptCode;  // 원본 코드 저장 (BJD001 또는 APT004)
             this.state.aptName = aptData.name; // 이름 저장
             this.state.aptDbCode = aptData.code; // DB의 실제 code (APT004 등)
+            this.state.facilityType = aptData.facility_type || 'general'; // 시설 유형 저장
             
             console.log('✅ 시설 정보 로드 완료:', {
               id: this.state.aptId,
               scannedCode: aptCode,
               dbCode: aptData.code,
               name: this.state.aptName,
+              facilityType: this.state.facilityType,
               compatibility: aptCode === aptData.code ? 'NEW_QR' : 'OLD_QR_LEGACY'
             });
 
@@ -1145,6 +1312,9 @@
 
           document.getElementById('btn-reset-emp').classList.remove('hidden');
           document.getElementById('section-work').classList.remove('hidden');
+
+          // 🆕 AC 작업 사진 버튼 표시 (ac_cleaning 시설만)
+          this.showACWorkPhotoBtnIfNeeded();
 
           // 🆕 구매 요청 배지 로드
           this.loadPurchaseBadge();
@@ -3180,6 +3350,456 @@
           } catch (error) {
             console.error('❌ 진단 중 오류 발생:', error);
           }
+        },
+
+        // ==================== 📸 에어컨 청소 작업 사진 촬영 함수들 ====================
+        
+        // AC 작업 사진 상태
+        acWorkPhoto: {
+          currentSession: null,
+          currentLocation: null,
+          currentPhotoType: 'before',
+          cameraStream: null,
+          facingMode: 'environment', // 'environment' (후면) or 'user' (전면)
+          beforePhoto: null,
+          afterPhoto: null,
+          locations: [], // All locations for this work
+          completedLocations: new Set()
+        },
+
+        // AC 작업 사진 UI 표시 (ac_cleaning 시설에만 버튼 표시)
+        showACWorkPhotoBtnIfNeeded: function() {
+          if (this.state.facilityType === 'ac_cleaning') {
+            const btn = document.getElementById('ac-work-photo-btn');
+            if (btn) {
+              btn.classList.remove('hidden');
+              console.log('✅ AC 작업 사진 버튼 표시됨 (ac_cleaning 시설)');
+            }
+          }
+        },
+
+        // AC 작업 사진 UI 열기
+        showACWorkPhotoUI: async function() {
+          try {
+            // 작업 세션 로드 또는 생성
+            const { data: session, error } = await this.sb
+              .from('work_sessions')
+              .select('*, work_locations(*)')
+              .eq('apartment_id', this.state.aptId)
+              .eq('work_date', new Date().toISOString().split('T')[0])
+              .eq('status', 'in_progress')
+              .order('created_at', { ascending: false })
+              .limit(1)
+              .maybeSingle();
+
+            if (error && error.code !== 'PGRST116') throw error;
+
+            if (!session) {
+              // 새 작업 세션 생성
+              const customerName = prompt('고객명을 입력하세요:');
+              if (!customerName) return;
+
+              const { data: newSession, error: createError } = await this.sb
+                .from('work_sessions')
+                .insert({
+                  apartment_id: this.state.aptId,
+                  customer_name: customerName,
+                  work_date: new Date().toISOString().split('T')[0],
+                  status: 'in_progress',
+                  total_locations: 30, // 에어컨 청소는 보통 30개 구역
+                  completed_locations: 0
+                })
+                .select()
+                .single();
+
+              if (createError) throw createError;
+
+              // 기본 30개 구역 생성
+              const locationRecords = [];
+              for (let i = 1; i <= 30; i++) {
+                locationRecords.push({
+                  work_session_id: newSession.id,
+                  location_name: `구역 ${i}`,
+                  display_order: i,
+                  status: 'pending'
+                });
+              }
+
+              const { error: locError } = await this.sb
+                .from('work_locations')
+                .insert(locationRecords);
+
+              if (locError) throw locError;
+
+              // 생성된 구역들 다시 로드
+              const { data: refreshedSession } = await this.sb
+                .from('work_sessions')
+                .select('*, work_locations(*)')
+                .eq('id', newSession.id)
+                .single();
+
+              this.acWorkPhoto.currentSession = refreshedSession;
+            } else {
+              this.acWorkPhoto.currentSession = session;
+            }
+
+            // 완료된 구역 확인
+            this.acWorkPhoto.completedLocations.clear();
+            for (const loc of this.acWorkPhoto.currentSession.work_locations) {
+              const { data: photos } = await this.sb
+                .from('work_photos')
+                .select('photo_type')
+                .eq('work_location_id', loc.id);
+
+              const hasBefore = photos?.some(p => p.photo_type === 'before');
+              const hasAfter = photos?.some(p => p.photo_type === 'after');
+              
+              if (hasBefore && hasAfter) {
+                this.acWorkPhoto.completedLocations.add(loc.id);
+              }
+            }
+
+            // 구역 목록 렌더링
+            this.renderACLocationSelector();
+            
+            // 진행률 업데이트
+            this.updateACProgress();
+
+            // 모달 표시
+            document.getElementById('ac-work-photo-modal').classList.remove('hidden');
+
+          } catch (error) {
+            console.error('❌ AC 작업 사진 UI 열기 실패:', error);
+            alert('작업 사진 촬영을 시작할 수 없습니다: ' + error.message);
+          }
+        },
+
+        // 구역 선택 드롭다운 렌더링
+        renderACLocationSelector: function() {
+          const selector = document.getElementById('ac-location-selector');
+          const locations = this.acWorkPhoto.currentSession.work_locations;
+          
+          // 완료되지 않은 구역만 표시
+          const pendingLocations = locations.filter(loc => 
+            !this.acWorkPhoto.completedLocations.has(loc.id)
+          );
+
+          selector.innerHTML = '<option value="">구역을 선택하세요...</option>';
+          
+          pendingLocations.forEach(loc => {
+            const option = document.createElement('option');
+            option.value = loc.id;
+            option.textContent = loc.location_name;
+            selector.appendChild(option);
+          });
+
+          // 다음 구역 추천
+          if (pendingLocations.length > 0) {
+            const nextLoc = pendingLocations[0];
+            document.getElementById('ac-next-suggestion').classList.remove('hidden');
+            document.getElementById('ac-next-suggestion-text').textContent = 
+              `다음 추천: ${nextLoc.location_name}`;
+          } else {
+            document.getElementById('ac-next-suggestion').classList.add('hidden');
+          }
+        },
+
+        // 구역 선택 시
+        selectACLocation: async function(locationId) {
+          if (!locationId) return;
+
+          const location = this.acWorkPhoto.currentSession.work_locations.find(l => l.id === locationId);
+          if (!location) return;
+
+          this.acWorkPhoto.currentLocation = location;
+          this.acWorkPhoto.beforePhoto = null;
+          this.acWorkPhoto.afterPhoto = null;
+          this.acWorkPhoto.currentPhotoType = 'before';
+
+          // UI 업데이트
+          this.setACPhotoType('before');
+          this.updateACPhotoDisplay();
+
+          // 카메라 섹션 표시
+          document.getElementById('ac-camera-section').classList.remove('hidden');
+          
+          // 카메라 시작
+          await this.initializeACCamera();
+        },
+
+        // 카메라 초기화
+        initializeACCamera: async function() {
+          try {
+            // 기존 스트림 정지
+            if (this.acWorkPhoto.cameraStream) {
+              this.acWorkPhoto.cameraStream.getTracks().forEach(track => track.stop());
+            }
+
+            const stream = await navigator.mediaDevices.getUserMedia({
+              video: {
+                facingMode: this.acWorkPhoto.facingMode,
+                width: { ideal: 1920 },
+                height: { ideal: 1080 }
+              }
+            });
+
+            this.acWorkPhoto.cameraStream = stream;
+            const video = document.getElementById('ac-camera-preview');
+            video.srcObject = stream;
+            
+            console.log('✅ AC 카메라 초기화 완료');
+          } catch (error) {
+            console.error('❌ 카메라 초기화 실패:', error);
+            alert('카메라에 접근할 수 없습니다. 권한을 확인해주세요.');
+          }
+        },
+
+        // 카메라 전환 (전면/후면)
+        switchACCamera: async function() {
+          this.acWorkPhoto.facingMode = this.acWorkPhoto.facingMode === 'environment' ? 'user' : 'environment';
+          await this.initializeACCamera();
+        },
+
+        // 사진 타입 설정 (Before/After)
+        setACPhotoType: function(type) {
+          this.acWorkPhoto.currentPhotoType = type;
+          
+          const beforeBtn = document.getElementById('ac-before-btn');
+          const afterBtn = document.getElementById('ac-after-btn');
+          const indicator = document.getElementById('ac-photo-type-indicator');
+
+          if (type === 'before') {
+            beforeBtn.classList.remove('bg-gray-300', 'text-gray-600');
+            beforeBtn.classList.add('bg-blue-600', 'text-white');
+            afterBtn.classList.remove('bg-green-600', 'text-white');
+            afterBtn.classList.add('bg-gray-300', 'text-gray-600');
+            indicator.textContent = '작업 전 (Before)';
+          } else {
+            afterBtn.classList.remove('bg-gray-300', 'text-gray-600');
+            afterBtn.classList.add('bg-green-600', 'text-white');
+            beforeBtn.classList.remove('bg-blue-600', 'text-white');
+            beforeBtn.classList.add('bg-gray-300', 'text-gray-600');
+            indicator.textContent = '작업 후 (After)';
+          }
+        },
+
+        // 사진 촬영
+        captureACPhoto: function() {
+          const video = document.getElementById('ac-camera-preview');
+          const canvas = document.getElementById('ac-camera-canvas');
+          
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(video, 0, 0);
+          
+          canvas.toBlob(blob => {
+            if (this.acWorkPhoto.currentPhotoType === 'before') {
+              this.acWorkPhoto.beforePhoto = blob;
+            } else {
+              this.acWorkPhoto.afterPhoto = blob;
+            }
+            
+            this.updateACPhotoDisplay();
+            
+            // 자동으로 다음 타입으로 전환
+            if (this.acWorkPhoto.currentPhotoType === 'before' && !this.acWorkPhoto.afterPhoto) {
+              setTimeout(() => this.setACPhotoType('after'), 500);
+            }
+          }, 'image/jpeg', 0.9);
+        },
+
+        // 촬영된 사진 표시 업데이트
+        updateACPhotoDisplay: function() {
+          const capturedSection = document.getElementById('ac-captured-photos');
+          const uploadBtn = document.getElementById('ac-upload-btn');
+          
+          if (this.acWorkPhoto.beforePhoto || this.acWorkPhoto.afterPhoto) {
+            capturedSection.classList.remove('hidden');
+          } else {
+            capturedSection.classList.add('hidden');
+          }
+
+          // Before 사진
+          if (this.acWorkPhoto.beforePhoto) {
+            const img = document.getElementById('ac-before-img');
+            const placeholder = document.getElementById('ac-before-placeholder');
+            const reader = new FileReader();
+            reader.onload = (e) => {
+              img.src = e.target.result;
+              img.classList.remove('hidden');
+              placeholder.classList.add('hidden');
+            };
+            reader.readAsDataURL(this.acWorkPhoto.beforePhoto);
+          }
+
+          // After 사진
+          if (this.acWorkPhoto.afterPhoto) {
+            const img = document.getElementById('ac-after-img');
+            const placeholder = document.getElementById('ac-after-placeholder');
+            const reader = new FileReader();
+            reader.onload = (e) => {
+              img.src = e.target.result;
+              img.classList.remove('hidden');
+              placeholder.classList.add('hidden');
+            };
+            reader.readAsDataURL(this.acWorkPhoto.afterPhoto);
+          }
+
+          // 업로드 버튼 활성화
+          if (this.acWorkPhoto.beforePhoto && this.acWorkPhoto.afterPhoto) {
+            uploadBtn.disabled = false;
+            uploadBtn.classList.remove('bg-gray-300');
+            uploadBtn.classList.add('bg-purple-600', 'hover:bg-purple-700');
+            uploadBtn.querySelector('span').textContent = '업로드';
+          } else {
+            uploadBtn.disabled = true;
+            uploadBtn.classList.add('bg-gray-300');
+            uploadBtn.classList.remove('bg-purple-600', 'hover:bg-purple-700');
+            const remaining = !this.acWorkPhoto.beforePhoto && !this.acWorkPhoto.afterPhoto ? '2' :
+                              !this.acWorkPhoto.beforePhoto || !this.acWorkPhoto.afterPhoto ? '1' : '0';
+            uploadBtn.querySelector('span').textContent = `업로드 (${remaining}장 더 필요)`;
+          }
+        },
+
+        // 사진 업로드
+        uploadACPhotos: async function() {
+          if (!this.acWorkPhoto.beforePhoto || !this.acWorkPhoto.afterPhoto) {
+            alert('Before와 After 사진을 모두 촬영해주세요.');
+            return;
+          }
+
+          const uploadBtn = document.getElementById('ac-upload-btn');
+          const spinner = document.getElementById('ac-upload-spinner');
+          
+          uploadBtn.disabled = true;
+          spinner.classList.remove('hidden');
+
+          try {
+            // Before 사진 업로드
+            const beforeFileName = `${this.state.aptId}/ac_${this.acWorkPhoto.currentLocation.id}_before_${Date.now()}.jpg`;
+            const { error: beforeError } = await this.sb.storage
+              .from('cleaning-photos')
+              .upload(beforeFileName, this.acWorkPhoto.beforePhoto);
+
+            if (beforeError) throw beforeError;
+
+            const { data: { publicUrl: beforeUrl } } = this.sb.storage
+              .from('cleaning-photos')
+              .getPublicUrl(beforeFileName);
+
+            // After 사진 업로드
+            const afterFileName = `${this.state.aptId}/ac_${this.acWorkPhoto.currentLocation.id}_after_${Date.now()}.jpg`;
+            const { error: afterError } = await this.sb.storage
+              .from('cleaning-photos')
+              .upload(afterFileName, this.acWorkPhoto.afterPhoto);
+
+            if (afterError) throw afterError;
+
+            const { data: { publicUrl: afterUrl } } = this.sb.storage
+              .from('cleaning-photos')
+              .getPublicUrl(afterFileName);
+
+            // DB에 사진 정보 저장
+            const photos = [
+              {
+                work_location_id: this.acWorkPhoto.currentLocation.id,
+                photo_url: beforeUrl,
+                photo_type: 'before'
+              },
+              {
+                work_location_id: this.acWorkPhoto.currentLocation.id,
+                photo_url: afterUrl,
+                photo_type: 'after'
+              }
+            ];
+
+            const { error: dbError } = await this.sb
+              .from('work_photos')
+              .insert(photos);
+
+            if (dbError) throw dbError;
+
+            // 구역 상태 업데이트
+            const { error: updateError } = await this.sb
+              .from('work_locations')
+              .update({ status: 'completed' })
+              .eq('id', this.acWorkPhoto.currentLocation.id);
+
+            if (updateError) throw updateError;
+
+            // 세션 완료 카운트 업데이트
+            const newCompleted = this.acWorkPhoto.completedLocations.size + 1;
+            const { error: sessionError } = await this.sb
+              .from('work_sessions')
+              .update({ completed_locations: newCompleted })
+              .eq('id', this.acWorkPhoto.currentSession.id);
+
+            if (sessionError) throw sessionError;
+
+            // 완료 처리
+            this.acWorkPhoto.completedLocations.add(this.acWorkPhoto.currentLocation.id);
+            this.showToast(`✅ ${this.acWorkPhoto.currentLocation.location_name} 촬영 완료!`);
+
+            // UI 초기화
+            this.acWorkPhoto.beforePhoto = null;
+            this.acWorkPhoto.afterPhoto = null;
+            this.acWorkPhoto.currentLocation = null;
+            
+            document.getElementById('ac-before-img').classList.add('hidden');
+            document.getElementById('ac-before-placeholder').classList.remove('hidden');
+            document.getElementById('ac-after-img').classList.add('hidden');
+            document.getElementById('ac-after-placeholder').classList.remove('hidden');
+            document.getElementById('ac-captured-photos').classList.add('hidden');
+            document.getElementById('ac-camera-section').classList.add('hidden');
+            document.getElementById('ac-location-selector').value = '';
+
+            // 구역 목록 및 진행률 업데이트
+            this.renderACLocationSelector();
+            this.updateACProgress();
+
+            // 모든 구역 완료 시
+            if (this.acWorkPhoto.completedLocations.size === this.acWorkPhoto.currentSession.total_locations) {
+              alert('🎉 모든 구역 촬영이 완료되었습니다!');
+              this.closeACWorkPhotoUI();
+            }
+
+          } catch (error) {
+            console.error('❌ 사진 업로드 실패:', error);
+            alert('사진 업로드에 실패했습니다: ' + error.message);
+          } finally {
+            uploadBtn.disabled = false;
+            spinner.classList.add('hidden');
+          }
+        },
+
+        // 진행률 업데이트
+        updateACProgress: function() {
+          const completed = this.acWorkPhoto.completedLocations.size;
+          const total = this.acWorkPhoto.currentSession.total_locations;
+          const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+          document.getElementById('ac-progress-text').textContent = `${completed}/${total}`;
+          document.getElementById('ac-progress-bar').style.width = `${percentage}%`;
+          document.getElementById('ac-progress-percentage').textContent = `${percentage}%`;
+        },
+
+        // AC 작업 사진 UI 닫기
+        closeACWorkPhotoUI: function() {
+          // 카메라 스트림 정지
+          if (this.acWorkPhoto.cameraStream) {
+            this.acWorkPhoto.cameraStream.getTracks().forEach(track => track.stop());
+            this.acWorkPhoto.cameraStream = null;
+          }
+
+          // 상태 초기화
+          this.acWorkPhoto.currentLocation = null;
+          this.acWorkPhoto.beforePhoto = null;
+          this.acWorkPhoto.afterPhoto = null;
+
+          // 모달 숨기기
+          document.getElementById('ac-work-photo-modal').classList.add('hidden');
         },
       };
 
