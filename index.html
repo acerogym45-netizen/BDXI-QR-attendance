@@ -640,7 +640,7 @@
               </button>
             </div>
             <div id="filter-panel" class="space-y-4">
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-1">날짜 범위</label>
                   <div class="flex gap-2">
@@ -664,6 +664,14 @@
                     <option value="전체">전체 위치</option>
                   </select>
                 </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">작업 단계</label>
+                  <select id="filter-before-after" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                    <option value="all">전체</option>
+                    <option value="before">작업 전 (Before)</option>
+                    <option value="after">작업 후 (After)</option>
+                  </select>
+                </div>
               </div>
               <div class="flex gap-2">
                 <button onclick="app.applyGalleryFilters()" class="px-4 py-2 bg-brand text-white rounded-lg hover:bg-green-700 transition-colors shadow-sm">
@@ -671,6 +679,9 @@
                 </button>
                 <button onclick="app.resetGalleryFilters()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
                   <i class="fas fa-redo mr-2"></i>초기화
+                </button>
+                <button onclick="app.toggleGroupByLocation()" id="group-toggle-btn" class="px-4 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors">
+                  <i class="fas fa-layer-group mr-2"></i>구역별 그룹화
                 </button>
               </div>
             </div>
@@ -2660,6 +2671,84 @@
       </div>
     </div>
 
+    <!-- AC Photo Detail Modal (작업 사진 상세 모달) -->
+    <div id="ac-photo-detail-modal" class="fixed inset-0 z-50 hidden modal-backdrop bg-black/80 flex items-center justify-center p-4" onclick="if (event.target === this) app.closeACPhotoDetailModal();">
+      <div class="bg-white rounded-2xl max-w-4xl w-full max-h-[95vh] overflow-y-auto shadow-2xl" onclick="event.stopPropagation()">
+        <!-- Header -->
+        <div class="flex justify-between items-center p-6 border-b bg-gradient-to-r from-purple-500 to-indigo-600">
+          <div>
+            <h3 class="text-xl font-bold text-white flex items-center gap-2">
+              <i class="fas fa-image"></i>
+              작업 사진 상세
+            </h3>
+            <p class="text-purple-100 text-sm mt-1" id="ac-modal-subtitle"></p>
+          </div>
+          <button onclick="app.closeACPhotoDetailModal()" class="text-white hover:bg-white/20 w-8 h-8 rounded-full flex items-center justify-center transition-colors">
+            <i class="fas fa-times text-xl"></i>
+          </button>
+        </div>
+
+        <div class="p-6 space-y-6">
+          <!-- 메인 이미지 -->
+          <div class="bg-gray-50 rounded-xl p-4 border-2 border-gray-200">
+            <img id="ac-modal-image" src="" class="w-full h-auto rounded-lg object-contain max-h-[60vh]">
+          </div>
+
+          <!-- 메타데이터 -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="bg-blue-50 rounded-xl p-4 border-2 border-blue-200">
+              <h4 class="text-sm font-bold text-blue-800 mb-3">📋 기본 정보</h4>
+              <div class="space-y-2 text-sm">
+                <div class="flex justify-between">
+                  <span class="text-gray-600">직원명:</span>
+                  <span class="font-bold text-gray-800" id="ac-modal-employee"></span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-600">구역:</span>
+                  <span class="font-bold text-gray-800" id="ac-modal-location"></span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-600">작업 단계:</span>
+                  <span id="ac-modal-before-after" class="px-2 py-1 rounded-lg text-xs font-bold"></span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-600">촬영 시간:</span>
+                  <span class="font-medium text-gray-800" id="ac-modal-time"></span>
+                </div>
+              </div>
+            </div>
+
+            <div class="bg-green-50 rounded-xl p-4 border-2 border-green-200">
+              <h4 class="text-sm font-bold text-green-800 mb-3">📝 메모</h4>
+              <textarea id="ac-modal-notes" class="w-full px-3 py-2 border-2 border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 text-sm resize-none" rows="4" placeholder="메모를 입력하세요..."></textarea>
+            </div>
+          </div>
+
+          <!-- 액션 버튼 -->
+          <div class="flex gap-3">
+            <button onclick="app.saveACPhotoNotes()" class="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold py-3 rounded-xl shadow-lg hover:from-green-600 hover:to-emerald-700 transition-all">
+              <i class="fas fa-save mr-2"></i>저장
+            </button>
+            <button onclick="app.downloadACPhoto()" class="px-6 bg-blue-500 text-white font-bold py-3 rounded-xl shadow-lg hover:bg-blue-600 transition-all">
+              <i class="fas fa-download mr-2"></i>다운로드
+            </button>
+            <button onclick="app.deleteACPhoto()" class="px-6 bg-red-500 text-white font-bold py-3 rounded-xl shadow-lg hover:bg-red-600 transition-all">
+              <i class="fas fa-trash mr-2"></i>삭제
+            </button>
+          </div>
+
+          <!-- 업무 일지 변환 -->
+          <div class="bg-purple-50 rounded-xl p-4 border-2 border-purple-200">
+            <h4 class="text-sm font-bold text-purple-800 mb-3">📄 업무 일지 변환</h4>
+            <p class="text-sm text-gray-600 mb-3">이 작업 사진을 공식 업무 일지 기록으로 변환합니다.</p>
+            <button onclick="app.convertACPhotoToWorkLog()" class="w-full bg-gradient-to-r from-purple-500 to-indigo-600 text-white font-bold py-3 rounded-xl shadow-lg hover:from-purple-600 hover:to-indigo-700 transition-all">
+              <i class="fas fa-file-alt mr-2"></i>업무 일지로 변환
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- TAB 5: Work Report (업무 일지) -->
 
 
@@ -4243,6 +4332,7 @@
             const dateEnd = document.getElementById('filter-date-end').value;
             const emp = document.getElementById('filter-employee-input').value;
             const loc = document.getElementById('filter-location').value;
+            const beforeAfter = document.getElementById('filter-before-after')?.value;
 
             // 날짜 범위 필터 (KST → UTC 변환)
             if (dateStart) {
@@ -4255,6 +4345,7 @@
             }
             if (emp) q = q.ilike('employee_name', `%${emp}%`);
             if (loc !== '전체') q = q.eq('location', loc);
+            if (beforeAfter && beforeAfter !== 'all') q = q.eq('before_after', beforeAfter);
 
             const { data, error } = await q.limit(200);
 
@@ -4574,6 +4665,7 @@
           document.getElementById('filter-date-end').value = '';
           document.getElementById('filter-employee-input').value = '';
           document.getElementById('filter-location').value = '전체';
+          document.getElementById('filter-before-after').value = 'all';
           document.getElementById('quick-search').value = '';
           this.loadGallery();
         },
@@ -16774,7 +16866,328 @@
           console.error('❌ 작업 세션 삭제 실패:', error);
           alert('작업 세션 삭제에 실패했습니다.');
         }
-      } // ← deleteWorkSession 함수 끝
+      }, // ← deleteWorkSession 함수 끝
+
+      // ==================== 📸 AC 작업 사진 관리 기능 ====================
+      
+      // AC 사진 상세 모달 열기
+      openACPhotoDetail: function(photoData) {
+        this.currentACPhoto = photoData;
+        
+        // 이미지 표시
+        document.getElementById('ac-modal-image').src = photoData.photo_url || photoData.photo_urls?.[0] || '';
+        
+        // 메타데이터 표시
+        document.getElementById('ac-modal-subtitle').textContent = photoData.location || '';
+        document.getElementById('ac-modal-employee').textContent = photoData.employee_name || '';
+        document.getElementById('ac-modal-location').textContent = photoData.location || '';
+        document.getElementById('ac-modal-time').textContent = this.formatDateTime(photoData.created_at);
+        document.getElementById('ac-modal-notes').value = photoData.notes || '';
+        
+        // Before/After 배지
+        const beforeAfterEl = document.getElementById('ac-modal-before-after');
+        if (photoData.before_after === 'before') {
+          beforeAfterEl.textContent = '작업 전';
+          beforeAfterEl.className = 'px-3 py-1 rounded-lg text-xs font-bold bg-blue-100 text-blue-700';
+        } else if (photoData.before_after === 'after') {
+          beforeAfterEl.textContent = '작업 후';
+          beforeAfterEl.className = 'px-3 py-1 rounded-lg text-xs font-bold bg-green-100 text-green-700';
+        } else {
+          beforeAfterEl.textContent = '-';
+          beforeAfterEl.className = 'px-3 py-1 rounded-lg text-xs font-bold bg-gray-100 text-gray-500';
+        }
+        
+        // 모달 표시
+        document.getElementById('ac-photo-detail-modal').classList.remove('hidden');
+      },
+      
+      // AC 사진 상세 모달 닫기
+      closeACPhotoDetailModal: function() {
+        document.getElementById('ac-photo-detail-modal').classList.add('hidden');
+        this.currentACPhoto = null;
+      },
+      
+      // AC 사진 메모 저장
+      saveACPhotoNotes: async function() {
+        if (!this.currentACPhoto) return;
+        
+        const notes = document.getElementById('ac-modal-notes').value;
+        
+        try {
+          const { error } = await this.sb
+            .from('cleaning_tasks')
+            .update({ notes: notes })
+            .eq('id', this.currentACPhoto.id);
+          
+          if (error) throw error;
+          
+          alert('✅ 메모가 저장되었습니다!');
+          
+          // 갤러리 새로고침
+          this.loadGallery();
+          
+        } catch (error) {
+          console.error('❌ 메모 저장 실패:', error);
+          alert('메모 저장에 실패했습니다: ' + error.message);
+        }
+      },
+      
+      // AC 사진 다운로드
+      downloadACPhoto: function() {
+        if (!this.currentACPhoto) return;
+        
+        const photoUrl = this.currentACPhoto.photo_url || this.currentACPhoto.photo_urls?.[0];
+        if (!photoUrl) {
+          alert('다운로드할 사진이 없습니다.');
+          return;
+        }
+        
+        // 새 탭에서 열기 (다운로드 트리거)
+        window.open(photoUrl, '_blank');
+      },
+      
+      // AC 사진 삭제
+      deleteACPhoto: async function() {
+        if (!this.currentACPhoto) return;
+        
+        if (!confirm('정말로 이 사진을 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.')) {
+          return;
+        }
+        
+        try {
+          // Storage에서 파일 삭제 (옵션)
+          // const photoUrl = this.currentACPhoto.photo_url || this.currentACPhoto.photo_urls?.[0];
+          // if (photoUrl) {
+          //   const path = photoUrl.split('/cleaning-photos/')[1];
+          //   await this.sb.storage.from('cleaning-photos').remove([path]);
+          // }
+          
+          // DB에서 레코드 삭제
+          const { error } = await this.sb
+            .from('cleaning_tasks')
+            .delete()
+            .eq('id', this.currentACPhoto.id);
+          
+          if (error) throw error;
+          
+          alert('✅ 사진이 삭제되었습니다.');
+          
+          // 모달 닫기
+          this.closeACPhotoDetailModal();
+          
+          // 갤러리 새로고침
+          this.loadGallery();
+          
+        } catch (error) {
+          console.error('❌ 사진 삭제 실패:', error);
+          alert('사진 삭제에 실패했습니다: ' + error.message);
+        }
+      },
+      
+      // AC 사진 → 업무 일지 변환
+      convertACPhotoToWorkLog: async function() {
+        if (!this.currentACPhoto) return;
+        
+        if (!confirm('이 작업 사진을 업무 일지로 변환하시겠습니까?\n\n업무 일지 탭에서 확인할 수 있습니다.')) {
+          return;
+        }
+        
+        try {
+          // work_reports 테이블에 새 레코드 생성
+          const workLogEntry = {
+            apartment_id: this.currentACPhoto.apartment_id,
+            employee_name: this.currentACPhoto.employee_name,
+            work_date: this.currentACPhoto.created_at.split('T')[0],
+            location: this.currentACPhoto.location,
+            work_type: 'AC 청소 작업',
+            description: `${this.currentACPhoto.location} - ${this.currentACPhoto.before_after === 'before' ? '작업 전' : '작업 후'}`,
+            notes: this.currentACPhoto.notes || '',
+            photo_urls: [this.currentACPhoto.photo_url || this.currentACPhoto.photo_urls?.[0]],
+            status: 'completed',
+            created_at: new Date().toISOString()
+          };
+          
+          const { error } = await this.sb
+            .from('work_reports')
+            .insert(workLogEntry);
+          
+          if (error) throw error;
+          
+          alert('✅ 업무 일지로 변환되었습니다!\n\n업무 일지 탭에서 확인하세요.');
+          
+          // 모달 닫기
+          this.closeACPhotoDetailModal();
+          
+        } catch (error) {
+          console.error('❌ 업무 일지 변환 실패:', error);
+          alert('업무 일지 변환에 실패했습니다: ' + error.message);
+        }
+      },
+      
+      // 구역별 그룹화 토글
+      toggleGroupByLocation: function() {
+        const btn = document.getElementById('group-toggle-btn');
+        const isGrouped = btn.textContent.includes('그룹화');
+        
+        if (isGrouped) {
+          btn.innerHTML = '<i class="fas fa-th mr-2"></i>그룹 해제';
+          btn.classList.remove('bg-purple-100', 'text-purple-700', 'hover:bg-purple-200');
+          btn.classList.add('bg-gray-100', 'text-gray-700', 'hover:bg-gray-200');
+          this.renderGroupedGallery();
+        } else {
+          btn.innerHTML = '<i class="fas fa-layer-group mr-2"></i>구역별 그룹화';
+          btn.classList.add('bg-purple-100', 'text-purple-700', 'hover:bg-purple-200');
+          btn.classList.remove('bg-gray-100', 'text-gray-700', 'hover:bg-gray-200');
+          this.loadGallery();
+        }
+      },
+      
+      // 구역별 그룹화된 갤러리 렌더링
+      renderGroupedGallery: async function() {
+        const grid = document.getElementById('gallery-grid');
+        this.showLoading('gallery-grid');
+        
+        try {
+          // 필터 적용된 데이터 가져오기
+          let q = this.sb.from('cleaning_tasks').select('*').order('created_at', { ascending: false });
+          
+          if (this.currentApartment) {
+            q = q.eq('apartment_id', this.currentApartment);
+          }
+          
+          const dateStart = document.getElementById('filter-date-start').value;
+          const dateEnd = document.getElementById('filter-date-end').value;
+          const emp = document.getElementById('filter-employee-input').value;
+          const loc = document.getElementById('filter-location').value;
+          const beforeAfter = document.getElementById('filter-before-after').value;
+          
+          if (dateStart) {
+            const startUTC = new Date(dateStart + 'T00:00:00+09:00').toISOString();
+            q = q.gte('created_at', startUTC);
+          }
+          if (dateEnd) {
+            const endUTC = new Date(dateEnd + 'T23:59:59+09:00').toISOString();
+            q = q.lte('created_at', endUTC);
+          }
+          if (emp) q = q.ilike('employee_name', `%${emp}%`);
+          if (loc !== '전체') q = q.eq('location', loc);
+          if (beforeAfter && beforeAfter !== 'all') q = q.eq('before_after', beforeAfter);
+          
+          const { data, error } = await q.limit(500);
+          
+          if (error) throw error;
+          
+          // 구역별로 그룹화
+          const byLocation = {};
+          data.forEach(item => {
+            const location = item.location || '미지정';
+            if (!byLocation[location]) {
+              byLocation[location] = { before: [], after: [] };
+            }
+            if (item.before_after === 'before') {
+              byLocation[location].before.push(item);
+            } else if (item.before_after === 'after') {
+              byLocation[location].after.push(item);
+            }
+          });
+          
+          // 렌더링
+          grid.innerHTML = '';
+          
+          Object.keys(byLocation).sort().forEach(location => {
+            const group = byLocation[location];
+            const isComplete = group.before.length > 0 && group.after.length > 0;
+            
+            const locationCard = document.createElement('div');
+            locationCard.className = 'bg-white rounded-xl shadow-sm border-2 overflow-hidden';
+            
+            if (isComplete) {
+              locationCard.classList.add('border-green-300');
+            } else {
+              locationCard.classList.add('border-yellow-300');
+            }
+            
+            locationCard.innerHTML = `
+              <div class="p-4 bg-gradient-to-r ${isComplete ? 'from-green-50 to-emerald-50' : 'from-yellow-50 to-orange-50'} border-b-2 ${isComplete ? 'border-green-200' : 'border-yellow-200'}">
+                <div class="flex items-center justify-between">
+                  <h3 class="text-lg font-bold text-gray-800">
+                    <i class="fas fa-map-marker-alt ${isComplete ? 'text-green-600' : 'text-yellow-600'} mr-2"></i>
+                    ${location}
+                  </h3>
+                  <span class="px-3 py-1 rounded-full text-xs font-bold ${isComplete ? 'bg-green-500 text-white' : 'bg-yellow-500 text-white'}">
+                    ${isComplete ? '✓ 완료' : '진행 중'}
+                  </span>
+                </div>
+                <div class="mt-2 flex gap-4 text-sm">
+                  <div class="flex items-center gap-2">
+                    <span class="text-blue-600 font-bold">Before:</span>
+                    <span class="${group.before.length > 0 ? 'text-blue-700 font-bold' : 'text-gray-400'}">${group.before.length}장</span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <span class="text-green-600 font-bold">After:</span>
+                    <span class="${group.after.length > 0 ? 'text-green-700 font-bold' : 'text-gray-400'}">${group.after.length}장</span>
+                  </div>
+                </div>
+              </div>
+              <div class="p-4">
+                <div class="grid grid-cols-2 gap-4">
+                  ${this.renderLocationPhotos(group.before, 'before')}
+                  ${this.renderLocationPhotos(group.after, 'after')}
+                </div>
+              </div>
+            `;
+            
+            grid.appendChild(locationCard);
+          });
+          
+          if (Object.keys(byLocation).length === 0) {
+            grid.innerHTML = '<div class="text-center py-20 text-gray-400">데이터가 없습니다.</div>';
+          }
+          
+          document.getElementById('gallery-count').textContent = `(${Object.keys(byLocation).length}개 구역)`;
+          
+        } catch (error) {
+          console.error('❌ 그룹화 갤러리 로드 실패:', error);
+          grid.innerHTML = '<div class="text-center text-red-500">오류 발생</div>';
+        }
+      },
+      
+      // 구역 사진 렌더링 헬퍼
+      renderLocationPhotos: function(photos, type) {
+        if (photos.length === 0) {
+          return `
+            <div class="text-center p-8 border-2 border-dashed ${type === 'before' ? 'border-blue-200 bg-blue-50' : 'border-green-200 bg-green-50'} rounded-xl">
+              <i class="fas fa-camera text-4xl ${type === 'before' ? 'text-blue-300' : 'text-green-300'} mb-2"></i>
+              <p class="text-sm ${type === 'before' ? 'text-blue-600' : 'text-green-600'} font-bold">
+                ${type === 'before' ? '작업 전' : '작업 후'} 사진 없음
+              </p>
+            </div>
+          `;
+        }
+        
+        const photo = photos[0]; // 첫 번째 사진만 표시
+        const photoUrl = photo.photo_url || photo.photo_urls?.[0] || '';
+        
+        return `
+          <div class="relative group cursor-pointer" onclick="app.openACPhotoDetail(${JSON.stringify(photo).replace(/"/g, '&quot;')})">
+            <div class="aspect-square rounded-xl overflow-hidden border-2 ${type === 'before' ? 'border-blue-300' : 'border-green-300'}">
+              <img src="${photoUrl}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">
+            </div>
+            <div class="absolute top-2 left-2 px-2 py-1 rounded-lg text-xs font-bold ${type === 'before' ? 'bg-blue-500' : 'bg-green-500'} text-white">
+              ${type === 'before' ? '작업 전' : '작업 후'}
+            </div>
+            ${photos.length > 1 ? `
+              <div class="absolute top-2 right-2 px-2 py-1 rounded-lg text-xs font-bold bg-gray-800 text-white">
+                +${photos.length - 1}
+              </div>
+            ` : ''}
+            <div class="absolute bottom-2 left-2 right-2 bg-black/70 text-white text-xs p-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
+              ${photo.employee_name || ''}<br>
+              ${this.formatDateTime(photo.created_at)}
+            </div>
+          </div>
+        `;
+      }
 
       // ==================== app 객체는 Line 9119에서 이미 닫혔음 ====================
       

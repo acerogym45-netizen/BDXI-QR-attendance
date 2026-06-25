@@ -812,7 +812,7 @@
 
     <!-- 🆕 AC 작업 사진 촬영 모달 (간단 버전) -->
     <div id="ac-photo-modal" class="hidden fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4">
-      <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl">
+      <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl max-h-[90vh] overflow-y-auto">
         <!-- Header -->
         <div class="flex justify-between items-center p-6 border-b bg-gradient-to-r from-purple-500 to-indigo-600">
           <h3 class="text-xl font-bold text-white flex items-center gap-2">
@@ -826,15 +826,32 @@
 
         <!-- Content -->
         <div class="p-6 space-y-4">
+          <!-- 전체 진행 상황 -->
+          <div class="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl p-4 border-2 border-indigo-200">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-sm font-bold text-gray-700">📊 스마트 작업 현황</span>
+              <span id="ac-overall-progress-text" class="text-sm font-bold text-indigo-600">0/0 완료 (0%)</span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+              <div id="ac-overall-progress-bar" class="bg-gradient-to-r from-indigo-500 to-purple-500 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+            </div>
+          </div>
+
+          <!-- 스마트 구역 추천 -->
+          <div id="ac-location-suggestion" class="bg-yellow-50 border-2 border-yellow-200 rounded-xl p-3 text-sm text-yellow-800"></div>
+
           <!-- 구역 선택 -->
           <div>
             <label class="block text-sm font-bold text-gray-800 mb-2">
               <i class="fas fa-map-marker-alt text-purple-600 mr-1"></i>작업 구역
             </label>
-            <select id="ac-location-select" class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 font-medium">
+            <select id="ac-location-select" class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 font-medium" onchange="app.updateCurrentLocationProgress()">
               <option value="">구역을 선택하세요...</option>
             </select>
           </div>
+
+          <!-- 현재 구역 진행 상황 -->
+          <div id="ac-current-location-progress"></div>
 
           <!-- Before/After 선택 -->
           <div>
@@ -842,10 +859,10 @@
               <i class="fas fa-exchange-alt text-purple-600 mr-1"></i>작업 단계
             </label>
             <div class="grid grid-cols-2 gap-3">
-              <button id="ac-before-radio" onclick="app.selectACPhotoType('before')" class="px-4 py-3 border-2 border-blue-500 bg-blue-50 text-blue-700 rounded-xl font-bold transition-all">
+              <button id="ac-before-radio" onclick="app.selectACPhotoType('before')" class="px-4 py-3 border-2 border-blue-500 bg-blue-50 text-blue-700 rounded-xl font-bold transition-all hover:bg-blue-100">
                 <i class="fas fa-arrow-left mr-1"></i>작업 전
               </button>
-              <button id="ac-after-radio" onclick="app.selectACPhotoType('after')" class="px-4 py-3 border-2 border-gray-300 bg-white text-gray-600 rounded-xl font-bold transition-all">
+              <button id="ac-after-radio" onclick="app.selectACPhotoType('after')" class="px-4 py-3 border-2 border-gray-300 bg-white text-gray-600 rounded-xl font-bold transition-all hover:bg-gray-50">
                 <i class="fas fa-arrow-right mr-1"></i>작업 후
               </button>
             </div>
@@ -3263,6 +3280,10 @@
         acPhoto: {
           selectedLocation: null,
           photoType: 'before', // 'before' or 'after'
+          locationProgress: {}, // { locationId: { before: count, after: count } }
+          allLocations: [], // 모든 구역 목록 (캐시)
+          completedCount: 0, // 완료된 구역 수
+          totalCount: 0, // 전체 구역 수
         },
 
         // AC 작업 사진 버튼 표시 (ac_cleaning 시설만)
@@ -3294,7 +3315,7 @@
         // AC 사진 촬영 모달 열기
         openACPhotoCapture: async function() {
           try {
-            // 구역 목록 로드
+            // 1. 구역 목록 로드
             const { data: locations, error } = await this.sb
               .from('locations')
               .select('id, name')
@@ -3303,23 +3324,179 @@
 
             if (error) throw error;
 
-            const selector = document.getElementById('ac-location-select');
-            selector.innerHTML = '<option value="">구역을 선택하세요...</option>';
+            this.acPhoto.allLocations = locations || [];
+            this.acPhoto.totalCount = locations.length;
+
+            // 2. 오늘 촬영한 사진 목록 로드 (진행 상황 추적)
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
             
+            const { data: todayPhotos, error: photoError } = await this.sb
+              .from('cleaning_tasks')
+              .select('location, before_after, created_at')
+              .eq('apartment_id', this.state.aptId)
+              .eq('employee_name', this.state.selectedEmp.name)
+              .eq('upload_type', 'ac_work')
+              .gte('created_at', today.toISOString());
+
+            if (photoError) console.error('사진 로드 오류:', photoError);
+
+            // 3. 진행 상황 계산
+            this.acPhoto.locationProgress = {};
+            this.acPhoto.completedCount = 0;
+
+            // 각 구역별로 before/after 카운트
             locations.forEach(loc => {
-              const option = document.createElement('option');
-              option.value = loc.id;
-              option.textContent = loc.name;
-              selector.appendChild(option);
+              this.acPhoto.locationProgress[loc.name] = { before: 0, after: 0 };
             });
 
-            // 모달 표시
+            (todayPhotos || []).forEach(photo => {
+              if (this.acPhoto.locationProgress[photo.location]) {
+                this.acPhoto.locationProgress[photo.location][photo.before_after] += 1;
+              }
+            });
+
+            // 완료된 구역 수 계산 (before와 after 둘 다 있어야 완료)
+            Object.values(this.acPhoto.locationProgress).forEach(progress => {
+              if (progress.before > 0 && progress.after > 0) {
+                this.acPhoto.completedCount++;
+              }
+            });
+
+            console.log('📊 진행 상황:', {
+              total: this.acPhoto.totalCount,
+              completed: this.acPhoto.completedCount,
+              progress: this.acPhoto.locationProgress
+            });
+
+            // 4. UI 렌더링
+            this.renderACPhotoModal();
+
+            // 5. 모달 표시
             document.getElementById('ac-photo-modal').classList.remove('hidden');
 
           } catch (error) {
             console.error('❌ AC 사진 촬영 모달 열기 실패:', error);
             alert('구역 목록을 불러올 수 없습니다.');
           }
+        },
+
+        // AC 포토 모달 UI 렌더링
+        renderACPhotoModal: function() {
+          const selector = document.getElementById('ac-location-select');
+          selector.innerHTML = '<option value="">구역을 선택하세요...</option>';
+          
+          // 완료 상태 계산
+          this.acPhoto.allLocations.forEach(loc => {
+            const progress = this.acPhoto.locationProgress[loc.name] || { before: 0, after: 0 };
+            const isComplete = progress.before > 0 && progress.after > 0;
+            const isPartial = (progress.before > 0 || progress.after > 0) && !isComplete;
+            
+            const option = document.createElement('option');
+            option.value = loc.id;
+            
+            let statusIcon = '';
+            if (isComplete) {
+              statusIcon = '✅ ';
+            } else if (isPartial) {
+              statusIcon = '🔄 ';
+            }
+            
+            option.textContent = `${statusIcon}${loc.name}`;
+            option.dataset.progress = JSON.stringify(progress);
+            option.dataset.complete = isComplete;
+            
+            selector.appendChild(option);
+          });
+
+          // 전체 진행률 업데이트
+          this.updateACProgressDisplay();
+          
+          // 스마트 추천 업데이트
+          this.suggestNextLocation();
+        },
+
+        // 전체 진행률 표시 업데이트
+        updateACProgressDisplay: function() {
+          const percentage = this.acPhoto.totalCount > 0 
+            ? Math.round((this.acPhoto.completedCount / this.acPhoto.totalCount) * 100) 
+            : 0;
+          
+          const progressText = document.getElementById('ac-overall-progress-text');
+          const progressBar = document.getElementById('ac-overall-progress-bar');
+          
+          if (progressText) {
+            progressText.textContent = `${this.acPhoto.completedCount}/${this.acPhoto.totalCount} 완료 (${percentage}%)`;
+          }
+          
+          if (progressBar) {
+            progressBar.style.width = `${percentage}%`;
+          }
+        },
+
+        // 스마트 구역 추천
+        suggestNextLocation: function() {
+          const suggestionBox = document.getElementById('ac-location-suggestion');
+          if (!suggestionBox) return;
+
+          // 1순위: Before도 After도 없는 구역
+          const untouchedLocations = this.acPhoto.allLocations.filter(loc => {
+            const progress = this.acPhoto.locationProgress[loc.name] || { before: 0, after: 0 };
+            return progress.before === 0 && progress.after === 0;
+          });
+
+          // 2순위: Before만 있고 After가 없는 구역
+          const needsAfter = this.acPhoto.allLocations.filter(loc => {
+            const progress = this.acPhoto.locationProgress[loc.name] || { before: 0, after: 0 };
+            return progress.before > 0 && progress.after === 0;
+          });
+
+          let suggestion = '';
+          if (needsAfter.length > 0) {
+            suggestion = `💡 다음 구역 추천: <strong>${needsAfter[0].name}</strong> ← 작업 후 촬영 필요!`;
+          } else if (untouchedLocations.length > 0) {
+            suggestion = `💡 다음 구역 추천: <strong>${untouchedLocations[0].name}</strong> ← 작업 전부터 시작!`;
+          } else {
+            suggestion = '🎉 모든 구역 촬영 완료!';
+          }
+
+          suggestionBox.innerHTML = suggestion;
+        },
+
+        // 현재 구역 진행 상황 표시 업데이트
+        updateCurrentLocationProgress: function() {
+          const selector = document.getElementById('ac-location-select');
+          const selectedOption = selector.options[selector.selectedIndex];
+          
+          if (!selectedOption || !selectedOption.value) {
+            document.getElementById('ac-current-location-progress').innerHTML = '';
+            return;
+          }
+
+          const progressData = JSON.parse(selectedOption.dataset.progress || '{}');
+          const locationName = selectedOption.textContent.replace(/^[✅🔄]\s*/, '');
+          
+          const progressHTML = `
+            <div class="bg-gray-50 rounded-xl p-4 border-2 border-gray-200">
+              <div class="text-sm font-bold text-gray-700 mb-2">📍 ${locationName}</div>
+              <div class="flex gap-4">
+                <div class="flex items-center gap-2">
+                  <span class="text-blue-600 font-bold">Before:</span>
+                  <span class="px-2 py-1 rounded-lg ${progressData.before > 0 ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-400'} font-bold">
+                    ${progressData.before > 0 ? '✓' : '✗'} ${progressData.before}장
+                  </span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-green-600 font-bold">After:</span>
+                  <span class="px-2 py-1 rounded-lg ${progressData.after > 0 ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400'} font-bold">
+                    ${progressData.after > 0 ? '✓' : '✗'} ${progressData.after}장
+                  </span>
+                </div>
+              </div>
+            </div>
+          `;
+          
+          document.getElementById('ac-current-location-progress').innerHTML = progressHTML;
         },
 
         // Before/After 선택
@@ -3361,6 +3538,8 @@
           const file = input.files[0];
           const locationId = this.acPhoto.selectedLocation;
           const photoType = this.acPhoto.photoType;
+          const selector = document.getElementById('ac-location-select');
+          const locationName = selector.selectedOptions[0].textContent.replace(/^[✅🔄]\s*/, '');
 
           // 업로드 시작
           const loadingMsg = this.showToast('사진 업로드 중...', 'info');
@@ -3386,7 +3565,8 @@
               .insert({
                 employee_name: this.state.selectedEmp.name,
                 status: 'completed',
-                location: document.getElementById('ac-location-select').selectedOptions[0].text,
+                location: locationName,
+                location_id: locationId,
                 apartment_id: this.state.aptId,
                 photo_url: publicUrl,
                 photo_urls: [publicUrl],
@@ -3401,13 +3581,52 @@
 
             this.showToast(`✅ ${photoType === 'before' ? '작업 전' : '작업 후'} 사진이 업로드되었습니다!`);
 
+            // 진행 상황 업데이트
+            if (!this.acPhoto.locationProgress[locationName]) {
+              this.acPhoto.locationProgress[locationName] = { before: 0, after: 0 };
+            }
+            this.acPhoto.locationProgress[locationName][photoType] += 1;
+
+            // 완료 카운트 재계산
+            this.acPhoto.completedCount = 0;
+            Object.values(this.acPhoto.locationProgress).forEach(progress => {
+              if (progress.before > 0 && progress.after > 0) {
+                this.acPhoto.completedCount++;
+              }
+            });
+
+            // UI 업데이트
+            this.renderACPhotoModal();
+            
+            // 현재 구역이 완료되었는지 확인
+            const currentProgress = this.acPhoto.locationProgress[locationName];
+            const isLocationComplete = currentProgress.before > 0 && currentProgress.after > 0;
+
             // 자동으로 다음 단계로 전환
             if (photoType === 'before') {
               this.selectACPhotoType('after');
+              this.showToast('👉 이제 작업 후 사진을 촬영하세요!', 'info');
             } else {
-              // After 완료 시 구역 선택 초기화
-              document.getElementById('ac-location-select').value = '';
+              if (isLocationComplete) {
+                this.showToast('🎉 ' + locationName + ' 완료!', 'success');
+                // 완료 애니메이션 효과
+                this.showCompletionAnimation(locationName);
+              }
+              
+              // After 완료 시 다음 구역으로 자동 이동
+              selector.value = '';
               this.selectACPhotoType('before');
+              this.updateCurrentLocationProgress();
+              
+              // 다음 추천 구역으로 이동
+              const nextLocation = this.getNextRecommendedLocation();
+              if (nextLocation) {
+                setTimeout(() => {
+                  selector.value = nextLocation.id;
+                  this.updateCurrentLocationProgress();
+                  this.showToast(`💡 다음 구역: ${nextLocation.name}`, 'info');
+                }, 1000);
+              }
             }
 
             input.value = ''; // 파일 입력 초기화
@@ -3418,11 +3637,45 @@
           }
         },
 
+        // 다음 추천 구역 가져오기
+        getNextRecommendedLocation: function() {
+          // 1순위: Before만 있고 After 없는 구역
+          for (const loc of this.acPhoto.allLocations) {
+            const progress = this.acPhoto.locationProgress[loc.name] || { before: 0, after: 0 };
+            if (progress.before > 0 && progress.after === 0) {
+              return loc;
+            }
+          }
+
+          // 2순위: 아직 시작하지 않은 구역
+          for (const loc of this.acPhoto.allLocations) {
+            const progress = this.acPhoto.locationProgress[loc.name] || { before: 0, after: 0 };
+            if (progress.before === 0 && progress.after === 0) {
+              return loc;
+            }
+          }
+
+          return null; // 모두 완료
+        },
+
+        // 완료 애니메이션
+        showCompletionAnimation: function(locationName) {
+          // 간단한 토스트 메시지로 대체 (추후 고급 애니메이션 가능)
+          console.log('✨ 완료 애니메이션:', locationName);
+        },
+
         // 모달 닫기
         closeACPhotoModal: function() {
           document.getElementById('ac-photo-modal').classList.add('hidden');
           this.acPhoto.selectedLocation = null;
           this.acPhoto.photoType = 'before';
+          
+          // 선택 초기화
+          const selector = document.getElementById('ac-location-select');
+          if (selector) selector.value = '';
+          
+          // Before 버튼으로 리셋
+          this.selectACPhotoType('before');
         },
       };
 
