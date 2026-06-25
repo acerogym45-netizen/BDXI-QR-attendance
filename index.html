@@ -3489,6 +3489,7 @@
         currentPurchase: null, // 현재 선택된 구매 요청
         purchaseItemCounter: 0, // 물품 카운터
         currentInspectionPurchaseId: null, // 검수 중인 구매 요청 ID
+        currentPurchaseIdForPhoto: null, // 사진 업로드 중인 구매 요청 ID
         brandSettings: null, // 브랜드 설정 (로고, 회사명 등)
         
         // 캘린더 관련
@@ -10646,11 +10647,9 @@
       
       // ==================== 검수 사진 업로드 ====================
       
-      let currentPurchaseIdForPhoto = null;
-      
       // 사진 업로드 모달 열기
       openPhotoUploadModal(purchaseId) {
-        currentPurchaseIdForPhoto = purchaseId;
+        this.currentPurchaseIdForPhoto = purchaseId;
         document.getElementById('photo-upload-modal').classList.remove('hidden');
         document.getElementById('inspection-photo-input').value = '';
         document.getElementById('actual-amount-input').value = '';
@@ -10682,7 +10681,7 @@
       // 사진 업로드 모달 닫기
       closePhotoUploadModal() {
         document.getElementById('photo-upload-modal').classList.add('hidden');
-        currentPurchaseIdForPhoto = null;
+        this.currentPurchaseIdForPhoto = null;
       },
       
       // 사진 미리보기
@@ -10784,7 +10783,7 @@
         
         try {
           // 1. 필수 값 검증
-          if (!currentPurchaseIdForPhoto) {
+          if (!this.currentPurchaseIdForPhoto) {
             alert('⚠️ 구매 요청 ID가 없습니다');
             return;
           }
@@ -10874,7 +10873,7 @@
           }
           
           console.log('📤 업로드 시작:', {
-            purchaseId: currentPurchaseIdForPhoto,
+            purchaseId: this.currentPurchaseIdForPhoto,
             fileCount: files.length,
             adminId: app.currentAdmin?.id
           });
@@ -10911,7 +10910,7 @@
               const timestamp = Date.now();
               const random = Math.random().toString(36).substring(2, 11); // 9자리
               const safeFileName = `${timestamp}_${i}_${random}.${fileExt}`;
-              const storagePath = `${currentPurchaseIdForPhoto}/${safeFileName}`;
+              const storagePath = `${this.currentPurchaseIdForPhoto}/${safeFileName}`;
               
               console.log(`📁 파일 ${i + 1} 업로드 시작:`, {
                 original: file.name,
@@ -10957,7 +10956,7 @@
               const systemUserId = '00000000-0000-0000-0000-000000000000'; // 시스템 기본 UUID
               
               const photoData = {
-                purchase_id: currentPurchaseIdForPhoto,
+                purchase_id: this.currentPurchaseIdForPhoto,
                 purchase_item_id: photoItems[i], // 선택된 물품 ID
                 photo_url: urlData.publicUrl,
                 uploaded_by: app.currentAdmin?.id || systemUserId,
@@ -11017,7 +11016,7 @@
                   actual_amount: parseFloat(actualAmount),
                   updated_at: new Date().toISOString()
                 })
-                .eq('id', currentPurchaseIdForPhoto);
+                .eq('id', this.currentPurchaseIdForPhoto);
               
               if (updateError) {
                 console.error('⚠️ 실제 금액 업데이트 실패:', updateError);
@@ -11035,12 +11034,12 @@
             // 모두 성공
             alert(`✅ 검수 사진 ${successCount}장이 업로드되었습니다`);
             app.closePhotoUploadModal();
-            await app.showPurchaseDetail(currentPurchaseIdForPhoto);
+            await app.showPurchaseDetail(this.currentPurchaseIdForPhoto);
           } else if (successCount > 0) {
             // 일부 성공
             alert(`⚠️ ${successCount}/${files.length}장이 업로드되었습니다\n\n실패한 파일:\n${errors.join('\n')}`);
             app.closePhotoUploadModal();
-            await app.showPurchaseDetail(currentPurchaseIdForPhoto);
+            await app.showPurchaseDetail(this.currentPurchaseIdForPhoto);
           } else {
             // 모두 실패
             alert(`❌ 업로드에 실패했습니다\n\n${errors.join('\n')}\n\n시스템 관리자에게 문의하세요`);
