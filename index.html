@@ -2753,13 +2753,13 @@
 
 
     <!-- Employee Modal -->
-    <div id="employee-modal" class="fixed inset-0 z-50 bg-black bg-opacity-80 flex items-center justify-center p-4 overflow-y-auto" style="display: none;">
-      <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl my-8" onclick="event.stopPropagation()">
-        <div class="flex justify-between items-center p-6 border-b">
+    <div id="employee-modal" class="fixed inset-0 z-50 bg-black bg-opacity-80 flex items-start justify-center p-4 overflow-y-auto" style="display: none;">
+      <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl my-8 max-h-[calc(100vh-4rem)]" onclick="event.stopPropagation()">
+        <div class="flex justify-between items-center p-6 border-b sticky top-0 bg-white rounded-t-2xl z-10">
           <h3 class="text-xl font-bold text-gray-800">직원 추가</h3>
           <button onclick="app.closeEmployeeModal()" class="text-gray-400 hover:text-gray-600 text-2xl">×</button>
         </div>
-        <div class="p-6 space-y-4">
+        <div class="p-6 space-y-4 overflow-y-auto max-h-[calc(100vh-16rem)]">
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">직원명</label>
             <input type="text" id="new-employee-name" placeholder="이름을 입력하세요" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
@@ -2872,9 +2872,11 @@
             <label class="block text-sm font-medium text-gray-700 mb-2">비고</label>
             <textarea id="new-employee-notes" placeholder="기타 메모사항" rows="3" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"></textarea>
           </div>
-          <button onclick="app.addEmployee()" class="w-full px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium">
-            <i class="fas fa-plus mr-2"></i>추가
-          </button>
+          <div class="sticky bottom-0 bg-white p-6 border-t rounded-b-2xl">
+            <button onclick="app.addEmployee()" class="w-full px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium">
+              <i class="fas fa-plus mr-2"></i>추가
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -2917,15 +2919,15 @@
     </div>
 
     <!-- Edit Employee Modal -->
-    <div id="edit-employee-modal" class="fixed inset-0 z-50 bg-black bg-opacity-80 flex items-center justify-center p-4 overflow-y-auto" style="display: none;">
-      <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl my-8" onclick="event.stopPropagation()">
-        <div class="flex justify-between items-center p-6 border-b">
+    <div id="edit-employee-modal" class="fixed inset-0 z-50 bg-black bg-opacity-80 flex items-start justify-center p-4 overflow-y-auto" style="display: none;">
+      <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl my-8 max-h-[calc(100vh-4rem)]" onclick="event.stopPropagation()">
+        <div class="flex justify-between items-center p-6 border-b sticky top-0 bg-white rounded-t-2xl z-10">
           <h3 class="text-xl font-bold text-gray-800">
             <i class="fas fa-edit mr-2 text-green-600"></i>직원 정보 수정
           </h3>
           <button onclick="app.closeEditEmployeeModal()" class="text-gray-400 hover:text-gray-600 text-2xl">×</button>
         </div>
-        <div class="p-6 space-y-4">
+        <div class="p-6 space-y-4 overflow-y-auto max-h-[calc(100vh-16rem)]">
           <input type="hidden" id="edit-employee-id">
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">직원명</label>
@@ -3040,13 +3042,15 @@
             <label class="block text-sm font-medium text-gray-700 mb-2">비고</label>
             <textarea id="edit-employee-notes" placeholder="기타 메모사항" rows="3" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"></textarea>
           </div>
-          <div class="flex gap-3">
-            <button onclick="app.closeEditEmployeeModal()" class="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium">
-              <i class="fas fa-times mr-2"></i>취소
-            </button>
-            <button onclick="app.updateEmployee()" class="flex-1 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium">
-              <i class="fas fa-save mr-2"></i>저장
-            </button>
+          <div class="sticky bottom-0 bg-white p-6 border-t rounded-b-2xl">
+            <div class="flex gap-3">
+              <button onclick="app.closeEditEmployeeModal()" class="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium">
+                <i class="fas fa-times mr-2"></i>취소
+              </button>
+              <button onclick="app.updateEmployee()" class="flex-1 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium">
+                <i class="fas fa-save mr-2"></i>저장
+              </button>
+            </div>
           </div>
         </div>
       </div>
