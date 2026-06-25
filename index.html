@@ -9487,7 +9487,7 @@
         } catch (error) {
           console.error('매출 로드 실패:', error);
         }
-      };
+      },
       
       showAddSalesModal() {
         const now = new Date();
@@ -9500,7 +9500,7 @@
         document.getElementById('sales-decrease-reason').value = '';
         document.getElementById('sales-note').value = '';
         document.getElementById('sales-modal').style.display = 'flex';
-      };
+      },
       
       async editSales(salesId) {
         try {
@@ -9525,7 +9525,7 @@
           console.error('매출 데이터 로드 실패:', error);
           alert('❌ 매출 데이터를 불러오지 못했습니다.');
         }
-      };
+      },
       
       async saveSales() {
         if (!this.currentApartment) {
@@ -9586,7 +9586,7 @@
             alert('❌ 매출 저장에 실패했습니다: ' + error.message);
           }
         }
-      };
+      },
       
       async deleteSales(salesId, year, month) {
         if (!confirm(`${year}년 ${month}월 매출 기록을 삭제하시겠습니까?`)) return;
@@ -9605,11 +9605,11 @@
           console.error('매출 삭제 실패:', error);
           alert('❌ 매출 삭제에 실패했습니다: ' + error.message);
         }
-      };
+      },
       
       closeSalesModal() {
         document.getElementById('sales-modal').style.display = 'none';
-      };
+      },
 
       // ==================== 출퇴근 차단 시스템 함수 ====================
       
@@ -9640,7 +9640,7 @@
         } catch (error) {
           console.error('차단 목록 조회 실패:', error);
         }
-      };
+      },
       
       // 오늘 퇴근 미기록 직원 새로고침
       async refreshIncompleteTodayList() {
@@ -9678,7 +9678,7 @@
         } catch (error) {
           console.error('미완료 목록 조회 실패:', error);
         }
-      };
+      },
       
       // 차단된 직원 목록 모달 표시
       async showBlockedEmployeesList() {
@@ -9767,11 +9767,11 @@
           console.error('차단 목록 로드 실패:', error);
           container.innerHTML = '<div class="text-center py-8 text-red-500"><i class="fas fa-exclamation-circle text-3xl mb-3"></i><p>목록을 불러오는데 실패했습니다.</p></div>';
         }
-      };
+      },
       
       closeBlockedEmployeesModal() {
         document.getElementById('blocked-employees-modal').style.display = 'none';
-      };
+      },
       
       // 오늘 미완료 목록 모달 표시
       async showIncompleteTodayList() {
@@ -9820,11 +9820,11 @@
           console.error('미완료 목록 로드 실패:', error);
           tbody.innerHTML = '<tr><td colspan="4" class="text-center py-8 text-red-500">목록을 불러오는데 실패했습니다.</td></tr>';
         }
-      };
+      },
       
       closeIncompleteTodayModal() {
         document.getElementById('incomplete-today-modal').style.display = 'none';
-      };
+      },
       
       // 퇴근 시간 입력 모달
       showCheckOutInputModal(employeeId, employeeName, incompleteRecords) {
@@ -9870,11 +9870,11 @@
         });
         
         modal.style.display = 'flex';
-      };
+      },
       
       closeCheckOutModal() {
         document.getElementById('checkout-input-modal').style.display = 'none';
-      };
+      },
       
       // 모든 퇴근 시간 저장
       async saveAllCheckOuts() {
@@ -9971,16 +9971,16 @@
         this.refreshBlockedList();
         this.refreshIncompleteTodayList();
         this.loadStats();
-      };
+      },
       
       // 직원에게 연락
       notifyEmployeesByCall() {
         alert('💡 미완료 직원에게 직접 전화하여 퇴근 체크를 요청해주세요.');
-      };
+      },
       
       notifyEmployeeByPhone(employeeName) {
         alert(`💡 ${employeeName}님에게 전화하여 퇴근 체크를 요청해주세요.`);
-      };
+      },
       
       // ==================== 구매 요청 시스템 ====================
       
@@ -10028,7 +10028,7 @@
         } catch (err) {
           console.error('❌ 대시보드 로드 실패:', err);
         }
-      };
+      },
       
       // 구매 요청 목록 로드
       async loadPurchases() {
@@ -10055,7 +10055,7 @@
           console.error('❌ 구매 요청 목록 로드 실패:', err);
           alert('구매 요청 목록 로드 실패');
         }
-      };
+      },
       
       // 구매 요청 목록 렌더링
       renderPurchaseList(purchases) {
@@ -10116,7 +10116,7 @@
             </tr>
           `;
         }).join('');
-      };
+      },
       
       // 구매 요청 필터링
       filterPurchases() {
@@ -10147,7 +10147,7 @@
         }
         
         this.renderPurchaseList(filtered);
-      };
+      },
       
       // 새 구매 요청 모달 열기
       openNewPurchaseModal() {
@@ -10160,12 +10160,12 @@
         this.addPurchaseItem();
         
         document.getElementById('new-purchase-modal').classList.remove('hidden');
-      };
+      },
       
       // 새 구매 요청 모달 닫기
       closeNewPurchaseModal() {
         document.getElementById('new-purchase-modal').classList.add('hidden');
-      };
+      },
       
       // 물품 항목 추가
       async addPurchaseItem() {
@@ -10234,7 +10234,7 @@
             }
           });
         }
-      };
+      },
       
       // 물품 항목 제거
       removePurchaseItem(itemId) {
@@ -10243,7 +10243,7 @@
           item.remove();
           this.calculateTotal();
         }
-      };
+      },
       
       // 총 금액 계산
       calculateTotal() {
@@ -10255,7 +10255,7 @@
         });
         
         document.getElementById('purchase-total-amount').textContent = '₩' + total.toLocaleString('ko-KR');
-      };
+      },
       
       // 구매 요청 제출
       async submitPurchaseRequest() {
@@ -10364,7 +10364,7 @@
           console.error('❌ 구매 요청 등록 실패:', err);
           alert('구매 요청 등록 실패');
         }
-      };
+      },
       
       // 구매 요청 상세 보기
       async showPurchaseDetail(purchaseId) {
@@ -10637,12 +10637,12 @@
           console.error('❌ 구매 요청 상세 로드 실패:', err);
           alert('구매 요청 상세 로드 실패');
         }
-      };
+      },
       
       // 구매 요청 상세 모달 닫기
       closePurchaseDetailModal() {
         document.getElementById('purchase-detail-modal').classList.add('hidden');
-      };
+      },
       
       // ==================== 검수 사진 업로드 ====================
       
@@ -10677,13 +10677,13 @@
         } else {
           itemsListEl.innerHTML = '<p class="text-sm text-gray-500 text-center py-2">물품 정보가 없습니다</p>';
         }
-      };
+      },
       
       // 사진 업로드 모달 닫기
       closePhotoUploadModal() {
         document.getElementById('photo-upload-modal').classList.add('hidden');
         currentPurchaseIdForPhoto = null;
-      };
+      },
       
       // 사진 미리보기
       previewPhotos(event) {
@@ -10776,7 +10776,7 @@
         
         notesHTML += '</div>';
         notesContainer.innerHTML = notesHTML;
-      };
+      },
       
       // 검수 사진 업로드 (모든 시나리오 처리)
       async uploadInspectionPhotos() {
@@ -11056,7 +11056,7 @@
             uploadBtn.innerHTML = '<i class="fas fa-upload mr-2"></i>업로드';
           }
         }
-      };
+      },
       
       // 검수 사진 삭제
       async deleteInspectionPhoto(purchaseId, photoId) {
@@ -11134,7 +11134,7 @@
           console.error('❌ 사진 삭제 실패:', error);
           alert('⚠️ 사진 삭제 중 오류가 발생했습니다\n\n오류 내용: ' + (error.message || '알 수 없는 오류'));
         }
-      };
+      },
       
       // ==================== 구매 요청 추출 (Excel/PDF) ====================
       
@@ -11239,7 +11239,7 @@
           console.error('❌ Excel 추출 실패:', err);
           alert('Excel 추출 중 오류가 발생했습니다');
         }
-      };
+      },
       
       // PDF 추출 (html2canvas 방식 - Paperlogy 폰트 적용, 이미지-물품 매칭)
       async exportPurchaseToPDF(purchaseId) {
@@ -11355,7 +11355,7 @@
           if (loading) document.body.removeChild(loading);
           alert('PDF 추출 중 오류가 발생했습니다: ' + err.message);
         }
-      };
+      },
       
       // 구매 요청 PDF용 HTML 생성
       createPurchasePDFHTML(data, statusText) {
@@ -11495,7 +11495,7 @@
             ` : ''}
           </div>
         `;
-      };
+      },
       
       // 이미지를 Base64로 변환하는 헬퍼 함수
       loadImageAsBase64(url) {
@@ -11525,7 +11525,7 @@
           
           img.src = url;
         });
-      };
+      },
       
       // ==================== 특이사항 상세 모달 ====================
       
@@ -11613,12 +11613,12 @@
         `;
         
         modal.classList.remove('hidden');
-      };
+      },
       
       // 특이사항 상세 모달 닫기
       closeAttendanceNoteDetailModal() {
         document.getElementById('attendance-note-detail-modal').classList.add('hidden');
-      };
+      },
       
       // ==================== 구매 요청 ====================
       
@@ -11646,7 +11646,7 @@
           console.error('❌ 승인 실패:', err);
           alert('승인 실패: ' + (err.message || '알 수 없는 오류'));
         }
-      };
+      },
       
       // 구매 요청 반려
       async rejectPurchase(purchaseId) {
@@ -11674,7 +11674,7 @@
           console.error('❌ 반려 실패:', err);
           alert('반려 실패');
         }
-      };
+      },
       
       // 배송 완료 처리
       
@@ -11683,18 +11683,18 @@
         this.loadPurchases();
         this.loadPurchaseDashboard();
         alert('새로고침 완료');
-      };
+      },
       
       // QR 코드 관리 모달 열기
       async showQRCodeManagement() {
         document.getElementById('qr-management-modal').classList.remove('hidden');
         await this.loadPurchaseQRCodes();
-      };
+      },
       
       // QR 코드 관리 모달 닫기
       closeQRManagementModal() {
         document.getElementById('qr-management-modal').classList.add('hidden');
-      };
+      },
       
       // 구매 QR 코드 목록 로드
       async loadPurchaseQRCodes() {
@@ -11738,7 +11738,7 @@
         } catch (err) {
           console.error('❌ QR 코드 목록 로드 실패:', err);
         }
-      };
+      },
       
       // 구매 QR 코드 생성
       async generatePurchaseQR() {
@@ -11770,7 +11770,7 @@
           console.error('❌ QR 코드 생성 실패:', err);
           alert('QR 코드 생성 실패');
         }
-      };
+      },
       
       // QR 코드 상태 토글
       async toggleQRStatus(qrId, isActive) {
@@ -11788,7 +11788,7 @@
           console.error('❌ QR 상태 변경 실패:', err);
           alert('QR 상태 변경 실패');
         }
-      };
+      },
       
       // QR 코드 다운로드
       downloadQRCode(qrCode, locationName) {
@@ -11818,7 +11818,7 @@
         }, 300);
         
         alert('QR 코드 다운로드 시작');
-      };
+      },
       
       // ==================== 서류 관리 시스템 ====================
       
@@ -11828,7 +11828,7 @@
         categories: [],
         currentFile: null,
         filteredList: []
-      };
+      },
       
       // 서류 목록 로드
       async loadDocuments() {
@@ -11866,7 +11866,7 @@
             </div>
           `;
         }
-      };
+      },
       
       // 서류 렌더링
       renderDocuments() {
@@ -11951,7 +11951,7 @@
         });
         
         container.innerHTML = html;
-      };
+      },
       
       // 카테고리별 색상 클래스
       getCategoryColorClass(color) {
@@ -11964,7 +11964,7 @@
           gray: 'from-gray-500 to-gray-600'
         };
         return colorMap[color] || colorMap.gray;
-      };
+      },
       
       // 카테고리 로드
       async loadDocumentCategories() {
@@ -12020,7 +12020,7 @@
         } catch (err) {
           console.error('❌ 카테고리 로드 실패:', err);
         }
-      };
+      },
       
       // 통계 로드
       async loadDocumentStats() {
@@ -12049,7 +12049,7 @@
         } catch (err) {
           console.error('❌ 통계 로드 실패:', err);
         }
-      };
+      },
       
       // 서류 검색
       searchDocuments() {
@@ -12067,7 +12067,7 @@
         }
         
         this.renderDocuments();
-      };
+      },
       
       // 서류 필터링
       filterDocuments() {
@@ -12099,7 +12099,7 @@
         
         this.documents.filteredList = filtered;
         this.renderDocuments();
-      };
+      },
       
       // 서류 새로고침
       async refreshDocumentList() {
@@ -12107,7 +12107,7 @@
         document.getElementById('documents-list').innerHTML = '';
         await this.loadDocuments();
         await this.loadDocumentStats();
-      };
+      },
       
       // 업로드 모달 열기
       openDocumentUploadModal() {
@@ -12129,14 +12129,14 @@
         
         // 카테고리 로드
         this.loadDocumentCategories();
-      };
+      },
       
       // 업로드 모달 닫기
       closeDocumentUploadModal() {
         const modal = document.getElementById('document-upload-modal');
         modal.classList.add('hidden');
         modal.classList.remove('flex');
-      };
+      },
       
       // 버전 필드 토글
       toggleVersionFields() {
@@ -12154,21 +12154,21 @@
         } else {
           fields.classList.add('hidden');
         }
-      };
+      },
       
       // 파일 드래그 오버
       handleDocDragOver(e) {
         e.preventDefault();
         e.stopPropagation();
         document.getElementById('doc-drop-zone').classList.add('border-blue-500', 'bg-blue-50');
-      };
+      },
       
       // 파일 드래그 떠남
       handleDocDragLeave(e) {
         e.preventDefault();
         e.stopPropagation();
         document.getElementById('doc-drop-zone').classList.remove('border-blue-500', 'bg-blue-50');
-      };
+      },
       
       // 파일 드롭
       handleDocDrop(e) {
@@ -12181,7 +12181,7 @@
           this.documents.currentFile = files[0];
           this.showDocFilePreview();
         }
-      };
+      },
       
       // 파일 선택
       handleDocFileSelect(e) {
@@ -12190,7 +12190,7 @@
           this.documents.currentFile = files[0];
           this.showDocFilePreview();
         }
-      };
+      },
       
       // 파일 미리보기 표시
       showDocFilePreview() {
@@ -12238,14 +12238,14 @@
         document.getElementById('doc-file-name').textContent = file.name;
         document.getElementById('doc-file-size').textContent = `${sizeInMB} MB`;
         document.getElementById('doc-file-preview').classList.remove('hidden');
-      };
+      },
       
       // 파일 선택 초기화
       clearDocFile() {
         this.documents.currentFile = null;
         document.getElementById('doc-file-input').value = '';
         document.getElementById('doc-file-preview').classList.add('hidden');
-      };
+      },
       
       // 서류 업로드 제출
       async submitDocumentUpload(event) {
@@ -12358,7 +12358,7 @@
             btn.innerHTML = '<i class="fas fa-cloud-upload-alt mr-2"></i>업로드';
           }
         }
-      };
+      },
       
       // 서류 다운로드
       async downloadDocument(documentId) {
@@ -12386,7 +12386,7 @@
           console.error('❌ 다운로드 실패:', err);
           alert(`다운로드 실패: ${err.message}`);
         }
-      };
+      },
       
       // 서류 상세 보기
       async showDocumentDetail(documentId) {
@@ -12501,14 +12501,14 @@
           console.error('❌ 서류 상세 로드 실패:', err);
           alert(`서류 상세 정보 로드 실패: ${err.message}`);
         }
-      };
+      },
       
       // 서류 상세 모달 닫기
       closeDocumentDetailModal() {
         const modal = document.getElementById('document-detail-modal');
         modal.classList.add('hidden');
         modal.classList.remove('flex');
-      };
+      },
       
       // 서류 상세 모달 표시
       async showDocumentDetail(documentId) {
@@ -12578,14 +12578,14 @@
           console.error('❌ 문서 상세 표시 실패:', err);
           alert(`문서를 불러오는데 실패했습니다: ${err.message}`);
         }
-      };
+      },
       
       // 서류 상세 모달 닫기
       closeDocumentDetailModal() {
         const modal = document.getElementById('document-detail-modal');
         modal.classList.add('hidden');
         modal.classList.remove('flex');
-      };
+      },
       
       // 파일 크기 포맷
       formatFileSize(bytes) {
@@ -12594,12 +12594,12 @@
         const sizes = ['Bytes', 'KB', 'MB', 'GB'];
         const i = Math.floor(Math.log(bytes) / Math.log(k));
         return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
-      };
+      },
       
       // 서류 수정
       editDocument(documentId) {
         alert('서류 수정 기능은 다음 업데이트에서 제공됩니다.');
-      };
+      },
       
       // 마스터 비밀번호 확인
       verifyMasterPassword() {
@@ -12617,7 +12617,7 @@
           alert('❌ 비밀번호가 틀렸습니다.\n총괄 관리자만 문서를 삭제할 수 있습니다.');
           return false;
         }
-      };
+      },
       
       // 서류 삭제
       async deleteDocument(documentId) {
@@ -12654,7 +12654,7 @@
           console.error('❌ 서류 삭제 실패:', err);
           alert(`❌ 서류 삭제 실패: ${err.message}`);
         }
-      };
+      },
       
       // 카테고리 관리 모달 열기
       openCategoryManageModal() {
@@ -12662,14 +12662,14 @@
         modal.classList.remove('hidden');
         modal.classList.add('flex');
         this.renderCategoryList();
-      };
+      },
       
       // 카테고리 관리 모달 닫기
       closeCategoryManageModal() {
         const modal = document.getElementById('category-manage-modal');
         modal.classList.add('hidden');
         modal.classList.remove('flex');
-      };
+      },
       
       // 카테고리 목록 렌더링
       renderCategoryList() {
@@ -12743,7 +12743,7 @@
           </div>
         `;
         }).join('');
-      };
+      },
       
       // 카테고리 색상
       getCategoryColor(color) {
@@ -12759,7 +12759,7 @@
           gray: '#6b7280'
         };
         return colorMap[color] || colorMap.gray;
-      };
+      },
       
       // ==================== Phase 5-18: 추가 기능 ====================
       
@@ -12781,7 +12781,7 @@
           formContainer.classList.add('hidden');
           document.getElementById('new-category-btn').innerHTML = '<i class="fas fa-plus mr-2"></i>새 카테고리 추가';
         }
-      };
+      },
       
       // 카테고리 폼 초기화
       resetCategoryForm() {
@@ -12791,7 +12791,7 @@
         document.getElementById('category-icon').value = 'fa-folder';
         document.getElementById('category-color').value = 'blue';
         document.getElementById('category-order').value = '0';
-      };
+      },
       
       // 카테고리 폼 취소
       cancelCategoryForm() {
@@ -12799,7 +12799,7 @@
         formContainer.classList.add('hidden');
         document.getElementById('new-category-btn').innerHTML = '<i class="fas fa-plus mr-2"></i>새 카테고리 추가';
         this.resetCategoryForm();
-      };
+      },
       
       // 카테고리 폼 제출
       async submitCategoryForm(event) {
@@ -12857,7 +12857,7 @@
           console.error('❌ 카테고리 저장 실패:', err);
           alert('카테고리 저장에 실패했습니다: ' + err.message);
         }
-      };
+      },
       
       // 카테고리 수정
       editCategory(categoryId) {
@@ -12879,7 +12879,7 @@
         
         // 폼으로 스크롤
         formContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      };
+      },
       
       // 카테고리 삭제
       async deleteCategory(categoryId, categoryName, docCount) {
@@ -12910,7 +12910,7 @@
           console.error('❌ 카테고리 삭제 실패:', err);
           alert('카테고리 삭제에 실패했습니다: ' + err.message);
         }
-      };
+      },
       
       // 폼 제출 이벤트 리스너
       document.addEventListener('DOMContentLoaded', function() {
@@ -12956,7 +12956,7 @@
         } catch (err) {
           console.error('❌ 즐겨찾기 토글 실패:', err);
         }
-      };
+      },
       
       // Phase 10: 버전 히스토리 조회
       async showVersionHistory(documentId) {
@@ -12975,7 +12975,7 @@
         } catch (err) {
           console.error('❌ 버전 히스토리 조회 실패:', err);
         }
-      };
+      },
       
       // Phase 13: 읽음 표시
       async markAsRead(documentId) {
@@ -12998,7 +12998,7 @@
         } catch (err) {
           console.error('❌ 읽음 표시 실패:', err);
         }
-      };
+      },
       
       // Phase 14: 알림 생성
       async createDocumentNotification(documentId, type, title, message) {
@@ -13031,7 +13031,7 @@
         } catch (err) {
           console.error('❌ 알림 생성 실패:', err);
         }
-      };
+      },
       
       // Phase 15: 인기 서류 조회
       async loadPopularDocuments() {
@@ -13050,7 +13050,7 @@
           console.error('❌ 인기 서류 조회 실패:', err);
           return [];
         }
-      };
+      },
       
       // Phase 16: 권한 확인
       checkDocumentPermission(document) {
@@ -13066,12 +13066,12 @@
         
         // 일반 사용자는 조회만
         return { canView: true, canEdit: false, canDelete: false };
-      };
+      },
       
       // Phase 17: 모바일 감지
       isMobile() {
         return window.innerWidth < 768;
-      };
+      },
       
       // Phase 18: 시스템 상태 체크
       async checkSystemHealth() {
@@ -13107,7 +13107,7 @@
             error: err.message
           };
         }
-      };
+      },
       
       // ==================== 📊 정산서 관리 함수 ====================
       
@@ -13154,7 +13154,7 @@
           console.error('❌ 정산서 로드 실패:', error);
           this.showToast('정산서 로드 중 오류가 발생했습니다', 'error');
         }
-      };
+      },
       
       // 정산서 UI 업데이트
       updateSettlementUI(settlement) {
@@ -13215,7 +13215,7 @@
         } else {
           feedbackDiv.classList.add('hidden');
         }
-      };
+      },
       
       // 자동 집계 통계 계산
       async calculateSettlementStats(yearMonth) {
@@ -13276,7 +13276,7 @@
         } catch (error) {
           console.error('❌ 통계 계산 실패:', error);
         }
-      };
+      },
       
       // 대시보드 통계 업데이트
       async updateDashboardStats() {
@@ -13307,7 +13307,7 @@
         } catch (error) {
           console.error('❌ 대시보드 통계 업데이트 실패:', error);
         }
-      };
+      },
       
       // 월간 정산서 생성 (DB 저장)
       async generateMonthlySettlement() {
@@ -13438,7 +13438,7 @@
           console.error('❌ 정산서 생성 실패:', error);
           this.showToast('정산서 생성 중 오류가 발생했습니다: ' + error.message, 'error');
         }
-      };
+      },
       
       // 정산서 초안 저장
       async saveSettlementDraft(yearMonth) {
@@ -13474,7 +13474,7 @@
         } catch (error) {
           console.error('❌ 초안 저장 실패:', error);
         }
-      };
+      },
       
       // 최종 통계 계산
       async calculateFinalStats(yearMonth) {
@@ -13512,7 +13512,7 @@
           total_late_count: lateCount,
           total_absent_count: absentCount
         };
-      };
+      },
       
       // 본사에 제출
       async submitSettlementToHQ() {
@@ -13547,7 +13547,7 @@
           console.error('❌ 제출 실패:', error);
           this.showToast('제출 중 오류가 발생했습니다', 'error');
         }
-      };
+      },
       
       // 정산서 수정 후 재제출
       async reviseSettlement() {
@@ -13568,7 +13568,7 @@
           console.error('❌ 수정 모드 전환 실패:', error);
           this.showToast('오류가 발생했습니다', 'error');
         }
-      };
+      },
       
       // 제출 이력 로드
       async loadSettlementHistory() {
@@ -13637,7 +13637,7 @@
           loadingEl.classList.add('hidden');
           this.showToast('이력 로드 중 오류가 발생했습니다', 'error');
         }
-      };
+      },
       
       // 선택된 정산서 ID 배열
       app.selectedSettlements = [];
@@ -13654,7 +13654,7 @@
         
         // 버튼 상태 업데이트
         this.updateSubmitButtonState();
-      };
+      },
       
       // 제출 버튼 상태 업데이트
       updateSubmitButtonState() {
@@ -13665,7 +13665,7 @@
           countSpan.textContent = this.selectedSettlements.length;
           btn.disabled = this.selectedSettlements.length === 0;
         }
-      };
+      },
       
       // 선택된 정산서 제출
       async submitSelectedSettlements() {
@@ -13708,7 +13708,7 @@
           console.error('❌ 제출 실패:', error);
           this.showToast('제출 중 오류가 발생했습니다: ' + error.message, 'error');
         }
-      };
+      },
       
       // 이력 카드 생성
       createSettlementHistoryCard(settlement) {
@@ -13803,7 +13803,7 @@
         `;
         
         return div;
-      };
+      },
       
       // 상세보기
       async viewSettlementDetail(settlementId) {
@@ -13834,7 +13834,7 @@
           console.error('❌ 정산서 로드 실패:', error);
           this.showToast('정산서 로드 중 오류가 발생했습니다: ' + error.message, 'error');
         }
-      };
+      },
       
       // 정산서 상세 모달 표시
       showSettlementDetailModal(settlement) {
@@ -13881,7 +13881,7 @@
         
         // 모달 표시
         modal.style.display = 'flex';
-      };
+      },
       
       // 직원 상세 테이블 렌더링
       renderEmployeeDetailTable(employeeDetails) {
@@ -14018,7 +14018,7 @@
           
           tbody.appendChild(row);
         });
-      };
+      },
       
       // 직원 필드 업데이트
       updateEmployeeField(index, field, value) {
@@ -14049,7 +14049,7 @@
         if (totalCell) {
           totalCell.textContent = `₩${totalSalary.toLocaleString()}`;
         }
-      };
+      },
       
       // 정산서 상세 저장
       async saveSettlementDetails() {
@@ -14083,7 +14083,7 @@
           console.error('❌ 저장 실패:', error);
           this.showToast('저장 중 오류가 발생했습니다: ' + error.message, 'error');
         }
-      };
+      },
       
       // 정산서 상세 모달 닫기
       closeSettlementDetailModal() {
@@ -14092,12 +14092,12 @@
           modal.style.display = 'none';
         }
         this.currentSettlementDetail = null;
-      };
+      },
       
       // 필터 적용
       filterSettlementHistory() {
         this.loadSettlementHistory();
-      };
+      },
       
       // ==================== 급여명세서 관리 함수 ====================
       
@@ -14143,7 +14143,7 @@
           console.error('❌ 직원 로드 실패:', error);
           this.showToast('직원 목록을 불러올 수 없습니다', 'error');
         }
-      };
+      },
       
       // PDF 업로드
       async uploadPayrollStatement() {
@@ -14229,7 +14229,7 @@
           console.error('❌ 업로드 실패:', error);
           this.showToast('업로드 중 오류가 발생했습니다: ' + error.message, 'error');
         }
-      };
+      },
       
       // 급여명세서 목록 로드
       async loadPayrollStatements() {
@@ -14289,7 +14289,7 @@
           loadingEl.classList.add('hidden');
           this.showToast('급여명세서 로드 중 오류가 발생했습니다', 'error');
         }
-      };
+      },
       
       // 급여명세서 카드 생성
       createPayrollStatementCard(statement) {
@@ -14339,7 +14339,7 @@
         `;
         
         return div;
-      };
+      },
       
       // 급여명세서 삭제
       async deletePayrollStatement(statementId) {
@@ -14361,12 +14361,12 @@
           console.error('❌ 삭제 실패:', error);
           this.showToast('삭제 중 오류가 발생했습니다', 'error');
         }
-      };
+      },
       
       // 필터 적용
       filterPayrollStatements() {
         this.loadPayrollStatements();
-      };
+      },
       
       // 통계 업데이트
       async updatePayrollStats() {
@@ -14419,7 +14419,7 @@
         } catch (error) {
           console.error('❌ 통계 업데이트 실패:', error);
         }
-      };
+      },
       
       // ==================== 전자 근태표 생성 함수 ====================
       
@@ -14436,7 +14436,7 @@
         
         document.getElementById('attendance-sheet-start-date').value = firstDay;
         document.getElementById('attendance-sheet-end-date').value = lastDay;
-      };
+      },
       
       // 근태표 생성
       async generateAttendanceSheet() {
@@ -14676,7 +14676,7 @@
           console.error('❌ 근태표 생성 실패:', error);
           this.showToast('근태표 생성 중 오류가 발생했습니다: ' + error.message, 'error');
         }
-      };
+      },
       
       // 근태표 렌더링
       renderAttendanceSheet(dates, attendanceData) {
@@ -14755,7 +14755,7 @@
         html += '</table>';
         
         container.innerHTML = html;
-      };
+      },
       
       // Excel 내보내기
       exportAttendanceSheetToExcel() {
@@ -14821,7 +14821,7 @@
           console.error('❌ Excel 내보내기 실패:', error);
           this.showToast('Excel 내보내기 중 오류가 발생했습니다', 'error');
         }
-      };
+      },
       
       // PDF로 근태표 내보내기 (관리자 페이지 스타일)
       async exportAttendanceSheetToPDF() {
@@ -15052,7 +15052,7 @@
           console.error('❌ PDF 내보내기 실패:', error);
           this.showToast('PDF 내보내기 중 오류가 발생했습니다: ' + error.message, 'error');
         }
-      };
+      },
       
       // ==================== 민원 관리 함수 ====================
       
@@ -15174,7 +15174,7 @@
             `;
           }
         }
-      };
+      },
       
       // 통계 업데이트
       updateComplaintsStats(complaints) {
@@ -15194,7 +15194,7 @@
         document.getElementById('complaint-completed-count').textContent = completed;
         document.getElementById('complaint-pending-count').textContent = pending;
         document.getElementById('complaint-month-count').textContent = thisMonth;
-      };
+      },
       
       // 테이블 렌더링
       renderComplaintsTable(complaints) {
@@ -15243,7 +15243,7 @@
           
           tbody.appendChild(row);
         });
-      };
+      },
       
       // 필터 적용
       filterComplaintsList() {
@@ -15333,7 +15333,7 @@
         if (filterMonth || filterStatus) {
           this.showToast(`🔍 필터 적용: ${filtered.length}건 표시됨`, 'info');
         }
-      };
+      },
       
       // 필터 옵션 자동 생성
       populateComplaintFilters() {
@@ -15368,14 +15368,14 @@
             statusSelect.value = currentValue;
           }
         }
-      };
+      },
       
       // 필터 초기화
       resetComplaintsFilter() {
         document.getElementById('complaint-filter-month').value = '';
         document.getElementById('complaint-filter-status').value = '';
         this.filterComplaintsList();
-      };
+      },
       
       // ==================== 기존 함수 ====================
       
@@ -15549,7 +15549,7 @@
         `;
         
         return div;
-      };
+      },
       
       async loadPayrollStatistics() {
         console.log('📊 급여명세서 통계 로드');
@@ -15609,7 +15609,7 @@
         } catch (error) {
           console.error('❌ 급여명세서 통계 로드 실패:', error);
         }
-      };
+      },
       
       viewPayrollAdmin(payrollId, fileUrl) {
         if (fileUrl) {
@@ -15626,7 +15626,7 @@
         } else {
           alert('⚠️ 파일 URL이 없습니다');
         }
-      };
+      },
       
       async deletePayrollStatement(payrollId, employeeName, yearMonth) {
         if (!confirm(`정말 삭제하시겠습니까?\n\n직원: ${employeeName}\n기간: ${yearMonth}\n\n이 작업은 되돌릴 수 없습니다.`)) {
@@ -15648,20 +15648,20 @@
           console.error('❌ 급여명세서 삭제 실패:', error);
           alert('❌ 삭제 중 오류가 발생했습니다: ' + error.message);
         }
-      };
+      },
       
       refreshPayrollList() {
         this.loadPayrollList();
         this.loadPayrollStatistics();
-      };
+      },
       
       searchPayroll() {
         this.loadPayrollList();
-      };
+      },
       
       filterPayroll() {
         this.loadPayrollList();
-      };
+      },
       
       async exportPayrollReport() {
         console.log('📊 급여명세서 리포트 내보내기');
@@ -15709,7 +15709,7 @@
           console.error('❌ 엑셀 내보내기 실패:', error);
           alert('❌ 엑셀 내보내기 중 오류가 발생했습니다: ' + error.message);
         }
-      };
+      },
       
       // ==================== 💰 급여명세서 업로드 모달 ====================
       
@@ -15718,7 +15718,7 @@
         selectedEmployees: new Set(),
         selectedFile: null,
         selectedDepartment: null
-      };
+      },
       
       async openPayrollUploadModal() {
         console.log('💰 급여명세서 업로드 모달 열기');
@@ -15766,7 +15766,7 @@
         this.clearPayrollFile();
         
         document.getElementById('payroll-upload-modal').style.display = 'flex';
-      };
+      },
       
       closePayrollUploadModal() {
         document.getElementById('payroll-upload-modal').style.display = 'none';
@@ -15776,7 +15776,7 @@
           selectedFile: null,
           selectedDepartment: null
         };
-      };
+      },
       
       selectPayrollMethod(method) {
         console.log('📝 선택 방법:', method);
@@ -15797,7 +15797,7 @@
         document.getElementById('payroll-single-select').classList.toggle('hidden', method !== 'single');
         document.getElementById('payroll-department-select').classList.toggle('hidden', method !== 'department');
         document.getElementById('payroll-all-select').classList.toggle('hidden', method !== 'all');
-      };
+      },
       
       async loadPayrollEmployeeList() {
         try {
@@ -15834,7 +15834,7 @@
         } catch (error) {
           console.error('❌ 직원 목록 로드 실패:', error);
         }
-      };
+      },
       
       async loadPayrollDepartmentList() {
         try {
@@ -15864,7 +15864,7 @@
         } catch (error) {
           console.error('❌ 부서 목록 로드 실패:', error);
         }
-      };
+      },
       
       togglePayrollEmployee(employeeId) {
         if (this.payrollUploadState.selectedEmployees.has(employeeId)) {
@@ -15875,7 +15875,7 @@
         
         document.getElementById('payroll-selected-count').textContent = 
           this.payrollUploadState.selectedEmployees.size;
-      };
+      },
       
       handlePayrollFileSelect(event) {
         const file = event.target.files[0];
@@ -15904,14 +15904,14 @@
         document.getElementById('payroll-file-name').textContent = file.name;
         document.getElementById('payroll-file-size').textContent = 
           `${(file.size / 1024).toFixed(1)} KB`;
-      };
+      },
       
       clearPayrollFile() {
         this.payrollUploadState.selectedFile = null;
         document.getElementById('payroll-file-input').value = '';
         document.getElementById('payroll-file-placeholder').classList.remove('hidden');
         document.getElementById('payroll-file-info').classList.add('hidden');
-      };
+      },
       
       async uploadPayrollStatements() {
         console.log('🚀 급여명세서 업로드 시작');
