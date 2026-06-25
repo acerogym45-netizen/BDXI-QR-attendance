@@ -3498,7 +3498,7 @@
         employeeAttendanceRecords: [],
         
         // 날짜 헬퍼 함수 (타임존 문제 해결)
-        getLocalDateString: function(date = new Date()) {
+        getLocalDateString(date = new Date()) {
           const d = date instanceof Date ? date : new Date(date);
           const year = d.getFullYear();
           const month = String(d.getMonth() + 1).padStart(2, '0');
@@ -3506,7 +3506,7 @@
           return `${year}-${month}-${day}`;
         },
 
-        init: async function () {
+        async init() {
           try {
             console.log('🔧 Supabase 초기화 시작');
             // Supabase 라이브러리 로드 확인
@@ -3573,7 +3573,7 @@
         // ============================================
         
         // 브랜드 설정 로드
-        loadBrandSettings: async function() {
+        async loadBrandSettings() {
           try {
             console.log('🎨 브랜드 설정 로드 시작...');
             
@@ -3621,7 +3621,7 @@
         },
         
         // UI에 브랜드 설정 적용
-        applyBrandSettings: function() {
+        applyBrandSettings() {
           const settings = this.brandSettings;
           
           // 1. 로고 이미지 교체
@@ -3659,7 +3659,7 @@
         },
         
         // 🔴 Realtime 구독 설정 (새로 추가)
-        setupRealtimeSubscription: function() {
+        setupRealtimeSubscription() {
           console.log('📡 Realtime 구독 시작...');
           
           // cleaning_tasks 테이블 변경 감지
@@ -3703,7 +3703,7 @@
         },
 
         // 시설 목록 로드
-        loadApartments: async function() {
+        async loadApartments() {
           try {
             const { data, error } = await this.sb
               .from('apartments')
@@ -3734,7 +3734,7 @@
         },
 
         // 카테고리 선택
-        selectCategory: function(category) {
+        selectCategory(category) {
           const categoryNames = {
             gym: '헬스장',
             apartment: '아파트',
@@ -3799,7 +3799,7 @@
         },
 
         // 시설 선택
-        selectFacility: function(facility) {
+        selectFacility(facility) {
           this.selectedFacility = facility;
 
           // 시설 선택 화면 숨기기
@@ -3813,21 +3813,21 @@
         },
 
         // 카테고리로 돌아가기
-        backToCategories: function() {
+        backToCategories() {
           document.getElementById('facility-selection').classList.add('hidden');
           document.getElementById('category-selection').classList.remove('hidden');
           this.selectedCategory = null;
         },
 
         // 시설 선택으로 돌아가기
-        backToFacilities: function() {
+        backToFacilities() {
           document.getElementById('pin-input-section').classList.add('hidden');
           document.getElementById('facility-selection').classList.remove('hidden');
           this.selectedFacility = null;
           document.getElementById('msg-error').classList.add('hidden');
         },
 
-        setupEmployeeSearch: function (inputId, dropdownId) {
+        setupEmployeeSearch(inputId, dropdownId) {
           const input = document.getElementById(inputId);
           const list = document.getElementById(dropdownId);
           if (!input || !list) return;
@@ -3865,7 +3865,7 @@
           });
         },
 
-        updateClock: function () {
+        updateClock() {
           const now = new Date();
           const time = now.toLocaleTimeString('ko-KR', { hour12: false });
           const el = document.getElementById('live-time');
@@ -3873,7 +3873,7 @@
         },
 
         // Toast 알림 함수
-        showToast: function(message, type = 'info') {
+        showToast(message, type = 'info') {
           console.log(`[Toast ${type}]:`, message);
           
           // 기존 토스트 제거
@@ -3907,7 +3907,7 @@
           }, 3000);
         },
 
-        login: function () {
+        login() {
           const pin = document.getElementById('inp-pin').value;
           
           // 새 UI: selectedFacility 사용
@@ -3940,7 +3940,7 @@
           }
         },
         
-        loginMaster: function () {
+        loginMaster() {
           const pin = prompt('총괄 관리자 PIN을 입력하세요:');
           if (!pin) return;
           
@@ -3953,7 +3953,7 @@
           }
         },
 
-        logout: function () {
+        logout() {
           if (confirm('로그아웃 하시겠습니까?')) {
             sessionStorage.removeItem('kindwon_login');
             sessionStorage.removeItem('kindwon_apartment_id');
@@ -3962,7 +3962,7 @@
           }
         },
 
-        checkLogin: function () {
+        checkLogin() {
           // URL 파라미터 확인 (마스터 관리자에서 바로 접근)
           const urlParams = new URLSearchParams(window.location.search);
           const apartmentId = urlParams.get('apartment');
@@ -4070,7 +4070,7 @@
           }
         },
 
-        showDashboard: function () {
+        showDashboard() {
           document.getElementById('view-login').classList.add('hidden');
           document.getElementById('view-dashboard').classList.remove('hidden');
           
@@ -4117,7 +4117,7 @@
           this.switchTab('gallery');
         },
 
-        switchTab: function (tab) {
+        switchTab(tab) {
           console.log('🔄 Switching to tab:', tab);
           
           // ULTRA-AGGRESSIVE: Hide all tabs with cssText override
@@ -4244,7 +4244,7 @@
         },
 
         // 급여명세서용 시설 목록 로드
-        loadPayrollApartments: async function() {
+        async loadPayrollApartments() {
           try {
             const { data: apartments, error } = await this.sb
               .from('apartments')
@@ -4282,7 +4282,7 @@
           }
         },
 
-        loadMeta: async function () {
+        async loadMeta() {
           if (this.employeeList.length > 0) return;
           try {
             // 직원 정보 전체를 가져와야 apartment_id 필터링이 가능
@@ -4309,12 +4309,12 @@
         },
 
         // 로딩 표시
-        showLoading: function(containerId) {
+        showLoading(containerId) {
           const container = document.getElementById(containerId);
           container.innerHTML = '<div class="text-center py-20"><div class="loader"></div><p class="mt-4 text-gray-500">데이터를 불러오는 중...</p></div>';
         },
 
-        loadGallery: async function () {
+        async loadGallery() {
           const grid = document.getElementById('gallery-grid');
           
           // 로딩 표시
@@ -4383,7 +4383,7 @@
         },
 
         // Group photos by group_id or before/after pairs
-        groupPhotosByGroupId: function(data) {
+        groupPhotosByGroupId(data) {
           const groups = [];
           const grouped = new Set();
           
@@ -4441,7 +4441,7 @@
         },
 
         // Create gallery group card
-        createGalleryGroupCard: function(groupItems) {
+        createGalleryGroupCard(groupItems) {
           const card = document.createElement('div');
           card.className = 'gallery-group-card';
           
@@ -4614,7 +4614,7 @@
           return card;
         },
 
-        getFirstPhotoUrl: function(item) {
+        getFirstPhotoUrl(item) {
           if (item.photo_url) return item.photo_url;
           
           if (item.photo_urls) {
@@ -4634,7 +4634,7 @@
         },
 
         // Lazy Loading 초기화
-        initLazyLoading: function() {
+        initLazyLoading() {
           const imageObserver = new IntersectionObserver((entries, observer) => {
             entries.forEach(entry => {
               if (entry.isIntersecting) {
@@ -4657,10 +4657,10 @@
           });
         },
 
-        applyGalleryFilters: function () {
+        applyGalleryFilters() {
           this.loadGallery();
         },
-        resetGalleryFilters: function () {
+        resetGalleryFilters() {
           document.getElementById('filter-date-start').value = '';
           document.getElementById('filter-date-end').value = '';
           document.getElementById('filter-employee-input').value = '';
@@ -4671,7 +4671,7 @@
         },
 
         // 빠른 검색 기능
-        quickSearch: function(query) {
+        quickSearch(query) {
           const items = document.querySelectorAll('.gallery-item');
           let visibleCount = 0;
           
@@ -4693,7 +4693,7 @@
         },
 
         // 필터 토글 기능
-        toggleFilters: function() {
+        toggleFilters() {
           const panel = document.getElementById('filter-panel');
           const icon = document.getElementById('filter-toggle-icon');
           
@@ -4709,7 +4709,7 @@
         },
 
         // History 빠른 검색
-        quickSearchHistory: function(query) {
+        quickSearchHistory(query) {
           const rows = document.querySelectorAll('#history-list tr');
           let visibleCount = 0;
           
@@ -4730,7 +4730,7 @@
         },
 
         // History 필터 토글
-        toggleHistoryFilters: function() {
+        toggleHistoryFilters() {
           const panel = document.getElementById('history-filter-panel');
           const icon = document.getElementById('history-filter-toggle-icon');
           
@@ -4746,11 +4746,11 @@
         },
 
         // 직원 검색 자동완성
-        searchEmployee: function(value) {
+        searchEmployee(value) {
           this.setupEmployeeSearch('filter-employee-input', 'filter-employee-dropdown');
         },
 
-        openModal: function (photos, name, time, beforeAfter, groupId, startIndex = 0) {
+        openModal(photos, name, time, beforeAfter, groupId, startIndex = 0) {
           // photos can be a single URL string or an array of URLs
           const photosArray = Array.isArray(photos) ? photos : [photos];
           const mainPhoto = photosArray[startIndex] || photosArray[0];
@@ -4801,7 +4801,7 @@
           document.getElementById('image-modal').classList.remove('hidden');
         },
         
-        switchModalImage: function(photoUrl, index) {
+        switchModalImage(photoUrl, index) {
           document.getElementById('modal-image').src = photoUrl;
           
           // Update border on thumbnails
@@ -4816,11 +4816,11 @@
             }
           });
         },
-        closeModal: function () {
+        closeModal() {
           document.getElementById('image-modal').classList.add('hidden');
         },
 
-        loadHistory: async function () {
+        async loadHistory() {
           const list = document.getElementById('history-list');
           list.innerHTML = '<tr><td colspan="5" class="text-center py-4"><div class="loader"></div></td></tr>';
 
@@ -4985,12 +4985,12 @@
           }
         },
 
-        applyHistoryFilters: function () {
+        applyHistoryFilters() {
           this.loadHistory();
         },
 
         // ==================== 출퇴근 캘린더 시스템 ====================
-        loadAttendanceCalendar: async function() {
+        async loadAttendanceCalendar() {
           // 직원 목록을 셀렉트박스에 로드
           const select = document.getElementById('calendar-employee-select');
           if (!select) return;
@@ -5038,7 +5038,7 @@
           }
         },
         
-        loadEmployeeCalendar: async function() {
+        async loadEmployeeCalendar() {
           const select = document.getElementById('calendar-employee-select');
           const employeeId = select.value;
           
@@ -5066,7 +5066,7 @@
           await this.loadEmployeeMonthData();
         },
         
-        prevCalendarMonth: function() {
+        prevCalendarMonth() {
           this.calendarMonth--;
           if (this.calendarMonth < 0) {
             this.calendarMonth = 11;
@@ -5075,7 +5075,7 @@
           this.loadEmployeeMonthData();
         },
         
-        nextCalendarMonth: function() {
+        nextCalendarMonth() {
           this.calendarMonth++;
           if (this.calendarMonth > 11) {
             this.calendarMonth = 0;
@@ -5084,7 +5084,7 @@
           this.loadEmployeeMonthData();
         },
         
-        loadEmployeeMonthData: async function() {
+        async loadEmployeeMonthData() {
           if (!this.selectedEmployeeId) return;
           
           try {
@@ -5134,7 +5134,7 @@
           }
         },
         
-        renderAdminCalendar: function() {
+        renderAdminCalendar() {
           const year = this.calendarYear;
           const month = this.calendarMonth;
           const today = new Date();
@@ -5218,7 +5218,7 @@
           }
         },
         
-        calculateEmployeeMonthStats: function() {
+        calculateEmployeeMonthStats() {
           const records = this.employeeAttendanceRecords;
           
           // 날짜별 그룹화
@@ -5268,7 +5268,7 @@
           document.getElementById('emp-break-hours').textContent = (totalBreakMinutes / 60).toFixed(1);
         },
         
-        showAdminDayDetail: function(dateStr) {
+        showAdminDayDetail(dateStr) {
           const records = this.employeeAttendanceRecords.filter(r => 
             r.created_at.split('T')[0] === dateStr
           );
@@ -5316,14 +5316,14 @@
           }
         },
         
-        refreshCalendar: function() {
+        refreshCalendar() {
           this.loadAttendanceCalendar();
           if (this.selectedEmployeeId) {
             this.loadEmployeeMonthData();
           }
         },
         
-        loadStats: async function () {
+        async loadStats() {
           const period = document.getElementById('stats-period').value;
           const now = new Date();
           let start, end;
@@ -5587,7 +5587,7 @@
           }
         },
 
-        changePeriod: function () {
+        changePeriod() {
           const val = document.getElementById('stats-period').value;
           const cust = document.getElementById('custom-range');
           if (val === 'custom') cust.classList.remove('hidden');
@@ -5597,7 +5597,7 @@
           }
         },
 
-        downloadData: async function () {
+        async downloadData() {
           try {
             const [emps, atts, cleans, locs] = await Promise.all([
               this.sb.from('employees').select('*'),
@@ -5630,7 +5630,7 @@
           }
         },
 
-        loadQRCodes: async function () {
+        async loadQRCodes() {
           const container = document.getElementById('qr-location-list');
           container.innerHTML = '<div class="col-span-full text-center"><i class="fas fa-spinner fa-spin text-2xl text-gray-400"></i></div>';
           
@@ -5696,7 +5696,7 @@
           }
         },
         
-        downloadQRCode: async function (qrId, locationName, background = 'fitness') {
+        async downloadQRCode(qrId, locationName, background = 'fitness') {
           const qrCanvas = document.getElementById(qrId).querySelector('canvas');
           if (!qrCanvas) {
             alert('QR 코드를 찾을 수 없습니다.');
@@ -5757,7 +5757,7 @@
         },
         
         // Export Hours to Excel
-        exportHoursToExcel: function () {
+        exportHoursToExcel() {
           const tbody = document.getElementById('hours-table-body');
           const rows = tbody.querySelectorAll('tr');
           
@@ -5796,7 +5796,7 @@
         },
 
         // 🕐 초과근무 로드
-        loadOvertimeRecords: async function () {
+        async loadOvertimeRecords() {
           const tbody = document.getElementById('overtime-table-body');
           const badge = document.getElementById('overtime-count-badge');
           
@@ -5880,7 +5880,7 @@
         },
 
         // ⚠️ 지각/결근 로드
-        loadTardinessRecords: async function () {
+        async loadTardinessRecords() {
           const tbody = document.getElementById('tardiness-table-body');
           const badge = document.getElementById('tardiness-count-badge');
           
@@ -6023,7 +6023,7 @@
         },
 
         // 📝 휴가 승인 대기 로드
-        loadPendingVacations: async function () {
+        async loadPendingVacations() {
           const tbody = document.getElementById('pending-vacation-body');
           const badge = document.getElementById('pending-vacation-badge');
           
@@ -6095,7 +6095,7 @@
         },
 
         // 휴가 승인
-        approveVacation: async function (vacationId) {
+        async approveVacation(vacationId) {
           if (!confirm('이 휴가를 승인하시겠습니까?')) return;
           
           try {
@@ -6120,7 +6120,7 @@
         },
 
         // 휴가 거부
-        rejectVacation: async function (vacationId) {
+        async rejectVacation(vacationId) {
           const reason = prompt('거부 사유를 입력해주세요:', '');
           if (reason === null || reason.trim() === '') {
             alert('거부 사유를 입력해주세요.');
@@ -6150,7 +6150,7 @@
         },
 
         // Vacation Management
-        showVacationModal: async function () {
+        async showVacationModal() {
           const modal = document.getElementById('vacation-modal');
           modal.style.display = 'flex';
           
@@ -6169,7 +6169,7 @@
           document.getElementById('vacation-date').value = now.toISOString().split('T')[0];
         },
 
-        closeVacationModal: function () {
+        closeVacationModal() {
           document.getElementById('vacation-modal').style.display = 'none';
           // 폼 초기화
           document.getElementById('vacation-employee').value = '';
@@ -6178,7 +6178,7 @@
           document.getElementById('vacation-note').value = '';
         },
 
-        loadVacationEmployees: async function () {
+        async loadVacationEmployees() {
           try {
             let query = this.sb.from('employees')
               .select('id, name, position')
@@ -6207,7 +6207,7 @@
           }
         },
 
-        loadMonthlyVacations: async function () {
+        async loadMonthlyVacations() {
           try {
             const now = new Date();
             const startOfMonth = this.getLocalDateString(new Date(now.getFullYear(), now.getMonth(), 1));
@@ -6266,7 +6266,7 @@
           }
         },
 
-        addVacation: async function () {
+        async addVacation() {
           const employeeSelect = document.getElementById('vacation-employee');
           const employeeId = employeeSelect.value;
           const employeeName = employeeSelect.selectedOptions[0]?.dataset.name;
@@ -6320,7 +6320,7 @@
           }
         },
 
-        deleteVacation: async function (vacationId) {
+        async deleteVacation(vacationId) {
           if (!confirm('이 휴가 기록을 삭제하시겠습니까?')) {
             return;
           }
@@ -6348,7 +6348,7 @@
         // ============================================
 
         // 휴가 통계 로드
-        loadVacationStats: async function () {
+        async loadVacationStats() {
           try {
             const { data: vacations, error } = await this.sb
               .from('vacations')
@@ -6399,13 +6399,13 @@
         },
 
         // 휴가 내역 새로고침
-        refreshVacationHistory: async function () {
+        async refreshVacationHistory() {
           await this.loadVacationHistory();
           alert('✅ 휴가 데이터가 새로고침되었습니다.');
         },
 
         // 휴가 사용 내역 로드
-        loadVacationHistory: async function () {
+        async loadVacationHistory() {
           const tbody = document.getElementById('vacation-history-body');
           tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4"><i class="fas fa-spinner fa-spin"></i> 로딩중...</td></tr>';
 
@@ -6478,7 +6478,7 @@
         },
 
         // 휴가 상태 뱃지
-        getVacationStatusBadge: function (status) {
+        getVacationStatusBadge(status) {
           const badges = {
             'approved': '<span class="px-2 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">승인됨</span>',
             'pending': '<span class="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-semibold rounded-full">대기중</span>',
@@ -6488,7 +6488,7 @@
         },
 
         // 휴가 일수 계산
-        calculateVacationDays: function (startDate, endDate) {
+        calculateVacationDays(startDate, endDate) {
           try {
             const start = new Date(startDate);
             const end = new Date(endDate);
@@ -6501,7 +6501,7 @@
         },
 
         // 휴가 내역 필터
-        filterVacationHistory: async function () {
+        async filterVacationHistory() {
           const employeeFilter = document.getElementById('vacation-filter-employee').value;
           const statusFilter = document.getElementById('vacation-filter-status').value;
           const periodFilter = document.getElementById('vacation-filter-period').value;
@@ -6603,7 +6603,7 @@
         },
 
         // 직원별 잔여 휴가 로드
-        loadEmployeeVacationBalance: async function () {
+        async loadEmployeeVacationBalance() {
           const container = document.getElementById('employee-vacation-balance-list');
           container.innerHTML = '<div class="text-center py-4"><i class="fas fa-spinner fa-spin"></i> 로딩중...</div>';
 
@@ -6676,7 +6676,7 @@
         },
 
         // 총 휴가 일수 계산 (근속년수 기반)
-        calculateTotalVacationDays: function (hireDate) {
+        calculateTotalVacationDays(hireDate) {
           if (!hireDate) return 15; // 기본값
           
           const hire = new Date(hireDate);
@@ -6692,7 +6692,7 @@
         },
 
         // Excel 다운로드
-        exportVacationToExcel: async function () {
+        async exportVacationToExcel() {
           try {
             let query = this.sb
               .from('vacations')
@@ -6757,7 +6757,7 @@
         },
         
         // Employee Management
-        loadEmployees: async function () {
+        async loadEmployees() {
           const list = document.getElementById('employee-list');
           list.innerHTML = '<tr><td colspan="7" class="text-center py-4"><div class="loader"></div></td></tr>';
           
@@ -6899,7 +6899,7 @@
         },
 
         // 🔐 비밀번호 관리 로드
-        loadPasswordManagement: async function() {
+        async loadPasswordManagement() {
           const passwordList = document.getElementById('password-list');
           if (!passwordList) return;
           
@@ -7019,7 +7019,7 @@
         },
 
         // 직원 비밀번호 초기화
-        resetEmployeePassword: async function(employeeId, employeeName) {
+        async resetEmployeePassword(employeeId, employeeName) {
           if (!confirm(`${employeeName}님의 비밀번호를 초기화하시겠습니까?\n초기 비밀번호: 전화번호 뒷자리 4자리`)) {
             return;
           }
@@ -7074,7 +7074,7 @@
         },
 
         // 비밀번호 목록 Excel 다운로드
-        exportPasswordList: async function() {
+        async exportPasswordList() {
           try {
             let query = this.sb
               .from('employees')
@@ -7120,7 +7120,7 @@
           }
         },
         
-        showAddEmployeeModal: function () {
+        showAddEmployeeModal() {
           // 다른 모든 모달 숨기기
           ['location-modal', 'location-edit-modal', 'edit-employee-modal', 'apartment-modal', 'image-modal'].forEach(id => {
             const m = document.getElementById(id);
@@ -7143,12 +7143,12 @@
           document.getElementById('new-employee-notes').value = '';
         },
         
-        closeEmployeeModal: function () {
+        closeEmployeeModal() {
           const modal = document.getElementById('employee-modal');
           if (modal) modal.style.display = 'none';
         },
         
-        showEditEmployeeModal: function (emp) {
+        showEditEmployeeModal(emp) {
           // 다른 모든 모달 숨기기
           ['location-modal', 'location-edit-modal', 'employee-modal', 'apartment-modal', 'image-modal'].forEach(id => {
             const m = document.getElementById(id);
@@ -7191,12 +7191,12 @@
           document.getElementById('edit-employee-weekend-end').value = emp.weekend_end_time ? emp.weekend_end_time.substring(0, 5) : '';
         },
         
-        closeEditEmployeeModal: function () {
+        closeEditEmployeeModal() {
           const modal = document.getElementById('edit-employee-modal');
           if (modal) modal.style.display = 'none';
         },
         
-        updateEmployee: async function () {
+        async updateEmployee() {
           const id = document.getElementById('edit-employee-id').value;
           const name = document.getElementById('edit-employee-name').value.trim();
           const phone = document.getElementById('edit-employee-phone').value.trim();
@@ -7268,7 +7268,7 @@
           }
         },
         
-        addEmployee: async function () {
+        async addEmployee() {
           const name = document.getElementById('new-employee-name').value.trim();
           const phone = document.getElementById('new-employee-phone').value.trim();
           const email = document.getElementById('new-employee-email').value.trim();
@@ -7345,7 +7345,7 @@
           }
         },
         
-        toggleEmployeeStatus: async function (id, currentStatus) {
+        async toggleEmployeeStatus(id, currentStatus) {
           const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
           
           try {
@@ -7363,7 +7363,7 @@
           }
         },
         
-        deleteEmployee: async function (id) {
+        async deleteEmployee(id) {
           if (!confirm('직원을 삭제하시겠습니까?')) return;
           
           try {
@@ -7382,7 +7382,7 @@
         },
         
         // ==================== 공휴일 관리 ====================
-        showAddHolidayModal: function () {
+        showAddHolidayModal() {
           ['holiday-modal'].forEach(id => {
             const m = document.getElementById(id);
             if (m) {
@@ -7397,12 +7397,12 @@
           document.getElementById('new-holiday-date').value = today;
         },
         
-        closeHolidayModal: function () {
+        closeHolidayModal() {
           const modal = document.getElementById('holiday-modal');
           if (modal) modal.style.display = 'none';
         },
         
-        addHoliday: async function () {
+        async addHoliday() {
           const date = document.getElementById('new-holiday-date').value;
           const name = document.getElementById('new-holiday-name').value.trim();
           const type = document.getElementById('new-holiday-type').value;
@@ -7454,7 +7454,7 @@
           }
         },
         
-        loadHolidays: async function () {
+        async loadHolidays() {
           const list = document.getElementById('holiday-list');
           if (!list) return;
           
@@ -7540,7 +7540,7 @@
           }
         },
         
-        deleteHoliday: async function (id) {
+        async deleteHoliday(id) {
           if (!confirm('이 공휴일을 삭제하시겠습니까?')) {
             return;
           }
@@ -7559,7 +7559,7 @@
         },
         
         // 계약 만료 알림 체크
-        checkContractExpirations: async function () {
+        async checkContractExpirations() {
           try {
             let query = this.sb
               .from('employees')
@@ -7627,7 +7627,7 @@
         },
         
         // 데이터 탭용 계약 만료 체크
-        checkContractExpirationsInDataTab: async function () {
+        async checkContractExpirationsInDataTab() {
           try {
             const alertDays = parseInt(localStorage.getItem('contract_alert_days') || '30');
             
@@ -7722,7 +7722,7 @@
         },
         
         // 알림 기간 업데이트
-        updateAlertDays: function (days) {
+        updateAlertDays(days) {
           localStorage.setItem('contract_alert_days', days);
           const alertDisplay = document.getElementById('alert-days-display');
           if (alertDisplay) {
@@ -7732,7 +7732,7 @@
         },
         
         // Location Management
-        loadLocations: async function () {
+        async loadLocations() {
           const list = document.getElementById('location-list');
           list.innerHTML = '<tr><td colspan="4" class="text-center py-4"><div class="loader"></div></td></tr>';
           
@@ -7796,7 +7796,7 @@
           }
         },
         
-        showAddLocationModal: function () {
+        showAddLocationModal() {
           // 다른 모든 모달 숨기기
           ['employee-modal', 'edit-employee-modal', 'location-edit-modal', 'apartment-modal', 'image-modal'].forEach(id => {
             const m = document.getElementById(id);
@@ -7813,13 +7813,13 @@
           document.getElementById('new-location-status').value = 'active';
         },
         
-        closeLocationModal: function () {
+        closeLocationModal() {
           const modal = document.getElementById('location-modal');
           if (modal) modal.style.display = 'none';
         },
         
         // 구역명으로 배경 자동 선택
-        detectBackgroundFromName: function(name) {
+        detectBackgroundFromName(name) {
           const nameLower = name.toLowerCase().replace(/\s/g, '');
           
           // 골프장
@@ -7880,7 +7880,7 @@
           }
         },
         
-        addLocation: async function () {
+        async addLocation() {
           const name = document.getElementById('new-location-name').value.trim();
           const status = document.getElementById('new-location-status').value;
           
@@ -7916,7 +7916,7 @@
           }
         },
         
-        toggleLocationStatus: async function (id, currentStatus) {
+        async toggleLocationStatus(id, currentStatus) {
           const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
           
           try {
@@ -7933,7 +7933,7 @@
           }
         },
         
-        showEditLocationModal: function (loc) {
+        showEditLocationModal(loc) {
           // 다른 모든 모달 숨기기
           ['location-modal', 'employee-modal', 'edit-employee-modal', 'apartment-modal', 'image-modal'].forEach(id => {
             const m = document.getElementById(id);
@@ -7952,12 +7952,12 @@
           document.getElementById('edit-location-status').value = loc.status || 'active';
         },
         
-        closeEditLocationModal: function () {
+        closeEditLocationModal() {
           const modal = document.getElementById('location-edit-modal');
           if (modal) modal.style.display = 'none';
         },
         
-        updateLocation: async function () {
+        async updateLocation() {
           const id = document.getElementById('edit-location-id').value;
           const name = document.getElementById('edit-location-name').value.trim();
           const status = document.getElementById('edit-location-status').value;
@@ -7990,7 +7990,7 @@
           }
         },
         
-        deleteLocation: async function (id) {
+        async deleteLocation(id) {
           if (!confirm('구역을 삭제하시겠습니까?')) return;
           
           try {
@@ -8008,7 +8008,7 @@
         },
         
         // Apartment Management
-        loadApartmentInfo: async function () {
+        async loadApartmentInfo() {
           const container = document.getElementById('apartment-info');
           if (!this.currentApartment || !this.currentApartment) {
             container.innerHTML = '<div class="text-gray-500"><i class="fas fa-info-circle mr-2"></i>시설 정보가 없습니다.</div>';
@@ -8075,7 +8075,7 @@
           }
         },
         
-        showEditApartmentModal: async function () {
+        async showEditApartmentModal() {
           if (!this.currentApartment || !this.currentApartment) {
             alert('시설 정보가 없습니다.');
             return;
@@ -8123,12 +8123,12 @@
           }
         },
         
-        closeApartmentModal: function () {
+        closeApartmentModal() {
           const modal = document.getElementById('apartment-modal');
           if (modal) modal.style.display = 'none';
         },
         
-        openGoogleMapsForCoords: function () {
+        openGoogleMapsForCoords() {
           const apartmentName = document.getElementById('edit-apartment-name').value.trim();
           const apartmentAddress = document.getElementById('edit-apartment-address').value.trim();
           
@@ -8140,7 +8140,7 @@
           alert('📍 Google Maps에서 관리사무소를 찾아 우클릭 → "이 장소 정보" 클릭 후 좌표를 복사하세요!\n\n예시: 37.2157891, 127.0528374\n(첫 번째 숫자: 위도, 두 번째 숫자: 경도)');
         },
         
-        updateApartment: async function () {
+        async updateApartment() {
           const id = document.getElementById('edit-apartment-id').value;
           const name = document.getElementById('edit-apartment-name').value.trim();
           const address = document.getElementById('edit-apartment-address').value.trim();
@@ -8239,7 +8239,7 @@
         
         // ==================== 업무 일지 기능 ====================
         
-        setReportDateRange: function(range) {
+        setReportDateRange(range) {
           const today = new Date();
           const startInput = document.getElementById('report-start-date');
           const endInput = document.getElementById('report-end-date');
@@ -8271,7 +8271,7 @@
           this.loadWorkReport();
         },
         
-        loadWorkReport: async function() {
+        async loadWorkReport() {
           const startDate = document.getElementById('report-start-date').value;
           const endDate = document.getElementById('report-end-date').value;
           
@@ -8510,7 +8510,7 @@
           }
         },
         
-        loadComplaintData: async function(startDate, endDate) {
+        async loadComplaintData(startDate, endDate) {
           // 시설별 Google Sheets ID 사용 (없으면 기본값)
           console.log('🔍 민원 데이터 로드 시작:', {
             currentApartmentName: this.currentApartmentInfo?.name,
@@ -8662,7 +8662,7 @@
           }
         },
         
-        renderRecentComplaints: function(complaints) {
+        renderRecentComplaints(complaints) {
           const container = document.getElementById('recent-complaints-container');
           if (!container) return;
           
@@ -8709,7 +8709,7 @@
           });
         },
         
-        renderTaskCheckboxes: function(tasks) {
+        renderTaskCheckboxes(tasks) {
           const container = document.getElementById('tasks-checkbox-list');
           container.innerHTML = '';
           
@@ -8742,7 +8742,7 @@
           });
         },
         
-        updateReportPreviewFromSelection: function() {
+        updateReportPreviewFromSelection() {
           const checkboxes = document.querySelectorAll('#tasks-checkbox-list input[type="checkbox"]:checked');
           const selectedIndexes = Array.from(checkboxes).map(cb => parseInt(cb.dataset.taskIndex));
           
@@ -8761,7 +8761,7 @@
           this.updateReportPreview(startDate, endDate, selectedTasks);
         },
         
-        renderFacilityCheckboxes: function() {
+        renderFacilityCheckboxes() {
           const container = document.getElementById('facility-checks-container');
           if (!container) return;
           
@@ -8802,7 +8802,7 @@
           });
         },
         
-        getFacilityCheckStatus: function() {
+        getFacilityCheckStatus() {
           const statuses = [];
           
           // 모든 구역의 상태와 메모 수집
@@ -8825,7 +8825,7 @@
           return statuses;
         },
         
-        renderWorkReportItems: function(tasks) {
+        renderWorkReportItems(tasks) {
           const container = document.getElementById('report-work-items');
           if (!container) return; // 컨테이너가 없으면 리턴
           
@@ -8910,7 +8910,7 @@
           });
         },
         
-        generateWorkReportPDF: async function() {
+        async generateWorkReportPDF() {
           const startDate = document.getElementById('report-start-date').value;
           const endDate = document.getElementById('report-end-date').value;
           
@@ -9022,7 +9022,7 @@
           }
         },
         
-        createPDFHTML: function(startDate, endDate) {
+        createPDFHTML(startDate, endDate) {
           const apartmentName = this.currentApartment?.name || '전체';
           const totalTasks = document.getElementById('report-total-tasks').textContent;
           const totalEmployees = document.getElementById('report-total-employees').textContent;
@@ -9317,7 +9317,7 @@
           `;
         },
         
-        updateReportPreview: function(startDate, endDate, tasks) {
+        updateReportPreview(startDate, endDate, tasks) {
           const previewContainer = document.getElementById('report-preview');
           
           // 임시 숨겨진 컨테이너에 업무 항목 렌더링
@@ -9340,7 +9340,7 @@
           previewContainer.style.backgroundColor = '#ffffff';
         },
         
-        loadImageAsDataURL: function(url) {
+        loadImageAsDataURL(url) {
           return new Promise((resolve, reject) => {
             const img = new Image();
             img.crossOrigin = 'Anonymous';
@@ -9367,7 +9367,7 @@
       console.log('app.showAddLocationModal 타입:', typeof app.showAddLocationModal);
       
       // 💰 매출 관리 함수들
-      loadSales: async function() {
+      async loadSales() {
         if (!this.currentApartment) return;
         
         try {
@@ -9493,7 +9493,7 @@
         }
       };
       
-      showAddSalesModal: function() {
+      showAddSalesModal() {
         const now = new Date();
         document.getElementById('sales-modal-title').textContent = '매출 기록 추가';
         document.getElementById('edit-sales-id').value = '';
@@ -9506,7 +9506,7 @@
         document.getElementById('sales-modal').style.display = 'flex';
       };
       
-      editSales: async function(salesId) {
+      async editSales(salesId) {
         try {
           const { data: sale, error } = await this.sb
             .from('sales')
@@ -9531,7 +9531,7 @@
         }
       };
       
-      saveSales: async function() {
+      async saveSales() {
         if (!this.currentApartment) {
           alert('시설을 먼저 선택해주세요.');
           return;
@@ -9592,7 +9592,7 @@
         }
       };
       
-      deleteSales: async function(salesId, year, month) {
+      async deleteSales(salesId, year, month) {
         if (!confirm(`${year}년 ${month}월 매출 기록을 삭제하시겠습니까?`)) return;
         
         try {
@@ -9611,14 +9611,14 @@
         }
       };
       
-      closeSalesModal: function() {
+      closeSalesModal() {
         document.getElementById('sales-modal').style.display = 'none';
       };
 
       // ==================== 출퇴근 차단 시스템 함수 ====================
       
       // 차단된 직원 목록 새로고침
-      refreshBlockedList: async function() {
+      async refreshBlockedList() {
         if (!this.currentApartment) return;
         
         try {
@@ -9647,7 +9647,7 @@
       };
       
       // 오늘 퇴근 미기록 직원 새로고침
-      refreshIncompleteTodayList: async function() {
+      async refreshIncompleteTodayList() {
         if (!this.currentApartment) return;
         
         const currentHour = new Date().getHours();
@@ -9685,7 +9685,7 @@
       };
       
       // 차단된 직원 목록 모달 표시
-      showBlockedEmployeesList: async function() {
+      async showBlockedEmployeesList() {
         if (!this.currentApartment) return;
         
         const modal = document.getElementById('blocked-employees-modal');
@@ -9773,12 +9773,12 @@
         }
       };
       
-      closeBlockedEmployeesModal: function() {
+      closeBlockedEmployeesModal() {
         document.getElementById('blocked-employees-modal').style.display = 'none';
       };
       
       // 오늘 미완료 목록 모달 표시
-      showIncompleteTodayList: async function() {
+      async showIncompleteTodayList() {
         if (!this.currentApartment) return;
         
         const modal = document.getElementById('incomplete-today-modal');
@@ -9826,12 +9826,12 @@
         }
       };
       
-      closeIncompleteTodayModal: function() {
+      closeIncompleteTodayModal() {
         document.getElementById('incomplete-today-modal').style.display = 'none';
       };
       
       // 퇴근 시간 입력 모달
-      showCheckOutInputModal: function(employeeId, employeeName, incompleteRecords) {
+      showCheckOutInputModal(employeeId, employeeName, incompleteRecords) {
         const modal = document.getElementById('checkout-input-modal');
         const container = document.getElementById('checkout-forms-container');
         document.getElementById('modal-employee-name').textContent = employeeName;
@@ -9876,12 +9876,12 @@
         modal.style.display = 'flex';
       };
       
-      closeCheckOutModal: function() {
+      closeCheckOutModal() {
         document.getElementById('checkout-input-modal').style.display = 'none';
       };
       
       // 모든 퇴근 시간 저장
-      saveAllCheckOuts: async function() {
+      async saveAllCheckOuts() {
         if (!this.currentEditingEmployee) return;
         
         const employeeId = this.currentEditingEmployee.id;
@@ -9978,18 +9978,18 @@
       };
       
       // 직원에게 연락
-      notifyEmployeesByCall: function() {
+      notifyEmployeesByCall() {
         alert('💡 미완료 직원에게 직접 전화하여 퇴근 체크를 요청해주세요.');
       };
       
-      notifyEmployeeByPhone: function(employeeName) {
+      notifyEmployeeByPhone(employeeName) {
         alert(`💡 ${employeeName}님에게 전화하여 퇴근 체크를 요청해주세요.`);
       };
       
       // ==================== 구매 요청 시스템 ====================
       
       // 구매 요청 대시보드 로드
-      loadPurchaseDashboard: async function() {
+      async loadPurchaseDashboard() {
         console.log('📊 loadPurchaseDashboard 시작');
         try {
           const aptId = this.currentApartment;
@@ -10035,7 +10035,7 @@
       };
       
       // 구매 요청 목록 로드
-      loadPurchases: async function() {
+      async loadPurchases() {
         console.log('📦 loadPurchases 시작');
         try {
           const aptId = this.currentApartment;
@@ -10062,7 +10062,7 @@
       };
       
       // 구매 요청 목록 렌더링
-      renderPurchaseList: function(purchases) {
+      renderPurchaseList(purchases) {
         console.log('🎨 renderPurchaseList 시작, purchases:', purchases?.length || 0);
         const tbody = document.getElementById('purchase-list');
         const noData = document.getElementById('no-purchase-data');
@@ -10123,7 +10123,7 @@
       };
       
       // 구매 요청 필터링
-      filterPurchases: function() {
+      filterPurchases() {
         const status = document.getElementById('filter-status').value;
         const startDate = document.getElementById('filter-start-date').value;
         const endDate = document.getElementById('filter-end-date').value;
@@ -10154,7 +10154,7 @@
       };
       
       // 새 구매 요청 모달 열기
-      openNewPurchaseModal: function() {
+      openNewPurchaseModal() {
         document.getElementById('purchase-requester-name').value = this.currentAdmin.name || '관리자';
         document.getElementById('purchase-reason').value = '';
         document.getElementById('purchase-items-container').innerHTML = '';
@@ -10167,12 +10167,12 @@
       };
       
       // 새 구매 요청 모달 닫기
-      closeNewPurchaseModal: function() {
+      closeNewPurchaseModal() {
         document.getElementById('new-purchase-modal').classList.add('hidden');
       };
       
       // 물품 항목 추가
-      addPurchaseItem: async function() {
+      async addPurchaseItem() {
         const itemId = ++this.purchaseItemCounter;
         const container = document.getElementById('purchase-items-container');
         
@@ -10241,7 +10241,7 @@
       };
       
       // 물품 항목 제거
-      removePurchaseItem: function(itemId) {
+      removePurchaseItem(itemId) {
         const item = document.querySelector(`[data-item-id="${itemId}"]`);
         if (item) {
           item.remove();
@@ -10250,7 +10250,7 @@
       };
       
       // 총 금액 계산
-      calculateTotal: function() {
+      calculateTotal() {
         let total = 0;
         document.querySelectorAll('#purchase-items-container > div').forEach(item => {
           const quantity = parseFloat(item.querySelector('.item-quantity').value) || 0;
@@ -10262,7 +10262,7 @@
       };
       
       // 구매 요청 제출
-      submitPurchaseRequest: async function() {
+      async submitPurchaseRequest() {
         const requesterName = document.getElementById('purchase-requester-name').value;
         const requesterRole = document.getElementById('purchase-requester-role').value;
         const reason = document.getElementById('purchase-reason').value.trim();
@@ -10371,7 +10371,7 @@
       };
       
       // 구매 요청 상세 보기
-      showPurchaseDetail: async function(purchaseId) {
+      async showPurchaseDetail(purchaseId) {
         try {
           const { data, error } = await this.sb
             .from('purchases')
@@ -10644,7 +10644,7 @@
       };
       
       // 구매 요청 상세 모달 닫기
-      closePurchaseDetailModal: function() {
+      closePurchaseDetailModal() {
         document.getElementById('purchase-detail-modal').classList.add('hidden');
       };
       
@@ -10653,7 +10653,7 @@
       let currentPurchaseIdForPhoto = null;
       
       // 사진 업로드 모달 열기
-      openPhotoUploadModal: function(purchaseId) {
+      openPhotoUploadModal(purchaseId) {
         currentPurchaseIdForPhoto = purchaseId;
         document.getElementById('photo-upload-modal').classList.remove('hidden');
         document.getElementById('inspection-photo-input').value = '';
@@ -10684,13 +10684,13 @@
       };
       
       // 사진 업로드 모달 닫기
-      closePhotoUploadModal: function() {
+      closePhotoUploadModal() {
         document.getElementById('photo-upload-modal').classList.add('hidden');
         currentPurchaseIdForPhoto = null;
       };
       
       // 사진 미리보기
-      previewPhotos: function(event) {
+      previewPhotos(event) {
         const files = event.target.files;
         const container = document.getElementById('photo-preview-container');
         const notesContainer = document.getElementById('photo-notes-container');
@@ -10783,7 +10783,7 @@
       };
       
       // 검수 사진 업로드 (모든 시나리오 처리)
-      uploadInspectionPhotos: async function() {
+      async uploadInspectionPhotos() {
         const uploadBtn = document.querySelector('#photo-upload-modal button[onclick*="uploadInspectionPhotos"]');
         
         try {
@@ -11063,7 +11063,7 @@
       };
       
       // 검수 사진 삭제
-      deleteInspectionPhoto: async function(purchaseId, photoId) {
+      async deleteInspectionPhoto(purchaseId, photoId) {
         if (!confirm('이 사진을 삭제하시겠습니까?')) return;
         
         try {
@@ -11143,7 +11143,7 @@
       // ==================== 구매 요청 추출 (Excel/PDF) ====================
       
       // Excel 추출
-      exportPurchaseToExcel: async function(purchaseId) {
+      async exportPurchaseToExcel(purchaseId) {
         try {
           if (!this.currentPurchase || this.currentPurchase.id !== purchaseId) {
             alert('구매 요청 데이터를 먼저 로드해주세요');
@@ -11246,7 +11246,7 @@
       };
       
       // PDF 추출 (html2canvas 방식 - Paperlogy 폰트 적용, 이미지-물품 매칭)
-      exportPurchaseToPDF: async function(purchaseId) {
+      async exportPurchaseToPDF(purchaseId) {
         try {
           if (!this.currentPurchase || this.currentPurchase.id !== purchaseId) {
             alert('구매 요청 데이터를 먼저 로드해주세요');
@@ -11362,7 +11362,7 @@
       };
       
       // 구매 요청 PDF용 HTML 생성
-      createPurchasePDFHTML: function(data, statusText) {
+      createPurchasePDFHTML(data, statusText) {
         // 물품-사진 매칭된 아이템들 생성 (2열 그리드)
         let itemsHTML = '';
         (data.purchase_photos || []).forEach((photo, idx) => {
@@ -11502,7 +11502,7 @@
       };
       
       // 이미지를 Base64로 변환하는 헬퍼 함수
-      loadImageAsBase64: function(url) {
+      loadImageAsBase64(url) {
         return new Promise((resolve, reject) => {
           const img = new Image();
           img.crossOrigin = 'Anonymous';
@@ -11534,7 +11534,7 @@
       // ==================== 특이사항 상세 모달 ====================
       
       // 특이사항 상세 모달 열기
-      showAttendanceNoteDetail: function(attendanceRecord, note) {
+      showAttendanceNoteDetail(attendanceRecord, note) {
         const modal = document.getElementById('attendance-note-detail-modal');
         const content = document.getElementById('attendance-note-detail-content');
         
@@ -11620,14 +11620,14 @@
       };
       
       // 특이사항 상세 모달 닫기
-      closeAttendanceNoteDetailModal: function() {
+      closeAttendanceNoteDetailModal() {
         document.getElementById('attendance-note-detail-modal').classList.add('hidden');
       };
       
       // ==================== 구매 요청 ====================
       
       // 구매 요청 승인
-      approvePurchase: async function(purchaseId) {
+      async approvePurchase(purchaseId) {
         if (!confirm('이 구매 요청을 승인하시겠습니까?')) return;
         
         try {
@@ -11653,7 +11653,7 @@
       };
       
       // 구매 요청 반려
-      rejectPurchase: async function(purchaseId) {
+      async rejectPurchase(purchaseId) {
         const reason = prompt('반려 사유를 입력하세요:');
         if (!reason) return;
         
@@ -11683,25 +11683,25 @@
       // 배송 완료 처리
       
       // 구매 요청 목록 새로고침
-      refreshPurchaseList: function() {
+      refreshPurchaseList() {
         this.loadPurchases();
         this.loadPurchaseDashboard();
         alert('새로고침 완료');
       };
       
       // QR 코드 관리 모달 열기
-      showQRCodeManagement: async function() {
+      async showQRCodeManagement() {
         document.getElementById('qr-management-modal').classList.remove('hidden');
         await this.loadPurchaseQRCodes();
       };
       
       // QR 코드 관리 모달 닫기
-      closeQRManagementModal: function() {
+      closeQRManagementModal() {
         document.getElementById('qr-management-modal').classList.add('hidden');
       };
       
       // 구매 QR 코드 목록 로드
-      loadPurchaseQRCodes: async function() {
+      async loadPurchaseQRCodes() {
         try {
           const { data, error } = await this.sb
             .from('purchase_qr_requests')
@@ -11745,7 +11745,7 @@
       };
       
       // 구매 QR 코드 생성
-      generatePurchaseQR: async function() {
+      async generatePurchaseQR() {
         const locationName = document.getElementById('qr-location-name').value.trim();
         
         if (!locationName) {
@@ -11777,7 +11777,7 @@
       };
       
       // QR 코드 상태 토글
-      toggleQRStatus: async function(qrId, isActive) {
+      async toggleQRStatus(qrId, isActive) {
         try {
           const { error } = await this.sb
             .from('purchase_qr_requests')
@@ -11795,7 +11795,7 @@
       };
       
       // QR 코드 다운로드
-      downloadQRCode: function(qrCode, locationName) {
+      downloadQRCode(qrCode, locationName) {
         // QR 코드 이미지 생성 및 다운로드
         const qrUrl = `${window.location.origin}/purchase-request.html?qr=${qrCode}`;
         
@@ -11835,7 +11835,7 @@
       };
       
       // 서류 목록 로드
-      loadDocuments: async function() {
+      async loadDocuments() {
         try {
           console.log('📄 서류 목록 로드 중...');
           
@@ -11873,7 +11873,7 @@
       };
       
       // 서류 렌더링
-      renderDocuments: function() {
+      renderDocuments() {
         const container = document.getElementById('documents-list');
         const loading = document.getElementById('docs-loading');
         const empty = document.getElementById('docs-empty');
@@ -11958,7 +11958,7 @@
       };
       
       // 카테고리별 색상 클래스
-      getCategoryColorClass: function(color) {
+      getCategoryColorClass(color) {
         const colorMap = {
           blue: 'from-blue-500 to-blue-600',
           green: 'from-green-500 to-green-600',
@@ -11971,7 +11971,7 @@
       };
       
       // 카테고리 로드
-      loadDocumentCategories: async function() {
+      async loadDocumentCategories() {
         try {
           const { data, error } = await this.sb
             .from('document_categories')
@@ -12027,7 +12027,7 @@
       };
       
       // 통계 로드
-      loadDocumentStats: async function() {
+      async loadDocumentStats() {
         try {
           // 전체 서류 수
           const totalCount = this.documents.list.length;
@@ -12056,7 +12056,7 @@
       };
       
       // 서류 검색
-      searchDocuments: function() {
+      searchDocuments() {
         const query = document.getElementById('docs-search').value.toLowerCase();
         
         if (!query) {
@@ -12074,7 +12074,7 @@
       };
       
       // 서류 필터링
-      filterDocuments: function() {
+      filterDocuments() {
         const category = document.getElementById('docs-filter-category').value;
         const sort = document.getElementById('docs-filter-sort').value;
         
@@ -12106,7 +12106,7 @@
       };
       
       // 서류 새로고침
-      refreshDocumentList: async function() {
+      async refreshDocumentList() {
         document.getElementById('docs-loading').classList.remove('hidden');
         document.getElementById('documents-list').innerHTML = '';
         await this.loadDocuments();
@@ -12114,7 +12114,7 @@
       };
       
       // 업로드 모달 열기
-      openDocumentUploadModal: function() {
+      openDocumentUploadModal() {
         const modal = document.getElementById('document-upload-modal');
         modal.classList.remove('hidden');
         modal.classList.add('flex');
@@ -12136,14 +12136,14 @@
       };
       
       // 업로드 모달 닫기
-      closeDocumentUploadModal: function() {
+      closeDocumentUploadModal() {
         const modal = document.getElementById('document-upload-modal');
         modal.classList.add('hidden');
         modal.classList.remove('flex');
       };
       
       // 버전 필드 토글
-      toggleVersionFields: function() {
+      toggleVersionFields() {
         const isChecked = document.getElementById('doc-is-new-version').checked;
         const fields = document.getElementById('version-fields');
         
@@ -12161,21 +12161,21 @@
       };
       
       // 파일 드래그 오버
-      handleDocDragOver: function(e) {
+      handleDocDragOver(e) {
         e.preventDefault();
         e.stopPropagation();
         document.getElementById('doc-drop-zone').classList.add('border-blue-500', 'bg-blue-50');
       };
       
       // 파일 드래그 떠남
-      handleDocDragLeave: function(e) {
+      handleDocDragLeave(e) {
         e.preventDefault();
         e.stopPropagation();
         document.getElementById('doc-drop-zone').classList.remove('border-blue-500', 'bg-blue-50');
       };
       
       // 파일 드롭
-      handleDocDrop: function(e) {
+      handleDocDrop(e) {
         e.preventDefault();
         e.stopPropagation();
         document.getElementById('doc-drop-zone').classList.remove('border-blue-500', 'bg-blue-50');
@@ -12188,7 +12188,7 @@
       };
       
       // 파일 선택
-      handleDocFileSelect: function(e) {
+      handleDocFileSelect(e) {
         const files = e.target.files;
         if (files.length > 0) {
           this.documents.currentFile = files[0];
@@ -12197,7 +12197,7 @@
       };
       
       // 파일 미리보기 표시
-      showDocFilePreview: function() {
+      showDocFilePreview() {
         const file = this.documents.currentFile;
         if (!file) return;
         
@@ -12245,14 +12245,14 @@
       };
       
       // 파일 선택 초기화
-      clearDocFile: function() {
+      clearDocFile() {
         this.documents.currentFile = null;
         document.getElementById('doc-file-input').value = '';
         document.getElementById('doc-file-preview').classList.add('hidden');
       };
       
       // 서류 업로드 제출
-      submitDocumentUpload: async function(event) {
+      async submitDocumentUpload(event) {
         try {
           // 버튼 가져오기
           const btn = event ? event.target : document.querySelector('#document-upload-modal button[type="button"]:last-of-type');
@@ -12365,7 +12365,7 @@
       };
       
       // 서류 다운로드
-      downloadDocument: async function(documentId) {
+      async downloadDocument(documentId) {
         try {
           const doc = this.documents.list.find(d => d.id === documentId);
           if (!doc) return;
@@ -12393,7 +12393,7 @@
       };
       
       // 서류 상세 보기
-      showDocumentDetail: async function(documentId) {
+      async showDocumentDetail(documentId) {
         try {
           const doc = this.documents.list.find(d => d.id === documentId);
           if (!doc) return;
@@ -12508,14 +12508,14 @@
       };
       
       // 서류 상세 모달 닫기
-      closeDocumentDetailModal: function() {
+      closeDocumentDetailModal() {
         const modal = document.getElementById('document-detail-modal');
         modal.classList.add('hidden');
         modal.classList.remove('flex');
       };
       
       // 서류 상세 모달 표시
-      showDocumentDetail: async function(documentId) {
+      async showDocumentDetail(documentId) {
         try {
           const doc = this.documents.list.find(d => d.id === documentId);
           if (!doc) {
@@ -12585,14 +12585,14 @@
       };
       
       // 서류 상세 모달 닫기
-      closeDocumentDetailModal: function() {
+      closeDocumentDetailModal() {
         const modal = document.getElementById('document-detail-modal');
         modal.classList.add('hidden');
         modal.classList.remove('flex');
       };
       
       // 파일 크기 포맷
-      formatFileSize: function(bytes) {
+      formatFileSize(bytes) {
         if (!bytes) return '0 Bytes';
         const k = 1024;
         const sizes = ['Bytes', 'KB', 'MB', 'GB'];
@@ -12601,12 +12601,12 @@
       };
       
       // 서류 수정
-      editDocument: function(documentId) {
+      editDocument(documentId) {
         alert('서류 수정 기능은 다음 업데이트에서 제공됩니다.');
       };
       
       // 마스터 비밀번호 확인
-      verifyMasterPassword: function() {
+      verifyMasterPassword() {
         const password = prompt('🔐 총괄 관리자 비밀번호를 입력하세요:\n\n※ 문서 삭제는 총괄 관리자 권한이 필요합니다');
         
         if (!password) {
@@ -12624,7 +12624,7 @@
       };
       
       // 서류 삭제
-      deleteDocument: async function(documentId) {
+      async deleteDocument(documentId) {
         // 1단계: 삭제 의사 확인
         if (!confirm('정말로 이 서류를 삭제하시겠습니까?\n삭제된 서류는 복구할 수 없습니다.')) {
           return;
@@ -12661,7 +12661,7 @@
       };
       
       // 카테고리 관리 모달 열기
-      openCategoryManageModal: function() {
+      openCategoryManageModal() {
         const modal = document.getElementById('category-manage-modal');
         modal.classList.remove('hidden');
         modal.classList.add('flex');
@@ -12669,14 +12669,14 @@
       };
       
       // 카테고리 관리 모달 닫기
-      closeCategoryManageModal: function() {
+      closeCategoryManageModal() {
         const modal = document.getElementById('category-manage-modal');
         modal.classList.add('hidden');
         modal.classList.remove('flex');
       };
       
       // 카테고리 목록 렌더링
-      renderCategoryList: function() {
+      renderCategoryList() {
         const container = document.getElementById('category-list');
         
         if (!this.documents.categories || this.documents.categories.length === 0) {
@@ -12750,7 +12750,7 @@
       };
       
       // 카테고리 색상
-      getCategoryColor: function(color) {
+      getCategoryColor(color) {
         const colorMap = {
           blue: '#3b82f6',
           green: '#10b981',
@@ -12770,7 +12770,7 @@
       // Phase 5: 카테고리 CRUD 완성
       
       // 카테고리 폼 토글
-      toggleCategoryForm: function() {
+      toggleCategoryForm() {
         const formContainer = document.getElementById('category-form-container');
         const isHidden = formContainer.classList.contains('hidden');
         
@@ -12788,7 +12788,7 @@
       };
       
       // 카테고리 폼 초기화
-      resetCategoryForm: function() {
+      resetCategoryForm() {
         document.getElementById('edit-category-id').value = '';
         document.getElementById('category-name').value = '';
         document.getElementById('category-description').value = '';
@@ -12798,7 +12798,7 @@
       };
       
       // 카테고리 폼 취소
-      cancelCategoryForm: function() {
+      cancelCategoryForm() {
         const formContainer = document.getElementById('category-form-container');
         formContainer.classList.add('hidden');
         document.getElementById('new-category-btn').innerHTML = '<i class="fas fa-plus mr-2"></i>새 카테고리 추가';
@@ -12806,7 +12806,7 @@
       };
       
       // 카테고리 폼 제출
-      submitCategoryForm: async function(event) {
+      async submitCategoryForm(event) {
         event.preventDefault();
         
         const editId = document.getElementById('edit-category-id').value;
@@ -12864,7 +12864,7 @@
       };
       
       // 카테고리 수정
-      editCategory: function(categoryId) {
+      editCategory(categoryId) {
         const category = this.documents.categories.find(cat => cat.id === categoryId);
         if (!category) return;
         
@@ -12886,7 +12886,7 @@
       };
       
       // 카테고리 삭제
-      deleteCategory: async function(categoryId, categoryName, docCount) {
+      async deleteCategory(categoryId, categoryName, docCount) {
         if (docCount > 0) {
           alert(`이 카테고리에 ${docCount}건의 서류가 있습니다.\n먼저 서류를 다른 카테고리로 이동하거나 삭제한 후 카테고리를 삭제할 수 있습니다.`);
           return;
@@ -12927,7 +12927,7 @@
       });
       
       // Phase 9: 즐겨찾기 토글
-      toggleFavorite: async function(documentId) {
+      async toggleFavorite(documentId) {
         try {
           // 즐겨찾기 상태 확인
           const { data: existing } = await this.sb
@@ -12963,7 +12963,7 @@
       };
       
       // Phase 10: 버전 히스토리 조회
-      showVersionHistory: async function(documentId) {
+      async showVersionHistory(documentId) {
         try {
           const { data, error } = await this.sb
             .from('document_versions')
@@ -12982,7 +12982,7 @@
       };
       
       // Phase 13: 읽음 표시
-      markAsRead: async function(documentId) {
+      async markAsRead(documentId) {
         try {
           await this.sb
             .from('document_views')
@@ -13005,7 +13005,7 @@
       };
       
       // Phase 14: 알림 생성
-      createDocumentNotification: async function(documentId, type, title, message) {
+      async createDocumentNotification(documentId, type, title, message) {
         try {
           // 모든 직원에게 알림 발송 (실제로는 권한에 따라 필터링)
           const { data: employees } = await this.sb
@@ -13038,7 +13038,7 @@
       };
       
       // Phase 15: 인기 서류 조회
-      loadPopularDocuments: async function() {
+      async loadPopularDocuments() {
         try {
           const { data, error } = await this.sb
             .from('document_templates_popular')
@@ -13057,7 +13057,7 @@
       };
       
       // Phase 16: 권한 확인
-      checkDocumentPermission: function(document) {
+      checkDocumentPermission(document) {
         // 관리자는 모든 권한
         if (this.currentEmployee?.role === 'admin') {
           return { canView: true, canEdit: true, canDelete: true };
@@ -13073,12 +13073,12 @@
       };
       
       // Phase 17: 모바일 감지
-      isMobile: function() {
+      isMobile() {
         return window.innerWidth < 768;
       };
       
       // Phase 18: 시스템 상태 체크
-      checkSystemHealth: async function() {
+      async checkSystemHealth() {
         try {
           console.log('🏥 시스템 상태 체크 중...');
           
@@ -13116,7 +13116,7 @@
       // ==================== 📊 정산서 관리 함수 ====================
       
       // 현재 정산서 상태 로드
-      loadCurrentSettlement: async function() {
+      async loadCurrentSettlement() {
         console.log('📊 이번 달 정산서 로드');
         
         try {
@@ -13161,7 +13161,7 @@
       };
       
       // 정산서 UI 업데이트
-      updateSettlementUI: function(settlement) {
+      updateSettlementUI(settlement) {
         const statusBadge = document.getElementById('settlement-current-badge');
         const feedbackDiv = document.getElementById('settlement-feedback');
         const submitBtn = document.getElementById('btn-submit-settlement');
@@ -13222,7 +13222,7 @@
       };
       
       // 자동 집계 통계 계산
-      calculateSettlementStats: async function(yearMonth) {
+      async calculateSettlementStats(yearMonth) {
         console.log('📊 자동 집계 시작:', yearMonth);
         
         try {
@@ -13283,7 +13283,7 @@
       };
       
       // 대시보드 통계 업데이트
-      updateDashboardStats: async function() {
+      async updateDashboardStats() {
         try {
           // 제출 건수
           const { data: settlements, error } = await this.sb
@@ -13314,7 +13314,7 @@
       };
       
       // 월간 정산서 생성 (DB 저장)
-      generateMonthlySettlement: async function() {
+      async generateMonthlySettlement() {
         console.log('📊 월간 정산서 생성 시작');
         
         try {
@@ -13445,7 +13445,7 @@
       };
       
       // 정산서 초안 저장
-      saveSettlementDraft: async function(yearMonth) {
+      async saveSettlementDraft(yearMonth) {
         try {
           const [year, month] = yearMonth.split('-');
           const startDate = `${year}-${month}-01`;
@@ -13481,7 +13481,7 @@
       };
       
       // 최종 통계 계산
-      calculateFinalStats: async function(yearMonth) {
+      async calculateFinalStats(yearMonth) {
         const [year, month] = yearMonth.split('-');
         const startDate = `${year}-${month}-01`;
         const endDate = new Date(year, parseInt(month), 0).toISOString().split('T')[0];
@@ -13519,7 +13519,7 @@
       };
       
       // 본사에 제출
-      submitSettlementToHQ: async function() {
+      async submitSettlementToHQ() {
         if (!this.currentSettlementData) {
           this.showToast('⚠️ 먼저 정산서를 생성해주세요', 'warning');
           return;
@@ -13554,7 +13554,7 @@
       };
       
       // 정산서 수정 후 재제출
-      reviseSettlement: async function() {
+      async reviseSettlement() {
         if (!this.currentSettlementData) return;
         
         try {
@@ -13575,7 +13575,7 @@
       };
       
       // 제출 이력 로드
-      loadSettlementHistory: async function() {
+      async loadSettlementHistory() {
         console.log('📚 제출 이력 로드');
         
         const loadingEl = document.getElementById('settlement-history-loading');
@@ -13647,7 +13647,7 @@
       app.selectedSettlements = [];
       
       // 체크박스 상태 변경 핸들러
-      toggleSettlementSelection: function(settlementId, checked) {
+      toggleSettlementSelection(settlementId, checked) {
         if (checked) {
           if (!this.selectedSettlements.includes(settlementId)) {
             this.selectedSettlements.push(settlementId);
@@ -13661,7 +13661,7 @@
       };
       
       // 제출 버튼 상태 업데이트
-      updateSubmitButtonState: function() {
+      updateSubmitButtonState() {
         const btn = document.getElementById('btn-submit-selected');
         const countSpan = document.getElementById('selected-count');
         
@@ -13672,7 +13672,7 @@
       };
       
       // 선택된 정산서 제출
-      submitSelectedSettlements: async function() {
+      async submitSelectedSettlements() {
         if (this.selectedSettlements.length === 0) {
           this.showToast('⚠️ 제출할 정산서를 선택해주세요', 'warning');
           return;
@@ -13715,7 +13715,7 @@
       };
       
       // 이력 카드 생성
-      createSettlementHistoryCard: function(settlement) {
+      createSettlementHistoryCard(settlement) {
         const div = document.createElement('div');
         div.className = 'bg-white border rounded-xl p-4 hover:shadow-md transition';
         
@@ -13810,7 +13810,7 @@
       };
       
       // 상세보기
-      viewSettlementDetail: async function(settlementId) {
+      async viewSettlementDetail(settlementId) {
         try {
           this.showToast('정산서를 불러오는 중...', 'info');
           
@@ -13841,7 +13841,7 @@
       };
       
       // 정산서 상세 모달 표시
-      showSettlementDetailModal: function(settlement) {
+      showSettlementDetailModal(settlement) {
         const modal = document.getElementById('settlement-detail-modal');
         if (!modal) return;
         
@@ -13888,7 +13888,7 @@
       };
       
       // 직원 상세 테이블 렌더링
-      renderEmployeeDetailTable: function(employeeDetails) {
+      renderEmployeeDetailTable(employeeDetails) {
         const tbody = document.getElementById('settlement-detail-employee-list');
         if (!tbody) return;
         
@@ -14025,7 +14025,7 @@
       };
       
       // 직원 필드 업데이트
-      updateEmployeeField: function(index, field, value) {
+      updateEmployeeField(index, field, value) {
         if (!this.currentSettlementDetail || !this.currentSettlementDetail.employee_details) return;
         
         const numValue = parseFloat(value) || 0;
@@ -14056,7 +14056,7 @@
       };
       
       // 정산서 상세 저장
-      saveSettlementDetails: async function() {
+      async saveSettlementDetails() {
         if (!this.currentSettlementDetail) {
           this.showToast('저장할 정산서가 없습니다', 'error');
           return;
@@ -14090,7 +14090,7 @@
       };
       
       // 정산서 상세 모달 닫기
-      closeSettlementDetailModal: function() {
+      closeSettlementDetailModal() {
         const modal = document.getElementById('settlement-detail-modal');
         if (modal) {
           modal.style.display = 'none';
@@ -14099,14 +14099,14 @@
       };
       
       // 필터 적용
-      filterSettlementHistory: function() {
+      filterSettlementHistory() {
         this.loadSettlementHistory();
       };
       
       // ==================== 급여명세서 관리 함수 ====================
       
       // 시설 선택 시 직원 로드
-      loadEmployeesForPayroll: async function() {
+      async loadEmployeesForPayroll() {
         const apartmentSelect = document.getElementById('payroll-apartment-select');
         const employeeSelect = document.getElementById('payroll-employee-select');
         
@@ -14150,7 +14150,7 @@
       };
       
       // PDF 업로드
-      uploadPayrollStatement: async function() {
+      async uploadPayrollStatement() {
         const apartmentSelect = document.getElementById('payroll-apartment-select');
         const employeeSelect = document.getElementById('payroll-employee-select');
         const yearMonthInput = document.getElementById('payroll-year-month');
@@ -14236,7 +14236,7 @@
       };
       
       // 급여명세서 목록 로드
-      loadPayrollStatements: async function() {
+      async loadPayrollStatements() {
         const loadingEl = document.getElementById('payroll-loading');
         const listEl = document.getElementById('payroll-list');
         const emptyEl = document.getElementById('payroll-empty');
@@ -14296,7 +14296,7 @@
       };
       
       // 급여명세서 카드 생성
-      createPayrollStatementCard: function(statement) {
+      createPayrollStatementCard(statement) {
         const div = document.createElement('div');
         div.className = 'bg-white border rounded-xl p-4 hover:shadow-md transition';
         
@@ -14346,7 +14346,7 @@
       };
       
       // 급여명세서 삭제
-      deletePayrollStatement: async function(statementId) {
+      async deletePayrollStatement(statementId) {
         if (!confirm('급여명세서를 삭제하시겠습니까?')) return;
         
         try {
@@ -14368,12 +14368,12 @@
       };
       
       // 필터 적용
-      filterPayrollStatements: function() {
+      filterPayrollStatements() {
         this.loadPayrollStatements();
       };
       
       // 통계 업데이트
-      updatePayrollStats: async function() {
+      async updatePayrollStats() {
         try {
           const now = new Date();
           const currentYearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
@@ -14431,7 +14431,7 @@
       app.currentAttendanceSheetData = null;
       
       // 이번 달로 설정
-      setCurrentMonth: function() {
+      setCurrentMonth() {
         const now = new Date();
         const year = now.getFullYear();
         const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -14443,7 +14443,7 @@
       };
       
       // 근태표 생성
-      generateAttendanceSheet: async function() {
+      async generateAttendanceSheet() {
         const startDate = document.getElementById('attendance-sheet-start-date')?.value;
         const endDate = document.getElementById('attendance-sheet-end-date')?.value;
         
@@ -14683,7 +14683,7 @@
       };
       
       // 근태표 렌더링
-      renderAttendanceSheet: function(dates, attendanceData) {
+      renderAttendanceSheet(dates, attendanceData) {
         const container = document.getElementById('attendance-sheet-container');
         if (!container) return;
         
@@ -14762,7 +14762,7 @@
       };
       
       // Excel 내보내기
-      exportAttendanceSheetToExcel: function() {
+      exportAttendanceSheetToExcel() {
         if (!this.currentAttendanceSheetData) {
           this.showToast('먼저 근태표를 생성하세요', 'warning');
           return;
@@ -14828,7 +14828,7 @@
       };
       
       // PDF로 근태표 내보내기 (관리자 페이지 스타일)
-      exportAttendanceSheetToPDF: async function() {
+      async exportAttendanceSheetToPDF() {
         console.log('📄 PDF 근태표 내보내기 시작 (관리자 페이지 스타일)');
         
         try {
@@ -14994,7 +14994,7 @@
               fillColor: [252, 252, 252]
             },
             // 🎨 상태별 셀 배경색 적용
-            didParseCell: function(data) {
+            didParseCell(data) {
               // 날짜 컬럼만 색상 적용
               if (data.section === 'body' && data.column.index >= 2 && data.column.index < 2 + dates.length) {
                 const cellText = data.cell.raw;
@@ -15061,7 +15061,7 @@
       // ==================== 민원 관리 함수 ====================
       
       // 민원 목록 로드
-      loadComplaintsList: async function() {
+      async loadComplaintsList() {
         console.log('📋 민원 목록 로드 시작');
         
         try {
@@ -15181,7 +15181,7 @@
       };
       
       // 통계 업데이트
-      updateComplaintsStats: function(complaints) {
+      updateComplaintsStats(complaints) {
         const total = complaints.length;
         const completed = complaints.filter(c => c.status === '처리완료').length;
         const pending = complaints.filter(c => c.status === '처리중').length;
@@ -15201,7 +15201,7 @@
       };
       
       // 테이블 렌더링
-      renderComplaintsTable: function(complaints) {
+      renderComplaintsTable(complaints) {
         const tbody = document.getElementById('complaints-list-body');
         if (!tbody) return;
         
@@ -15250,7 +15250,7 @@
       };
       
       // 필터 적용
-      filterComplaintsList: function() {
+      filterComplaintsList() {
         console.log('🔍 민원 필터링 적용 중');
         
         // 필터 값 가져오기
@@ -15340,7 +15340,7 @@
       };
       
       // 필터 옵션 자동 생성
-      populateComplaintFilters: function() {
+      populateComplaintFilters() {
         if (!this.allComplaints || this.allComplaints.length === 0) return;
         
         // 고유한 상태 값 추출
@@ -15375,7 +15375,7 @@
       };
       
       // 필터 초기화
-      resetComplaintsFilter: function() {
+      resetComplaintsFilter() {
         document.getElementById('complaint-filter-month').value = '';
         document.getElementById('complaint-filter-status').value = '';
         this.filterComplaintsList();
@@ -15471,7 +15471,7 @@
         }
       */
       
-      createPayrollAdminCard: function(payroll) {
+      createPayrollAdminCard(payroll) {
         const div = document.createElement('div');
         div.className = 'bg-white border-2 border-gray-100 rounded-xl p-4 hover:border-green-500 transition shadow-sm';
         
@@ -15555,7 +15555,7 @@
         return div;
       };
       
-      loadPayrollStatistics: async function() {
+      async loadPayrollStatistics() {
         console.log('📊 급여명세서 통계 로드');
         
         try {
@@ -15615,7 +15615,7 @@
         }
       };
       
-      viewPayrollAdmin: function(payrollId, fileUrl) {
+      viewPayrollAdmin(payrollId, fileUrl) {
         if (fileUrl) {
           window.open(fileUrl, '_blank');
           // 조회 시간 업데이트
@@ -15632,7 +15632,7 @@
         }
       };
       
-      deletePayrollStatement: async function(payrollId, employeeName, yearMonth) {
+      async deletePayrollStatement(payrollId, employeeName, yearMonth) {
         if (!confirm(`정말 삭제하시겠습니까?\n\n직원: ${employeeName}\n기간: ${yearMonth}\n\n이 작업은 되돌릴 수 없습니다.`)) {
           return;
         }
@@ -15654,20 +15654,20 @@
         }
       };
       
-      refreshPayrollList: function() {
+      refreshPayrollList() {
         this.loadPayrollList();
         this.loadPayrollStatistics();
       };
       
-      searchPayroll: function() {
+      searchPayroll() {
         this.loadPayrollList();
       };
       
-      filterPayroll: function() {
+      filterPayroll() {
         this.loadPayrollList();
       };
       
-      exportPayrollReport: async function() {
+      async exportPayrollReport() {
         console.log('📊 급여명세서 리포트 내보내기');
         
         try {
@@ -15724,7 +15724,7 @@
         selectedDepartment: null
       };
       
-      openPayrollUploadModal: async function() {
+      async openPayrollUploadModal() {
         console.log('💰 급여명세서 업로드 모달 열기');
         
         // 현재 연월 설정
@@ -15772,7 +15772,7 @@
         document.getElementById('payroll-upload-modal').style.display = 'flex';
       };
       
-      closePayrollUploadModal: function() {
+      closePayrollUploadModal() {
         document.getElementById('payroll-upload-modal').style.display = 'none';
         this.payrollUploadState = {
           selectedMethod: 'single',
@@ -15782,7 +15782,7 @@
         };
       };
       
-      selectPayrollMethod: function(method) {
+      selectPayrollMethod(method) {
         console.log('📝 선택 방법:', method);
         
         this.payrollUploadState.selectedMethod = method;
@@ -15803,7 +15803,7 @@
         document.getElementById('payroll-all-select').classList.toggle('hidden', method !== 'all');
       };
       
-      loadPayrollEmployeeList: async function() {
+      async loadPayrollEmployeeList() {
         try {
           const { data, error } = await this.sb
             .from('employees')
@@ -15840,7 +15840,7 @@
         }
       };
       
-      loadPayrollDepartmentList: async function() {
+      async loadPayrollDepartmentList() {
         try {
           const { data, error } = await this.sb
             .from('employees')
@@ -15870,7 +15870,7 @@
         }
       };
       
-      togglePayrollEmployee: function(employeeId) {
+      togglePayrollEmployee(employeeId) {
         if (this.payrollUploadState.selectedEmployees.has(employeeId)) {
           this.payrollUploadState.selectedEmployees.delete(employeeId);
         } else {
@@ -15881,7 +15881,7 @@
           this.payrollUploadState.selectedEmployees.size;
       };
       
-      handlePayrollFileSelect: function(event) {
+      handlePayrollFileSelect(event) {
         const file = event.target.files[0];
         
         if (!file) return;
@@ -15910,14 +15910,14 @@
           `${(file.size / 1024).toFixed(1)} KB`;
       };
       
-      clearPayrollFile: function() {
+      clearPayrollFile() {
         this.payrollUploadState.selectedFile = null;
         document.getElementById('payroll-file-input').value = '';
         document.getElementById('payroll-file-placeholder').classList.remove('hidden');
         document.getElementById('payroll-file-info').classList.add('hidden');
       };
       
-      uploadPayrollStatements: async function() {
+      async uploadPayrollStatements() {
         console.log('🚀 급여명세서 업로드 시작');
         
         // 유효성 검사
@@ -16075,7 +16075,7 @@
       },
 
       // 작업 세션 목록 로드
-      loadWorkSessions: async function() {
+      async loadWorkSessions() {
         try {
           const { data: sessions, error } = await this.sb
             .from('work_sessions')
@@ -16157,7 +16157,7 @@
       },
 
       // 새 작업 세션 시작
-      startNewWorkSession: async function() {
+      async startNewWorkSession() {
         const customerName = prompt('고객명을 입력하세요:');
         if (!customerName) return;
 
@@ -16211,7 +16211,7 @@
       },
 
       // 작업 세션 계속하기
-      continueWorkSession: async function(sessionId) {
+      async continueWorkSession(sessionId) {
         try {
           // 세션 및 구역 정보 로드
           const { data: session, error: sessionError } = await this.sb
@@ -16282,7 +16282,7 @@
       },
 
       // 작업 세션 목록으로 돌아가기
-      backToSessionsList: function() {
+      backToSessionsList() {
         // 카메라 정지
         this.stopCamera();
         
@@ -16293,7 +16293,7 @@
       },
 
       // 카메라 초기화
-      initializeCamera: async function() {
+      async initializeCamera() {
         try {
           const video = document.getElementById('camera-preview');
           
@@ -16314,7 +16314,7 @@
       },
 
       // 카메라 정지
-      stopCamera: function() {
+      stopCamera() {
         if (this.workPhoto.cameraStream) {
           this.workPhoto.cameraStream.getTracks().forEach(track => track.stop());
           this.workPhoto.cameraStream = null;
@@ -16323,7 +16323,7 @@
       },
 
       // 카메라 전환 (전면/후면)
-      switchCamera: async function() {
+      async switchCamera() {
         const video = document.getElementById('camera-preview');
         const currentFacingMode = this.workPhoto.cameraStream
           ?.getVideoTracks()[0]
@@ -16351,7 +16351,7 @@
       },
 
       // 사진 타입 설정 (작업 전/후)
-      setPhotoType: function(type) {
+      setPhotoType(type) {
         this.workPhoto.currentPhotoType = type;
         
         const beforeBtn = document.getElementById('before-btn');
@@ -16370,7 +16370,7 @@
       },
 
       // 사진 촬영
-      capturePhoto: async function() {
+      async capturePhoto() {
         if (!this.workPhoto.currentLocation) {
           alert('구역을 먼저 선택해주세요!');
           return;
@@ -16470,7 +16470,7 @@
       },
 
       // 스마트 기능 #1: 구역 완료 체크
-      checkLocationComplete: function(locationId) {
+      checkLocationComplete(locationId) {
         const photos = this.workPhoto.capturedPhotos.filter(p => p.locationId === locationId);
         const hasBefore = photos.some(p => p.photoType === 'before');
         const hasAfter = photos.some(p => p.photoType === 'after');
@@ -16496,7 +16496,7 @@
       },
 
       // 스마트 기능 #2: 진행률 업데이트
-      updateProgress: function() {
+      updateProgress() {
         if (!this.workPhoto.currentSession) return;
 
         const total = this.workPhoto.currentSession.work_locations.length;
@@ -16509,7 +16509,7 @@
       },
 
       // 개선 A: 다음 구역 자동 제안
-      suggestNextLocation: function() {
+      suggestNextLocation() {
         if (!this.workPhoto.currentSession) return;
 
         const locations = this.workPhoto.currentSession.work_locations
@@ -16529,7 +16529,7 @@
       },
 
       // 구역 전환
-      switchLocation: function(locationId) {
+      switchLocation(locationId) {
         this.workPhoto.currentLocation = locationId;
         
         const location = this.workPhoto.currentSession.work_locations.find(l => l.id === locationId);
@@ -16554,7 +16554,7 @@
       },
 
       // 구역 선택기 업데이트
-      updateLocationSelector: function() {
+      updateLocationSelector() {
         if (!this.workPhoto.currentSession) return;
 
         const selector = document.getElementById('location-selector');
@@ -16611,7 +16611,7 @@
       },
 
       // 개선 B: 구역 버튼 렌더링 (그룹 폴더)
-      renderLocationButtons: function() {
+      renderLocationButtons() {
         if (!this.workPhoto.currentSession) return;
 
         const groupsContainer = document.getElementById('location-groups');
@@ -16661,7 +16661,7 @@
       },
 
       // 구역 버튼 HTML 생성
-      renderLocationButton: function(location) {
+      renderLocationButton(location) {
         const isCompleted = this.workPhoto.completedLocations.has(location.id);
         const isActive = this.workPhoto.currentLocation === location.id;
         
@@ -16688,7 +16688,7 @@
       },
 
       // 완료된 구역 표시/숨김 토글
-      toggleCompletedLocations: function() {
+      toggleCompletedLocations() {
         this.workPhoto.showCompleted = !this.workPhoto.showCompleted;
         
         const toggleText = document.getElementById('toggle-completed-text');
@@ -16700,7 +16700,7 @@
       },
 
       // 촬영한 사진 렌더링
-      renderCapturedPhotos: function() {
+      renderCapturedPhotos() {
         const container = document.getElementById('captured-photos-grid');
         
         if (this.workPhoto.capturedPhotos.length === 0) {
@@ -16754,12 +16754,12 @@
       },
 
       // 사진 크게 보기
-      viewPhoto: function(photoUrl) {
+      viewPhoto(photoUrl) {
         window.open(photoUrl, '_blank');
       },
 
       // 사진 삭제
-      deletePhoto: async function(photoId, locationId) {
+      async deletePhoto(photoId, locationId) {
         if (!confirm('이 사진을 삭제하시겠습니까?')) return;
 
         try {
@@ -16790,7 +16790,7 @@
       },
 
       // 스마트 기능 #3: 작업 완료 검증 및 저장
-      saveWorkSession: async function() {
+      async saveWorkSession() {
         if (!this.workPhoto.currentSession) return;
 
         const total = this.workPhoto.currentSession.work_locations.length;
@@ -16832,7 +16832,7 @@
       },
 
       // 작업 세션 미리보기
-      previewWorkSession: function() {
+      previewWorkSession() {
         if (!this.workPhoto.currentSession) return;
 
         // 새 창에서 미리보기 페이지 열기
@@ -16847,7 +16847,7 @@
       },
 
       // 작업 세션 삭제
-      deleteWorkSession: async function(sessionId) {
+      async deleteWorkSession(sessionId) {
         if (!confirm('이 작업 세션을 삭제하시겠습니까?\n모든 사진도 함께 삭제됩니다.')) return;
 
         try {
@@ -16871,7 +16871,7 @@
       // ==================== 📸 AC 작업 사진 관리 기능 ====================
       
       // AC 사진 상세 모달 열기
-      openACPhotoDetail: function(photoData) {
+      openACPhotoDetail(photoData) {
         this.currentACPhoto = photoData;
         
         // 이미지 표시
@@ -16902,13 +16902,13 @@
       },
       
       // AC 사진 상세 모달 닫기
-      closeACPhotoDetailModal: function() {
+      closeACPhotoDetailModal() {
         document.getElementById('ac-photo-detail-modal').classList.add('hidden');
         this.currentACPhoto = null;
       },
       
       // AC 사진 메모 저장
-      saveACPhotoNotes: async function() {
+      async saveACPhotoNotes() {
         if (!this.currentACPhoto) return;
         
         const notes = document.getElementById('ac-modal-notes').value;
@@ -16933,7 +16933,7 @@
       },
       
       // AC 사진 다운로드
-      downloadACPhoto: function() {
+      downloadACPhoto() {
         if (!this.currentACPhoto) return;
         
         const photoUrl = this.currentACPhoto.photo_url || this.currentACPhoto.photo_urls?.[0];
@@ -16947,7 +16947,7 @@
       },
       
       // AC 사진 삭제
-      deleteACPhoto: async function() {
+      async deleteACPhoto() {
         if (!this.currentACPhoto) return;
         
         if (!confirm('정말로 이 사진을 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.')) {
@@ -16985,7 +16985,7 @@
       },
       
       // AC 사진 → 업무 일지 변환
-      convertACPhotoToWorkLog: async function() {
+      async convertACPhotoToWorkLog() {
         if (!this.currentACPhoto) return;
         
         if (!confirm('이 작업 사진을 업무 일지로 변환하시겠습니까?\n\n업무 일지 탭에서 확인할 수 있습니다.')) {
@@ -17025,7 +17025,7 @@
       },
       
       // 구역별 그룹화 토글
-      toggleGroupByLocation: function() {
+      toggleGroupByLocation() {
         const btn = document.getElementById('group-toggle-btn');
         const isGrouped = btn.textContent.includes('그룹화');
         
@@ -17043,7 +17043,7 @@
       },
       
       // 구역별 그룹화된 갤러리 렌더링
-      renderGroupedGallery: async function() {
+      async renderGroupedGallery() {
         const grid = document.getElementById('gallery-grid');
         this.showLoading('gallery-grid');
         
@@ -17153,7 +17153,7 @@
       },
       
       // 구역 사진 렌더링 헬퍼
-      renderLocationPhotos: function(photos, type) {
+      renderLocationPhotos(photos, type) {
         if (photos.length === 0) {
           return `
             <div class="text-center p-8 border-2 border-dashed ${type === 'before' ? 'border-blue-200 bg-blue-50' : 'border-green-200 bg-green-50'} rounded-xl">
@@ -17197,7 +17197,7 @@
       },
       
       // ID로 AC 사진 상세 열기 (헬퍼 함수)
-      openACPhotoDetailById: function(photoId) {
+      openACPhotoDetailById(photoId) {
         const photo = window.acPhotoData?.[photoId];
         if (photo) {
           this.openACPhotoDetail(photo);
