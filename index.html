@@ -30,7 +30,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="paperlogy_fonts.js"></script>
+    <!-- <script src="paperlogy_fonts.js"></script> -->
 
     <style>
       /* Paperlogy Font Face */
@@ -3491,6 +3491,31 @@
         currentInspectionPurchaseId: null, // 검수 중인 구매 요청 ID
         currentPurchaseIdForPhoto: null, // 사진 업로드 중인 구매 요청 ID
         brandSettings: null, // 브랜드 설정 (로고, 회사명 등)
+        
+        // 서류 관리 시스템
+        documents: {
+          list: [],
+          categories: [],
+          currentFile: null,
+          filteredList: []
+        },
+        selectedSettlements: [],
+        currentAttendanceSheetData: null,
+        payrollUploadState: {
+          selectedMethod: 'single',
+          selectedEmployees: new Set(),
+          selectedFile: null,
+          selectedDepartment: null
+        },
+        workPhoto: {
+          currentSession: null,
+          currentLocation: null,
+          currentPhotoType: 'before',
+          cameraStream: null,
+          completedLocations: new Set(),
+          showCompleted: false,
+          capturedPhotos: []
+        },
         
         // 캘린더 관련
         calendarYear: new Date().getFullYear(),
@@ -11821,14 +11846,6 @@
       
       // ==================== 서류 관리 시스템 ====================
       
-      // 서류 관리 상태
-      app.documents = {
-        list: [],
-        categories: [],
-        currentFile: null,
-        filteredList: []
-      },
-      
       // 서류 목록 로드
       async loadDocuments() {
         try {
@@ -13638,9 +13655,6 @@
         }
       },
       
-      // 선택된 정산서 ID 배열
-      app.selectedSettlements = [];
-      
       // 체크박스 상태 변경 핸들러
       toggleSettlementSelection(settlementId, checked) {
         if (checked) {
@@ -14421,9 +14435,6 @@
       },
       
       // ==================== 전자 근태표 생성 함수 ====================
-      
-      // 현재 변수 저장
-      app.currentAttendanceSheetData = null;
       
       // 이번 달로 설정
       setCurrentMonth() {
@@ -15712,13 +15723,6 @@
       
       // ==================== 💰 급여명세서 업로드 모달 ====================
       
-      app.payrollUploadState = {
-        selectedMethod: 'single',
-        selectedEmployees: new Set(),
-        selectedFile: null,
-        selectedDepartment: null
-      },
-      
       async openPayrollUploadModal() {
         console.log('💰 급여명세서 업로드 모달 열기');
         
@@ -16058,17 +16062,6 @@
 
       // ==================== 📸 작업 사진 관리 함수들 ====================
       
-      // 작업 사진 관련 상태
-      app.workPhoto = {
-        currentSession: null,
-        currentLocation: null,
-        currentPhotoType: 'before', // 'before' or 'after'
-        cameraStream: null,
-        completedLocations: new Set(),
-        showCompleted: false,
-        capturedPhotos: [] // {locationId, locationType, photoUrl, photoType}
-      },
-
       // 작업 세션 목록 로드
       async loadWorkSessions() {
         try {
