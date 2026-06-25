@@ -12928,16 +12928,6 @@
         }
       },
       
-      // 폼 제출 이벤트 리스너
-      document.addEventListener('DOMContentLoaded', function() {
-        const categoryForm = document.getElementById('category-form');
-        if (categoryForm) {
-          categoryForm.addEventListener('submit', function(e) {
-            app.submitCategoryForm(e);
-          });
-        }
-      });
-      
       // Phase 9: 즐겨찾기 토글
       async toggleFavorite(documentId) {
         try {
