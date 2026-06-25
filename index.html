@@ -17168,8 +17168,15 @@
         const photo = photos[0]; // 첫 번째 사진만 표시
         const photoUrl = photo.photo_url || photo.photo_urls?.[0] || '';
         
+        // 고유 ID 생성
+        const photoId = 'photo-' + Math.random().toString(36).substr(2, 9);
+        
+        // 전역 객체에 사진 데이터 저장
+        if (!window.acPhotoData) window.acPhotoData = {};
+        window.acPhotoData[photoId] = photo;
+        
         return `
-          <div class="relative group cursor-pointer" onclick="app.openACPhotoDetail(${JSON.stringify(photo).replace(/"/g, '&quot;')})">
+          <div class="relative group cursor-pointer" onclick="app.openACPhotoDetailById('${photoId}')">
             <div class="aspect-square rounded-xl overflow-hidden border-2 ${type === 'before' ? 'border-blue-300' : 'border-green-300'}">
               <img src="${photoUrl}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">
             </div>
@@ -17187,6 +17194,14 @@
             </div>
           </div>
         `;
+      },
+      
+      // ID로 AC 사진 상세 열기 (헬퍼 함수)
+      openACPhotoDetailById: function(photoId) {
+        const photo = window.acPhotoData?.[photoId];
+        if (photo) {
+          this.openACPhotoDetail(photo);
+        }
       }
 
       // ==================== app 객체는 Line 9119에서 이미 닫혔음 ====================
