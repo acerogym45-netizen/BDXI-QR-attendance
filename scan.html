@@ -3614,7 +3614,14 @@
 
         // Before/After 선택
         selectACPhotoType: function(type) {
+          const locationSelect = document.getElementById('ac-location-select');
+          if (!locationSelect.value) {
+            this.showToast('구역을 먼저 선택하세요!', 'error');
+            return;
+          }
+          
           this.acPhoto.photoType = type;
+          this.acPhoto.selectedLocation = locationSelect.value;
           
           const beforeBtn = document.getElementById('ac-before-radio');
           const afterBtn = document.getElementById('ac-after-radio');
@@ -3630,6 +3637,11 @@
             beforeBtn.classList.remove('border-blue-500', 'bg-blue-50', 'text-blue-700');
             beforeBtn.classList.add('border-gray-300', 'bg-white', 'text-gray-600');
           }
+          
+          // 바로 카메라 열기
+          setTimeout(() => {
+            document.getElementById('ac-photo-input').click();
+          }, 300);
         },
 
         // 사진 촬영 트리거
@@ -3673,22 +3685,23 @@
               .getPublicUrl(fileName);
 
             // cleaning_tasks 테이블에 저장 (업무일지 자동 반영)
+            const insertData = {
+              employee_name: this.state.selectedEmp.name,
+              status: 'completed',
+              location: locationName,
+              location_id: locationId,
+              apartment_id: this.state.aptId,
+              photo_url: publicUrl,
+              photo_count: 1,
+              notes: `${photoType === 'before' ? '작업 전' : '작업 후'} 사진`,
+              before_after: photoType,
+              upload_type: 'ac_work',
+              created_at: new Date().toISOString()
+            };
+            
             const { error: dbError } = await this.sb
               .from('cleaning_tasks')
-              .insert({
-                employee_name: this.state.selectedEmp.name,
-                status: 'completed',
-                location: locationName,
-                location_id: locationId,
-                apartment_id: this.state.aptId,
-                photo_url: publicUrl,
-                photo_urls: [publicUrl],
-                photo_count: 1,
-                notes: `${photoType === 'before' ? '작업 전' : '작업 후'} 사진`,
-                before_after: photoType,
-                upload_type: 'ac_work',
-                created_at: new Date().toISOString()
-              });
+              .insert(insertData);
 
             if (dbError) throw dbError;
 
@@ -3717,28 +3730,40 @@
 
             // 자동으로 다음 단계로 전환
             if (photoType === 'before') {
-              this.selectACPhotoType('after');
-              this.showToast('👉 이제 작업 후 사진을 촬영하세요!', 'info');
+              // Before 완료 → 알림만 표시 (After는 수동으로)
+              this.showToast('✅ 작업 전 사진 업로드 완료!', 'success');
             } else {
+              // After 완료
               if (isLocationComplete) {
                 this.showToast('🎉 ' + locationName + ' 완료!', 'success');
-                // 완료 애니메이션 효과
                 this.showCompletionAnimation(locationName);
               }
               
-              // After 완료 시 다음 구역으로 자동 이동
-              selector.value = '';
-              this.selectACPhotoType('before');
-              this.updateCurrentLocationProgress();
-              
-              // 다음 추천 구역으로 이동
+              // 다음 추천 구역으로 자동 이동
               const nextLocation = this.getNextRecommendedLocation();
               if (nextLocation) {
                 setTimeout(() => {
                   selector.value = nextLocation.id;
+                  this.acPhoto.selectedLocation = nextLocation.id;
+                  this.acPhoto.photoType = 'before';
+                  
+                  // 버튼 스타일 리셋
+                  const beforeBtn = document.getElementById('ac-before-radio');
+                  const afterBtn = document.getElementById('ac-after-radio');
+                  beforeBtn.classList.add('border-blue-500', 'bg-blue-50', 'text-blue-700');
+                  beforeBtn.classList.remove('border-gray-300', 'bg-white', 'text-gray-600');
+                  afterBtn.classList.remove('border-green-500', 'bg-green-50', 'text-green-700');
+                  afterBtn.classList.add('border-gray-300', 'bg-white', 'text-gray-600');
+                  
                   this.updateCurrentLocationProgress();
                   this.showToast(`💡 다음 구역: ${nextLocation.name}`, 'info');
                 }, 1000);
+              } else {
+                // 모든 구역 완료
+                this.showToast('🎊 모든 구역 촬영 완료!', 'success');
+                setTimeout(() => {
+                  this.closeACPhotoModal();
+                }, 2000);
               }
             }
 
@@ -3806,10 +3831,9 @@
           try {
             // 구역 목록 로드
             const { data: locations, error } = await this.sb
-              .from('work_locations')
-              .select('*')
+              .from('locations')
+              .select('id, name')
               .eq('apartment_id', this.state.aptId)
-              .eq('status', 'active')
               .order('name');
 
             if (error) throw error;
