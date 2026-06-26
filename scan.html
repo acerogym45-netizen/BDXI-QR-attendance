@@ -1175,7 +1175,10 @@
             // 5. Start Session Timer
             this.startSessionTimer();
 
-            // 6. Hide Loader
+            // 6. Show AC Photo Button if needed
+            this.showACPhotoBtnIfNeeded();
+
+            // 7. Hide Loader
             document.getElementById('screen-loading').classList.add('hidden');
           } catch (e) {
             console.error(e);
