@@ -951,9 +951,9 @@
               <i class="fas fa-plus-circle text-xl"></i>
               <span id="multi-upload-btn-text">작업 전 사진 추가</span>
             </button>
-            <input type="file" id="multi-photo-input" accept="image/*" capture="environment" class="hidden" multiple onchange="app.handleMultiPhotoCapture(this)">
+            <input type="file" id="multi-photo-input" accept="image/*" class="hidden" multiple onchange="app.handleMultiPhotoCapture(this)">
             <p class="text-xs text-gray-600 mt-2 text-center">
-              <i class="fas fa-info-circle mr-1"></i>여러 장을 한 번에 선택할 수 있습니다
+              <i class="fas fa-info-circle mr-1"></i>갤러리에서 최대 30장까지 선택 가능합니다
             </p>
           </div>
 
@@ -3620,8 +3620,18 @@
             return;
           }
           
+          console.log('🔄 사진 타입 변경:', type);
+          
+          // 파일 입력 초기화 (이전 파일 제거)
+          const fileInput = document.getElementById('ac-photo-input');
+          if (fileInput) {
+            fileInput.value = '';
+          }
+          
           this.acPhoto.photoType = type;
           this.acPhoto.selectedLocation = locationSelect.value;
+          
+          console.log('✅ photoType 설정 완료:', this.acPhoto.photoType);
           
           const beforeBtn = document.getElementById('ac-before-radio');
           const afterBtn = document.getElementById('ac-after-radio');
@@ -3666,6 +3676,14 @@
           const selector = document.getElementById('ac-location-select');
           const locationName = selector.selectedOptions[0].textContent.replace(/^[✅🔄]\s*/, '');
 
+          console.log('🔍 사진 업로드 시작:', {
+            photoType: photoType,
+            locationId: locationId,
+            locationName: locationName,
+            fileName: file.name,
+            fileSize: file.size
+          });
+
           // 업로드 시작
           const loadingMsg = this.showToast('사진 업로드 중...', 'info');
 
@@ -3674,15 +3692,24 @@
             const ext = file.name.split('.').pop() || 'jpg';
             const fileName = `${this.state.aptId}/${locationId}_${photoType}_${Date.now()}.${ext}`;
 
+            console.log('📤 스토리지 업로드 시작:', fileName);
+
             const { error: uploadError } = await this.sb.storage
               .from('cleaning-photos')
               .upload(fileName, file);
 
-            if (uploadError) throw uploadError;
+            if (uploadError) {
+              console.error('❌ 스토리지 업로드 실패:', uploadError);
+              throw uploadError;
+            }
+
+            console.log('✅ 스토리지 업로드 성공');
 
             const { data: { publicUrl } } = this.sb.storage
               .from('cleaning-photos')
               .getPublicUrl(fileName);
+
+            console.log('🔗 Public URL:', publicUrl);
 
             // cleaning_tasks 테이블에 저장 (업무일지 자동 반영)
             const insertData = {
@@ -3702,6 +3729,8 @@
             if (locationId) {
               insertData.location_id = locationId;
             }
+
+            console.log('💾 DB 삽입 시도:', JSON.stringify(insertData, null, 2));
             
             const { error: dbError } = await this.sb
               .from('cleaning_tasks')
@@ -3712,6 +3741,8 @@
               console.error('❌ 삽입 시도 데이터:', insertData);
               throw new Error(`DB 오류: ${dbError.message || JSON.stringify(dbError)}`);
             }
+
+            console.log('✅ DB 삽입 성공');
 
             this.showToast(`✅ ${photoType === 'before' ? '작업 전' : '작업 후'} 사진이 업로드되었습니다!`);
 
@@ -3779,7 +3810,12 @@
 
           } catch (error) {
             console.error('❌ AC 사진 업로드 실패:', error);
-            alert('사진 업로드에 실패했습니다: ' + error.message);
+            console.error('❌ 오류 상세:', {
+              message: error.message,
+              stack: error.stack,
+              error: error
+            });
+            this.showToast('사진 업로드에 실패했습니다: ' + error.message, 'error');
           }
         },
 
@@ -3888,7 +3924,7 @@
           document.getElementById('multi-photo-input').click();
         },
 
-        // 사진 선택 처리
+        // 사진 선택 처리 (최대 30장 제한)
         handleMultiPhotoCapture: function(input) {
           if (!input.files || input.files.length === 0) return;
 
@@ -3896,7 +3932,20 @@
           const currentTab = this.acPhotoMulti.currentTab;
           const targetArray = currentTab === 'before' ? this.acPhotoMulti.beforePhotos : this.acPhotoMulti.afterPhotos;
 
-          files.forEach(file => {
+          // 최대 30장 제한
+          const remainingSlots = 30 - targetArray.length;
+          if (remainingSlots <= 0) {
+            this.showToast('⚠️ 최대 30장까지만 추가할 수 있습니다', 'warning');
+            input.value = '';
+            return;
+          }
+
+          const filesToAdd = files.slice(0, remainingSlots);
+          if (files.length > remainingSlots) {
+            this.showToast(`⚠️ ${remainingSlots}장만 추가되었습니다 (최대 30장)`, 'warning');
+          }
+
+          filesToAdd.forEach(file => {
             const preview = URL.createObjectURL(file);
             targetArray.push({
               file: file,
@@ -3906,7 +3955,7 @@
             });
           });
 
-          this.showToast(`✅ ${files.length}장의 사진이 추가되었습니다`);
+          this.showToast(`✅ ${filesToAdd.length}장의 사진이 추가되었습니다`);
           this.renderMultiPhotoModal();
           input.value = ''; // 파일 입력 초기화
         },
