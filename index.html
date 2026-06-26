@@ -8343,8 +8343,9 @@
               employeeMap[emp.name] = emp.position || '직원';
             });
             
-            // Before/After 레코드 합치기 (같은 group_id를 가진 레코드들)
+            // Before/After 레코드 합치기 (같은 group_id를 가진 레코드들 + AC work 사진)
             const groupedTasks = {};
+            const acWorkGroups = {}; // AC work 사진 그룹핑용
             const processedTasks = [];
             
             tasks.forEach(task => {
@@ -8370,6 +8371,23 @@
                 groupedTasks[task.group_id].photo_urls = 
                   groupedTasks[task.group_id].original_records.map(r => r.photo_url);
                 
+              } else if (task.upload_type === 'ac_work' || task.upload_type === 'ac_work_multi') {
+                // AC 작업 사진 그룹핑 (location + employee + 같은 날짜)
+                const dateOnly = task.created_at.split('T')[0]; // YYYY-MM-DD
+                const groupKey = `${task.location}_${task.employee_name}_${dateOnly}`;
+                
+                if (!acWorkGroups[groupKey]) {
+                  acWorkGroups[groupKey] = {
+                    before: null,
+                    after: null
+                  };
+                }
+                
+                if (task.before_after === 'before') {
+                  acWorkGroups[groupKey].before = task;
+                } else if (task.before_after === 'after') {
+                  acWorkGroups[groupKey].after = task;
+                }
               } else {
                 // 일반 업무는 그대로 추가
                 processedTasks.push(task);
@@ -8379,6 +8397,27 @@
             // Before/After 그룹화된 업무 추가
             Object.values(groupedTasks).forEach(group => {
               processedTasks.push(group);
+            });
+            
+            // AC work 그룹 처리
+            Object.entries(acWorkGroups).forEach(([groupKey, group]) => {
+              if (group.before && group.after) {
+                // Before와 After 모두 있는 경우 - 하나로 합치기
+                const combinedTask = {
+                  ...group.before,
+                  photo_urls: [group.before.photo_url, group.after.photo_url],
+                  before_after: 'both', // 표시용
+                  notes: `${group.before.location} - 작업 전/후`,
+                  original_records: [group.before, group.after]
+                };
+                processedTasks.push(combinedTask);
+              } else if (group.before) {
+                // Before만 있는 경우
+                processedTasks.push(group.before);
+              } else if (group.after) {
+                // After만 있는 경우
+                processedTasks.push(group.after);
+              }
             });
             
             // 다시 날짜순 정렬

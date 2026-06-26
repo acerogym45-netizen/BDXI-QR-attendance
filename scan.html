@@ -898,16 +898,16 @@
             </label>
             <div class="grid grid-cols-2 gap-3">
               <button id="ac-before-radio" onclick="app.selectACPhotoType('before')" class="px-4 py-3 border-2 border-blue-500 bg-blue-50 text-blue-700 rounded-xl font-bold transition-all hover:bg-blue-100">
-                <i class="fas fa-arrow-left mr-1"></i>작업 전
+                <i class="fas fa-camera mr-1"></i>작업 전 <span class="text-sm">(클릭)</span>
               </button>
               <button id="ac-after-radio" onclick="app.selectACPhotoType('after')" class="px-4 py-3 border-2 border-gray-300 bg-white text-gray-600 rounded-xl font-bold transition-all hover:bg-gray-50">
-                <i class="fas fa-arrow-right mr-1"></i>작업 후
+                <i class="fas fa-camera mr-1"></i>작업 후 <span class="text-sm">(클릭)</span>
               </button>
             </div>
           </div>
 
-          <!-- 사진 촬영 버튼 -->
-          <button onclick="app.captureACPhoto()" class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold py-4 rounded-xl shadow-lg hover:from-purple-700 hover:to-indigo-700 transition-all flex items-center justify-center gap-2">
+          <!-- 사진 촬영 버튼 (숨김 - 작업 전/후 버튼 직접 클릭) -->
+          <button onclick="app.captureACPhoto()" class="hidden w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold py-4 rounded-xl shadow-lg hover:from-purple-700 hover:to-indigo-700 transition-all items-center justify-center gap-2">
             <i class="fas fa-camera text-xl"></i>
             <span>사진 촬영 및 업로드</span>
           </button>
@@ -3689,7 +3689,6 @@
               employee_name: this.state.selectedEmp.name,
               status: 'completed',
               location: locationName,
-              location_id: locationId,
               apartment_id: this.state.aptId,
               photo_url: publicUrl,
               photo_count: 1,
@@ -3699,11 +3698,20 @@
               created_at: new Date().toISOString()
             };
             
+            // location_id가 유효한 경우에만 추가 (옵션)
+            if (locationId) {
+              insertData.location_id = locationId;
+            }
+            
             const { error: dbError } = await this.sb
               .from('cleaning_tasks')
               .insert(insertData);
 
-            if (dbError) throw dbError;
+            if (dbError) {
+              console.error('❌ DB 삽입 오류:', dbError);
+              console.error('❌ 삽입 시도 데이터:', insertData);
+              throw new Error(`DB 오류: ${dbError.message || JSON.stringify(dbError)}`);
+            }
 
             this.showToast(`✅ ${photoType === 'before' ? '작업 전' : '작업 후'} 사진이 업로드되었습니다!`);
 
