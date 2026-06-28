@@ -3712,37 +3712,37 @@
             console.log('🔗 Public URL:', publicUrl);
 
             // cleaning_tasks 테이블에 저장 (업무일지 자동 반영)
+            // 최소한의 필수 필드만 사용 (JSON 오류 방지)
             const insertData = {
-              employee_name: this.state.selectedEmp.name,
-              status: 'completed',
-              location: locationName,
               apartment_id: this.state.aptId,
+              employee_name: this.state.selectedEmp.name,
+              location: locationName,
               photo_url: publicUrl,
-              photo_count: 1,
-              notes: `${photoType === 'before' ? '작업 전' : '작업 후'} 사진`,
               before_after: photoType,
               upload_type: 'ac_work',
-              created_at: new Date().toISOString()
+              status: 'completed'
             };
             
-            // location_id가 유효한 경우에만 추가 (옵션)
-            if (locationId) {
-              insertData.location_id = locationId;
-            }
-
-            console.log('💾 DB 삽입 시도:', JSON.stringify(insertData, null, 2));
+            console.log('💾 DB 삽입 시도 (최소 필드):', JSON.stringify(insertData, null, 2));
             
-            const { error: dbError } = await this.sb
+            const { data: insertResult, error: dbError } = await this.sb
               .from('cleaning_tasks')
-              .insert(insertData);
+              .insert(insertData)
+              .select();
 
             if (dbError) {
-              console.error('❌ DB 삽입 오류:', dbError);
+              console.error('❌ DB 삽입 오류 전체:', {
+                error: dbError,
+                code: dbError.code,
+                message: dbError.message,
+                details: dbError.details,
+                hint: dbError.hint
+              });
               console.error('❌ 삽입 시도 데이터:', insertData);
-              throw new Error(`DB 오류: ${dbError.message || JSON.stringify(dbError)}`);
+              throw new Error(`DB 오류: ${dbError.message || dbError.code || JSON.stringify(dbError)}`);
             }
 
-            console.log('✅ DB 삽입 성공');
+            console.log('✅ DB 삽입 성공, 결과:', insertResult);
 
             this.showToast(`✅ ${photoType === 'before' ? '작업 전' : '작업 후'} 사진이 업로드되었습니다!`);
 
