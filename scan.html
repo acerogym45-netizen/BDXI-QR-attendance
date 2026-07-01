@@ -1016,6 +1016,9 @@
         YDB002: '용인동백센트럴',
         SYT003: '수원영통자이',
         PGD004: '평택고덕국제신도시',
+        DJR001: '아세로짐 대전 라마다호텔점',
+        ACEROGYM001: '아세로짐 대전 라마다호텔점',
+        APT001: '아세로짐 대전 라마다호텔점', // 기본 코드
         ETC999: '기타 시설',
       };
 
@@ -1060,12 +1063,39 @@
               aptCode: aptCode
             });
 
+            // URL 파라미터가 없으면 상세 에러 표시
             if (!this.state.locId) {
-              throw new Error('유효하지 않은 QR 코드입니다.\n\n구역 정보(loc/location)가 없습니다.\n\nURL: ' + window.location.href + '\n\n새 QR 코드를 생성해주세요.');
+              const errorDiv = document.createElement('div');
+              errorDiv.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); max-width: 90%; z-index: 9999; font-family: sans-serif;';
+              errorDiv.innerHTML = `
+                <h2 style="color: #dc2626; margin-bottom: 15px; font-size: 20px;">❌ QR 코드 오류</h2>
+                <p style="margin-bottom: 10px; color: #374151;">구역 정보(loc 파라미터)가 없습니다.</p>
+                <div style="background: #f3f4f6; padding: 15px; border-radius: 5px; margin: 15px 0; word-break: break-all; font-size: 12px;">
+                  <strong>현재 URL:</strong><br>${window.location.href}
+                </div>
+                <p style="color: #6b7280; font-size: 14px; margin-top: 15px;">관리자 페이지에서 새 QR 코드를 생성해주세요.</p>
+                <button onclick="window.location.href='./index.html'" style="margin-top: 20px; padding: 10px 20px; background: #3b82f6; color: white; border: none; border-radius: 5px; cursor: pointer; width: 100%;">관리자 페이지로 이동</button>
+              `;
+              document.body.innerHTML = '';
+              document.body.appendChild(errorDiv);
+              throw new Error('구역 정보 없음');
             }
             
             if (!aptCode) {
-              throw new Error('유효하지 않은 QR 코드입니다.\n\n시설 정보(apt/apartment)가 없습니다.\n\nURL: ' + window.location.href + '\n\n새 QR 코드를 생성해주세요.');
+              const errorDiv = document.createElement('div');
+              errorDiv.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); max-width: 90%; z-index: 9999; font-family: sans-serif;';
+              errorDiv.innerHTML = `
+                <h2 style="color: #dc2626; margin-bottom: 15px; font-size: 20px;">❌ QR 코드 오류</h2>
+                <p style="margin-bottom: 10px; color: #374151;">시설 정보(apt 파라미터)가 없습니다.</p>
+                <div style="background: #f3f4f6; padding: 15px; border-radius: 5px; margin: 15px 0; word-break: break-all; font-size: 12px;">
+                  <strong>현재 URL:</strong><br>${window.location.href}
+                </div>
+                <p style="color: #6b7280; font-size: 14px; margin-top: 15px;">관리자 페이지에서 새 QR 코드를 생성해주세요.</p>
+                <button onclick="window.location.href='./index.html'" style="margin-top: 20px; padding: 10px 20px; background: #3b82f6; color: white; border: none; border-radius: 5px; cursor: pointer; width: 100%;">관리자 페이지로 이동</button>
+              `;
+              document.body.innerHTML = '';
+              document.body.appendChild(errorDiv);
+              throw new Error('시설 정보 없음');
             }
 
             // 3. Load Apartment ID from code
