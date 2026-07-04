@@ -224,41 +224,114 @@
         if (locError) throw locError;
         addLog(`✅ 구역 ${locations?.length || 0}개 삭제 완료`, 'success');
 
-        // 7. 구매 요청 삭제 (purchase_requests)
-        addLog('7️⃣ 구매 요청 삭제 중...', 'info');
-        const { data: purchaseRequests, error: purchaseError } = await sb
-          .from('purchase_requests')
-          .delete()
-          .eq('apartment_id', apartment.id)
-          .select();
+        // 7. 구매 요청 삭제 (purchase_requests) - 테이블이 없을 수 있음
+        addLog('7️⃣ 구매 요청 삭제 시도 중...', 'info');
+        let purchaseRequests = null;
+        try {
+          const result = await sb
+            .from('purchase_requests')
+            .delete()
+            .eq('apartment_id', apartment.id)
+            .select();
 
-        if (purchaseError && purchaseError.code !== 'PGRST116') throw purchaseError;
-        addLog(`✅ 구매 요청 ${purchaseRequests?.length || 0}건 삭제 완료`, 'success');
+          if (result.error && result.error.code !== 'PGRST116' && result.error.code !== '42P01' && result.error.code !== 'PGRST205') {
+            throw result.error;
+          }
+          purchaseRequests = result.data;
+          addLog(`✅ 구매 요청 ${purchaseRequests?.length || 0}건 삭제 완료`, 'success');
+        } catch (err) {
+          if (err.code === '42P01' || err.code === 'PGRST205' || err.message?.includes('does not exist') || err.message?.includes('schema cache')) {
+            addLog(`⚠️ purchase_requests 테이블 없음 (무시)`, 'info');
+          } else {
+            throw err;
+          }
+        }
 
         // 8. 휴가 기록 삭제
-        addLog('8️⃣ 휴가 기록 삭제 중...', 'info');
-        const { data: vacations, error: vacError } = await sb
-          .from('vacations')
-          .delete()
-          .eq('apartment_id', apartment.id)
-          .select();
+        addLog('8️⃣ 휴가 기록 삭제 시도 중...', 'info');
+        let vacations = null;
+        try {
+          const result = await sb
+            .from('vacations')
+            .delete()
+            .eq('apartment_id', apartment.id)
+            .select();
 
-        if (vacError && vacError.code !== 'PGRST116') throw vacError;
-        addLog(`✅ 휴가 기록 ${vacations?.length || 0}건 삭제 완료`, 'success');
+          if (result.error && result.error.code !== 'PGRST116' && result.error.code !== '42P01' && result.error.code !== 'PGRST205') {
+            throw result.error;
+          }
+          vacations = result.data;
+          addLog(`✅ 휴가 기록 ${vacations?.length || 0}건 삭제 완료`, 'success');
+        } catch (err) {
+          if (err.code === '42P01' || err.code === 'PGRST205' || err.message?.includes('does not exist') || err.message?.includes('schema cache')) {
+            addLog(`⚠️ vacations 테이블 없음 (무시)`, 'info');
+          } else {
+            throw err;
+          }
+        }
 
         // 9. 매출 기록 삭제
-        addLog('9️⃣ 매출 기록 삭제 중...', 'info');
-        const { data: sales, error: salesError } = await sb
-          .from('sales')
-          .delete()
-          .eq('apartment_id', apartment.id)
-          .select();
+        addLog('9️⃣ 매출 기록 삭제 시도 중...', 'info');
+        let sales = null;
+        try {
+          const result = await sb
+            .from('sales')
+            .delete()
+            .eq('apartment_id', apartment.id)
+            .select();
 
-        if (salesError && salesError.code !== 'PGRST116') throw salesError;
-        addLog(`✅ 매출 기록 ${sales?.length || 0}건 삭제 완료`, 'success');
+          if (result.error && result.error.code !== 'PGRST116' && result.error.code !== '42P01' && result.error.code !== 'PGRST205') {
+            throw result.error;
+          }
+          sales = result.data;
+          addLog(`✅ 매출 기록 ${sales?.length || 0}건 삭제 완료`, 'success');
+        } catch (err) {
+          if (err.code === '42P01' || err.code === 'PGRST205' || err.message?.includes('does not exist') || err.message?.includes('schema cache')) {
+            addLog(`⚠️ sales 테이블 없음 (무시)`, 'info');
+          } else {
+            throw err;
+          }
+        }
 
-        // 🔟 시설 정보 삭제
-        addLog('🔟 시설 정보 삭제 중...', 'info');
+        // 🔟 기타 관련 테이블 삭제 (있을 수 있는 모든 테이블)
+        addLog('🔟 기타 관련 데이터 삭제 시도 중...', 'info');
+        
+        const otherTables = [
+          'attendance_records',
+          'work_schedules', 
+          'employee_passwords',
+          'holidays',
+          'documents',
+          'settlements',
+          'payrolls',
+          'complaints',
+          'qr_codes'
+        ];
+        
+        let otherDeleted = 0;
+        for (const tableName of otherTables) {
+          try {
+            const { data, error } = await sb
+              .from(tableName)
+              .delete()
+              .eq('apartment_id', apartment.id)
+              .select();
+            
+            if (!error) {
+              const count = data?.length || 0;
+              if (count > 0) {
+                addLog(`  ✅ ${tableName}: ${count}건 삭제`, 'success');
+                otherDeleted += count;
+              }
+            }
+          } catch (err) {
+            // 테이블이 없거나 apartment_id 컬럼이 없으면 무시
+          }
+        }
+        addLog(`✅ 기타 데이터 ${otherDeleted}건 삭제 완료`, 'success');
+
+        // 1️⃣1️⃣ 시설 정보 삭제 (최종)
+        addLog('1️⃣1️⃣ 시설 정보 삭제 중...', 'info');
         const { error: deleteAptError } = await sb
           .from('apartments')
           .delete()
