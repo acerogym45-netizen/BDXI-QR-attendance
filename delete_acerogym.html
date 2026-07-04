@@ -88,6 +88,7 @@
         <li>업무 기록 (cleaning_tasks)</li>
         <li>구역 정보 (locations)</li>
         <li>구매 요청 (purchase_requests)</li>
+        <li>구매 항목 (purchases)</li>
         <li>휴가 기록 (vacations)</li>
         <li>매출 기록 (sales)</li>
         <li>기타 모든 관련 데이터</li>
@@ -190,16 +191,42 @@
         if (locError) throw locError;
         addLog(`✅ 구역 ${locations?.length || 0}개 삭제 완료`, 'success');
 
-        // 5. 구매 요청 삭제
+        // 5. 구매 요청 삭제 (purchase_requests)
         addLog('5️⃣ 구매 요청 삭제 중...', 'info');
-        const { data: purchases, error: purchaseError } = await sb
+        const { data: purchaseRequests, error: purchaseError } = await sb
           .from('purchase_requests')
           .delete()
           .eq('apartment_id', apartment.id)
           .select();
 
         if (purchaseError && purchaseError.code !== 'PGRST116') throw purchaseError;
-        addLog(`✅ 구매 요청 ${purchases?.length || 0}건 삭제 완료`, 'success');
+        addLog(`✅ 구매 요청 ${purchaseRequests?.length || 0}건 삭제 완료`, 'success');
+
+        // 5-1. 구매 항목 삭제 (purchases) - 직원 외래키 참조
+        addLog('5-1️⃣ 구매 항목 (purchases) 삭제 중...', 'info');
+        
+        let purchasesData = null;
+        
+        // 먼저 해당 시설의 직원 ID 목록 가져오기
+        const { data: empIds } = await sb
+          .from('employees')
+          .select('id')
+          .eq('apartment_id', apartment.id);
+        
+        if (empIds && empIds.length > 0) {
+          const employeeIds = empIds.map(e => e.id);
+          const result = await sb
+            .from('purchases')
+            .delete()
+            .in('requester_employee_id', employeeIds)
+            .select();
+          
+          if (result.error && result.error.code !== 'PGRST116') throw result.error;
+          purchasesData = result.data;
+          addLog(`✅ 구매 항목 ${purchasesData?.length || 0}건 삭제 완료`, 'success');
+        } else {
+          addLog(`✅ 구매 항목 0건 (직원 없음)`, 'success');
+        }
 
         // 6. 휴가 기록 삭제
         addLog('6️⃣ 휴가 기록 삭제 중...', 'info');
@@ -242,7 +269,8 @@
         addLog(`- 직원: ${employees?.length || 0}명`, 'info');
         addLog(`- 업무 기록: ${tasks?.length || 0}건`, 'info');
         addLog(`- 구역: ${locations?.length || 0}개`, 'info');
-        addLog(`- 구매 요청: ${purchases?.length || 0}건`, 'info');
+        addLog(`- 구매 요청: ${purchaseRequests?.length || 0}건`, 'info');
+        addLog(`- 구매 항목: ${purchasesData?.length || 0}건`, 'info');
         addLog(`- 휴가 기록: ${vacations?.length || 0}건`, 'info');
         addLog(`- 매출 기록: ${sales?.length || 0}건`, 'info');
 
