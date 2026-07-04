@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>아세로짐 시설 삭제 도구</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #dc2626;
+      margin-bottom: 20px;
+    }
+    .warning {
+      background: #fef2f2;
+      border: 2px solid #dc2626;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+    .info {
+      background: #eff6ff;
+      border: 2px solid #3b82f6;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+    button {
+      background: #dc2626;
+      color: white;
+      border: none;
+      padding: 15px 30px;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    button:hover {
+      background: #b91c1c;
+    }
+    button:disabled {
+      background: #9ca3af;
+      cursor: not-allowed;
+    }
+    #log {
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      padding: 15px;
+      border-radius: 8px;
+      margin-top: 20px;
+      max-height: 400px;
+      overflow-y: auto;
+      font-family: monospace;
+      font-size: 14px;
+      white-space: pre-wrap;
+    }
+    .success {
+      color: #059669;
+    }
+    .error {
+      color: #dc2626;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🗑️ 아세로짐 대전 라마다호텔점 완전 삭제</h1>
+    
+    <div class="warning">
+      <h3>⚠️ 경고</h3>
+      <p><strong>이 작업은 되돌릴 수 없습니다!</strong></p>
+      <p>다음 데이터가 영구적으로 삭제됩니다:</p>
+      <ul>
+        <li>시설 정보 (apartments)</li>
+        <li>소속 직원 (employees)</li>
+        <li>업무 기록 (cleaning_tasks)</li>
+        <li>구역 정보 (locations)</li>
+        <li>구매 요청 (purchase_requests)</li>
+        <li>휴가 기록 (vacations)</li>
+        <li>매출 기록 (sales)</li>
+        <li>기타 모든 관련 데이터</li>
+      </ul>
+    </div>
+
+    <div class="info">
+      <h3>📋 삭제 절차</h3>
+      <ol>
+        <li>시설 정보 조회</li>
+        <li>관련 직원 데이터 삭제</li>
+        <li>관련 업무 기록 삭제</li>
+        <li>관련 구역 정보 삭제</li>
+        <li>기타 관련 데이터 삭제</li>
+        <li>시설 정보 삭제</li>
+      </ol>
+    </div>
+
+    <button id="deleteBtn" onclick="deleteAcerogym()">
+      🗑️ 아세로짐 대전 라마다호텔점 완전 삭제
+    </button>
+
+    <div id="log"></div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = 'https://qgpqhtuynxhmgawakjxe.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFncHFodHV5bnhobWdhd2FranhlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcyOTQyNTEsImV4cCI6MjA4Mjg3MDI1MX0.WNljQIKDbeZCDlXe8fpBdZs58XRFfujGt7lBGfq_pVg';
+    
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const log = document.getElementById('log');
+    const btn = document.getElementById('deleteBtn');
+
+    function addLog(message, type = 'info') {
+      const timestamp = new Date().toLocaleTimeString();
+      const className = type === 'error' ? 'error' : (type === 'success' ? 'success' : '');
+      log.innerHTML += `<div class="${className}">[${timestamp}] ${message}</div>`;
+      log.scrollTop = log.scrollHeight;
+      console.log(message);
+    }
+
+    async function deleteAcerogym() {
+      if (!confirm('정말로 아세로짐 대전 라마다호텔점의 모든 데이터를 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다!')) {
+        return;
+      }
+
+      btn.disabled = true;
+      log.innerHTML = '';
+      addLog('🚀 삭제 작업 시작...', 'info');
+
+      try {
+        // 1. 시설 정보 조회
+        addLog('1️⃣ 시설 정보 조회 중...', 'info');
+        const { data: apartments, error: aptError } = await sb
+          .from('apartments')
+          .select('id, name, code')
+          .ilike('name', '%아세로짐%라마다%');
+
+        if (aptError) throw aptError;
+
+        if (!apartments || apartments.length === 0) {
+          addLog('❌ 아세로짐 대전 라마다호텔점을 찾을 수 없습니다.', 'error');
+          btn.disabled = false;
+          return;
+        }
+
+        const apartment = apartments[0];
+        addLog(`✅ 시설 발견: ${apartment.name} (ID: ${apartment.id})`, 'success');
+
+        // 2. 직원 삭제
+        addLog('2️⃣ 소속 직원 삭제 중...', 'info');
+        const { data: employees, error: empError } = await sb
+          .from('employees')
+          .delete()
+          .eq('apartment_id', apartment.id)
+          .select();
+
+        if (empError) throw empError;
+        addLog(`✅ 직원 ${employees?.length || 0}명 삭제 완료`, 'success');
+
+        // 3. 업무 기록 삭제
+        addLog('3️⃣ 업무 기록 삭제 중...', 'info');
+        const { data: tasks, error: taskError } = await sb
+          .from('cleaning_tasks')
+          .delete()
+          .eq('apartment_id', apartment.id)
+          .select();
+
+        if (taskError) throw taskError;
+        addLog(`✅ 업무 기록 ${tasks?.length || 0}건 삭제 완료`, 'success');
+
+        // 4. 구역 정보 삭제
+        addLog('4️⃣ 구역 정보 삭제 중...', 'info');
+        const { data: locations, error: locError } = await sb
+          .from('locations')
+          .delete()
+          .eq('apartment_id', apartment.id)
+          .select();
+
+        if (locError) throw locError;
+        addLog(`✅ 구역 ${locations?.length || 0}개 삭제 완료`, 'success');
+
+        // 5. 구매 요청 삭제
+        addLog('5️⃣ 구매 요청 삭제 중...', 'info');
+        const { data: purchases, error: purchaseError } = await sb
+          .from('purchase_requests')
+          .delete()
+          .eq('apartment_id', apartment.id)
+          .select();
+
+        if (purchaseError && purchaseError.code !== 'PGRST116') throw purchaseError;
+        addLog(`✅ 구매 요청 ${purchases?.length || 0}건 삭제 완료`, 'success');
+
+        // 6. 휴가 기록 삭제
+        addLog('6️⃣ 휴가 기록 삭제 중...', 'info');
+        const { data: vacations, error: vacError } = await sb
+          .from('vacations')
+          .delete()
+          .eq('apartment_id', apartment.id)
+          .select();
+
+        if (vacError && vacError.code !== 'PGRST116') throw vacError;
+        addLog(`✅ 휴가 기록 ${vacations?.length || 0}건 삭제 완료`, 'success');
+
+        // 7. 매출 기록 삭제
+        addLog('7️⃣ 매출 기록 삭제 중...', 'info');
+        const { data: sales, error: salesError } = await sb
+          .from('sales')
+          .delete()
+          .eq('apartment_id', apartment.id)
+          .select();
+
+        if (salesError && salesError.code !== 'PGRST116') throw salesError;
+        addLog(`✅ 매출 기록 ${sales?.length || 0}건 삭제 완료`, 'success');
+
+        // 8. 시설 정보 삭제
+        addLog('8️⃣ 시설 정보 삭제 중...', 'info');
+        const { error: deleteAptError } = await sb
+          .from('apartments')
+          .delete()
+          .eq('id', apartment.id);
+
+        if (deleteAptError) throw deleteAptError;
+        addLog(`✅ 시설 삭제 완료: ${apartment.name}`, 'success');
+
+        // 완료
+        addLog('', 'info');
+        addLog('🎉 모든 삭제 작업이 완료되었습니다!', 'success');
+        addLog('', 'info');
+        addLog('📊 삭제 요약:', 'info');
+        addLog(`- 시설: 1개`, 'info');
+        addLog(`- 직원: ${employees?.length || 0}명`, 'info');
+        addLog(`- 업무 기록: ${tasks?.length || 0}건`, 'info');
+        addLog(`- 구역: ${locations?.length || 0}개`, 'info');
+        addLog(`- 구매 요청: ${purchases?.length || 0}건`, 'info');
+        addLog(`- 휴가 기록: ${vacations?.length || 0}건`, 'info');
+        addLog(`- 매출 기록: ${sales?.length || 0}건`, 'info');
+
+        setTimeout(() => {
+          alert('✅ 아세로짐 대전 라마다호텔점이 완전히 삭제되었습니다.');
+        }, 500);
+
+      } catch (error) {
+        addLog('', 'info');
+        addLog(`❌ 오류 발생: ${error.message}`, 'error');
+        addLog(`상세: ${JSON.stringify(error, null, 2)}`, 'error');
+        alert('삭제 중 오류가 발생했습니다. 로그를 확인해주세요.');
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    addLog('✅ 삭제 도구가 준비되었습니다.', 'success');
+    addLog('⚠️ 버튼을 클릭하면 아세로짐 대전 라마다호텔점의 모든 데이터가 영구 삭제됩니다.', 'info');
+  </script>
+</body>
+</html>
