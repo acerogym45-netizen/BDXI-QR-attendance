@@ -5741,64 +5741,13 @@
           
           console.log('📥 QR 다운로드 시작:', { qrId, locationName, canvasSize: `${qrCanvas.width}x${qrCanvas.height}` });
           
-          try {
-            // 템플릿 배경 이미지 로드
-            const bgImage = new Image();
-            bgImage.crossOrigin = 'anonymous';
-            bgImage.src = './assets/backgrounds/template.png';
-            
-            await new Promise((resolve, reject) => {
-              bgImage.onload = resolve;
-              bgImage.onerror = () => reject(new Error('템플릿 이미지 로드 실패'));
-            });
-            
-            console.log('✅ 템플릿 로드 완료:', `${bgImage.width}x${bgImage.height}`);
-            
-            // 새 캔버스 생성 (고해상도)
-            const canvas = document.createElement('canvas');
-            canvas.width = bgImage.width;   // 765
-            canvas.height = bgImage.height; // 1024
-            const ctx = canvas.getContext('2d');
-            
-            // 배경 이미지 그리기
-            ctx.drawImage(bgImage, 0, 0);
-            
-            // 구역명 텍스트 삽입
-            const textX = 382;
-            const textY = 408;
-            ctx.fillStyle = '#2C5F2D';
-            ctx.font = 'bold 80px "Noto Sans KR", sans-serif';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(locationName, textX, textY);
-            
-            // QR 코드 삽입 좌표
-            const qrSize = 353;
-            const qrX = 206;
-            const qrY = 582;
-            
-            // QR 코드 그리기 - 픽셀 퍼펙트
-            ctx.imageSmoothingEnabled = false;
-            ctx.drawImage(qrCanvas, qrX, qrY, qrSize, qrSize);
-            
-            console.log('✅ QR 합성 완료');
-            
-            // 다운로드
-            const link = document.createElement('a');
-            link.download = `근무구역_${locationName}_QR.png`;
-            link.href = canvas.toDataURL('image/png');
-            link.click();
-            
-            console.log('✅ 다운로드 완료');
-          } catch (error) {
-            console.error('❌ QR 합성 실패:', error);
-            // 실패 시 원본 QR만 다운로드
-            const link = document.createElement('a');
-            link.download = `근무구역_${locationName}_QR_원본.png`;
-            link.href = qrCanvas.toDataURL('image/png');
-            link.click();
-            alert('템플릿 합성 실패. 원본 QR 코드만 다운로드됩니다.');
-          }
+          // QR 코드만 다운로드 (배경 템플릿 제거)
+          const link = document.createElement('a');
+          link.download = `${locationName}_QR.png`;
+          link.href = qrCanvas.toDataURL('image/png');
+          link.click();
+          
+          console.log('✅ 다운로드 완료');
         },
         
         // Export Hours to Excel
