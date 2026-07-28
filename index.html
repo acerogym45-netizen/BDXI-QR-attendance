@@ -5727,64 +5727,27 @@
         },
         
         async downloadQRCode(qrId, locationName, background = 'fitness') {
-          const qrCanvas = document.getElementById(qrId).querySelector('canvas');
-          if (!qrCanvas) {
+          const qrElement = document.getElementById(qrId);
+          if (!qrElement) {
             alert('QR 코드를 찾을 수 없습니다.');
             return;
           }
           
-          try {
-            // 템플릿 배경 이미지 로드
-            const bgImage = new Image();
-            bgImage.crossOrigin = 'anonymous';
-            bgImage.src = './assets/backgrounds/template.png';
-            
-            await new Promise((resolve, reject) => {
-              bgImage.onload = resolve;
-              bgImage.onerror = () => reject(new Error('템플릿 이미지 로드 실패'));
-            });
-            
-            // 새 캔버스 생성
-            const canvas = document.createElement('canvas');
-            canvas.width = bgImage.width;   // 765
-            canvas.height = bgImage.height; // 1024
-            const ctx = canvas.getContext('2d');
-            
-            // 배경 이미지 그리기
-            ctx.drawImage(bgImage, 0, 0);
-            
-            // 구역명 텍스트 삽입 (금색 가로줄 하단 ~ QR 박스 상단 사이)
-            const textX = 382;  // 중앙 X 좌표
-            const textY = 408;  // 중앙 Y 좌표
-            
-            ctx.fillStyle = '#2C5F2D';  // 어두운 녹색 (KINDWON 로고 색상)
-            ctx.font = 'bold 80px "Noto Sans KR", sans-serif';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(locationName, textX, textY);
-            
-            // QR 코드 삽입 좌표 (측정된 값)
-            const qrSize = 353;
-            const qrX = 206;
-            const qrY = 582;
-            
-            // QR 코드 그리기 - 이미지 스무딩 비활성화로 선명도 유지
-            ctx.imageSmoothingEnabled = false;
-            ctx.drawImage(qrCanvas, qrX, qrY, qrSize, qrSize);
-            
-            // 다운로드
-            const link = document.createElement('a');
-            link.download = `QR_${locationName}.png`;
-            link.href = canvas.toDataURL('image/png');
-            link.click();
-          } catch (error) {
-            console.error('QR 합성 실패:', error);
-            // 실패 시 원본 QR만 다운로드
-            const link = document.createElement('a');
-            link.download = `QR_${locationName}.png`;
-            link.href = qrCanvas.toDataURL();
-            link.click();
+          const qrCanvas = qrElement.querySelector('canvas');
+          if (!qrCanvas) {
+            alert('QR 캔버스를 찾을 수 없습니다.');
+            return;
           }
+          
+          // 🚨 임시 디버깅: 원본 QR만 다운로드 (템플릿 제거)
+          console.log('📥 원본 QR 다운로드:', { qrId, locationName, canvasSize: `${qrCanvas.width}x${qrCanvas.height}` });
+          
+          const link = document.createElement('a');
+          link.download = `QR_${locationName}_원본.png`;
+          link.href = qrCanvas.toDataURL('image/png');
+          link.click();
+          
+          console.log('✅ 다운로드 완료');
         },
         
         // Export Hours to Excel
