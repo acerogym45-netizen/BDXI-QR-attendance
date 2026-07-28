@@ -5713,8 +5713,8 @@
               const qrUrl = `https://erpcrm-ljh.vercel.app/scan.html?loc=${loc.id}&apt=${aptCode}`;
               new QRCode(document.getElementById(`qr-${loc.id}`), {
                 text: qrUrl,
-                width: 400,
-                height: 400,
+                width: 353,
+                height: 353,
                 colorDark: '#000000',
                 colorLight: '#ffffff',
                 correctLevel: QRCode.CorrectLevel.H
@@ -5768,7 +5768,8 @@
             const qrX = 206;
             const qrY = 582;
             
-            // QR 코드 그리기
+            // QR 코드 그리기 - 이미지 스무딩 비활성화로 선명도 유지
+            ctx.imageSmoothingEnabled = false;
             ctx.drawImage(qrCanvas, qrX, qrY, qrSize, qrSize);
             
             // 다운로드
